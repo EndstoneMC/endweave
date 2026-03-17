@@ -81,7 +81,7 @@ def main() -> None:
     new_path = DATA_DIR / "v944_packets.json"
 
     if not old_path.exists() or not new_path.exists():
-        print("Error: Run parse_dot_files.py first to generate packet JSON files.")
+        print("Error: Run parse_protocol_docs.py first to generate packet JSON files.")
         print(f"  Expected: {old_path}")
         print(f"  Expected: {new_path}")
         return

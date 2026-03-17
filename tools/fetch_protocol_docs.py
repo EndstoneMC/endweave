@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fetch protocol documentation from the BedrockProtocol repository.
 
-Downloads DOT files and docs for two protocol versions into protocol_docs/.
+Downloads DOT and JSON files for two protocol versions into protocol_docs/.
 """
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ def fetch_version(name: str, branch: str) -> None:
         dest.mkdir(parents=True, exist_ok=True)
 
         tmp_path = Path(tmp)
-        for subdir in ("docs", "dot"):
+        for subdir in ("dot", "json"):
             src = tmp_path / subdir
             if src.exists():
                 shutil.copytree(src, dest / subdir)

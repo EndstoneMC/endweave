@@ -33,7 +33,9 @@ def create_v924_to_v944() -> ProtocolTranslator:
     # Typed block-position packets (13 packets)
     register_block_pos_handlers(t)
 
-    # Cancel new v944 serverbound packets unknown to v924 (>= 340)
-    t.cancel_serverbound(PacketId.SERVERBOUND_DATA_DRIVEN_SCREEN_CLOSED)
+    # Cancel new v944 serverbound packets unknown to v924 (v924 EndId = 340)
+    t.cancel_serverbound(
+        *range(PacketId.RESOURCE_PACKS_READY_FOR_VALIDATION, PacketId.CLIENTBOUND_ATTRIBUTE_LAYER_SYNC + 1)
+    )
 
     return t
