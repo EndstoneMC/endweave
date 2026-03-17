@@ -3,19 +3,13 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "endstone-example"
-version = "0.4.0"
+name = "endstone-endweave"
+version = "0.1.0"
 dependencies = []
-authors = [
-    { name = "Endstone Developers", email = "hello@endstone.dev" },
-]
-description = "Python example plugin for Endstone servers"
+description = "Protocol translation plugin for Bedrock - allows newer clients on older servers"
 readme = "README.md"
 license = { file = "LICENSE" }
-keywords = ["endstone", "plugin"]
-
-[project.urls]
-Homepage = "https://github.com/EndstoneMC/python-example-plugin"
+keywords = ["endstone", "plugin", "protocol", "translation"]
 
 [project.entry-points."endstone"]
-example = "endstone_example:ExamplePlugin"
+endweave = "endstone_endweave:EndweavePlugin"

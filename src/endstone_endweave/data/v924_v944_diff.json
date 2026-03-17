@@ -1,0 +1,136 @@
+{
+  "new_packets": [
+    "AddTimeMarkerData",
+    "AnimatedImageData",
+    "AttributeLayerData",
+    "AttributeLayerSettings",
+    "BoolAttributeData",
+    "Color255RGB",
+    "Color255RGBA",
+    "ColorAttributeData",
+    "EditorNetworkPacketVariantPayload",
+    "EnvironmentAttributeData",
+    "FloatAttributeData",
+    "InitializeRegistryData",
+    "MinEngineVersion",
+    "RemoveEnvironmentAttributesData",
+    "RemoveTimeMarkerData",
+    "SerializedPersonaPieceHandle",
+    "SerializedSkin",
+    "ServerWaypoint__Payload",
+    "SkinImage",
+    "SyncStateData",
+    "SyncWorldClockStateData",
+    "TimeMarkerData",
+    "TintMapColor",
+    "UpdateAttributeLayerSettingsData",
+    "UpdateAttributeLayersData",
+    "UpdateEnvironmentAttributesData",
+    "WorldClockData",
+    "WorldPosition"
+  ],
+  "removed_packets": [
+    "NetworkBlockPosition"
+  ],
+  "changed_packets": {
+    "CameraInstruction": {
+      "added_fields": [
+        "Spline.loadFromJson",
+        "Spline.loadFromJson.bool",
+        "Spline.splineIdentifier",
+        "Spline.splineIdentifier.string"
+      ],
+      "removed_fields": [],
+      "type_changes": {}
+    },
+    "CameraInstruction__SplineInstruction": {
+      "added_fields": [
+        "loadFromJson",
+        "loadFromJson.bool",
+        "splineIdentifier",
+        "splineIdentifier.string"
+      ],
+      "removed_fields": [],
+      "type_changes": {}
+    },
+    "CommandBlockUpdatePacket": {
+      "added_fields": [
+        "Dependency on 'Is Block?'.If True.Block Position.BlockPos"
+      ],
+      "removed_fields": [
+        "Dependency on 'Is Block?'.If True.Block Position.NetworkBlockPosition"
+      ],
+      "type_changes": {}
+    },
+    "EditorNetworkPacket": {
+      "added_fields": [
+        "Raw Variant Data",
+        "Raw Variant Data.string",
+        "Raw Variant Name",
+        "Raw Variant Name.string"
+      ],
+      "removed_fields": [
+        "Binary Payload",
+        "Binary Payload.CompoundTag"
+      ],
+      "type_changes": {}
+    },
+    "PlayerAuthInputPacket": {
+      "added_fields": [
+        "Dependency on 'IsInClientPredictedVehicle bit set'.If False.node_172",
+        "Dependency on 'ItemStackRequest and PerformItemStackRequest bit set'.If False.node_90",
+        "Dependency on 'PerformBlockActions bit set'.If False.node_126"
+      ],
+      "removed_fields": [
+        "Dependency on 'IsInClientPredictedVehicle bit set'.If False.node_170",
+        "Dependency on 'ItemStackRequest and PerformItemStackRequest bit set'.If False.node_88",
+        "Dependency on 'PerformBlockActions bit set'.If False.node_124"
+      ],
+      "type_changes": {}
+    },
+    "PlayerSkinPacket": {
+      "added_fields": [
+        "Localized New Skin Name",
+        "Localized New Skin Name.string",
+        "Localized Old Skin Name",
+        "Localized Old Skin Name.string"
+      ],
+      "removed_fields": [
+        "New Skin Name",
+        "New Skin Name.string",
+        "Old Skin Name",
+        "Old Skin Name.string"
+      ],
+      "type_changes": {}
+    },
+    "StructureBlockUpdatePacket": {
+      "added_fields": [
+        "Block Position.BlockPos"
+      ],
+      "removed_fields": [
+        "Block Position.NetworkBlockPosition"
+      ],
+      "type_changes": {}
+    },
+    "UpdateSubChunkBlocksChangedInfo": {
+      "added_fields": [
+        "Blocks Changed - Extras.example element.Pos.Y.varint",
+        "Blocks Changed - Standards.example element.Pos.Y.varint"
+      ],
+      "removed_fields": [
+        "Blocks Changed - Extras.example element.Pos.Y.unsigned varint",
+        "Blocks Changed - Standards.example element.Pos.Y.unsigned varint"
+      ],
+      "type_changes": {}
+    },
+    "UpdateSubChunkNetworkBlockInfo": {
+      "added_fields": [
+        "Pos.Y.varint"
+      ],
+      "removed_fields": [
+        "Pos.Y.unsigned varint"
+      ],
+      "type_changes": {}
+    }
+  }
+}
