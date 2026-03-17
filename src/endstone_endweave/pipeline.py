@@ -14,6 +14,14 @@ from endstone_endweave.protocol.registry import TranslatorRegistry
 from endstone_endweave.protocol.v924_to_v944.packet_ids import PacketId
 
 
+def _pname(packet_id: int) -> str:
+    """Resolve packet ID to name, e.g. 'START_GAME(11)' or '999'."""
+    try:
+        return f"{PacketId(packet_id).name}({packet_id})"
+    except ValueError:
+        return str(packet_id)
+
+
 class TranslationPipeline:
     """Intercepts packet events and applies protocol translation."""
 
@@ -47,7 +55,7 @@ class TranslationPipeline:
         if session is None or not session.needs_translation:
             return  # fast path
 
-        self._logger.info(f"[SB] packet {packet_id} ({len(payload)}b)")
+        self._logger.info(f"[SB] {_pname(packet_id)} ({len(payload)}b)")
 
         translator = self._registry.get(session.server_protocol, session.client_protocol)
         if translator is None:
@@ -63,15 +71,15 @@ class TranslationPipeline:
             result = translator.translate_serverbound(packet_id, payload, session)
         except Exception:
             self._logger.error(
-                f"[SB] packet {packet_id} ({len(payload)}b) from {address} "
+                f"[SB] {_pname(packet_id)} ({len(payload)}b) from {address} "
                 f"EXCEPTION:\n{traceback.format_exc()}"
             )
             return
         if result.cancel:
-            self._logger.info(f"[SB] packet {packet_id} CANCELLED")
+            self._logger.info(f"[SB] {_pname(packet_id)} CANCELLED")
         elif result.new_payload is not None:
             self._logger.info(
-                f"[SB] packet {packet_id} rewritten "
+                f"[SB] {_pname(packet_id)} rewritten "
                 f"{len(payload)}b -> {len(result.new_payload)}b"
             )
             event.payload = result.new_payload
@@ -91,7 +99,7 @@ class TranslationPipeline:
         packet_id = event.packet_id
         payload = event.payload
 
-        self._logger.info(f"[CB] packet {packet_id} ({len(payload)}b)")
+        self._logger.info(f"[CB] {_pname(packet_id)} ({len(payload)}b)")
 
         if packet_id == PacketId.DISCONNECT:
             self._log_disconnect(address, payload)
@@ -100,15 +108,15 @@ class TranslationPipeline:
             result = translator.translate_clientbound(packet_id, payload, session)
         except Exception:
             self._logger.error(
-                f"[CB] packet {packet_id} ({len(payload)}b) to {address} "
+                f"[CB] {_pname(packet_id)} ({len(payload)}b) to {address} "
                 f"EXCEPTION:\n{traceback.format_exc()}"
             )
             return
         if result.cancel:
-            self._logger.info(f"[CB] packet {packet_id} CANCELLED")
+            self._logger.info(f"[CB] {_pname(packet_id)} CANCELLED")
         elif result.new_payload is not None:
             self._logger.info(
-                f"[CB] packet {packet_id} rewritten "
+                f"[CB] {_pname(packet_id)} rewritten "
                 f"{len(payload)}b -> {len(result.new_payload)}b"
             )
             event.payload = result.new_payload

@@ -68,12 +68,8 @@ class TestV924ToV944Translator:
             address="1.2.3.4:1234", client_protocol=944, server_protocol=924
         )
 
-        # PlayerToggleCrafterSlotRequestPacket (306)
-        result = translator.translate_serverbound(306, b"\x00", session)
-        assert result.cancel
-
-        # MovementEffect (318)
-        result = translator.translate_serverbound(318, b"\x00", session)
+        # ServerboundDataDrivenScreenClosed (343) - new in v944
+        result = translator.translate_serverbound(343, b"\x00", session)
         assert result.cancel
 
     def test_passthrough_normal_packets(self):

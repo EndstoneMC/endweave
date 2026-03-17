@@ -22,14 +22,18 @@ def create_v924_to_v944() -> ProtocolTranslator:
     t.register_serverbound(PacketId.REQUEST_NETWORK_SETTINGS, rewrite_request_network_settings)
     t.register_serverbound(PacketId.LOGIN, rewrite_login)
 
-    # --- DEBUG: re-enabling handlers one by one ---
-    # t.register_serverbound(PacketId.COMMAND_BLOCK_UPDATE, rewrite_command_block_update)
-    # t.register_serverbound(PacketId.STRUCTURE_BLOCK_UPDATE, rewrite_structure_block_update)
-    # t.register_serverbound(PacketId.PLAYER_AUTH_INPUT, rewrite_auth_input)
+    # Complex manual handlers
+    t.register_serverbound(PacketId.COMMAND_BLOCK_UPDATE, rewrite_command_block_update)
+    t.register_serverbound(PacketId.STRUCTURE_BLOCK_UPDATE, rewrite_structure_block_update)
+    t.register_serverbound(PacketId.PLAYER_AUTH_INPUT, rewrite_auth_input)
     t.register_clientbound(PacketId.START_GAME, rewrite_start_game)
-    # t.register_clientbound(PacketId.MAP_DATA, rewrite_map_item_data)
-    # t.register_clientbound(PacketId.UPDATE_SUB_CHUNK_BLOCKS, rewrite_sub_chunk_blocks)
-    # register_block_pos_handlers(t)
-    # t.cancel_serverbound(PacketId.PLAYER_TOGGLE_CRAFTER_SLOT_REQUEST, PacketId.MOVEMENT_EFFECT)
+    t.register_clientbound(PacketId.MAP_DATA, rewrite_map_item_data)
+    t.register_clientbound(PacketId.UPDATE_SUB_CHUNK_BLOCKS, rewrite_sub_chunk_blocks)
+
+    # Typed block-position packets (13 packets)
+    register_block_pos_handlers(t)
+
+    # Cancel new v944 serverbound packets unknown to v924 (>= 340)
+    t.cancel_serverbound(PacketId.SERVERBOUND_DATA_DRIVEN_SCREEN_CLOSED)
 
     return t
