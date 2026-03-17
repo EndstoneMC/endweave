@@ -36,3 +36,7 @@ running the current version (r26_u0, protocol 924, MC 1.26.0).
 - Only deserialize packets that have registered rewriters (pass-through by default)
 - Rewrite `RequestNetworkSettings` protocol field to 924 so BDS accepts newer clients
 - Cancel new serverbound packet IDs that the v924 server doesn't understand
+
+## Git
+
+- Never add a Co-Authored-By line for Claude in commit messages
