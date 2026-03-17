@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "endstone-example"
+version = "0.4.0"
+dependencies = []
+authors = [
+    { name = "Endstone Developers", email = "hello@endstone.dev" },
+]
+description = "Python example plugin for Endstone servers"
+readme = "README.md"
+license = { file = "LICENSE" }
+keywords = ["endstone", "plugin"]
+
+[project.urls]
+Homepage = "https://github.com/EndstoneMC/python-example-plugin"
+
+[project.entry-points."endstone"]
+example = "endstone_example:ExamplePlugin"
