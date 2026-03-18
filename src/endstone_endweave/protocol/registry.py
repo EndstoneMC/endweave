@@ -53,9 +53,9 @@ class TranslatorRegistry:
         # Each translator steps from client_protocol -> server_protocol,
         # so we search: starting at client_protocol, find edges where
         # client_protocol matches, and follow to server_protocol.
-        result = self._bfs(server_protocol, client_protocol)
-        self._path_cache[cache_key] = result
-        return result
+        path = self._bfs(server_protocol, client_protocol)
+        self._path_cache[cache_key] = path
+        return path
 
     def _bfs(
         self, server_protocol: int, client_protocol: int

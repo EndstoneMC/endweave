@@ -15,12 +15,12 @@ from endstone_endweave.session import SessionManager
 from endstone_endweave.protocol.base import ProtocolTranslator
 from endstone_endweave.protocol.registry import TranslatorRegistry
 from endstone_endweave.protocol.v924_to_v944 import create_translator as create_v924_to_v944
-from endstone_endweave.protocol.versions import VERSIONS
+from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
 
 
 class EndweavePlugin(Plugin):
-    prefix = "Endweave"
-    api_version = "0.11"
+    prefix = "Endweave"  # type: ignore[assignment]
+    api_version = "0.11"  # type: ignore[assignment]
 
     def on_enable(self) -> None:
         server_protocol = self._detect_server_protocol()
@@ -45,17 +45,25 @@ class EndweavePlugin(Plugin):
             f"max client: {max_ver.minecraft_version if max_ver else 'none'}"
         )
 
+    @staticmethod
+    def _normalize_mc_version(version: str) -> str:
+        """Normalize a Minecraft version string to dotted form.
+
+        Endstone may return short forms like "26.3" meaning "1.26.3".
+        """
+        parts = version.split(".")
+        if len(parts) == 2:
+            # "26.3" -> "1.26.3"
+            return f"1.{parts[0]}.{parts[1]}"
+        return version
+
     def _detect_server_protocol(self) -> int:
         """Detect the server's protocol version from its minecraft_version string."""
-        server_mc_version = self.server.minecraft_version
-        for proto, ver in VERSIONS.items():
-            if ver.minecraft_version == server_mc_version:
-                self.logger.info(
-                    f"Detected server protocol {proto} "
-                    f"(MC {server_mc_version})"
-                )
-                return proto
-        # Fallback: assume lowest registered version
+        server_mc_version = self._normalize_mc_version(self.server.minecraft_version)
+        ver = get_version_by_name(server_mc_version)
+        if ver:
+            self.logger.info(f"Detected server protocol {ver.protocol} (MC {server_mc_version})")
+            return ver.protocol
         fallback = min(VERSIONS.keys()) if VERSIONS else 0
         self.logger.warning(
             f"Could not detect server protocol for MC {server_mc_version}, "
@@ -70,11 +78,11 @@ class EndweavePlugin(Plugin):
             f"{translator.server_protocol} -> {translator.client_protocol}"
         )
 
-    @event_handler(priority=EventPriority.LOWEST)
+    @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value]
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
         self._pipeline.on_packet_receive(event)
 
-    @event_handler(priority=EventPriority.LOWEST)
+    @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value]
     def on_packet_send(self, event: PacketSendEvent) -> None:
         self._pipeline.on_packet_send(event)
 

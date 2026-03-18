@@ -141,3 +141,34 @@ class TestTranslationPipeline:
         event = self._make_event(42, b"\x00\x01")
         pipeline.on_packet_send(event)
         event.cancel.assert_not_called()
+
+
+class TestNormalizeMcVersion:
+    """Test Endstone version string normalization."""
+
+    def test_short_form(self):
+        from endstone_endweave.plugin import EndweavePlugin
+        assert EndweavePlugin._normalize_mc_version("26.0") == "1.26.0"
+        assert EndweavePlugin._normalize_mc_version("26.10") == "1.26.10"
+        assert EndweavePlugin._normalize_mc_version("26.3") == "1.26.3"
+
+    def test_full_form_unchanged(self):
+        from endstone_endweave.plugin import EndweavePlugin
+        assert EndweavePlugin._normalize_mc_version("1.26.0") == "1.26.0"
+        assert EndweavePlugin._normalize_mc_version("1.26.10") == "1.26.10"
+
+
+class TestGetVersionByName:
+    """Test MC version string -> ProtocolVersion lookup."""
+
+    def test_patch_version_maps_to_base(self):
+        from endstone_endweave.protocol.versions import get_version_by_name, R26_U0
+        assert get_version_by_name("1.26.2") is R26_U0
+
+    def test_exact_version_match(self):
+        from endstone_endweave.protocol.versions import get_version_by_name, R26_U1
+        assert get_version_by_name("1.26.10") is R26_U1
+
+    def test_unknown_version_returns_none(self):
+        from endstone_endweave.protocol.versions import get_version_by_name
+        assert get_version_by_name("1.99.0") is None

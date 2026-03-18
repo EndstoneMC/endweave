@@ -30,6 +30,7 @@ class ProtocolTranslator:
         self.client_protocol = client_protocol
         self._clientbound: dict[int, PacketHandler] = {}
         self._serverbound: dict[int, PacketHandler] = {}
+        self._cancel_clientbound: set[int] = set()
         self._cancel_serverbound: set[int] = set()
 
     def register_clientbound(self, packet_id: int, handler: PacketHandler) -> None:
@@ -38,12 +39,17 @@ class ProtocolTranslator:
     def register_serverbound(self, packet_id: int, handler: PacketHandler) -> None:
         self._serverbound[packet_id] = handler
 
+    def cancel_clientbound(self, *packet_ids: int) -> None:
+        self._cancel_clientbound.update(packet_ids)
+
     def cancel_serverbound(self, *packet_ids: int) -> None:
         self._cancel_serverbound.update(packet_ids)
 
     def translate_clientbound(
         self, packet_id: int, payload: bytes, session: PlayerSession
     ) -> PacketTransformation:
+        if packet_id in self._cancel_clientbound:
+            return PacketTransformation(cancel=True)
         handler = self._clientbound.get(packet_id)
         if handler:
             return handler(payload, session)

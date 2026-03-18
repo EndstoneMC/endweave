@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from endstone_endweave.codec import PacketReader, PacketWriter
 from endstone_endweave.session import PlayerSession
 from endstone_endweave.protocol.base import PacketTransformation, ProtocolTranslator
@@ -48,7 +50,7 @@ _SERVERBOUND: list[tuple[int, type]] = [
 ]
 
 
-def _make_cb_handler(packet_cls: type):
+def _make_cb_handler(packet_cls: Any):
     """Create a clientbound handler: read v924 positions, write v944."""
     def handler(payload: bytes, session: PlayerSession) -> PacketTransformation:
         reader = PacketReader(payload)
@@ -59,7 +61,7 @@ def _make_cb_handler(packet_cls: type):
     return handler
 
 
-def _make_sb_handler(packet_cls: type):
+def _make_sb_handler(packet_cls: Any):
     """Create a serverbound handler: read v944 positions, write v924."""
     def handler(payload: bytes, session: PlayerSession) -> PacketTransformation:
         reader = PacketReader(payload)

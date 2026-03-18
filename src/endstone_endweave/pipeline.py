@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import logging
 import struct
 import traceback
 
+from endstone import Logger
 from endstone.event import PacketReceiveEvent, PacketSendEvent
 
 from endstone_endweave.codec import PacketReader
@@ -30,7 +30,7 @@ class TranslationPipeline:
         self,
         registry: TranslatorRegistry,
         sessions: SessionManager,
-        logger: logging.Logger,
+        logger: Logger,
     ) -> None:
         self._registry = registry
         self._sessions = sessions
@@ -44,10 +44,10 @@ class TranslationPipeline:
 
         # Detect client protocol from RequestNetworkSettings
         if packet_id == PacketId.REQUEST_NETWORK_SETTINGS:
-            session = self._sessions.get_or_create(address)
+            new_session = self._sessions.get_or_create(address)
             if len(payload) >= 4:
                 client_proto = struct.unpack(">i", payload[:4])[0]
-                session.client_protocol = client_proto
+                new_session.client_protocol = client_proto
                 self._logger.info(
                     f"Client {address} connecting with protocol {client_proto}"
                 )
@@ -150,7 +150,7 @@ class TranslationPipeline:
             reason = reader.read_varint()
             skip_message = reader.read_bool()
             message = ""
-            if not skip_message and reader.has_remaining:
+            if not skip_message and reader.has_remaining():
                 message = reader.read_string()
             self._logger.warning(
                 f"[CB] Disconnect to {address}: reason={reason} "

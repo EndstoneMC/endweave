@@ -6,6 +6,7 @@ from endstone_endweave.protocol.base import ProtocolTranslator
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.v924_to_v944.handlers.auth_input import rewrite_auth_input
 from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import register_block_pos_handlers
+from endstone_endweave.protocol.v924_to_v944.handlers.client_input_locks import rewrite_client_input_locks
 from endstone_endweave.protocol.v924_to_v944.handlers.command_block import rewrite_command_block_update
 from endstone_endweave.protocol.v924_to_v944.handlers.login import rewrite_login, rewrite_request_network_settings
 from endstone_endweave.protocol.v924_to_v944.handlers.map_item_data import rewrite_map_item_data
@@ -32,6 +33,7 @@ def create_translator() -> ProtocolTranslator:
     t.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     t.register_clientbound(PacketId.MAP_DATA, rewrite_map_item_data)
     t.register_clientbound(PacketId.UPDATE_SUB_CHUNK_BLOCKS, rewrite_sub_chunk_blocks)
+    t.register_clientbound(PacketId.PLAYER_CLIENT_INPUT_PERMISSIONS, rewrite_client_input_locks)
 
     # Typed block-position packets (13 packets)
     register_block_pos_handlers(t)
@@ -40,6 +42,22 @@ def create_translator() -> ProtocolTranslator:
     t.cancel_serverbound(
         *range(PacketId.RESOURCE_PACKS_READY_FOR_VALIDATION, PacketId.CLIENTBOUND_ATTRIBUTE_LAYER_SYNC + 1)
     )
+
+    # Incompatible format change (editor-only)
+    t.cancel_serverbound(PacketId.EDITOR_NETWORK)
+    t.cancel_clientbound(PacketId.EDITOR_NETWORK)
+
+    # TODO: SerializedSkin format changed dramatically
+    t.cancel_serverbound(PacketId.PLAYER_SKIN)
+
+    # Removed in v944
+    t.cancel_clientbound(PacketId.CLIENTBOUND_DATA_DRIVEN_UI_CLOSE_ALL_SCREENS)
+
+    # TODO: v944 adds FormId + DataInstanceId fields; append defaults when needed
+    t.cancel_clientbound(PacketId.CLIENTBOUND_DATA_DRIVEN_UI_SHOW_SCREEN)
+
+    # TODO: v944 adds Custom Shape Count (uint16) at end
+    t.cancel_clientbound(PacketId.VOXEL_SHAPES)
 
     return t
 
