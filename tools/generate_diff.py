@@ -1,22 +1,30 @@
 #!/usr/bin/env python3
 """Generate a diff between two protocol version JSON files.
 
-Compares v924_packets.json and v944_packets.json field-by-field to identify:
+Compares packet JSON files field-by-field to identify:
 - New packets (only in one version)
 - Removed packets
 - Field additions/removals per packet
 - Type changes
 
-Output: src/endstone_endweave/data/v924_v944_diff.json
+Usage:
+    python tools/generate_diff.py                  # diff v924 vs v944 (default)
+    python tools/generate_diff.py r26_u0 r26_u1    # diff specific versions by tag
+    python tools/generate_diff.py 924 944          # diff by protocol number
 """
 
 from __future__ import annotations
 
+import argparse
 import json
+import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = PROJECT_ROOT / "src" / "endstone_endweave" / "data"
+DATA_DIR = PROJECT_ROOT / "data"
+
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+from endstone_endweave.protocol.versions import VERSIONS
 
 
 def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
@@ -76,9 +84,59 @@ def diff_packets(old_packets: list[dict], new_packets: list[dict]) -> dict:
     return result
 
 
+def _resolve_protocol(arg: str) -> int | None:
+    """Resolve a CLI argument to a protocol number (accepts tag or number)."""
+    # Try as protocol number
+    try:
+        proto = int(arg)
+        if proto in VERSIONS:
+            return proto
+    except ValueError:
+        pass
+    # Try as release tag
+    for ver in VERSIONS.values():
+        if ver.release_tag == arg:
+            return ver.protocol
+    return None
+
+
 def main() -> None:
-    old_path = DATA_DIR / "v924_packets.json"
-    new_path = DATA_DIR / "v944_packets.json"
+    parser = argparse.ArgumentParser(
+        description="Diff two protocol version packet JSONs."
+    )
+    parser.add_argument(
+        "old",
+        nargs="?",
+        help="Old version (protocol number or release tag). Default: lowest known.",
+    )
+    parser.add_argument(
+        "new",
+        nargs="?",
+        help="New version (protocol number or release tag). Default: highest known.",
+    )
+    args = parser.parse_args()
+
+    sorted_protos = sorted(VERSIONS.keys())
+    old_proto = sorted_protos[0] if len(sorted_protos) >= 1 else None
+    new_proto = sorted_protos[-1] if len(sorted_protos) >= 2 else None
+
+    if args.old:
+        old_proto = _resolve_protocol(args.old)
+        if old_proto is None:
+            print(f"Error: unknown version '{args.old}'")
+            sys.exit(1)
+    if args.new:
+        new_proto = _resolve_protocol(args.new)
+        if new_proto is None:
+            print(f"Error: unknown version '{args.new}'")
+            sys.exit(1)
+
+    if old_proto is None or new_proto is None:
+        print("Error: need at least two known versions to diff.")
+        sys.exit(1)
+
+    old_path = DATA_DIR / f"v{old_proto}_packets.json"
+    new_path = DATA_DIR / f"v{new_proto}_packets.json"
 
     if not old_path.exists() or not new_path.exists():
         print("Error: Run parse_protocol_docs.py first to generate packet JSON files.")
@@ -98,7 +156,7 @@ def main() -> None:
     print(f"  Removed packets: {len(diff['removed_packets'])}")
     print(f"  Changed packets: {len(diff['changed_packets'])}")
 
-    out_path = DATA_DIR / "v924_v944_diff.json"
+    out_path = DATA_DIR / f"v{old_proto}_v{new_proto}_diff.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(diff, f, indent=2)
     print(f"  Written to {out_path}")

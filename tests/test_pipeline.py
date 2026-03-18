@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from endstone_endweave.pipeline import TranslationPipeline
-from endstone_endweave.player_state import PlayerSession, SessionManager
+from endstone_endweave.session import PlayerSession, SessionManager
 from endstone_endweave.protocol.base import PacketTransformation, ProtocolTranslator
 from endstone_endweave.protocol.registry import TranslatorRegistry
 
@@ -73,8 +73,8 @@ class TestTranslationPipeline:
         event.address = address
         return event
 
-    def _make_pipeline(self):
-        sessions = SessionManager()
+    def _make_pipeline(self, server_protocol: int = 924):
+        sessions = SessionManager(server_protocol=server_protocol)
         registry = TranslatorRegistry()
         logger = MagicMock()
         pipeline = TranslationPipeline(registry, sessions, logger)

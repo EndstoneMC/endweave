@@ -3,7 +3,11 @@
 
 Reads .dot files from protocol_docs/<version>/dot/ and .json files from
 protocol_docs/<version>/json/, then outputs merged structured JSON to
-src/endstone_endweave/data/<version>_packets.json.
+src/endstone_endweave/data/v<protocol>_packets.json.
+
+Usage:
+    python tools/parse_protocol_docs.py              # parse all known versions
+    python tools/parse_protocol_docs.py r26_u0 r26_u1  # parse specific versions
 
 DOT format:
 - Node 0 = packet root, `comment` has metadata
@@ -19,6 +23,7 @@ JSON format:
 
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -26,20 +31,10 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-VERSIONS = {
-    "r26_u0": {
-        "dot_dir": "protocol_docs/r26_u0/dot",
-        "json_dir": "protocol_docs/r26_u0/json",
-        "output": "v924_packets.json",
-    },
-    "r26_u1": {
-        "dot_dir": "protocol_docs/r26_u1/dot",
-        "json_dir": "protocol_docs/r26_u1/json",
-        "output": "v944_packets.json",
-    },
-}
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+from endstone_endweave.protocol.versions import VERSIONS
 
-OUTPUT_DIR = PROJECT_ROOT / "src" / "endstone_endweave" / "data"
+OUTPUT_DIR = PROJECT_ROOT / "data"
 
 # ---------------------------------------------------------------------------
 # DOT parsing (unchanged from parse_dot_files.py)
@@ -354,9 +349,39 @@ def merge_packets(dot_packets: list[dict], json_packets: list[dict]) -> list[dic
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Parse protocol DOT + JSON docs into structured JSON."
+    )
+    parser.add_argument(
+        "versions",
+        nargs="*",
+        help="Release tags to parse (e.g. r26_u0 r26_u1). Defaults to all known versions.",
+    )
+    args = parser.parse_args()
+
+    # Build config from versions registry
+    all_configs: dict[str, dict] = {}
+    for ver in VERSIONS.values():
+        tag = ver.release_tag
+        all_configs[tag] = {
+            "dot_dir": f"protocol_docs/{tag}/dot",
+            "json_dir": f"protocol_docs/{tag}/json",
+            "output": f"v{ver.protocol}_packets.json",
+        }
+
+    if args.versions:
+        selected = {}
+        for tag in args.versions:
+            if tag not in all_configs:
+                print(f"Error: unknown version tag '{tag}'. Known: {', '.join(all_configs)}")
+                sys.exit(1)
+            selected[tag] = all_configs[tag]
+    else:
+        selected = all_configs
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    for version_name, cfg in VERSIONS.items():
+    for version_name, cfg in selected.items():
         dot_dir = PROJECT_ROOT / cfg["dot_dir"]
         json_dir = PROJECT_ROOT / cfg["json_dir"]
 

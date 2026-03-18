@@ -7,7 +7,7 @@ Key: NetworkBlockPosition (v924) stores coords * 8 on wire, Y as unsigned varint
 from __future__ import annotations
 
 from endstone_endweave.codec import PacketReader, PacketWriter
-from endstone_endweave.player_state import PlayerSession
+from endstone_endweave.session import PlayerSession
 from endstone_endweave.protocol.v924_to_v944.block_position import (
     NETWORK_BLOCK_POS_SCALE,
     read_block_pos,

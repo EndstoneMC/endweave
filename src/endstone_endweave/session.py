@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from endstone import Player
+
+if TYPE_CHECKING:
+    from endstone_endweave.protocol.base import ProtocolTranslator
 
 
 @dataclass
@@ -13,8 +17,9 @@ class PlayerSession:
 
     address: str  # "host:port" key
     client_protocol: int = 0  # Detected from RequestNetworkSettings
-    server_protocol: int = 924
+    server_protocol: int = 0  # Set by SessionManager
     warned_no_translator: bool = False
+    translator_chain: list[ProtocolTranslator] | None = None  # cached after first lookup
 
     @property
     def needs_translation(self) -> bool:
@@ -24,12 +29,15 @@ class PlayerSession:
 class SessionManager:
     """Manages player sessions keyed by network address."""
 
-    def __init__(self) -> None:
+    def __init__(self, server_protocol: int = 0) -> None:
+        self._server_protocol = server_protocol
         self._sessions: dict[str, PlayerSession] = {}
 
     def get_or_create(self, address: str) -> PlayerSession:
         if address not in self._sessions:
-            self._sessions[address] = PlayerSession(address=address)
+            self._sessions[address] = PlayerSession(
+                address=address, server_protocol=self._server_protocol
+            )
         return self._sessions[address]
 
     def get(self, address: str) -> PlayerSession | None:

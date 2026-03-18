@@ -6,7 +6,7 @@ import struct
 
 import pytest
 
-from endstone_endweave.player_state import PlayerSession
+from endstone_endweave.session import PlayerSession
 from endstone_endweave.protocol.v924_to_v944.handlers.login import (
     rewrite_login,
     rewrite_request_network_settings,

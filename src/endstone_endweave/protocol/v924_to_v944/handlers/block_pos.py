@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from endstone_endweave.codec import PacketReader, PacketWriter
-from endstone_endweave.player_state import PlayerSession
+from endstone_endweave.session import PlayerSession
 from endstone_endweave.protocol.base import PacketTransformation, ProtocolTranslator
 from endstone_endweave.protocol.v924_to_v944.block_position import (
     read_pos_v924,

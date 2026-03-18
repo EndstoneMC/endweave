@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
 """Fetch protocol documentation from the BedrockProtocol repository.
 
-Downloads DOT and JSON files for two protocol versions into protocol_docs/.
+Downloads DOT and JSON files for protocol versions into protocol_docs/.
+
+Usage:
+    python tools/fetch_protocol_docs.py              # fetch all known versions
+    python tools/fetch_protocol_docs.py r26_u0 r26_u1  # fetch specific versions
 """
 
 from __future__ import annotations
 
+import argparse
 import shutil
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-REPO_URL = "https://github.com/Mojang/bedrock-protocol-docs.git"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+from endstone_endweave.protocol.versions import VERSIONS
 
-VERSIONS = {
-    "r26_u0": "r/26_u0",
-    "r26_u1": "r/26_u1",
-}
+REPO_URL = "https://github.com/Mojang/bedrock-protocol-docs.git"
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "protocol_docs"
 
@@ -60,8 +63,31 @@ def fetch_version(name: str, branch: str) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Fetch protocol docs from BedrockProtocol repo."
+    )
+    parser.add_argument(
+        "versions",
+        nargs="*",
+        help="Release tags to fetch (e.g. r26_u0 r26_u1). Defaults to all known versions.",
+    )
+    args = parser.parse_args()
+
+    # Build tag -> branch mapping from versions registry
+    all_versions = {v.release_tag: f"r/{v.release_tag.replace('r', '', 1)}" for v in VERSIONS.values()}
+
+    if args.versions:
+        selected = {}
+        for tag in args.versions:
+            if tag not in all_versions:
+                print(f"Error: unknown version tag '{tag}'. Known: {', '.join(all_versions)}")
+                sys.exit(1)
+            selected[tag] = all_versions[tag]
+    else:
+        selected = all_versions
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    for name, branch in VERSIONS.items():
+    for name, branch in selected.items():
         print(f"Fetching {name} ({branch})...")
         fetch_version(name, branch)
     print("Done.")

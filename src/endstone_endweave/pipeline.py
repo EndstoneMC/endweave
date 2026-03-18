@@ -9,9 +9,10 @@ import traceback
 from endstone.event import PacketReceiveEvent, PacketSendEvent
 
 from endstone_endweave.codec import PacketReader
-from endstone_endweave.player_state import SessionManager
+from endstone_endweave.session import SessionManager
+from endstone_endweave.protocol.base import PacketTransformation, ProtocolTranslator
+from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.registry import TranslatorRegistry
-from endstone_endweave.protocol.v924_to_v944.packet_ids import PacketId
 
 
 def _pname(packet_id: int) -> str:
@@ -57,8 +58,8 @@ class TranslationPipeline:
 
         self._logger.info(f"[SB] {_pname(packet_id)} ({len(payload)}b)")
 
-        translator = self._registry.get(session.server_protocol, session.client_protocol)
-        if translator is None:
+        chain = self._get_chain(session)
+        if chain is None:
             if not session.warned_no_translator:
                 session.warned_no_translator = True
                 self._logger.warning(
@@ -67,22 +68,27 @@ class TranslationPipeline:
                 )
             return
 
-        try:
-            result = translator.translate_serverbound(packet_id, payload, session)
-        except Exception:
-            self._logger.error(
-                f"[SB] {_pname(packet_id)} ({len(payload)}b) from {address} "
-                f"EXCEPTION:\n{traceback.format_exc()}"
-            )
-            return
-        if result.cancel:
-            self._logger.info(f"[SB] {_pname(packet_id)} CANCELLED")
-        elif result.new_payload is not None:
-            self._logger.info(
-                f"[SB] {_pname(packet_id)} rewritten "
-                f"{len(payload)}b -> {len(result.new_payload)}b"
-            )
-            event.payload = result.new_payload
+        # Serverbound: apply chain in order (client -> server direction)
+        for translator in chain:
+            try:
+                result = translator.translate_serverbound(packet_id, payload, session)
+            except Exception:
+                self._logger.error(
+                    f"[SB] {_pname(packet_id)} ({len(payload)}b) from {address} "
+                    f"EXCEPTION:\n{traceback.format_exc()}"
+                )
+                return
+            if result.cancel:
+                self._logger.info(f"[SB] {_pname(packet_id)} CANCELLED")
+                event.cancel()
+                return
+            if result.new_payload is not None:
+                self._logger.info(
+                    f"[SB] {_pname(packet_id)} rewritten "
+                    f"{len(payload)}b -> {len(result.new_payload)}b"
+                )
+                payload = result.new_payload
+                event.payload = payload
 
     def on_packet_send(self, event: PacketSendEvent) -> None:
         """Handle a clientbound (server->client) packet."""
@@ -92,8 +98,8 @@ class TranslationPipeline:
         if session is None or not session.needs_translation:
             return  # fast path
 
-        translator = self._registry.get(session.server_protocol, session.client_protocol)
-        if translator is None:
+        chain = self._get_chain(session)
+        if chain is None:
             return
 
         packet_id = event.packet_id
@@ -104,22 +110,38 @@ class TranslationPipeline:
         if packet_id == PacketId.DISCONNECT:
             self._log_disconnect(address, payload)
 
-        try:
-            result = translator.translate_clientbound(packet_id, payload, session)
-        except Exception:
-            self._logger.error(
-                f"[CB] {_pname(packet_id)} ({len(payload)}b) to {address} "
-                f"EXCEPTION:\n{traceback.format_exc()}"
-            )
-            return
-        if result.cancel:
-            self._logger.info(f"[CB] {_pname(packet_id)} CANCELLED")
-        elif result.new_payload is not None:
-            self._logger.info(
-                f"[CB] {_pname(packet_id)} rewritten "
-                f"{len(payload)}b -> {len(result.new_payload)}b"
-            )
-            event.payload = result.new_payload
+        # Clientbound: apply chain in reverse order (server -> client direction)
+        for translator in reversed(chain):
+            try:
+                result = translator.translate_clientbound(packet_id, payload, session)
+            except Exception:
+                self._logger.error(
+                    f"[CB] {_pname(packet_id)} ({len(payload)}b) to {address} "
+                    f"EXCEPTION:\n{traceback.format_exc()}"
+                )
+                return
+            if result.cancel:
+                self._logger.info(f"[CB] {_pname(packet_id)} CANCELLED")
+                event.cancel()
+                return
+            if result.new_payload is not None:
+                self._logger.info(
+                    f"[CB] {_pname(packet_id)} rewritten "
+                    f"{len(payload)}b -> {len(result.new_payload)}b"
+                )
+                payload = result.new_payload
+                event.payload = payload
+
+    def _get_chain(self, session) -> list[ProtocolTranslator] | None:
+        """Get the translator chain for a session, caching the result."""
+        if session.translator_chain is not None:
+            return session.translator_chain
+        chain = self._registry.get_path(
+            session.server_protocol, session.client_protocol
+        )
+        if chain is not None:
+            session.translator_chain = chain
+        return chain
 
     def _log_disconnect(self, address: str, payload: bytes) -> None:
         """Log the reason from a Disconnect packet."""

@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from endstone_endweave.player_state import PlayerSession
+from endstone_endweave.session import PlayerSession
 
 PacketHandler = Callable[[bytes, PlayerSession], "PacketTransformation"]
 

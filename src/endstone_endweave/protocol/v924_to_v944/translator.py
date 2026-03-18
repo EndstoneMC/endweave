@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from endstone_endweave.protocol.base import ProtocolTranslator
+from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.v924_to_v944.handlers.auth_input import rewrite_auth_input
 from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import register_block_pos_handlers
 from endstone_endweave.protocol.v924_to_v944.handlers.command_block import rewrite_command_block_update
@@ -11,10 +12,12 @@ from endstone_endweave.protocol.v924_to_v944.handlers.map_item_data import rewri
 from endstone_endweave.protocol.v924_to_v944.handlers.start_game import rewrite_start_game
 from endstone_endweave.protocol.v924_to_v944.handlers.structure_block import rewrite_structure_block_update
 from endstone_endweave.protocol.v924_to_v944.handlers.sub_chunk import rewrite_sub_chunk_blocks
-from endstone_endweave.protocol.v924_to_v944.packet_ids import PacketId
+
+SERVER_PROTOCOL = 924
+CLIENT_PROTOCOL = 944
 
 
-def create_v924_to_v944() -> ProtocolTranslator:
+def create_translator() -> ProtocolTranslator:
     """Create a translator for v924 server <- v944 client."""
     t = ProtocolTranslator(server_protocol=924, client_protocol=944)
 
@@ -39,3 +42,7 @@ def create_v924_to_v944() -> ProtocolTranslator:
     )
 
     return t
+
+
+# Backward compat alias
+create_v924_to_v944 = create_translator

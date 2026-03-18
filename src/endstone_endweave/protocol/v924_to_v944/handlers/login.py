@@ -4,10 +4,8 @@ from __future__ import annotations
 
 import struct
 
-from endstone_endweave.player_state import PlayerSession
+from endstone_endweave.session import PlayerSession
 from endstone_endweave.protocol.base import PacketTransformation
-
-SERVER_PROTOCOL = 924
 
 
 def rewrite_request_network_settings(
@@ -24,10 +22,10 @@ def rewrite_request_network_settings(
     client_protocol = struct.unpack(">i", payload[:4])[0]
     session.client_protocol = client_protocol
 
-    if client_protocol == SERVER_PROTOCOL:
+    if client_protocol == session.server_protocol:
         return PacketTransformation()
 
-    new_payload = struct.pack(">i", SERVER_PROTOCOL) + payload[4:]
+    new_payload = struct.pack(">i", session.server_protocol) + payload[4:]
     return PacketTransformation(new_payload=new_payload)
 
 
@@ -45,8 +43,8 @@ def rewrite_login(
 
     protocol_in_packet = struct.unpack(">i", payload[:4])[0]
 
-    if protocol_in_packet == SERVER_PROTOCOL:
+    if protocol_in_packet == session.server_protocol:
         return PacketTransformation()
 
-    new_payload = struct.pack(">i", SERVER_PROTOCOL) + payload[4:]
+    new_payload = struct.pack(">i", session.server_protocol) + payload[4:]
     return PacketTransformation(new_payload=new_payload)
