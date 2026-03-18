@@ -13,7 +13,7 @@ from endstone_endweave.protocol.v924_to_v944.block_position import (
     write_pos_v924,
     write_pos_v944,
 )
-from endstone_endweave.protocol.v924_to_v944.packet_ids import PacketId
+from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.v924_to_v944.packets import (
     AddVolumeEntityPacket,
     AnvilDamagePacket,

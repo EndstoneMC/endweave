@@ -78,27 +78,6 @@ def convert_944_to_924(reader: PacketReader, writer: PacketWriter) -> None:
     write_network_block_pos(writer, x * NETWORK_BLOCK_POS_SCALE, y * NETWORK_BLOCK_POS_SCALE, z * NETWORK_BLOCK_POS_SCALE)
 
 
-def skip_varint(reader: PacketReader) -> None:
-    """Skip a varint without decoding it."""
-    while reader.read_byte() & 0x80:
-        pass
-
-
-def copy_varint(reader: PacketReader, writer: PacketWriter) -> None:
-    """Copy a varint from reader to writer without decoding."""
-    while True:
-        b = reader.read_byte()
-        writer.write_byte(b)
-        if not (b & 0x80):
-            break
-
-
-def copy_string(reader: PacketReader, writer: PacketWriter) -> None:
-    """Copy a varint-prefixed string from reader to writer."""
-    length = reader.read_varint()
-    writer.write_varint(length)
-    writer.write_bytes(reader.read_bytes(length))
-
 
 def read_pos_v924(reader: PacketReader) -> tuple[int, int, int]:
     """Read v924 NetworkBlockPosition and return logical block coordinates."""

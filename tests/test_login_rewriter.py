@@ -61,9 +61,9 @@ class TestLoginPacket:
 
 class TestV924ToV944Translator:
     def test_cancels_new_serverbound_packets(self):
-        from endstone_endweave.protocol.v924_to_v944.translator import create_v924_to_v944
+        from endstone_endweave.protocol.v924_to_v944.translator import create_translator
 
-        translator = create_v924_to_v944()
+        translator = create_translator()
         session = PlayerSession(
             address="1.2.3.4:1234", client_protocol=944, server_protocol=924
         )
@@ -73,9 +73,9 @@ class TestV924ToV944Translator:
         assert result.cancel
 
     def test_passthrough_normal_packets(self):
-        from endstone_endweave.protocol.v924_to_v944.translator import create_v924_to_v944
+        from endstone_endweave.protocol.v924_to_v944.translator import create_translator
 
-        translator = create_v924_to_v944()
+        translator = create_translator()
         session = PlayerSession(
             address="1.2.3.4:1234", client_protocol=944, server_protocol=924
         )

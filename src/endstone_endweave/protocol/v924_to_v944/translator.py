@@ -60,7 +60,3 @@ def create_translator() -> ProtocolTranslator:
     t.cancel_clientbound(PacketId.VOXEL_SHAPES)
 
     return t
-
-
-# Backward compat alias
-create_v924_to_v944 = create_translator

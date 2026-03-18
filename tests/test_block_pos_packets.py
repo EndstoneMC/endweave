@@ -17,7 +17,7 @@ from endstone_endweave.protocol.v924_to_v944.block_position import (
     write_block_pos,
     write_network_block_pos,
 )
-from endstone_endweave.protocol.v924_to_v944.translator import create_v924_to_v944
+from endstone_endweave.protocol.v924_to_v944.translator import create_translator
 
 S = NETWORK_BLOCK_POS_SCALE  # 8
 
@@ -43,7 +43,7 @@ def _read_v944_pos(r: PacketReader) -> tuple[int, int, int]:
     return read_block_pos(r)
 
 
-_translator = create_v924_to_v944()
+_translator = create_translator()
 
 
 # ---- Clientbound (v924 -> v944) ----
