@@ -29,6 +29,7 @@ from endstone_endweave.codec import (
 from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.connection import UserConnection
 from endstone_endweave.protocol.base import Protocol
+from endstone_endweave.protocol.direction import Direction
 
 
 class TestPacketWrapperBasics:
@@ -58,7 +59,6 @@ class TestPacketWrapperBasics:
         assert val == 944
         wrapper.passthrough(STRING)
         result = wrapper.to_bytes()
-        # Output should only have the string, not the int
         w2 = PacketWriter()
         w2.write_string("hello")
         assert result == w2.to_bytes()
@@ -85,11 +85,11 @@ class TestPacketWrapperBasics:
         wrapper.cancel()
         assert wrapper.cancelled
 
-    def test_passthrough_remaining(self):
+    def test_passthrough_all(self):
         payload = b"\x01\x02\x03\x04"
         wrapper = PacketWrapper(payload)
         wrapper.read(BYTE)  # consume first byte
-        remaining = wrapper.passthrough_remaining()
+        remaining = wrapper.passthrough_all()
         assert remaining == b"\x02\x03\x04"
         assert wrapper.to_bytes() == b"\x02\x03\x04"
 
@@ -98,7 +98,6 @@ class TestPacketWrapperBasics:
         payload = b"\x01\x02\x03\x04"
         wrapper = PacketWrapper(payload)
         wrapper.passthrough(BYTE)
-        # Don't read the rest -- to_bytes should include it
         result = wrapper.to_bytes()
         assert result == payload
 
@@ -109,6 +108,11 @@ class TestPacketWrapperBasics:
         assert wrapper.has_remaining()
         wrapper.read(BYTE)
         assert not wrapper.has_remaining()
+
+    def test_user(self):
+        conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        assert wrapper.user() is conn
 
 
 class TestPacketWrapperTransform:
@@ -123,7 +127,7 @@ class TestPacketWrapperTransform:
         old_val = wrapper.read(INT_BE)
         assert old_val == 944
         wrapper.write(INT_BE, 924)
-        wrapper.passthrough_remaining()
+        wrapper.passthrough_all()
         result = wrapper.to_bytes()
 
         assert struct.unpack(">i", result[:4])[0] == 924
@@ -139,7 +143,7 @@ class TestPacketWrapperTransform:
 
         wrapper = PacketWrapper(payload)
         wrapper.passthrough(BYTE)
-        wrapper.read(INT_LE)  # consume without writing
+        wrapper.read(INT_LE)
         wrapper.passthrough(BYTE)
         result = wrapper.to_bytes()
         assert result == bytes([0x01, 0x02])
@@ -240,7 +244,8 @@ class TestWrapperHandlerIntegration:
     """Test wrapper-style handlers integrated with Protocol."""
 
     def test_wrapper_handler_rewrites_packet(self):
-        def rewrite_protocol(wrapper: PacketWrapper, conn: UserConnection) -> None:
+        def rewrite_protocol(wrapper: PacketWrapper) -> None:
+            conn = wrapper.user()
             old_proto = wrapper.read(INT_BE)
             wrapper.write(INT_BE, conn.server_protocol)
 
@@ -254,34 +259,34 @@ class TestWrapperHandlerIntegration:
         w.write_bytes(b"\xde\xad")
         payload = w.to_bytes()
 
-        wrapper = PacketWrapper(payload)
-        p.transform_serverbound(193, wrapper, conn)
+        wrapper = PacketWrapper(payload, user=conn)
+        p.transform(Direction.SERVERBOUND, 193, wrapper)
         assert not wrapper.cancelled
         result = wrapper.to_bytes()
         assert struct.unpack(">i", result[:4])[0] == 924
         assert result[4:] == b"\xde\xad"
 
     def test_wrapper_handler_cancel(self):
-        def cancel_handler(wrapper: PacketWrapper, conn: UserConnection) -> None:
+        def cancel_handler(wrapper: PacketWrapper) -> None:
             wrapper.cancel()
 
         p = Protocol(server_protocol=924, client_protocol=944)
         p.register_serverbound(42, cancel_handler)
 
         conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
-        wrapper = PacketWrapper(b"\x00")
-        p.transform_serverbound(42, wrapper, conn)
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        p.transform(Direction.SERVERBOUND, 42, wrapper)
         assert wrapper.cancelled
 
     def test_wrapper_handler_passthrough_unchanged(self):
-        def noop_handler(wrapper: PacketWrapper, conn: UserConnection) -> None:
-            wrapper.passthrough_remaining()
+        def noop_handler(wrapper: PacketWrapper) -> None:
+            wrapper.passthrough_all()
 
         p = Protocol(server_protocol=924, client_protocol=944)
         p.register_serverbound(42, noop_handler)
 
         conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
-        wrapper = PacketWrapper(b"\x01\x02\x03")
-        p.transform_serverbound(42, wrapper, conn)
+        wrapper = PacketWrapper(b"\x01\x02\x03", user=conn)
+        p.transform(Direction.SERVERBOUND, 42, wrapper)
         assert not wrapper.cancelled
         assert wrapper.to_bytes() == b"\x01\x02\x03"

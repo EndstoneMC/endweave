@@ -10,6 +10,7 @@ from endstone.event import PacketReceiveEvent, PacketSendEvent
 from endstone_endweave.codec.wrapper import PacketWrapper
 from endstone_endweave.connection import ConnectionManager
 from endstone_endweave.protocol.base import Protocol
+from endstone_endweave.protocol.direction import Direction
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.manager import ProtocolManager
 
@@ -47,10 +48,10 @@ class ProtocolPipeline:
 
         # Run base protocols first (always, even before needs_translation check)
         connection = self._connections.get_or_create(address)
-        wrapper = PacketWrapper(payload)
+        wrapper = PacketWrapper(payload, user=connection)
 
         for base in self._manager.get_base_protocols():
-            base.transform_serverbound(packet_id, wrapper, connection)
+            base.transform(Direction.SERVERBOUND, packet_id, wrapper)
             if wrapper.cancelled:
                 event.cancel()
                 return
@@ -78,12 +79,12 @@ class ProtocolPipeline:
             return
 
         # Fresh wrapper from base protocol output for version-specific chain
-        wrapper = PacketWrapper(payload)
+        wrapper = PacketWrapper(payload, user=connection)
 
         # Serverbound: apply chain in order (client -> server direction)
         for protocol in chain:
             try:
-                protocol.transform_serverbound(packet_id, wrapper, connection)
+                protocol.transform(Direction.SERVERBOUND, packet_id, wrapper)
             except Exception:
                 self._logger.error(
                     f"[SB] {_pname(packet_id)} from {address} "
@@ -117,14 +118,14 @@ class ProtocolPipeline:
 
         packet_id = event.packet_id
         payload = event.payload
-        wrapper = PacketWrapper(payload)
+        wrapper = PacketWrapper(payload, user=connection)
 
         self._logger.debug(f"[CB] {_pname(packet_id)} ({len(payload)}b)")
 
         # Clientbound: apply chain in reverse order (server -> client direction)
         for protocol in reversed(chain):
             try:
-                protocol.transform_clientbound(packet_id, wrapper, connection)
+                protocol.transform(Direction.CLIENTBOUND, packet_id, wrapper)
             except Exception:
                 self._logger.error(
                     f"[CB] {_pname(packet_id)} to {address} "
@@ -138,10 +139,10 @@ class ProtocolPipeline:
 
         # Finalize version chain output, then run base protocols with fresh wrapper
         payload = wrapper.to_bytes()
-        wrapper = PacketWrapper(payload)
+        wrapper = PacketWrapper(payload, user=connection)
 
         for base in self._manager.get_base_protocols():
-            base.transform_clientbound(packet_id, wrapper, connection)
+            base.transform(Direction.CLIENTBOUND, packet_id, wrapper)
             if wrapper.cancelled:
                 event.cancel()
                 return

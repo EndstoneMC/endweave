@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
-from endstone_endweave.codec import UVAR_INT, BOOL, STRING, PacketWrapper
-from endstone_endweave.connection import UserConnection
+from endstone_endweave.codec import UVAR_INT, BOOL, STRING, INT_BE, PacketWrapper
 from endstone_endweave.protocol.base import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
 
 
-def detect_client_protocol(wrapper: PacketWrapper, connection: UserConnection) -> None:
+def detect_client_protocol(wrapper: PacketWrapper) -> None:
     """Read client protocol from RequestNetworkSettings and store on connection."""
-    from endstone_endweave.codec import INT_BE
+    connection = wrapper.user()
     client_proto = wrapper.passthrough(INT_BE)
     connection.client_protocol = client_proto
     connection.logger.debug(
@@ -18,8 +17,9 @@ def detect_client_protocol(wrapper: PacketWrapper, connection: UserConnection) -
     )
 
 
-def log_disconnect(wrapper: PacketWrapper, connection: UserConnection) -> None:
+def log_disconnect(wrapper: PacketWrapper) -> None:
     """Log the reason from a Disconnect packet (does not modify payload)."""
+    connection = wrapper.user()
     try:
         reason = wrapper.passthrough(UVAR_INT)
         skip_message = wrapper.passthrough(BOOL)

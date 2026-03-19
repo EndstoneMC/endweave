@@ -9,6 +9,7 @@ import pytest
 
 from endstone_endweave.codec import PacketWrapper, INT_BE
 from endstone_endweave.connection import UserConnection
+from endstone_endweave.protocol.direction import Direction
 from endstone_endweave.protocol.v924_to_v944.handlers.login import (
     rewrite_login,
     rewrite_request_network_settings,
@@ -21,21 +22,21 @@ class TestRequestNetworkSettings:
 
     def test_rewrites_944_to_924(self):
         payload = struct.pack(">i", 944)
-        wrapper = PacketWrapper(payload)
-        rewrite_request_network_settings(wrapper, self.connection)
+        wrapper = PacketWrapper(payload, user=self.connection)
+        rewrite_request_network_settings(wrapper)
         result = wrapper.to_bytes()
         assert struct.unpack(">i", result[:4])[0] == 924
 
     def test_no_rewrite_when_matching(self):
         payload = struct.pack(">i", 924)
-        wrapper = PacketWrapper(payload)
-        rewrite_request_network_settings(wrapper, self.connection)
+        wrapper = PacketWrapper(payload, user=self.connection)
+        rewrite_request_network_settings(wrapper)
         assert wrapper.to_bytes() == payload
 
     def test_preserves_trailing_data(self):
         payload = struct.pack(">i", 944) + b"\xde\xad\xbe\xef"
-        wrapper = PacketWrapper(payload)
-        rewrite_request_network_settings(wrapper, self.connection)
+        wrapper = PacketWrapper(payload, user=self.connection)
+        rewrite_request_network_settings(wrapper)
         result = wrapper.to_bytes()
         assert struct.unpack(">i", result[:4])[0] == 924
         assert result[4:] == b"\xde\xad\xbe\xef"
@@ -46,17 +47,17 @@ class TestLoginPacket:
         self.connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
 
     def test_rewrites_protocol_version(self):
-        payload = struct.pack(">i", 944) + b"\x00" * 100  # JWT data
-        wrapper = PacketWrapper(payload)
-        rewrite_login(wrapper, self.connection)
+        payload = struct.pack(">i", 944) + b"\x00" * 100
+        wrapper = PacketWrapper(payload, user=self.connection)
+        rewrite_login(wrapper)
         result = wrapper.to_bytes()
         assert struct.unpack(">i", result[:4])[0] == 924
         assert len(result) == len(payload)
 
     def test_no_rewrite_when_matching(self):
         payload = struct.pack(">i", 924) + b"\x00" * 100
-        wrapper = PacketWrapper(payload)
-        rewrite_login(wrapper, self.connection)
+        wrapper = PacketWrapper(payload, user=self.connection)
+        rewrite_login(wrapper)
         assert wrapper.to_bytes() == payload
 
 
@@ -69,9 +70,8 @@ class TestV924ToV944Protocol:
             address="1.2.3.4:1234", logger=MagicMock(), client_protocol=944, server_protocol=924
         )
 
-        # ServerboundDataDrivenScreenClosed (343) - new in v944
-        wrapper = PacketWrapper(b"\x00")
-        protocol.transform_serverbound(343, wrapper, connection)
+        wrapper = PacketWrapper(b"\x00", user=connection)
+        protocol.transform(Direction.SERVERBOUND, 343, wrapper)
         assert wrapper.cancelled
 
     def test_passthrough_normal_packets(self):
@@ -82,8 +82,7 @@ class TestV924ToV944Protocol:
             address="1.2.3.4:1234", logger=MagicMock(), client_protocol=944, server_protocol=924
         )
 
-        # Some normal gameplay packet
-        wrapper = PacketWrapper(b"\x00\x01\x02")
-        protocol.transform_serverbound(50, wrapper, connection)
+        wrapper = PacketWrapper(b"\x00\x01\x02", user=connection)
+        protocol.transform(Direction.SERVERBOUND, 50, wrapper)
         assert not wrapper.cancelled
         assert wrapper.to_bytes() == b"\x00\x01\x02"

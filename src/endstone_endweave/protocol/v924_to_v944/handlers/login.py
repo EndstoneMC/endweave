@@ -3,17 +3,15 @@
 from __future__ import annotations
 
 from endstone_endweave.codec import INT_BE, PacketWrapper
-from endstone_endweave.connection import UserConnection
 
 
-def rewrite_request_network_settings(
-    wrapper: PacketWrapper, connection: UserConnection
-) -> None:
+def rewrite_request_network_settings(wrapper: PacketWrapper) -> None:
     """Rewrite the client's protocol version to match the server's.
 
     RequestNetworkSettings payload:
     - int32 BE: client_network_version (protocol number)
     """
+    connection = wrapper.user()
     client_protocol = wrapper.read(INT_BE)
 
     if client_protocol == connection.server_protocol:
@@ -29,15 +27,14 @@ def rewrite_request_network_settings(
     wrapper.write(INT_BE, connection.server_protocol)
 
 
-def rewrite_login(
-    wrapper: PacketWrapper, connection: UserConnection
-) -> None:
+def rewrite_login(wrapper: PacketWrapper) -> None:
     """Rewrite the Login packet's protocol version.
 
     Login payload:
     - int32 BE: protocol_version
     - bytes: JWT chain data
     """
+    connection = wrapper.user()
     protocol_in_packet = wrapper.read(INT_BE)
 
     if protocol_in_packet == connection.server_protocol:

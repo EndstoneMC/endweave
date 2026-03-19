@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from endstone_endweave.codec import REMAINING_BYTES
 from endstone_endweave.codec.wrapper import PacketWrapper
 from endstone_endweave.pipeline import ProtocolPipeline
 from endstone_endweave.connection import UserConnection, ConnectionManager
@@ -94,22 +95,18 @@ class TestProtocolPipeline:
 
     def test_passthrough_when_no_translation_needed(self):
         pipeline, connections, _ = self._make_pipeline()
-        # Create connection with matching protocol
         payload = struct.pack(">i", 924)
         event = self._make_event(193, payload)
         pipeline.on_packet_receive(event)
-        # Subsequent packet should pass through
         event2 = self._make_event(42, b"\x00\x01")
         pipeline.on_packet_receive(event2)
         event2.cancel.assert_not_called()
 
     def test_passthrough_when_no_protocol_chain(self):
         pipeline, connections, _ = self._make_pipeline()
-        # Create connection with unknown protocol
         payload = struct.pack(">i", 999)
         event = self._make_event(193, payload)
         pipeline.on_packet_receive(event)
-        # Next packet should pass through unmodified (no chain for 924->999)
         event2 = self._make_event(42, b"\x00\x01")
         pipeline.on_packet_receive(event2)
         event2.cancel.assert_not_called()
@@ -117,9 +114,7 @@ class TestProtocolPipeline:
     def test_protocol_called_for_serverbound(self):
         pipeline, connections, manager = self._make_pipeline()
 
-        # Create a real protocol that rewrites payload to b"\xff"
-        from endstone_endweave.codec import REMAINING_BYTES
-        def rewrite_handler(wrapper: PacketWrapper, conn: UserConnection) -> None:
+        def rewrite_handler(wrapper: PacketWrapper) -> None:
             wrapper.read(REMAINING_BYTES)
             wrapper.write(REMAINING_BYTES, b"\xff")
 
@@ -127,12 +122,10 @@ class TestProtocolPipeline:
         protocol.register_serverbound(42, rewrite_handler)
         manager.register(protocol)
 
-        # Setup connection
         payload = struct.pack(">i", 944)
         event = self._make_event(193, payload)
         pipeline.on_packet_receive(event)
 
-        # Send a packet that should be translated
         event2 = self._make_event(42, b"\x00\x01")
         pipeline.on_packet_receive(event2)
         assert event2.payload == b"\xff"
@@ -145,8 +138,6 @@ class TestProtocolPipeline:
 
 
 class TestNormalizeMcVersion:
-    """Test Endstone version string normalization."""
-
     def test_short_form(self):
         from endstone_endweave.plugin import EndweavePlugin
         assert EndweavePlugin._normalize_mc_version("26.0") == "1.26.0"
@@ -160,8 +151,6 @@ class TestNormalizeMcVersion:
 
 
 class TestGetVersionByName:
-    """Test MC version string -> ProtocolVersion lookup."""
-
     def test_patch_version_maps_to_base(self):
         from endstone_endweave.protocol.versions import get_version_by_name, R26_U0
         assert get_version_by_name("1.26.2") is R26_U0

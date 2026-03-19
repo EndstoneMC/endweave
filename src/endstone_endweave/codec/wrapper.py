@@ -13,20 +13,31 @@ write buffer plus any unread trailing bytes.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.codec.types import Type
+
+if TYPE_CHECKING:
+    from endstone_endweave.connection import UserConnection
 
 
 class PacketWrapper:
     """Wraps a packet payload for field-level read/transform/write."""
 
-    __slots__ = ("_reader", "_writer", "_cancelled")
+    __slots__ = ("_reader", "_writer", "_cancelled", "_user")
 
-    def __init__(self, payload: bytes) -> None:
+    def __init__(self, payload: bytes, user: UserConnection | None = None) -> None:
         self._reader = PacketReader(payload)
         self._writer = PacketWriter()
         self._cancelled = False
+        self._user = user
+
+    def user(self) -> UserConnection:
+        """Return the UserConnection associated with this packet."""
+        assert self._user is not None, "No UserConnection set on this PacketWrapper"
+        return self._user
 
     @property
     def reader(self) -> PacketReader:
@@ -60,7 +71,7 @@ class PacketWrapper:
         """Write a field to output without reading (inserts a new field)."""
         field_type.write(self._writer, value)
 
-    def passthrough_remaining(self) -> bytes:
+    def passthrough_all(self) -> bytes:
         """Copy all remaining input bytes to output."""
         remaining = self._reader.read_remaining()
         self._writer.write_bytes(remaining)
