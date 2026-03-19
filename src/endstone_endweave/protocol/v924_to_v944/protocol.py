@@ -9,6 +9,7 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_command_block_update,
     rewrite_container_open,
     rewrite_first_net_block_to_block,
+    rewrite_map_data,
     rewrite_play_sound,
     rewrite_player_action,
     rewrite_set_spawn_position,
@@ -65,6 +66,7 @@ def create_protocol() -> Protocol:
     )
     p.register_clientbound(PacketId.OPEN_SIGN, rewrite_first_net_block_to_block)
     p.register_clientbound(PacketId.PLAY_SOUND, rewrite_play_sound)
+    p.register_clientbound(PacketId.MAP_DATA, rewrite_map_data)
 
     # Clientbound rewriters -- other v944 changes
     p.register_clientbound(

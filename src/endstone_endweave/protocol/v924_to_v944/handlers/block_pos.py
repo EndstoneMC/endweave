@@ -9,6 +9,7 @@ from endstone_endweave.codec import (
     BOOL,
     BYTE,
     FLOAT_LE,
+    INT_LE,
     STRING,
     NETWORK_BLOCK_POS,
     UINT_LE,
@@ -78,6 +79,44 @@ def rewrite_play_sound(wrapper: PacketWrapper) -> None:
     """PlaySound (86): Name, Position, Volume, Pitch."""
     wrapper.passthrough(STRING)  # Name
     wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # Position
+
+
+def rewrite_map_data(wrapper: PacketWrapper) -> None:
+    """ClientBoundMapItemData (67): tracked block objects use UBlockPos in v924.
+
+    Only the MapTrackedObject.BlockPosition field needs conversion, and only
+    when UpdateFlags has the Decoration bit (0x04) and the object Type is Block (1).
+    """
+    wrapper.passthrough(VAR_LONG)  # MapID (varint64)
+    types = wrapper.passthrough(UVAR_INT)  # UpdateFlags
+    wrapper.passthrough(BYTE)  # Dimension
+    wrapper.passthrough(BOOL)  # LockedMap
+    wrapper.passthrough(BLOCK_POS)  # Origin (already signed varint Y)
+
+    TYPE_TEXTURE_UPDATE = 0x02
+    TYPE_DECORATION_UPDATE = 0x04
+    TYPE_CREATION = 0x08
+
+    if types & TYPE_CREATION:
+        # mMapIds
+        count = wrapper.passthrough(UVAR_INT)
+        for _ in range(count):
+            wrapper.passthrough(VAR_LONG)
+
+    if types & (TYPE_CREATION | TYPE_DECORATION_UPDATE | TYPE_TEXTURE_UPDATE):
+        wrapper.passthrough(BYTE)  # Scale
+
+    if types & TYPE_DECORATION_UPDATE:
+        # TrackedObjects
+        obj_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(obj_count):
+            obj_type = wrapper.passthrough(INT_LE)  # Type (int32)
+            if obj_type == 0:  # Entity
+                wrapper.passthrough(VAR_LONG)  # EntityUniqueID
+            elif obj_type == 1:  # Block
+                wrapper.write(
+                    BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS)
+                )  # BlockPosition
 
 
 def rewrite_update_client_input_locks(wrapper: PacketWrapper) -> None:
