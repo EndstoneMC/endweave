@@ -55,11 +55,12 @@ class ProtocolPipeline:
                 event.cancel()
                 return
 
+        # Finalize base protocol output before version-specific chain
+        payload = wrapper.to_bytes()
+
         if not connection.needs_translation:
-            # Apply any base protocol modifications before returning
-            new_payload = wrapper.to_bytes()
-            if new_payload != payload:
-                event.payload = new_payload
+            if payload != event.payload:
+                event.payload = payload
             return
 
         self._logger.debug(f"[SB] {_pname(packet_id)} ({len(payload)}b)")
@@ -72,11 +73,12 @@ class ProtocolPipeline:
                     f"No protocol chain for server={connection.server_protocol} "
                     f"client={connection.client_protocol} from {address}"
                 )
-            # Still apply base protocol modifications
-            new_payload = wrapper.to_bytes()
-            if new_payload != payload:
-                event.payload = new_payload
+            if payload != event.payload:
+                event.payload = payload
             return
+
+        # Fresh wrapper from base protocol output for version-specific chain
+        wrapper = PacketWrapper(payload)
 
         # Serverbound: apply chain in order (client -> server direction)
         for protocol in chain:
@@ -134,7 +136,10 @@ class ProtocolPipeline:
                 event.cancel()
                 return
 
-        # Run base protocols for clientbound
+        # Finalize version chain output, then run base protocols with fresh wrapper
+        payload = wrapper.to_bytes()
+        wrapper = PacketWrapper(payload)
+
         for base in self._manager.get_base_protocols():
             base.transform_clientbound(packet_id, wrapper, connection)
             if wrapper.cancelled:
@@ -142,7 +147,7 @@ class ProtocolPipeline:
                 return
 
         new_payload = wrapper.to_bytes()
-        if new_payload != payload:
+        if new_payload != event.payload:
             self._logger.debug(
                 f"[CB] {_pname(packet_id)} rewritten "
                 f"{len(payload)}b -> {len(new_payload)}b"
