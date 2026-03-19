@@ -25,7 +25,6 @@ if TYPE_CHECKING:
 class PacketWrapper:
     """Wraps a packet payload for field-level read/transform/write."""
 
-    __slots__ = ("_reader", "_writer", "_cancelled", "_user")
 
     def __init__(self, payload: bytes, user: "UserConnection | None" = None) -> None:
         self._reader = PacketReader(payload)

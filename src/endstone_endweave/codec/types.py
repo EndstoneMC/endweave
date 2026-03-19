@@ -18,7 +18,6 @@ T = TypeVar("T")
 class Type(ABC, Generic[T]):
     """A serializable packet field type."""
 
-    __slots__ = ()
 
     @abstractmethod
     def read(self, reader: PacketReader) -> T: ...
@@ -28,7 +27,6 @@ class Type(ABC, Generic[T]):
 
 
 class _Byte(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_byte()
@@ -38,7 +36,6 @@ class _Byte(Type[int]):
 
 
 class _Bool(Type[bool]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> bool:
         return reader.read_bool()
@@ -48,7 +45,6 @@ class _Bool(Type[bool]):
 
 
 class _ShortLE(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_short_le()
@@ -58,7 +54,6 @@ class _ShortLE(Type[int]):
 
 
 class _UShortLE(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_ushort_le()
@@ -68,7 +63,6 @@ class _UShortLE(Type[int]):
 
 
 class _IntLE(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_int_le()
@@ -78,7 +72,6 @@ class _IntLE(Type[int]):
 
 
 class _IntBE(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_int_be()
@@ -88,7 +81,6 @@ class _IntBE(Type[int]):
 
 
 class _UIntLE(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_uint_le()
@@ -98,7 +90,6 @@ class _UIntLE(Type[int]):
 
 
 class _LongLE(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_long_le()
@@ -108,7 +99,6 @@ class _LongLE(Type[int]):
 
 
 class _FloatLE(Type[float]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> float:
         return reader.read_float_le()
@@ -118,7 +108,6 @@ class _FloatLE(Type[float]):
 
 
 class _VarInt(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_varint()
@@ -128,7 +117,6 @@ class _VarInt(Type[int]):
 
 
 class _UVarInt(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_uvarint()
@@ -138,7 +126,6 @@ class _UVarInt(Type[int]):
 
 
 class _VarLong(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_varint64()
@@ -148,7 +135,6 @@ class _VarLong(Type[int]):
 
 
 class _UVarLong(Type[int]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> int:
         return reader.read_uvarint64()
@@ -158,7 +144,6 @@ class _UVarLong(Type[int]):
 
 
 class _String(Type[str]):
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> str:
         return reader.read_string()
@@ -170,7 +155,6 @@ class _String(Type[str]):
 class _Bytes(Type[bytes]):
     """Fixed-length raw bytes."""
 
-    __slots__ = ("_length",)
 
     def __init__(self, length: int) -> None:
         self._length = length
@@ -185,7 +169,6 @@ class _Bytes(Type[bytes]):
 class _CompoundTag(Type[bytes]):
     """Bedrock network NBT CompoundTag -- raw byte passthrough."""
 
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> bytes:
         start = reader.position
@@ -199,7 +182,6 @@ class _CompoundTag(Type[bytes]):
 class _RemainingBytes(Type[bytes]):
     """All remaining bytes in the packet."""
 
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> bytes:
         return reader.read_remaining()
@@ -230,7 +212,6 @@ REMAINING_BYTES = _RemainingBytes()
 class _NetworkBlockPos(Type[tuple[int, int, int]]):
     """v924 NetworkBlockPosition: varint X, uvarint Y, varint Z."""
 
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> tuple[int, int, int]:
         x = reader.read_varint()
@@ -247,7 +228,6 @@ class _NetworkBlockPos(Type[tuple[int, int, int]]):
 class _BlockPos(Type[tuple[int, int, int]]):
     """v944 BlockPos: varint X, varint Y, varint Z."""
 
-    __slots__ = ()
 
     def read(self, reader: PacketReader) -> tuple[int, int, int]:
         x = reader.read_varint()

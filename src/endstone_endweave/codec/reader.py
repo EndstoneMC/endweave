@@ -7,7 +7,6 @@ import struct
 class PacketReader:
     """Reads binary data from a Bedrock packet payload."""
 
-    __slots__ = ("_data", "_pos")
 
     def __init__(self, data: bytes) -> None:
         self._data = data
