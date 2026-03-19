@@ -2,49 +2,52 @@
 
 from __future__ import annotations
 
-import struct
-
-from endstone_endweave.session import PlayerSession
-from endstone_endweave.protocol.base import PacketTransformation
+from endstone_endweave.codec import INT_BE, PacketWrapper
+from endstone_endweave.connection import UserConnection
 
 
 def rewrite_request_network_settings(
-    payload: bytes, session: PlayerSession
-) -> PacketTransformation:
+    wrapper: PacketWrapper, connection: UserConnection
+) -> None:
     """Rewrite the client's protocol version to match the server's.
 
     RequestNetworkSettings payload:
     - int32 BE: client_network_version (protocol number)
     """
-    if len(payload) < 4:
-        return PacketTransformation()
+    client_protocol = wrapper.read(INT_BE)
 
-    client_protocol = struct.unpack(">i", payload[:4])[0]
-    session.client_protocol = client_protocol
+    if client_protocol == connection.server_protocol:
+        connection.logger.debug(
+            f"RequestNetworkSettings: protocol {client_protocol} matches server, no rewrite"
+        )
+        wrapper.write(INT_BE, client_protocol)
+        return
 
-    if client_protocol == session.server_protocol:
-        return PacketTransformation()
-
-    new_payload = struct.pack(">i", session.server_protocol) + payload[4:]
-    return PacketTransformation(new_payload=new_payload)
+    connection.logger.debug(
+        f"RequestNetworkSettings: protocol {client_protocol} -> {connection.server_protocol}"
+    )
+    wrapper.write(INT_BE, connection.server_protocol)
 
 
 def rewrite_login(
-    payload: bytes, session: PlayerSession
-) -> PacketTransformation:
+    wrapper: PacketWrapper, connection: UserConnection
+) -> None:
     """Rewrite the Login packet's protocol version.
 
     Login payload:
     - int32 BE: protocol_version
     - bytes: JWT chain data
     """
-    if len(payload) < 4:
-        return PacketTransformation()
+    protocol_in_packet = wrapper.read(INT_BE)
 
-    protocol_in_packet = struct.unpack(">i", payload[:4])[0]
+    if protocol_in_packet == connection.server_protocol:
+        connection.logger.debug(
+            f"Login: protocol {protocol_in_packet} matches server, no rewrite"
+        )
+        wrapper.write(INT_BE, protocol_in_packet)
+        return
 
-    if protocol_in_packet == session.server_protocol:
-        return PacketTransformation()
-
-    new_payload = struct.pack(">i", session.server_protocol) + payload[4:]
-    return PacketTransformation(new_payload=new_payload)
+    connection.logger.debug(
+        f"Login: protocol {protocol_in_packet} -> {connection.server_protocol}"
+    )
+    wrapper.write(INT_BE, connection.server_protocol)

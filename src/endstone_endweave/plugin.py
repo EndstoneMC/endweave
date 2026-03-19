@@ -10,11 +10,12 @@ from endstone.event import (
 )
 from endstone.plugin import Plugin
 
-from endstone_endweave.pipeline import TranslationPipeline
-from endstone_endweave.session import SessionManager
-from endstone_endweave.protocol.base import ProtocolTranslator
-from endstone_endweave.protocol.registry import TranslatorRegistry
-from endstone_endweave.protocol.v924_to_v944 import create_translator as create_v924_to_v944
+from endstone_endweave.pipeline import ProtocolPipeline
+from endstone_endweave.connection import ConnectionManager
+from endstone_endweave.protocol.base import Protocol
+from endstone_endweave.protocol.base_protocol import create_base_protocol
+from endstone_endweave.protocol.manager import ProtocolManager
+from endstone_endweave.protocol.v924_to_v944 import create_protocol as create_v924_to_v944
 from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
 
 
@@ -23,19 +24,28 @@ class EndweavePlugin(Plugin):
     api_version = "0.11"  # type: ignore[assignment]
 
     def on_enable(self) -> None:
-        server_protocol = self._detect_server_protocol()
-        self._sessions = SessionManager(server_protocol=server_protocol)
-        self._registry = TranslatorRegistry()
+        self.save_default_config()
+        if self.config.get("debug", {}).get("enabled", False):
+            self.logger.set_level(self.logger.DEBUG)
 
-        # Register translators (add new ones here, like ViaVersion's registerProtocols)
-        self._register_translator(create_v924_to_v944())
-        # Future: self._register_translator(create_v944_to_v960())
+        server_protocol = self._detect_server_protocol()
+        self._connections = ConnectionManager(
+            server_protocol=server_protocol, logger=self.logger
+        )
+        self._manager = ProtocolManager()
+
+        # Register base protocol (version detection + disconnect logging)
+        self._manager.register_base(create_base_protocol(server_protocol))
+
+        # Register version-specific protocols
+        self._register_protocol(create_v924_to_v944())
+        # Future: self._register_protocol(create_v944_to_v960())
 
         # Determine highest client version we support
-        self._max_client_version = self._registry.get_max_client_version(server_protocol)
+        self._max_client_version = self._manager.get_max_client_version(server_protocol)
 
-        self._pipeline = TranslationPipeline(
-            self._registry, self._sessions, self.logger
+        self._pipeline = ProtocolPipeline(
+            self._manager, self._connections, self.logger
         )
         self.register_events(self)
 
@@ -71,11 +81,11 @@ class EndweavePlugin(Plugin):
         )
         return fallback
 
-    def _register_translator(self, translator: ProtocolTranslator) -> None:
-        self._registry.register(translator)
+    def _register_protocol(self, protocol: Protocol) -> None:
+        self._manager.register(protocol)
         self.logger.info(
-            f"Registered translator: "
-            f"{translator.server_protocol} -> {translator.client_protocol}"
+            f"Registered protocol: "
+            f"{protocol.server_protocol} -> {protocol.client_protocol}"
         )
 
     @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value]
@@ -95,4 +105,4 @@ class EndweavePlugin(Plugin):
 
     @event_handler
     def on_player_quit(self, event: PlayerQuitEvent) -> None:
-        self._sessions.remove_by_player(event.player)
+        self._connections.remove_by_player(event.player)

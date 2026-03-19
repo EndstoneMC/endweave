@@ -3,26 +3,21 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
 
-from endstone_endweave.session import PlayerSession
+from endstone_endweave.codec.wrapper import PacketWrapper
+from endstone_endweave.connection import UserConnection
 
-PacketHandler = Callable[[bytes, PlayerSession], "PacketTransformation"]
-
-
-@dataclass
-class PacketTransformation:
-    """Result of a packet rewrite operation."""
-
-    cancel: bool = False
-    new_payload: bytes | None = None
+PacketHandler = Callable[[PacketWrapper, UserConnection], None]
 
 
-class ProtocolTranslator:
+class Protocol:
     """Translates packets between two protocol versions.
 
     Handlers are registered per packet ID and direction.
     Unregistered packets pass through unchanged.
+
+    Handlers receive a PacketWrapper and use passthrough/read/write/cancel
+    for field-level transforms.
     """
 
     def __init__(self, server_protocol: int, client_protocol: int) -> None:
@@ -45,22 +40,24 @@ class ProtocolTranslator:
     def cancel_serverbound(self, *packet_ids: int) -> None:
         self._cancel_serverbound.update(packet_ids)
 
-    def translate_clientbound(
-        self, packet_id: int, payload: bytes, session: PlayerSession
-    ) -> PacketTransformation:
+    def transform_clientbound(
+        self, packet_id: int, wrapper: PacketWrapper, connection: UserConnection
+    ) -> None:
+        """Run the clientbound handler for this packet, if any."""
         if packet_id in self._cancel_clientbound:
-            return PacketTransformation(cancel=True)
+            wrapper.cancel()
+            return
         handler = self._clientbound.get(packet_id)
-        if handler:
-            return handler(payload, session)
-        return PacketTransformation()
+        if handler is not None:
+            handler(wrapper, connection)
 
-    def translate_serverbound(
-        self, packet_id: int, payload: bytes, session: PlayerSession
-    ) -> PacketTransformation:
+    def transform_serverbound(
+        self, packet_id: int, wrapper: PacketWrapper, connection: UserConnection
+    ) -> None:
+        """Run the serverbound handler for this packet, if any."""
         if packet_id in self._cancel_serverbound:
-            return PacketTransformation(cancel=True)
+            wrapper.cancel()
+            return
         handler = self._serverbound.get(packet_id)
-        if handler:
-            return handler(payload, session)
-        return PacketTransformation()
+        if handler is not None:
+            handler(wrapper, connection)

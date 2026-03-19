@@ -1,0 +1,3 @@
+[debug]
+# Enable verbose debug logging for packet translation
+enabled = false

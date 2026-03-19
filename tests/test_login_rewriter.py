@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import struct
+from unittest.mock import MagicMock
 
 import pytest
 
-from endstone_endweave.session import PlayerSession
+from endstone_endweave.codec import PacketWrapper, INT_BE
+from endstone_endweave.connection import UserConnection
 from endstone_endweave.protocol.v924_to_v944.handlers.login import (
     rewrite_login,
     rewrite_request_network_settings,
@@ -15,72 +17,73 @@ from endstone_endweave.protocol.v924_to_v944.handlers.login import (
 
 class TestRequestNetworkSettings:
     def setup_method(self):
-        self.session = PlayerSession(address="1.2.3.4:1234", server_protocol=924)
+        self.connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
 
     def test_rewrites_944_to_924(self):
         payload = struct.pack(">i", 944)
-        result = rewrite_request_network_settings(payload, self.session)
-        assert result.new_payload is not None
-        assert struct.unpack(">i", result.new_payload[:4])[0] == 924
-        assert self.session.client_protocol == 944
+        wrapper = PacketWrapper(payload)
+        rewrite_request_network_settings(wrapper, self.connection)
+        result = wrapper.to_bytes()
+        assert struct.unpack(">i", result[:4])[0] == 924
 
     def test_no_rewrite_when_matching(self):
         payload = struct.pack(">i", 924)
-        result = rewrite_request_network_settings(payload, self.session)
-        assert result.new_payload is None
-        assert not result.cancel
+        wrapper = PacketWrapper(payload)
+        rewrite_request_network_settings(wrapper, self.connection)
+        assert wrapper.to_bytes() == payload
 
     def test_preserves_trailing_data(self):
         payload = struct.pack(">i", 944) + b"\xde\xad\xbe\xef"
-        result = rewrite_request_network_settings(payload, self.session)
-        assert result.new_payload is not None
-        assert result.new_payload[4:] == b"\xde\xad\xbe\xef"
-
-    def test_short_payload_passthrough(self):
-        result = rewrite_request_network_settings(b"\x00", self.session)
-        assert result.new_payload is None
-        assert not result.cancel
+        wrapper = PacketWrapper(payload)
+        rewrite_request_network_settings(wrapper, self.connection)
+        result = wrapper.to_bytes()
+        assert struct.unpack(">i", result[:4])[0] == 924
+        assert result[4:] == b"\xde\xad\xbe\xef"
 
 
 class TestLoginPacket:
     def setup_method(self):
-        self.session = PlayerSession(address="1.2.3.4:1234", server_protocol=924)
+        self.connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
 
     def test_rewrites_protocol_version(self):
         payload = struct.pack(">i", 944) + b"\x00" * 100  # JWT data
-        result = rewrite_login(payload, self.session)
-        assert result.new_payload is not None
-        assert struct.unpack(">i", result.new_payload[:4])[0] == 924
-        assert len(result.new_payload) == len(payload)
+        wrapper = PacketWrapper(payload)
+        rewrite_login(wrapper, self.connection)
+        result = wrapper.to_bytes()
+        assert struct.unpack(">i", result[:4])[0] == 924
+        assert len(result) == len(payload)
 
     def test_no_rewrite_when_matching(self):
         payload = struct.pack(">i", 924) + b"\x00" * 100
-        result = rewrite_login(payload, self.session)
-        assert result.new_payload is None
+        wrapper = PacketWrapper(payload)
+        rewrite_login(wrapper, self.connection)
+        assert wrapper.to_bytes() == payload
 
 
-class TestV924ToV944Translator:
+class TestV924ToV944Protocol:
     def test_cancels_new_serverbound_packets(self):
-        from endstone_endweave.protocol.v924_to_v944.translator import create_translator
+        from endstone_endweave.protocol.v924_to_v944.protocol import create_protocol
 
-        translator = create_translator()
-        session = PlayerSession(
-            address="1.2.3.4:1234", client_protocol=944, server_protocol=924
+        protocol = create_protocol()
+        connection = UserConnection(
+            address="1.2.3.4:1234", logger=MagicMock(), client_protocol=944, server_protocol=924
         )
 
         # ServerboundDataDrivenScreenClosed (343) - new in v944
-        result = translator.translate_serverbound(343, b"\x00", session)
-        assert result.cancel
+        wrapper = PacketWrapper(b"\x00")
+        protocol.transform_serverbound(343, wrapper, connection)
+        assert wrapper.cancelled
 
     def test_passthrough_normal_packets(self):
-        from endstone_endweave.protocol.v924_to_v944.translator import create_translator
+        from endstone_endweave.protocol.v924_to_v944.protocol import create_protocol
 
-        translator = create_translator()
-        session = PlayerSession(
-            address="1.2.3.4:1234", client_protocol=944, server_protocol=924
+        protocol = create_protocol()
+        connection = UserConnection(
+            address="1.2.3.4:1234", logger=MagicMock(), client_protocol=944, server_protocol=924
         )
 
         # Some normal gameplay packet
-        result = translator.translate_serverbound(50, b"\x00\x01\x02", session)
-        assert not result.cancel
-        assert result.new_payload is None
+        wrapper = PacketWrapper(b"\x00\x01\x02")
+        protocol.transform_serverbound(50, wrapper, connection)
+        assert not wrapper.cancelled
+        assert wrapper.to_bytes() == b"\x00\x01\x02"

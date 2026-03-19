@@ -6,16 +6,17 @@ Currently translates between protocol 924 (MC 1.26.0) and 944 (MC 1.26.10).
 
 ## Architecture
 
-- **Plugin** (`plugin.py`): Endstone plugin entry point, registers event handlers and translators
-- **Pipeline** (`pipeline.py`): Routes packets through translator chains based on session state
-- **Session Manager** (`session.py`): Tracks per-player protocol version and cached translator chain
+- **Plugin** (`plugin.py`): Endstone plugin entry point, registers event handlers and protocols
+- **Pipeline** (`pipeline.py`): `ProtocolPipeline` -- pure dispatcher routing packets through base + version-specific protocols
+- **Connection** (`connection.py`): `UserConnection` (per-player state) and `ConnectionManager`
 - **Codec** (`codec/`): Binary reader/writer for Bedrock packet serialization (varint, zigzag, LE/BE integers)
-- **Protocol** (`protocol/`): Translation infrastructure + version-specific translator modules
+- **Protocol** (`protocol/`): Translation infrastructure + version-specific protocol modules
   - `versions.py`: Central `ProtocolVersion` registry (single source of truth for all known versions)
   - `packet_ids.py`: Shared `PacketId` enum (Bedrock IDs are stable across versions)
-  - `registry.py`: `TranslatorRegistry` with BFS chaining for multi-step version gaps
-  - `base.py`: `ProtocolTranslator` ABC and `PacketTransformation` result type
-  - `v924_to_v944/`: Version-specific translator module (exports `create_translator`, `SERVER_PROTOCOL`, `CLIENT_PROTOCOL`)
+  - `manager.py`: `ProtocolManager` with BFS chaining for multi-step version gaps + base protocol support
+  - `base.py`: `Protocol` class and `PacketAction` result type
+  - `base_protocol.py`: `BaseProtocol` -- always-on handlers for version detection and disconnect logging
+  - `v924_to_v944/`: Version-specific protocol module (exports `create_protocol`, `SERVER_PROTOCOL`, `CLIENT_PROTOCOL`)
 - **Tools** (`tools/`): Offline scripts to fetch protocol docs, parse DOT + JSON files, generate diffs
 
 ## API Constraints (Endstone 0.11.2)
@@ -37,28 +38,32 @@ Currently translates between protocol 924 (MC 1.26.0) and 944 (MC 1.26.10).
 
 ## Key Design Decisions
 
-- Fast-path skip when `not session.needs_translation` (no deserialization overhead for matching clients)
+- Fast-path skip when `not connection.needs_translation` (no deserialization overhead for matching clients)
 - Only deserialize packets that have registered rewriters (pass-through by default)
-- Rewrite `RequestNetworkSettings` protocol field to server's version so BDS accepts newer clients
+- Base protocol detects client version from `RequestNetworkSettings` and logs disconnects (always-on, separate from version-specific protocols)
+- Version-specific protocols rewrite `RequestNetworkSettings` protocol field to server's version so BDS accepts newer clients
 - Cancel new serverbound packet IDs that the older server doesn't understand
-- Translator chaining: each module handles one adjacent version step; pipeline chains them for larger gaps
-- Login handlers use `session.server_protocol` (not hardcoded constants) for version-agnostic rewriting
+- Protocol chaining: each module handles one adjacent version step; pipeline chains them for larger gaps
+- Login handlers use `connection.server_protocol` (not hardcoded constants) for version-agnostic rewriting
 
 ## Adding a New Version Pair
 
 1. Add `R27_U0 = ProtocolVersion(960, "1.27.0", "r27_u0")` to `protocol/versions.py`
 2. Run tools to fetch + parse + diff the new protocol docs
 3. Create `protocol/v944_to_v960/` with:
-   - `translator.py` — `SERVER_PROTOCOL = 944`, `CLIENT_PROTOCOL = 960`, `create_translator()`
-   - `packet_ids.py` — re-export from shared location (or add new IDs to shared `packet_ids.py`)
-   - `handlers/` — version-specific packet rewriters
-4. Register in `plugin.py`: `self._register_translator(create_v944_to_v960())`
+   - `protocol.py` -- `SERVER_PROTOCOL = 944`, `CLIENT_PROTOCOL = 960`, `create_protocol()`
+   - `handlers/` -- version-specific packet rewriters
+4. Register in `plugin.py`: `self._register_protocol(create_v944_to_v960())`
 
 The chaining system automatically handles multi-step gaps (e.g. v960 client -> v924 server).
 
 ## Git
 
 - Never add a Co-Authored-By line for Claude in commit messages
+
+## Code Style
+
+- Never use non-ASCII characters in code (no em dashes, smart quotes, fancy arrows, etc.) -- use only plain ASCII
 
 ## Tooling
 
