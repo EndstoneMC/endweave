@@ -28,7 +28,7 @@ from endstone_endweave.codec import (
 )
 from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.connection import UserConnection
-from endstone_endweave.protocol.base import Protocol
+from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.direction import Direction
 
 

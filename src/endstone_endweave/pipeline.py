@@ -9,7 +9,7 @@ from endstone.event import PacketReceiveEvent, PacketSendEvent
 
 from endstone_endweave.codec.wrapper import PacketWrapper
 from endstone_endweave.connection import ConnectionManager
-from endstone_endweave.protocol.base import Protocol
+from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.direction import Direction
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.manager import ProtocolManager

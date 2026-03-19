@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from endstone import Logger, Player
 
 if TYPE_CHECKING:
-    from endstone_endweave.protocol.base import Protocol
+    from endstone_endweave.protocol import Protocol
 
 
 @dataclass

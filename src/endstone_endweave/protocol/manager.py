@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import deque
 
-from endstone_endweave.protocol.base import Protocol
+from endstone_endweave.protocol import Protocol
 
 
 class ProtocolManager:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from endstone_endweave.protocol.base import Protocol
+from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.v924_to_v944.handlers.login import rewrite_login, rewrite_request_network_settings
 
