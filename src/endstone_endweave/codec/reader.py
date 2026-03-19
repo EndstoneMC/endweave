@@ -124,6 +124,91 @@ class PacketReader:
         raw = self.read_uvarint64()
         return (raw >> 1) ^ -(raw & 1)
 
+    def skip_string(self) -> None:
+        """Skip a varint-prefixed UTF-8 string without decoding."""
+        length = self.read_uvarint()
+        self._pos += length
+
+    def skip_nbt_compound(self) -> None:
+        """Skip a Bedrock network NBT compound tag (iterative).
+
+        Advances the reader past the root tag without allocating data
+        structures. Bedrock network NBT uses uvarint for string lengths
+        and zigzag varint/varint64 for Int/Int64 values.
+
+        Stack entries use (container_type, extra):
+          compound (10): extra = -1 (read tag headers until End byte)
+          list (9):      extra encodes elem_type and remaining count
+                         as (elem_type << 32 | remaining)
+        """
+        _MAX_DEPTH = 512
+
+        root_type = self.read_byte()
+        if root_type == 0:
+            return  # null/end tag -- empty
+        if root_type != 10:
+            raise ValueError(f"Expected compound root tag (10), got {root_type}")
+        # Skip root tag name
+        self.skip_string()
+
+        # Stack: (container_type, packed_info)
+        stack: list[tuple[int, int]] = [(10, -1)]
+
+        while stack:
+            if len(stack) > _MAX_DEPTH:
+                raise ValueError("NBT nesting depth exceeded")
+
+            container_type, info = stack[-1]
+
+            if container_type == 10:
+                # Compound: read next child tag header
+                tag_type = self.read_byte()
+                if tag_type == 0:  # End tag
+                    stack.pop()
+                    continue
+                self.skip_string()  # tag name
+            else:
+                # List: consume next element
+                elem_type = info >> 32
+                remaining = info & 0xFFFFFFFF
+                if remaining == 0:
+                    stack.pop()
+                    continue
+                stack[-1] = (9, (elem_type << 32) | (remaining - 1))
+                tag_type = elem_type
+
+            # Skip value based on tag_type
+            if tag_type == 1:      # Byte
+                self._pos += 1
+            elif tag_type == 2:    # Short
+                self._pos += 2
+            elif tag_type == 3:    # Int (zigzag varint)
+                self.read_varint()
+            elif tag_type == 4:    # Int64 (zigzag varint64)
+                self.read_varint64()
+            elif tag_type == 5:    # Float
+                self._pos += 4
+            elif tag_type == 6:    # Double
+                self._pos += 8
+            elif tag_type == 7:    # ByteArray (varint length + bytes)
+                length = self.read_varint()
+                self._pos += length
+            elif tag_type == 8:    # String
+                self.skip_string()
+            elif tag_type == 9:    # List
+                elem = self.read_byte()
+                count = self.read_varint()
+                if count > 0 and elem != 0:
+                    stack.append((9, (elem << 32) | count))
+            elif tag_type == 10:   # Compound
+                stack.append((10, -1))
+            elif tag_type == 11:   # IntArray (varint count + varints)
+                count = self.read_varint()
+                for _ in range(count):
+                    self.read_varint()
+            else:
+                raise ValueError(f"Unknown NBT tag type: {tag_type}")
+
     def slice_from(self, start: int) -> bytes:
         """Return bytes from start position to current position."""
         return self._data[start:self._pos]

@@ -16,6 +16,7 @@ from endstone_endweave.codec.types import (
     VAR_LONG,
     UVAR_LONG,
     STRING,
+    COMPOUND_TAG,
     REMAINING_BYTES,
     bytes_type,
 )
@@ -38,6 +39,7 @@ __all__ = [
     "VAR_LONG",
     "UVAR_LONG",
     "STRING",
+    "COMPOUND_TAG",
     "REMAINING_BYTES",
     "bytes_type",
 ]

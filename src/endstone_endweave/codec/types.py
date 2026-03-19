@@ -185,6 +185,20 @@ class _Bytes(Type[bytes]):
         writer.write_bytes(value)
 
 
+class _CompoundTag(Type[bytes]):
+    """Bedrock network NBT CompoundTag -- raw byte passthrough."""
+
+    __slots__ = ()
+
+    def read(self, reader: PacketReader) -> bytes:
+        start = reader.position
+        reader.skip_nbt_compound()
+        return reader.slice_from(start)
+
+    def write(self, writer: PacketWriter, value: bytes) -> None:
+        writer.write_bytes(value)
+
+
 class _RemainingBytes(Type[bytes]):
     """All remaining bytes in the packet."""
 
@@ -212,6 +226,7 @@ UVAR_INT = _UVarInt()
 VAR_LONG = _VarLong()
 UVAR_LONG = _UVarLong()
 STRING = _String()
+COMPOUND_TAG = _CompoundTag()
 REMAINING_BYTES = _RemainingBytes()
 
 
