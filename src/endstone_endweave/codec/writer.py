@@ -1,6 +1,5 @@
 """Binary packet writer for Bedrock protocol serialization."""
 
-from __future__ import annotations
 
 import struct
 

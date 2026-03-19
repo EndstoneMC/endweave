@@ -5,7 +5,6 @@ enabling the PacketWrapper's passthrough() pattern (read + write in one call).
 Inspired by ViaVersion's Type<T> system.
 """
 
-from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar

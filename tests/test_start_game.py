@@ -1,6 +1,5 @@
 """Tests for StartGamePacket handler and supporting codec methods."""
 
-from __future__ import annotations
 
 import struct
 

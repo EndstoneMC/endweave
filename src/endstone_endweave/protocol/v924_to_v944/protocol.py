@@ -1,6 +1,5 @@
 """Protocol factory for v924 (r26_u0) server <- v944 (r26_u1) client."""
 
-from __future__ import annotations
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId

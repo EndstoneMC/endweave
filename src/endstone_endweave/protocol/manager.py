@@ -1,6 +1,5 @@
 """Protocol manager mapping version pairs to protocols."""
 
-from __future__ import annotations
 
 from collections import deque
 

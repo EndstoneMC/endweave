@@ -1,6 +1,5 @@
 """Tests for the binary codec (PacketReader / PacketWriter)."""
 
-from __future__ import annotations
 
 import struct
 

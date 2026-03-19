@@ -1,6 +1,5 @@
 """Packet translation pipeline - routes packets through the appropriate protocol."""
 
-from __future__ import annotations
 
 import traceback
 

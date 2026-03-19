@@ -11,7 +11,6 @@ After all handlers run, the wrapper produces the final payload from its
 write buffer plus any unread trailing bytes.
 """
 
-from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
@@ -28,13 +27,13 @@ class PacketWrapper:
 
     __slots__ = ("_reader", "_writer", "_cancelled", "_user")
 
-    def __init__(self, payload: bytes, user: UserConnection | None = None) -> None:
+    def __init__(self, payload: bytes, user: "UserConnection | None" = None) -> None:
         self._reader = PacketReader(payload)
         self._writer = PacketWriter()
         self._cancelled = False
         self._user = user
 
-    def user(self) -> UserConnection:
+    def user(self) -> "UserConnection":
         """Return the UserConnection associated with this packet."""
         assert self._user is not None, "No UserConnection set on this PacketWrapper"
         return self._user

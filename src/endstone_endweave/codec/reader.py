@@ -1,6 +1,5 @@
 """Binary packet reader for Bedrock protocol deserialization."""
 
-from __future__ import annotations
 
 import struct
 

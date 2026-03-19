@@ -4,7 +4,6 @@ New versions are added here first. Tools and plugin both reference this
 single source of truth.
 """
 
-from __future__ import annotations
 
 from dataclasses import dataclass
 

@@ -64,6 +64,7 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 ## Code Style
 
 - Never use non-ASCII characters in code (no em dashes, smart quotes, fancy arrows, etc.) -- use only plain ASCII
+- Never use `from __future__ import annotations`
 
 ## Tooling
 

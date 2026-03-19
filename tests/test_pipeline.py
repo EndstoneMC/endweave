@@ -1,6 +1,5 @@
 """Tests for connection management and packet routing pipeline."""
 
-from __future__ import annotations
 
 import struct
 from unittest.mock import MagicMock

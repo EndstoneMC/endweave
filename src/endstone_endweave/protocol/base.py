@@ -1,6 +1,5 @@
 """Initial base protocol -- always-on handlers for version detection and disconnect logging."""
 
-from __future__ import annotations
 
 from endstone_endweave.codec import UVAR_INT, BOOL, STRING, INT_BE, PacketWrapper
 from endstone_endweave.protocol import Protocol

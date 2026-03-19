@@ -1,6 +1,5 @@
 """Tests for the login handlers (RequestNetworkSettings protocol spoofing)."""
 
-from __future__ import annotations
 
 import struct
 from unittest.mock import MagicMock

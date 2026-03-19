@@ -4,7 +4,6 @@ Clientbound handlers read NetworkBlockPos (from v924 server) and write BlockPos 
 Serverbound handlers read BlockPos (from v944 client) and write NetworkBlockPos (for v924 server).
 """
 
-from __future__ import annotations
 
 from endstone_endweave.codec import (
     BLOCK_POS,

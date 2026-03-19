@@ -1,6 +1,5 @@
 """Per-player connection tracking for protocol translation."""
 
-from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -20,7 +19,7 @@ class UserConnection:
     client_protocol: int = 0  # Detected from RequestNetworkSettings
     server_protocol: int = 0  # Set by ConnectionManager
     warned_no_chain: bool = False
-    protocol_chain: list[Protocol] | None = None  # cached after first lookup
+    protocol_chain: "list[Protocol] | None" = None  # cached after first lookup
 
     @property
     def needs_translation(self) -> bool:
