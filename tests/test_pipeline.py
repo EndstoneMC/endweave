@@ -11,8 +11,7 @@ from endstone_endweave.codec import REMAINING_BYTES
 from endstone_endweave.codec.wrapper import PacketWrapper
 from endstone_endweave.pipeline import ProtocolPipeline
 from endstone_endweave.connection import UserConnection, ConnectionManager
-from endstone_endweave.protocol.base import Protocol
-from endstone_endweave.protocol.base_protocol import create_base_protocol
+from endstone_endweave.protocol.base import Protocol, create_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
 
 
@@ -80,7 +79,7 @@ class TestProtocolPipeline:
         logger = MagicMock()
         connections = ConnectionManager(server_protocol=server_protocol, logger=logger)
         manager = ProtocolManager()
-        manager.register_base(create_base_protocol(server_protocol))
+        manager.register_base(create_protocol(server_protocol))
         pipeline = ProtocolPipeline(manager, connections, logger)
         return pipeline, connections, manager
 

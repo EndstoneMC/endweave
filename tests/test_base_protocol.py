@@ -10,8 +10,8 @@ import pytest
 from endstone_endweave.codec import PacketWrapper, UVAR_INT, BOOL, STRING
 from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.connection import UserConnection
-from endstone_endweave.protocol.base_protocol import (
-    create_base_protocol,
+from endstone_endweave.protocol.base import (
+    create_protocol,
     detect_client_protocol,
     log_disconnect,
 )
@@ -61,7 +61,7 @@ class TestLogDisconnect:
 
 class TestCreateBaseProtocol:
     def test_registers_correct_handlers(self):
-        bp = create_base_protocol(924)
+        bp = create_protocol(924)
         assert bp.server_protocol == 924
         assert bp.client_protocol == 0
         connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
@@ -71,7 +71,7 @@ class TestCreateBaseProtocol:
         assert connection.client_protocol == 944
 
     def test_disconnect_handler_registered(self):
-        bp = create_base_protocol(924)
+        bp = create_protocol(924)
         connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
         w = PacketWriter()
         w.write_uvarint(0)

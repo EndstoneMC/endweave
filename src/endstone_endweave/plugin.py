@@ -12,8 +12,7 @@ from endstone.plugin import Plugin
 
 from endstone_endweave.pipeline import ProtocolPipeline
 from endstone_endweave.connection import ConnectionManager
-from endstone_endweave.protocol.base import Protocol
-from endstone_endweave.protocol.base_protocol import create_base_protocol
+from endstone_endweave.protocol.base import Protocol, create_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
 from endstone_endweave.protocol.v924_to_v944 import create_protocol as create_v924_to_v944
 from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
@@ -35,7 +34,7 @@ class EndweavePlugin(Plugin):
         self._manager = ProtocolManager()
 
         # Register base protocol (version detection + disconnect logging)
-        self._manager.register_base(create_base_protocol(server_protocol))
+        self._manager.register_base(create_protocol(server_protocol))
 
         # Register version-specific protocols
         self._register_protocol(create_v924_to_v944())
