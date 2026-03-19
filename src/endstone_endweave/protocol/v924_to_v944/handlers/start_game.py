@@ -121,7 +121,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
 
     # -- Post-LevelSettings fields (identical in v924/v944) --
     wrapper.passthrough(STRING)  # Level ID
-    level_name = wrapper.passthrough(STRING)  # Level Name
+    wrapper.passthrough(STRING)  # Level Name
     wrapper.passthrough(STRING)  # Template Content Identity
     wrapper.passthrough(BOOL)  # Is Trial
     wrapper.passthrough(VAR_INT)  # SyncedPlayerMovementSettings.RewindHistorySize

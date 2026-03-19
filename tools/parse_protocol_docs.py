@@ -32,7 +32,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
-from endstone_endweave.protocol.versions import VERSIONS
+from endstone_endweave.protocol.versions import VERSIONS  # noqa: E402
 
 OUTPUT_DIR = PROJECT_ROOT / "data"
 

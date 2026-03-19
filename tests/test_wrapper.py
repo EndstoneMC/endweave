@@ -245,7 +245,7 @@ class TestWrapperHandlerIntegration:
     def test_wrapper_handler_rewrites_packet(self):
         def rewrite_protocol(wrapper: PacketWrapper) -> None:
             conn = wrapper.user()
-            old_proto = wrapper.read(INT_BE)
+            wrapper.read(INT_BE)
             wrapper.write(INT_BE, conn.server_protocol)
 
         p = Protocol(server_protocol=924, client_protocol=944)

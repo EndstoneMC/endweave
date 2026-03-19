@@ -24,7 +24,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
-from endstone_endweave.protocol.versions import VERSIONS
+from endstone_endweave.protocol.versions import VERSIONS  # noqa: E402
 
 
 def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:

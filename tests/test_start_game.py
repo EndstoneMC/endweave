@@ -491,11 +491,7 @@ class TestRewriteStartGame:
         rewrite_start_game(wrapper)
         result = wrapper.to_bytes()
 
-        # The last 4 fields should be our trailing strings
-        # Read from the end by finding them
-        r = PacketReader(result)
-        # Skip to the end to read trailing strings
-        # We know the total structure -- just verify they're in the output
+        # Verify trailing strings are present in the output
         assert b"server-id" in result
         assert b"scenario-id" in result
         assert b"world-id" in result
