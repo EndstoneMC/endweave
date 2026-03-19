@@ -139,7 +139,8 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # Enable Item Stack Net Manager
     wrapper.passthrough(STRING)  # Server version
     wrapper.passthrough(COMPOUND_TAG)  # Player Property Data
-    wrapper.passthrough(LONG_LE)  # Server Block Type Registry Checksum
+    wrapper.read(LONG_LE)  # Server Block Type Registry Checksum
+    wrapper.write(LONG_LE, 0)  # zero checksum to skip validation
     wrapper.passthrough(LONG_LE)  # World Template ID MSB
     wrapper.passthrough(LONG_LE)  # World Template ID LSB
     wrapper.passthrough(BOOL)  # Server Enabled ClientSide Generation
