@@ -2,17 +2,18 @@
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
-from endstone_endweave.protocol.v924_to_v944.handlers.block_pos_packets import (
+from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_add_volume_entity,
-    rewrite_anvil_damage_sb,
+    rewrite_anvil_damage,
     rewrite_camera_spline,
-    rewrite_command_block_update_sb,
-    rewrite_container_open_sb,
-    rewrite_first_block_to_net_block,
+    rewrite_command_block_update,
+    rewrite_container_open,
     rewrite_first_net_block_to_block,
-    rewrite_player_action_sb,
+    rewrite_play_sound,
+    rewrite_player_action,
     rewrite_set_spawn_position,
-    rewrite_structure_template_data_request_sb,
+    rewrite_structure_block_update,
+    rewrite_structure_template_data_request,
     rewrite_update_client_input_locks,
     rewrite_update_sub_chunk_blocks,
 )
@@ -42,7 +43,11 @@ def create_protocol() -> Protocol:
     p.register_serverbound(PacketId.LOGIN, rewrite_login)
 
     # Cancel new v944 serverbound packets unknown to v924 (v924 EndId = 340)
-    p.cancel_serverbound(PacketId.SERVERBOUND_DATA_DRIVEN_SCREEN_CLOSED)
+    p.cancel_serverbound(
+        PacketId.RESOURCE_PACKS_READY_FOR_VALIDATION,  # 340
+        PacketId.PARTY_CHANGED,                         # 342
+        PacketId.SERVERBOUND_DATA_DRIVEN_SCREEN_CLOSED, # 343
+    )
 
     # Clientbound rewriters -- BlockPos conversion (NetworkBlockPos -> BlockPos)
     p.register_clientbound(PacketId.START_GAME, rewrite_start_game)
@@ -59,6 +64,7 @@ def create_protocol() -> Protocol:
         PacketId.UPDATE_SUB_CHUNK_BLOCKS, rewrite_update_sub_chunk_blocks
     )
     p.register_clientbound(PacketId.OPEN_SIGN, rewrite_first_net_block_to_block)
+    p.register_clientbound(PacketId.PLAY_SOUND, rewrite_play_sound)
 
     # Clientbound rewriters -- other v944 changes
     p.register_clientbound(
@@ -68,18 +74,16 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
 
     # Serverbound rewriters -- BlockPos conversion (BlockPos -> NetworkBlockPos)
-    p.register_serverbound(PacketId.PLAYER_ACTION, rewrite_player_action_sb)
-    p.register_serverbound(PacketId.CONTAINER_OPEN, rewrite_container_open_sb)
+    p.register_serverbound(PacketId.PLAYER_ACTION, rewrite_player_action)
+    p.register_serverbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
+    p.register_serverbound(PacketId.COMMAND_BLOCK_UPDATE, rewrite_command_block_update)
     p.register_serverbound(
-        PacketId.COMMAND_BLOCK_UPDATE, rewrite_command_block_update_sb
-    )
-    p.register_serverbound(
-        PacketId.STRUCTURE_BLOCK_UPDATE, rewrite_first_block_to_net_block
+        PacketId.STRUCTURE_BLOCK_UPDATE, rewrite_structure_block_update
     )
     p.register_serverbound(
         PacketId.STRUCTURE_TEMPLATE_DATA_EXPORT_REQUEST,
-        rewrite_structure_template_data_request_sb,
+        rewrite_structure_template_data_request,
     )
-    p.register_serverbound(PacketId.ANVIL_DAMAGE, rewrite_anvil_damage_sb)
+    p.register_serverbound(PacketId.ANVIL_DAMAGE, rewrite_anvil_damage)
 
     return p

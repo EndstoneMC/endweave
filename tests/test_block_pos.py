@@ -7,17 +7,18 @@ from endstone_endweave.codec import (
 )
 from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.protocol.v924_to_v944.handlers.block_pos_packets import (
+from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_add_volume_entity,
-    rewrite_anvil_damage_sb,
+    rewrite_anvil_damage,
     rewrite_camera_spline,
-    rewrite_command_block_update_sb,
-    rewrite_container_open_sb,
-    rewrite_first_block_to_net_block,
+    rewrite_command_block_update,
+    rewrite_container_open,
     rewrite_first_net_block_to_block,
-    rewrite_player_action_sb,
+    rewrite_structure_block_update,
+    rewrite_play_sound,
+    rewrite_player_action,
     rewrite_set_spawn_position,
-    rewrite_structure_template_data_request_sb,
+    rewrite_structure_template_data_request,
     rewrite_update_client_input_locks,
     rewrite_update_sub_chunk_blocks,
 )
@@ -50,6 +51,43 @@ def _read_block_pos(r: PacketReader) -> tuple[int, int, int]:
 def _read_net_block_pos(r: PacketReader) -> tuple[int, int, int]:
     """Read a v924 NetworkBlockPos."""
     return (r.read_varint(), r.read_uvarint(), r.read_varint())
+
+
+def _write_structure_settings_v944(w: PacketWriter) -> None:
+    """Write a StructureSettings in v944 format (BlockPos for Size/Offset)."""
+    w.write_string("palette")  # PaletteName
+    w.write_bool(False)  # IgnoreEntities
+    w.write_bool(False)  # IgnoreBlocks
+    w.write_bool(True)  # AllowNonTickingChunks
+    _write_block_pos(w, 10, 20, 30)  # Size (v944 BlockPos)
+    _write_block_pos(w, -1, 5, -1)  # Offset (v944 BlockPos)
+    w.write_varint64(123)  # LastEditingPlayerUniqueID
+    w.write_byte(0)  # Rotation
+    w.write_byte(0)  # Mirror
+    w.write_byte(0)  # AnimationMode
+    w.write_float_le(0.0)  # AnimationSeconds
+    w.write_float_le(100.0)  # IntegrityValue
+    w.write_uint_le(42)  # IntegritySeed
+    w.write_float_le(0.5)  # RotationPivot.X
+    w.write_float_le(0.5)  # RotationPivot.Y
+    w.write_float_le(0.5)  # RotationPivot.Z
+
+
+def _verify_structure_settings_v924(r: PacketReader) -> None:
+    """Verify StructureSettings was converted to v924 (NetworkBlockPos for Size/Offset)."""
+    assert r.read_string() == "palette"
+    assert r.read_bool() is False  # IgnoreEntities
+    assert r.read_bool() is False  # IgnoreBlocks
+    assert r.read_bool() is True  # AllowNonTickingChunks
+    assert _read_net_block_pos(r) == (10, 20, 30)  # Size
+    assert _read_net_block_pos(r) == (-1, 5, -1)  # Offset
+    assert r.read_varint64() == 123  # LastEditingPlayerUniqueID
+    assert r.read_byte() == 0  # Rotation
+    assert r.read_byte() == 0  # Mirror
+    assert r.read_byte() == 0  # AnimationMode
+    assert r.read_float_le() == 0.0  # AnimationSeconds
+    assert r.read_float_le() == 100.0  # IntegrityValue
+    assert r.read_uint_le() == 42  # IntegritySeed
 
 
 # ---------------------------------------------------------------------------
@@ -289,6 +327,20 @@ class TestClientboundHandlers:
         assert r.read_bool() is False  # has LoadFromJson
         assert not r.has_remaining()
 
+    def test_play_sound(self):
+        w = PacketWriter()
+        w.write_string("mob.zombie.say")  # Name
+        _write_net_block_pos(w, 100, 64, -200)  # Position
+        w.write_float_le(1.0)  # Volume
+        w.write_float_le(0.8)  # Pitch
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_play_sound(wrapper)
+        r = PacketReader(wrapper.to_bytes())
+        assert r.read_string() == "mob.zombie.say"
+        assert _read_block_pos(r) == (100, 64, -200)
+        assert r.read_float_le() == 1.0  # Volume
+        assert r.remaining() == 4  # Pitch passthrough
+
 
 # ---------------------------------------------------------------------------
 # Tests: Serverbound packet handlers
@@ -304,7 +356,7 @@ class TestServerboundHandlers:
         _write_block_pos(w, 11, 65, 21)  # ResultPosition
         w.write_varint(1)  # face
         wrapper = PacketWrapper(w.to_bytes())
-        rewrite_player_action_sb(wrapper)
+        rewrite_player_action(wrapper)
         r = PacketReader(wrapper.to_bytes())
         assert r.read_uvarint64() == 1
         assert r.read_varint() == 2
@@ -319,7 +371,7 @@ class TestServerboundHandlers:
         _write_block_pos(w, -3, 80, 7)  # ContainerPosition
         w.write_varint64(-1)  # entityUniqueID
         wrapper = PacketWrapper(w.to_bytes())
-        rewrite_container_open_sb(wrapper)
+        rewrite_container_open(wrapper)
         r = PacketReader(wrapper.to_bytes())
         assert r.read_byte() == 5
         assert r.read_byte() == 2
@@ -332,7 +384,7 @@ class TestServerboundHandlers:
         _write_block_pos(w, 100, 64, 200)  # Position
         w.write_bytes(b"\xaa\xbb")  # rest of packet
         wrapper = PacketWrapper(w.to_bytes())
-        rewrite_command_block_update_sb(wrapper)
+        rewrite_command_block_update(wrapper)
         r = PacketReader(wrapper.to_bytes())
         assert r.read_bool() is True
         assert _read_net_block_pos(r) == (100, 64, 200)
@@ -343,39 +395,55 @@ class TestServerboundHandlers:
         w.write_bool(False)  # isBlock = false -> no BlockPos
         w.write_bytes(b"\xcc\xdd")
         wrapper = PacketWrapper(w.to_bytes())
-        rewrite_command_block_update_sb(wrapper)
+        rewrite_command_block_update(wrapper)
         r = PacketReader(wrapper.to_bytes())
         assert r.read_bool() is False
         assert r.read_remaining() == b"\xcc\xdd"
 
-    def test_first_field_structure_block_update(self):
+    def test_structure_block_update(self):
         w = PacketWriter()
-        _write_block_pos(w, 5, 100, -5)
-        w.write_bytes(b"\xee")
+        _write_block_pos(w, 5, 100, -5)  # Block Position
+        # StructureEditorData
+        w.write_string("my_struct")  # Name
+        w.write_string("")  # DataField
+        w.write_bool(False)  # IncludePlayers
+        w.write_bool(True)  # ShowBoundingBox
+        w.write_varint(1)  # StructureBlockType
+        _write_structure_settings_v944(w)
+        w.write_varint(0)  # RedstoneSaveMode
+        # Remaining fields
+        w.write_bool(True)  # Trigger
+        w.write_bool(False)  # IsWaterlogged
         wrapper = PacketWrapper(w.to_bytes())
-        rewrite_first_block_to_net_block(wrapper)
+        rewrite_structure_block_update(wrapper)
         r = PacketReader(wrapper.to_bytes())
         assert _read_net_block_pos(r) == (5, 100, -5)
-        assert r.read_remaining() == b"\xee"
+        assert r.read_string() == "my_struct"
+        assert r.read_string() == ""
+        assert r.read_bool() is False
+        assert r.read_bool() is True
+        assert r.read_varint() == 1
+        _verify_structure_settings_v924(r)
 
     def test_structure_template_data_request(self):
         w = PacketWriter()
         w.write_string("my_structure")  # Name
         _write_block_pos(w, 0, 64, 0)  # Position
-        w.write_byte(1)  # trailing
+        _write_structure_settings_v944(w)
+        w.write_byte(1)  # RequestedOperation
         wrapper = PacketWrapper(w.to_bytes())
-        rewrite_structure_template_data_request_sb(wrapper)
+        rewrite_structure_template_data_request(wrapper)
         r = PacketReader(wrapper.to_bytes())
         assert r.read_string() == "my_structure"
         assert _read_net_block_pos(r) == (0, 64, 0)
-        assert r.read_byte() == 1
+        _verify_structure_settings_v924(r)
 
     def test_anvil_damage(self):
         w = PacketWriter()
         w.write_byte(3)  # Damage
         _write_block_pos(w, -10, 50, 30)  # Position
         wrapper = PacketWrapper(w.to_bytes())
-        rewrite_anvil_damage_sb(wrapper)
+        rewrite_anvil_damage(wrapper)
         r = PacketReader(wrapper.to_bytes())
         assert r.read_byte() == 3
         assert _read_net_block_pos(r) == (-10, 50, 30)

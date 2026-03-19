@@ -11,9 +11,11 @@ from endstone_endweave.codec import (
     FLOAT_LE,
     STRING,
     NETWORK_BLOCK_POS,
+    UINT_LE,
     UVAR_INT,
     UVAR_LONG,
     VAR_INT,
+    VAR_LONG,
     PacketWrapper,
 )
 
@@ -72,6 +74,12 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(UVAR_LONG)  # syncedUpdateEntityUniqueID
 
 
+def rewrite_play_sound(wrapper: PacketWrapper) -> None:
+    """PlaySound (86): Name, Position, Volume, Pitch."""
+    wrapper.passthrough(STRING)  # Name
+    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # Position
+
+
 def rewrite_update_client_input_locks(wrapper: PacketWrapper) -> None:
     """UpdateClientInputLocks (196): v944 removed trailing Vec3 (12 bytes).
 
@@ -99,7 +107,7 @@ def rewrite_camera_spline(wrapper: PacketWrapper) -> None:
 # ---------------------------------------------------------------------------
 
 
-def rewrite_player_action_sb(wrapper: PacketWrapper) -> None:
+def rewrite_player_action(wrapper: PacketWrapper) -> None:
     """PlayerAction (36): entityRuntimeID, actionType, BlockPosition, ResultPosition, face."""
     wrapper.passthrough(UVAR_LONG)  # entityRuntimeID
     wrapper.passthrough(VAR_INT)  # actionType
@@ -107,35 +115,72 @@ def rewrite_player_action_sb(wrapper: PacketWrapper) -> None:
     wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # ResultPosition
 
 
-def rewrite_container_open_sb(wrapper: PacketWrapper) -> None:
+def rewrite_container_open(wrapper: PacketWrapper) -> None:
     """ContainerOpen (46): windowID, type, ContainerPosition, entityUniqueID."""
     wrapper.passthrough(BYTE)  # windowID
     wrapper.passthrough(BYTE)  # type
     wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # ContainerPosition
 
 
-def rewrite_first_block_to_net_block(wrapper: PacketWrapper) -> None:
-    """Rewrite first-field BlockPos -> NetworkBlockPos.
+def _rewrite_structure_settings(wrapper: PacketWrapper) -> None:
+    """Passthrough StructureSettings, converting BlockPos -> NetworkBlockPos.
 
-    Used by: StructureBlockUpdate (90).
+    Layout: string PaletteName, bool IgnoreEntities, bool IgnoreBlocks,
+    bool AllowNonTickingChunks, BlockPos Size, BlockPos Offset,
+    varint64 LastEditingPlayerUniqueID, byte Rotation, byte Mirror,
+    byte AnimationMode, float AnimationSeconds, float IntegrityValue,
+    uint32 IntegritySeed, Vec3 RotationPivot.
     """
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))
+    wrapper.passthrough(STRING)  # PaletteName
+    wrapper.passthrough(BOOL)  # IgnoreEntities
+    wrapper.passthrough(BOOL)  # IgnoreBlocks
+    wrapper.passthrough(BOOL)  # AllowNonTickingChunks
+    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Size
+    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Offset
+    wrapper.passthrough(VAR_LONG)  # LastEditingPlayerUniqueID
+    wrapper.passthrough(BYTE)  # Rotation
+    wrapper.passthrough(BYTE)  # Mirror
+    wrapper.passthrough(BYTE)  # AnimationMode
+    wrapper.passthrough(FLOAT_LE)  # AnimationSeconds
+    wrapper.passthrough(FLOAT_LE)  # IntegrityValue
+    wrapper.passthrough(UINT_LE)  # IntegritySeed
+    wrapper.passthrough(FLOAT_LE)  # RotationPivot.X
+    wrapper.passthrough(FLOAT_LE)  # RotationPivot.Y
+    wrapper.passthrough(FLOAT_LE)  # RotationPivot.Z
 
 
-def rewrite_command_block_update_sb(wrapper: PacketWrapper) -> None:
+def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
+    """StructureBlockUpdate (90): Position, StructureEditorData, trigger, waterlogged.
+
+    StructureEditorData: string Name, string DataField, bool IncludePlayers,
+    bool ShowBoundingBox, varint StructureBlockType, StructureSettings, varint RedstoneSaveMode.
+    """
+    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Block Position
+    # StructureEditorData
+    wrapper.passthrough(STRING)  # Name
+    wrapper.passthrough(STRING)  # DataField
+    wrapper.passthrough(BOOL)  # IncludePlayers
+    wrapper.passthrough(BOOL)  # ShowBoundingBox
+    wrapper.passthrough(VAR_INT)  # StructureBlockType
+    _rewrite_structure_settings(wrapper)
+    wrapper.passthrough(VAR_INT)  # RedstoneSaveMode
+
+
+def rewrite_command_block_update(wrapper: PacketWrapper) -> None:
     """CommandBlockUpdate (78): IsBlock (bool), then if true: Position first."""
     is_block = wrapper.passthrough(BOOL)
     if is_block:
         wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Position
 
 
-def rewrite_structure_template_data_request_sb(wrapper: PacketWrapper) -> None:
-    """StructureTemplateDataRequest (132): Name, Position, then rest."""
+def rewrite_structure_template_data_request(wrapper: PacketWrapper) -> None:
+    """StructureTemplateDataRequest (132): Name, Position, StructureSettings, RequestedOperation."""
     wrapper.passthrough(STRING)  # Name
     wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Position
+    _rewrite_structure_settings(wrapper)
 
 
-def rewrite_anvil_damage_sb(wrapper: PacketWrapper) -> None:
+def rewrite_anvil_damage(wrapper: PacketWrapper) -> None:
     """AnvilDamage (141): Damage, Position."""
     wrapper.passthrough(BYTE)  # Damage
     wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Position
