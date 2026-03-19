@@ -49,7 +49,7 @@ class PacketWriter:
     def write_float_le(self, val: float) -> None:
         self._buf.extend(struct.pack("<f", val))
 
-    def write_varint(self, val: int) -> None:
+    def write_uvarint(self, val: int) -> None:
         """Write an unsigned variable-length integer (LEB128)."""
         val &= 0xFFFFFFFF  # treat as unsigned 32-bit
         while True:
@@ -61,11 +61,15 @@ class PacketWriter:
                 self._buf.append(byte)
                 break
 
-    def write_signed_varint(self, val: int) -> None:
+    def write_varint(self, val: int) -> None:
         """Write a signed variable-length integer (zigzag encoded)."""
-        self.write_varint((val << 1) ^ (val >> 31))
+        self.write_uvarint((val << 1) ^ (val >> 31))
 
-    def write_varlong(self, val: int) -> None:
+    def write_varint64(self, val: int) -> None:
+        """Write a signed variable-length long (zigzag encoded, up to 64 bits)."""
+        self.write_uvarint64((val << 1) ^ (val >> 63))
+
+    def write_uvarint64(self, val: int) -> None:
         """Write an unsigned variable-length long (LEB128, up to 64 bits)."""
         val &= 0xFFFFFFFFFFFFFFFF  # treat as unsigned 64-bit
         while True:
@@ -80,5 +84,5 @@ class PacketWriter:
     def write_string(self, val: str) -> None:
         """Write a varint-prefixed UTF-8 string."""
         encoded = val.encode("utf-8")
-        self.write_varint(len(encoded))
+        self.write_uvarint(len(encoded))
         self._buf.extend(encoded)

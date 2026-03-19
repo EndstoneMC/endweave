@@ -84,7 +84,7 @@ class PacketReader:
         self._pos += 4
         return val
 
-    def read_varint(self) -> int:
+    def read_uvarint(self) -> int:
         """Read an unsigned variable-length integer (LEB128)."""
         result = 0
         shift = 0
@@ -99,12 +99,12 @@ class PacketReader:
                 raise ValueError("Varint too long")
         return result
 
-    def read_signed_varint(self) -> int:
+    def read_varint(self) -> int:
         """Read a signed variable-length integer (zigzag encoded)."""
-        raw = self.read_varint()
+        raw = self.read_uvarint()
         return (raw >> 1) ^ -(raw & 1)
 
-    def read_varlong(self) -> int:
+    def read_uvarint64(self) -> int:
         """Read an unsigned variable-length long (LEB128, up to 64 bits)."""
         result = 0
         shift = 0
@@ -119,13 +119,18 @@ class PacketReader:
                 raise ValueError("Varlong too long")
         return result
 
+    def read_varint64(self) -> int:
+        """Read a signed variable-length long (zigzag encoded, up to 64 bits)."""
+        raw = self.read_uvarint64()
+        return (raw >> 1) ^ -(raw & 1)
+
     def slice_from(self, start: int) -> bytes:
         """Return bytes from start position to current position."""
         return self._data[start:self._pos]
 
     def read_string(self) -> str:
         """Read a varint-prefixed UTF-8 string."""
-        length = self.read_varint()
+        length = self.read_uvarint()
         data = self._data[self._pos : self._pos + length]
         self._pos += length
         return data.decode("utf-8")
