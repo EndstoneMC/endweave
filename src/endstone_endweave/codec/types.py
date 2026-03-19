@@ -22,12 +22,10 @@ class Type(ABC, Generic[T]):
     __slots__ = ()
 
     @abstractmethod
-    def read(self, reader: PacketReader) -> T:
-        ...
+    def read(self, reader: PacketReader) -> T: ...
 
     @abstractmethod
-    def write(self, writer: PacketWriter, value: T) -> None:
-        ...
+    def write(self, writer: PacketWriter, value: T) -> None: ...
 
 
 class _Byte(Type[int]):
@@ -228,6 +226,44 @@ UVAR_LONG = _UVarLong()
 STRING = _String()
 COMPOUND_TAG = _CompoundTag()
 REMAINING_BYTES = _RemainingBytes()
+
+
+class _NetworkBlockPos(Type[tuple[int, int, int]]):
+    """v924 NetworkBlockPosition: varint X, uvarint Y, varint Z."""
+
+    __slots__ = ()
+
+    def read(self, reader: PacketReader) -> tuple[int, int, int]:
+        x = reader.read_varint()
+        y = reader.read_uvarint()
+        z = reader.read_varint()
+        return (x, y, z)
+
+    def write(self, writer: PacketWriter, value: tuple[int, int, int]) -> None:
+        writer.write_varint(value[0])
+        writer.write_uvarint(value[1])
+        writer.write_varint(value[2])
+
+
+class _BlockPos(Type[tuple[int, int, int]]):
+    """v944 BlockPos: varint X, varint Y, varint Z."""
+
+    __slots__ = ()
+
+    def read(self, reader: PacketReader) -> tuple[int, int, int]:
+        x = reader.read_varint()
+        y = reader.read_varint()
+        z = reader.read_varint()
+        return (x, y, z)
+
+    def write(self, writer: PacketWriter, value: tuple[int, int, int]) -> None:
+        writer.write_varint(value[0])
+        writer.write_varint(value[1])
+        writer.write_varint(value[2])
+
+
+NETWORK_BLOCK_POS = _NetworkBlockPos()
+BLOCK_POS = _BlockPos()
 
 
 def bytes_type(length: int) -> Type[bytes]:

@@ -18,6 +18,8 @@ from endstone_endweave.codec.types import (
     STRING,
     COMPOUND_TAG,
     REMAINING_BYTES,
+    NETWORK_BLOCK_POS,
+    BLOCK_POS,
     bytes_type,
 )
 
@@ -41,5 +43,7 @@ __all__ = [
     "STRING",
     "COMPOUND_TAG",
     "REMAINING_BYTES",
+    "NETWORK_BLOCK_POS",
+    "BLOCK_POS",
     "bytes_type",
 ]
