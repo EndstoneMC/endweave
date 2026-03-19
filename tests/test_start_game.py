@@ -1,6 +1,5 @@
 """Tests for StartGamePacket handler and supporting codec methods."""
 
-
 import struct
 
 

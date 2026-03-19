@@ -1,6 +1,5 @@
 """Protocol translation infrastructure."""
 
-
 from collections.abc import Callable
 
 from endstone_endweave.codec.wrapper import PacketWrapper

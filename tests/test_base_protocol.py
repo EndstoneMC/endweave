@@ -1,6 +1,5 @@
 """Tests for the base protocol (version detection + disconnect logging)."""
 
-
 import struct
 from unittest.mock import MagicMock
 

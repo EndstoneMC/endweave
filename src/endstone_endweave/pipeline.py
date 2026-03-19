@@ -1,6 +1,5 @@
 """Packet translation pipeline - routes packets through the appropriate protocol."""
 
-
 import traceback
 
 from endstone import Logger

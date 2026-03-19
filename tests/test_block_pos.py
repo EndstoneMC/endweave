@@ -1,6 +1,5 @@
 """Tests for BlockPos types and packet handlers (v924 NetworkBlockPos <-> v944 BlockPos)."""
 
-
 from endstone_endweave.codec import (
     BLOCK_POS,
     NETWORK_BLOCK_POS,

@@ -1,6 +1,5 @@
 """Handlers for login-phase packets (RequestNetworkSettings, Login)."""
 
-
 from endstone_endweave.codec import INT_BE, PacketWrapper
 
 

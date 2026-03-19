@@ -1,12 +1,10 @@
 """Binary packet reader for Bedrock protocol deserialization."""
 
-
 import struct
 
 
 class PacketReader:
     """Reads binary data from a Bedrock packet payload."""
-
 
     def __init__(self, data: bytes) -> None:
         self._data = data

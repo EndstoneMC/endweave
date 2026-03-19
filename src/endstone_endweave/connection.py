@@ -1,6 +1,5 @@
 """Per-player connection tracking for protocol translation."""
 
-
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 

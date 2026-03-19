@@ -1,12 +1,10 @@
 """Binary packet writer for Bedrock protocol serialization."""
 
-
 import struct
 
 
 class PacketWriter:
     """Builds binary data for a Bedrock packet payload."""
-
 
     def __init__(self) -> None:
         self._buf = bytearray()

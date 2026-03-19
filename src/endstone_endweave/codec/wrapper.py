@@ -11,7 +11,6 @@ After all handlers run, the wrapper produces the final payload from its
 write buffer plus any unread trailing bytes.
 """
 
-
 from typing import TYPE_CHECKING
 
 from endstone_endweave.codec.reader import PacketReader
@@ -24,7 +23,6 @@ if TYPE_CHECKING:
 
 class PacketWrapper:
     """Wraps a packet payload for field-level read/transform/write."""
-
 
     def __init__(self, payload: bytes, user: "UserConnection | None" = None) -> None:
         self._reader = PacketReader(payload)

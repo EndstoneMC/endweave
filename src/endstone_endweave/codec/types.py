@@ -5,7 +5,6 @@ enabling the PacketWrapper's passthrough() pattern (read + write in one call).
 Inspired by ViaVersion's Type<T> system.
 """
 
-
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
@@ -18,7 +17,6 @@ T = TypeVar("T")
 class Type(ABC, Generic[T]):
     """A serializable packet field type."""
 
-
     @abstractmethod
     def read(self, reader: PacketReader) -> T: ...
 
@@ -27,7 +25,6 @@ class Type(ABC, Generic[T]):
 
 
 class _Byte(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_byte()
 
@@ -36,7 +33,6 @@ class _Byte(Type[int]):
 
 
 class _Bool(Type[bool]):
-
     def read(self, reader: PacketReader) -> bool:
         return reader.read_bool()
 
@@ -45,7 +41,6 @@ class _Bool(Type[bool]):
 
 
 class _ShortLE(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_short_le()
 
@@ -54,7 +49,6 @@ class _ShortLE(Type[int]):
 
 
 class _UShortLE(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_ushort_le()
 
@@ -63,7 +57,6 @@ class _UShortLE(Type[int]):
 
 
 class _IntLE(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_int_le()
 
@@ -72,7 +65,6 @@ class _IntLE(Type[int]):
 
 
 class _IntBE(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_int_be()
 
@@ -81,7 +73,6 @@ class _IntBE(Type[int]):
 
 
 class _UIntLE(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_uint_le()
 
@@ -90,7 +81,6 @@ class _UIntLE(Type[int]):
 
 
 class _LongLE(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_long_le()
 
@@ -99,7 +89,6 @@ class _LongLE(Type[int]):
 
 
 class _FloatLE(Type[float]):
-
     def read(self, reader: PacketReader) -> float:
         return reader.read_float_le()
 
@@ -108,7 +97,6 @@ class _FloatLE(Type[float]):
 
 
 class _VarInt(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_varint()
 
@@ -117,7 +105,6 @@ class _VarInt(Type[int]):
 
 
 class _UVarInt(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_uvarint()
 
@@ -126,7 +113,6 @@ class _UVarInt(Type[int]):
 
 
 class _VarLong(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_varint64()
 
@@ -135,7 +121,6 @@ class _VarLong(Type[int]):
 
 
 class _UVarLong(Type[int]):
-
     def read(self, reader: PacketReader) -> int:
         return reader.read_uvarint64()
 
@@ -144,7 +129,6 @@ class _UVarLong(Type[int]):
 
 
 class _String(Type[str]):
-
     def read(self, reader: PacketReader) -> str:
         return reader.read_string()
 
@@ -154,7 +138,6 @@ class _String(Type[str]):
 
 class _Bytes(Type[bytes]):
     """Fixed-length raw bytes."""
-
 
     def __init__(self, length: int) -> None:
         self._length = length
@@ -169,7 +152,6 @@ class _Bytes(Type[bytes]):
 class _CompoundTag(Type[bytes]):
     """Bedrock network NBT CompoundTag -- raw byte passthrough."""
 
-
     def read(self, reader: PacketReader) -> bytes:
         start = reader.position
         reader.skip_nbt_compound()
@@ -181,7 +163,6 @@ class _CompoundTag(Type[bytes]):
 
 class _RemainingBytes(Type[bytes]):
     """All remaining bytes in the packet."""
-
 
     def read(self, reader: PacketReader) -> bytes:
         return reader.read_remaining()
@@ -212,7 +193,6 @@ REMAINING_BYTES = _RemainingBytes()
 class _NetworkBlockPos(Type[tuple[int, int, int]]):
     """v924 NetworkBlockPosition: varint X, uvarint Y, varint Z."""
 
-
     def read(self, reader: PacketReader) -> tuple[int, int, int]:
         x = reader.read_varint()
         y = reader.read_uvarint()
@@ -227,7 +207,6 @@ class _NetworkBlockPos(Type[tuple[int, int, int]]):
 
 class _BlockPos(Type[tuple[int, int, int]]):
     """v944 BlockPos: varint X, varint Y, varint Z."""
-
 
     def read(self, reader: PacketReader) -> tuple[int, int, int]:
         x = reader.read_varint()

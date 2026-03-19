@@ -1,6 +1,5 @@
 """Tests for PacketWrapper and Type system."""
 
-
 import struct
 from unittest.mock import MagicMock
 

@@ -1,6 +1,5 @@
 """Protocol manager mapping version pairs to protocols."""
 
-
 from collections import deque
 
 from endstone_endweave.protocol import Protocol

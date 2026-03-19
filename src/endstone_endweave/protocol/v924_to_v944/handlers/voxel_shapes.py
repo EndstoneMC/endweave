@@ -4,7 +4,6 @@ v944 added a `Custom Shape Count` (uint16) field at the end of the packet.
 Append 0 so the v944 client can deserialize the v924 payload.
 """
 
-
 from endstone_endweave.codec import USHORT_LE, PacketWrapper
 
 
