@@ -24,7 +24,9 @@ class UserConnection:
 
     @property
     def needs_translation(self) -> bool:
-        return self.client_protocol != 0 and self.client_protocol != self.server_protocol
+        return (
+            self.client_protocol != 0 and self.client_protocol != self.server_protocol
+        )
 
 
 class ConnectionManager:

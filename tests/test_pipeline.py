@@ -5,7 +5,6 @@ from __future__ import annotations
 import struct
 from unittest.mock import MagicMock
 
-import pytest
 
 from endstone_endweave.codec import REMAINING_BYTES
 from endstone_endweave.codec.wrapper import PacketWrapper
@@ -18,11 +17,21 @@ from endstone_endweave.protocol.manager import ProtocolManager
 
 class TestUserConnection:
     def test_needs_translation_false_when_matching(self):
-        c = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), client_protocol=924, server_protocol=924)
+        c = UserConnection(
+            address="1.2.3.4:1234",
+            logger=MagicMock(),
+            client_protocol=924,
+            server_protocol=924,
+        )
         assert not c.needs_translation
 
     def test_needs_translation_true_when_different(self):
-        c = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), client_protocol=944, server_protocol=924)
+        c = UserConnection(
+            address="1.2.3.4:1234",
+            logger=MagicMock(),
+            client_protocol=944,
+            server_protocol=924,
+        )
         assert c.needs_translation
 
     def test_needs_translation_false_when_undetected(self):
@@ -69,7 +78,9 @@ class TestProtocolManager:
 
 
 class TestProtocolPipeline:
-    def _make_event(self, packet_id: int, payload: bytes, address: str = "1.2.3.4:1234"):
+    def _make_event(
+        self, packet_id: int, payload: bytes, address: str = "1.2.3.4:1234"
+    ):
         event = MagicMock()
         event.packet_id = packet_id
         event.payload = payload
@@ -140,12 +151,14 @@ class TestProtocolPipeline:
 class TestNormalizeMcVersion:
     def test_short_form(self):
         from endstone_endweave.plugin import EndweavePlugin
+
         assert EndweavePlugin._normalize_mc_version("26.0") == "1.26.0"
         assert EndweavePlugin._normalize_mc_version("26.10") == "1.26.10"
         assert EndweavePlugin._normalize_mc_version("26.3") == "1.26.3"
 
     def test_full_form_unchanged(self):
         from endstone_endweave.plugin import EndweavePlugin
+
         assert EndweavePlugin._normalize_mc_version("1.26.0") == "1.26.0"
         assert EndweavePlugin._normalize_mc_version("1.26.10") == "1.26.10"
 
@@ -153,12 +166,15 @@ class TestNormalizeMcVersion:
 class TestGetVersionByName:
     def test_patch_version_maps_to_base(self):
         from endstone_endweave.protocol.versions import get_version_by_name, R26_U0
+
         assert get_version_by_name("1.26.2") is R26_U0
 
     def test_exact_version_match(self):
         from endstone_endweave.protocol.versions import get_version_by_name, R26_U1
+
         assert get_version_by_name("1.26.10") is R26_U1
 
     def test_unknown_version_returns_none(self):
         from endstone_endweave.protocol.versions import get_version_by_name
+
         assert get_version_by_name("1.99.0") is None

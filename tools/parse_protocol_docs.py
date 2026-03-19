@@ -40,15 +40,9 @@ OUTPUT_DIR = PROJECT_ROOT / "data"
 # DOT parsing (unchanged from parse_dot_files.py)
 # ---------------------------------------------------------------------------
 
-NODE_RE = re.compile(
-    r'(\d+)\s*\[([^\]]*)\]', re.DOTALL
-)
-ATTR_RE = re.compile(
-    r'(\w+)\s*=\s*"([^"]*)"'
-)
-EDGE_RE = re.compile(
-    r'(\d+)\s*->\s*(\d+)'
-)
+NODE_RE = re.compile(r"(\d+)\s*\[([^\]]*)\]", re.DOTALL)
+ATTR_RE = re.compile(r'(\w+)\s*=\s*"([^"]*)"')
+EDGE_RE = re.compile(r"(\d+)\s*->\s*(\d+)")
 
 
 def parse_dot_file(filepath: Path) -> dict | None:
@@ -213,16 +207,20 @@ def _build_field(name: str, prop: dict, definitions: dict) -> dict:
             element_children = _build_fields_from_properties(
                 items_ref.get("properties", {}), definitions
             )
-            element_field = {
-                "name": element_title,
-                "type": element_title,
-                "attributes": 16,  # array element
-                "children": element_children,
-            } if element_children else {
-                "name": element_title,
-                "type": element_title,
-                "attributes": 16 | 512,
-            }
+            element_field = (
+                {
+                    "name": element_title,
+                    "type": element_title,
+                    "attributes": 16,  # array element
+                    "children": element_children,
+                }
+                if element_children
+                else {
+                    "name": element_title,
+                    "type": element_title,
+                    "attributes": 16 | 512,
+                }
+            )
         else:
             # Array of inline/primitive items
             elem_type = _resolve_type(items)
@@ -373,7 +371,9 @@ def main() -> None:
         selected = {}
         for tag in args.versions:
             if tag not in all_configs:
-                print(f"Error: unknown version tag '{tag}'. Known: {', '.join(all_configs)}")
+                print(
+                    f"Error: unknown version tag '{tag}'. Known: {', '.join(all_configs)}"
+                )
                 sys.exit(1)
             selected[tag] = all_configs[tag]
     else:

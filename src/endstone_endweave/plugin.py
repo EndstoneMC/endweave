@@ -15,7 +15,9 @@ from endstone_endweave.connection import ConnectionManager
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.base import create_base_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
-from endstone_endweave.protocol.v924_to_v944 import create_protocol as create_v924_to_v944
+from endstone_endweave.protocol.v924_to_v944 import (
+    create_protocol as create_v924_to_v944,
+)
 from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
 
 
@@ -44,12 +46,12 @@ class EndweavePlugin(Plugin):
         # Determine highest client version we support
         self._max_client_version = self._manager.get_max_client_version(server_protocol)
 
-        self._pipeline = ProtocolPipeline(
-            self._manager, self._connections, self.logger
-        )
+        self._pipeline = ProtocolPipeline(self._manager, self._connections, self.logger)
         self.register_events(self)
 
-        max_ver = VERSIONS.get(self._max_client_version) if self._max_client_version else None
+        max_ver = (
+            VERSIONS.get(self._max_client_version) if self._max_client_version else None
+        )
         self.logger.info(
             f"Endweave enabled - server proto {server_protocol}, "
             f"max client: {max_ver.minecraft_version if max_ver else 'none'}"
@@ -72,7 +74,9 @@ class EndweavePlugin(Plugin):
         server_mc_version = self._normalize_mc_version(self.server.minecraft_version)
         ver = get_version_by_name(server_mc_version)
         if ver:
-            self.logger.info(f"Detected server protocol {ver.protocol} (MC {server_mc_version})")
+            self.logger.info(
+                f"Detected server protocol {ver.protocol} (MC {server_mc_version})"
+            )
             return ver.protocol
         fallback = min(VERSIONS.keys()) if VERSIONS else 0
         self.logger.warning(

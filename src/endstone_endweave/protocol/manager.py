@@ -66,9 +66,7 @@ class ProtocolManager:
         self._path_cache[cache_key] = path
         return path
 
-    def _bfs(
-        self, server_protocol: int, client_protocol: int
-    ) -> list[Protocol] | None:
+    def _bfs(self, server_protocol: int, client_protocol: int) -> list[Protocol] | None:
         """BFS to find a chain of protocols from client -> server."""
         # Build adjacency: for each protocol (s, c), from c we can reach s
         adjacency: dict[int, list[Protocol]] = {}

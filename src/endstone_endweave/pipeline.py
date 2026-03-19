@@ -100,7 +100,7 @@ class ProtocolPipeline:
         if new_payload != payload:
             self._logger.debug(
                 f"[SB] {_pname(packet_id)} rewritten "
-                f"{len(payload)}b -> {len(new_payload)}b"
+                f"{len(event.payload)}b -> {len(new_payload)}b"
             )
             event.payload = new_payload
 
@@ -151,7 +151,7 @@ class ProtocolPipeline:
         if new_payload != event.payload:
             self._logger.debug(
                 f"[CB] {_pname(packet_id)} rewritten "
-                f"{len(payload)}b -> {len(new_payload)}b"
+                f"{len(event.payload)}b -> {len(new_payload)}b"
             )
             event.payload = new_payload
 

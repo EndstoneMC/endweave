@@ -5,7 +5,6 @@ from __future__ import annotations
 import struct
 from unittest.mock import MagicMock
 
-import pytest
 
 from endstone_endweave.codec import (
     PacketWrapper,
@@ -110,7 +109,9 @@ class TestPacketWrapperBasics:
         assert not wrapper.has_remaining()
 
     def test_user(self):
-        conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
+        conn = UserConnection(
+            address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924
+        )
         wrapper = PacketWrapper(b"\x00", user=conn)
         assert wrapper.user() is conn
 
@@ -252,7 +253,9 @@ class TestWrapperHandlerIntegration:
         p = Protocol(server_protocol=924, client_protocol=944)
         p.register_serverbound(193, rewrite_protocol)
 
-        conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
+        conn = UserConnection(
+            address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924
+        )
 
         w = PacketWriter()
         w.write_int_be(944)
@@ -273,7 +276,9 @@ class TestWrapperHandlerIntegration:
         p = Protocol(server_protocol=924, client_protocol=944)
         p.register_serverbound(42, cancel_handler)
 
-        conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
+        conn = UserConnection(
+            address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924
+        )
         wrapper = PacketWrapper(b"\x00", user=conn)
         p.transform(Direction.SERVERBOUND, 42, wrapper)
         assert wrapper.cancelled
@@ -285,7 +290,9 @@ class TestWrapperHandlerIntegration:
         p = Protocol(server_protocol=924, client_protocol=944)
         p.register_serverbound(42, noop_handler)
 
-        conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
+        conn = UserConnection(
+            address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924
+        )
         wrapper = PacketWrapper(b"\x01\x02\x03", user=conn)
         p.transform(Direction.SERVERBOUND, 42, wrapper)
         assert not wrapper.cancelled

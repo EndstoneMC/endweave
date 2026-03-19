@@ -5,9 +5,8 @@ from __future__ import annotations
 import struct
 from unittest.mock import MagicMock
 
-import pytest
 
-from endstone_endweave.codec import PacketWrapper, INT_BE
+from endstone_endweave.codec import PacketWrapper
 from endstone_endweave.connection import UserConnection
 from endstone_endweave.protocol.direction import Direction
 from endstone_endweave.protocol.v924_to_v944.handlers.login import (
@@ -18,7 +17,9 @@ from endstone_endweave.protocol.v924_to_v944.handlers.login import (
 
 class TestRequestNetworkSettings:
     def setup_method(self):
-        self.connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
+        self.connection = UserConnection(
+            address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924
+        )
 
     def test_rewrites_944_to_924(self):
         payload = struct.pack(">i", 944)
@@ -44,7 +45,9 @@ class TestRequestNetworkSettings:
 
 class TestLoginPacket:
     def setup_method(self):
-        self.connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
+        self.connection = UserConnection(
+            address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924
+        )
 
     def test_rewrites_protocol_version(self):
         payload = struct.pack(">i", 944) + b"\x00" * 100
@@ -67,7 +70,10 @@ class TestV924ToV944Protocol:
 
         protocol = create_protocol()
         connection = UserConnection(
-            address="1.2.3.4:1234", logger=MagicMock(), client_protocol=944, server_protocol=924
+            address="1.2.3.4:1234",
+            logger=MagicMock(),
+            client_protocol=944,
+            server_protocol=924,
         )
 
         wrapper = PacketWrapper(b"\x00", user=connection)
@@ -79,7 +85,10 @@ class TestV924ToV944Protocol:
 
         protocol = create_protocol()
         connection = UserConnection(
-            address="1.2.3.4:1234", logger=MagicMock(), client_protocol=944, server_protocol=924
+            address="1.2.3.4:1234",
+            logger=MagicMock(),
+            client_protocol=944,
+            server_protocol=924,
         )
 
         wrapper = PacketWrapper(b"\x00\x01\x02", user=connection)

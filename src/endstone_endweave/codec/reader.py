@@ -178,31 +178,31 @@ class PacketReader:
                 tag_type = elem_type
 
             # Skip value based on tag_type
-            if tag_type == 1:      # Byte
+            if tag_type == 1:  # Byte
                 self._pos += 1
-            elif tag_type == 2:    # Short
+            elif tag_type == 2:  # Short
                 self._pos += 2
-            elif tag_type == 3:    # Int (zigzag varint)
+            elif tag_type == 3:  # Int (zigzag varint)
                 self.read_varint()
-            elif tag_type == 4:    # Int64 (zigzag varint64)
+            elif tag_type == 4:  # Int64 (zigzag varint64)
                 self.read_varint64()
-            elif tag_type == 5:    # Float
+            elif tag_type == 5:  # Float
                 self._pos += 4
-            elif tag_type == 6:    # Double
+            elif tag_type == 6:  # Double
                 self._pos += 8
-            elif tag_type == 7:    # ByteArray (varint length + bytes)
+            elif tag_type == 7:  # ByteArray (varint length + bytes)
                 length = self.read_varint()
                 self._pos += length
-            elif tag_type == 8:    # String
+            elif tag_type == 8:  # String
                 self.skip_string()
-            elif tag_type == 9:    # List
+            elif tag_type == 9:  # List
                 elem = self.read_byte()
                 count = self.read_varint()
                 if count > 0 and elem != 0:
                     stack.append((9, (elem << 32) | count))
-            elif tag_type == 10:   # Compound
+            elif tag_type == 10:  # Compound
                 stack.append((10, -1))
-            elif tag_type == 11:   # IntArray (varint count + varints)
+            elif tag_type == 11:  # IntArray (varint count + varints)
                 count = self.read_varint()
                 for _ in range(count):
                     self.read_varint()
@@ -211,7 +211,7 @@ class PacketReader:
 
     def slice_from(self, start: int) -> bytes:
         """Return bytes from start position to current position."""
-        return self._data[start:self._pos]
+        return self._data[start : self._pos]
 
     def read_string(self) -> str:
         """Read a varint-prefixed UTF-8 string."""

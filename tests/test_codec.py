@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import struct
 
-import pytest
 
 from endstone_endweave.codec import PacketReader
 from endstone_endweave.codec.writer import PacketWriter
