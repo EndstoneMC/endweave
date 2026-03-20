@@ -4,6 +4,7 @@ import struct
 
 
 from endstone_endweave.codec import PacketReader
+from endstone_endweave.codec.types import ItemInstance, ITEM_INSTANCE
 from endstone_endweave.codec.writer import PacketWriter
 
 
@@ -184,3 +185,70 @@ class TestReaderState:
         r.read_byte()
         assert r.read_remaining() == b"\x01\x02\x03"
         assert not r.has_remaining()
+
+
+class TestItemInstance:
+    def test_air_roundtrip(self):
+        item = ItemInstance(network_id=0)
+        w = PacketWriter()
+        ITEM_INSTANCE.write(w, item)
+        r = PacketReader(w.to_bytes())
+        result = ITEM_INSTANCE.read(r)
+        assert result.network_id == 0
+        assert not r.has_remaining()
+
+    def test_full_roundtrip(self):
+        item = ItemInstance(
+            network_id=42,
+            count=64,
+            aux_value=7,
+            has_net_id=True,
+            stack_net_id=99,
+            block_runtime_id=123,
+            user_data=b"\xaa\xbb\xcc",
+        )
+        w = PacketWriter()
+        ITEM_INSTANCE.write(w, item)
+        r = PacketReader(w.to_bytes())
+        result = ITEM_INSTANCE.read(r)
+        assert result == item
+        assert not r.has_remaining()
+
+    def test_roundtrip_no_net_id(self):
+        item = ItemInstance(
+            network_id=10,
+            count=1,
+            aux_value=0,
+            has_net_id=False,
+            stack_net_id=0,
+            block_runtime_id=5,
+            user_data=b"",
+        )
+        w = PacketWriter()
+        ITEM_INSTANCE.write(w, item)
+        r = PacketReader(w.to_bytes())
+        result = ITEM_INSTANCE.read(r)
+        assert result == item
+        assert not r.has_remaining()
+
+    def test_byte_identical_passthrough(self):
+        """Write -> bytes -> read -> write again produces identical bytes."""
+        item = ItemInstance(
+            network_id=42,
+            count=64,
+            aux_value=7,
+            has_net_id=True,
+            stack_net_id=99,
+            block_runtime_id=123,
+            user_data=b"\x01\x02\x03\x04",
+        )
+        w1 = PacketWriter()
+        ITEM_INSTANCE.write(w1, item)
+        original_bytes = w1.to_bytes()
+
+        r = PacketReader(original_bytes)
+        roundtripped = ITEM_INSTANCE.read(r)
+
+        w2 = PacketWriter()
+        ITEM_INSTANCE.write(w2, roundtripped)
+        assert w2.to_bytes() == original_bytes

@@ -21,6 +21,7 @@ from endstone_endweave.codec.types import (
     NETWORK_BLOCK_POS,
     BLOCK_POS,
     ITEM_INSTANCE,
+    ItemInstance,
     bytes_type,
 )
 
@@ -47,5 +48,6 @@ __all__ = [
     "NETWORK_BLOCK_POS",
     "BLOCK_POS",
     "ITEM_INSTANCE",
+    "ItemInstance",
     "bytes_type",
 ]

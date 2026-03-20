@@ -6,6 +6,7 @@ Inspired by ViaVersion's Type<T> system.
 """
 
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Generic, TypeVar
 
 from endstone_endweave.codec.reader import PacketReader
@@ -252,33 +253,60 @@ NETWORK_BLOCK_POS = _NetworkBlockPos()
 BLOCK_POS = _BlockPos()
 
 
-class _ItemInstance(Type[bytes]):
-    """Bedrock ItemInstance -- raw byte passthrough.
+@dataclass
+class ItemInstance:
+    """Deserialized Bedrock ItemInstance."""
 
-    Reads through the variable-length ItemInstance structure and returns
-    the raw bytes, enabling passthrough without full deserialization.
+    network_id: int = 0
+    count: int = 0
+    aux_value: int = 0
+    has_net_id: bool = False
+    stack_net_id: int = 0
+    block_runtime_id: int = 0
+    user_data: bytes = b""
+
+
+class _ItemInstance(Type[ItemInstance]):
+    """Bedrock ItemInstance -- full deserialization.
 
     Format: varint32 NetworkID (0 = air, done), uint16 Count,
     uvarint32 MetadataValue, bool HasNetID, [varint32 StackNetworkID],
     varint32 BlockRuntimeID, ByteSlice extraData.
     """
 
-    def read(self, reader: PacketReader) -> bytes:
-        start = reader.position
+    def read(self, reader: PacketReader) -> ItemInstance:
         network_id = reader.read_varint()
-        if network_id != 0:
-            reader.skip(2)  # uint16 Count
-            reader.read_uvarint()  # MetadataValue
-            has_net_id = reader.read_bool()
-            if has_net_id:
-                reader.read_varint()  # StackNetworkID
-            reader.read_varint()  # BlockRuntimeID
-            extra_len = reader.read_uvarint()  # ByteSlice length
-            reader.skip(extra_len)
-        return reader.slice_from(start)
+        if network_id == 0:
+            return ItemInstance(network_id=0)
+        count = reader.read_ushort_le()
+        aux_value = reader.read_uvarint()
+        has_net_id = reader.read_bool()
+        stack_net_id = reader.read_varint() if has_net_id else 0
+        block_runtime_id = reader.read_varint()
+        extra_len = reader.read_uvarint()
+        user_data = reader.read_bytes(extra_len)
+        return ItemInstance(
+            network_id=network_id,
+            count=count,
+            aux_value=aux_value,
+            has_net_id=has_net_id,
+            stack_net_id=stack_net_id,
+            block_runtime_id=block_runtime_id,
+            user_data=user_data,
+        )
 
-    def write(self, writer: PacketWriter, value: bytes) -> None:
-        writer.write_bytes(value)
+    def write(self, writer: PacketWriter, value: ItemInstance) -> None:
+        writer.write_varint(value.network_id)
+        if value.network_id == 0:
+            return
+        writer.write_ushort_le(value.count)
+        writer.write_uvarint(value.aux_value)
+        writer.write_bool(value.has_net_id)
+        if value.has_net_id:
+            writer.write_varint(value.stack_net_id)
+        writer.write_varint(value.block_runtime_id)
+        writer.write_uvarint(len(value.user_data))
+        writer.write_bytes(value.user_data)
 
 
 ITEM_INSTANCE = _ItemInstance()
