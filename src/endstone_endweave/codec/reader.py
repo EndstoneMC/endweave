@@ -34,7 +34,14 @@ class PacketReader:
 
         Args:
             n: Number of bytes to skip.
+
+        Raises:
+            ValueError: If n is negative or would move past end of data.
         """
+        if n < 0 or n > self.remaining():
+            raise ValueError(
+                f"skip({n}) out of bounds (remaining={self.remaining()})"
+            )
         self._pos += n
 
     def read_byte(self) -> int:
@@ -48,7 +55,14 @@ class PacketReader:
 
         Args:
             n: Number of bytes to read.
+
+        Raises:
+            ValueError: If n is negative or exceeds remaining bytes.
         """
+        if n < 0 or n > self.remaining():
+            raise ValueError(
+                f"read_bytes({n}) out of bounds (remaining={self.remaining()})"
+            )
         val = self._data[self._pos : self._pos + n]
         self._pos += n
         return val
@@ -145,9 +159,17 @@ class PacketReader:
         raw = self.read_uvarint64()
         return (raw >> 1) ^ -(raw & 1)
 
+    _MAX_STRING_BYTES = 131068  # 32767 * 4, matches ViaVersion UTF-8 limit
+
     def read_string(self) -> str:
-        """Read a varint-prefixed UTF-8 string."""
+        """Read a varint-prefixed UTF-8 string.
+
+        Raises:
+            ValueError: If the length prefix exceeds the max string byte limit.
+        """
         length = self.read_uvarint()
-        data = self._data[self._pos : self._pos + length]
-        self._pos += length
-        return data.decode("utf-8")
+        if length > self._MAX_STRING_BYTES:
+            raise ValueError(
+                f"String length {length} exceeds limit {self._MAX_STRING_BYTES}"
+            )
+        return self.read_bytes(length).decode("utf-8")

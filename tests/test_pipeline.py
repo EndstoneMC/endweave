@@ -145,6 +145,46 @@ class TestProtocolPipeline:
         pipeline.on_packet_send(event)
         event.cancel.assert_not_called()
 
+    def test_serverbound_exception_cancels_packet(self):
+        """A handler that raises should cancel the packet, not pass it through."""
+        pipeline, connections, manager = self._make_pipeline()
+
+        def bad_handler(wrapper: PacketWrapper) -> None:
+            raise ValueError("boom")
+
+        protocol = Protocol(server_protocol=924, client_protocol=944)
+        protocol.register_serverbound(42, bad_handler)
+        manager.register(protocol)
+
+        # Detect client version first
+        payload = struct.pack(">i", 944)
+        event = self._make_event(193, payload)
+        pipeline.on_packet_receive(event)
+
+        event2 = self._make_event(42, b"\x00\x01")
+        pipeline.on_packet_receive(event2)
+        event2.cancel.assert_called_once()
+
+    def test_clientbound_exception_cancels_packet(self):
+        """A handler that raises on send should cancel the packet."""
+        pipeline, connections, manager = self._make_pipeline()
+
+        def bad_handler(wrapper: PacketWrapper) -> None:
+            raise ValueError("boom")
+
+        protocol = Protocol(server_protocol=924, client_protocol=944)
+        protocol.register_clientbound(42, bad_handler)
+        manager.register(protocol)
+
+        # Detect client version first
+        payload = struct.pack(">i", 944)
+        event = self._make_event(193, payload)
+        pipeline.on_packet_receive(event)
+
+        event2 = self._make_event(42, b"\x00\x01")
+        pipeline.on_packet_send(event2)
+        event2.cancel.assert_called_once()
+
 
 class TestNormalizeMcVersion:
     def test_short_form(self):

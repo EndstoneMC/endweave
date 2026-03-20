@@ -2,6 +2,7 @@
 
 import struct
 
+import pytest
 
 from endstone_endweave.codec import PacketReader
 from endstone_endweave.codec.types import ItemInstance, ITEM_INSTANCE
@@ -154,6 +155,46 @@ class TestPrimitives:
         w.write_bytes(b"\x01\x02\x03")
         r = PacketReader(w.to_bytes())
         assert r.read_bytes(3) == b"\x01\x02\x03"
+
+
+class TestReaderBoundsChecks:
+    def test_read_bytes_raises_on_overread(self):
+        r = PacketReader(b"\x00\x01")
+        with pytest.raises(ValueError, match="read_bytes"):
+            r.read_bytes(3)
+
+    def test_read_bytes_raises_on_negative(self):
+        r = PacketReader(b"\x00\x01")
+        with pytest.raises(ValueError, match="read_bytes"):
+            r.read_bytes(-1)
+
+    def test_read_bytes_exact_remaining_ok(self):
+        r = PacketReader(b"\x00\x01\x02")
+        assert r.read_bytes(3) == b"\x00\x01\x02"
+
+    def test_skip_raises_past_end(self):
+        r = PacketReader(b"\x00\x01")
+        with pytest.raises(ValueError, match="skip"):
+            r.skip(3)
+
+    def test_skip_raises_negative(self):
+        r = PacketReader(b"\x00\x01")
+        with pytest.raises(ValueError, match="skip"):
+            r.skip(-1)
+
+    def test_skip_exact_remaining_ok(self):
+        r = PacketReader(b"\x00\x01")
+        r.skip(2)
+        assert not r.has_remaining()
+
+    def test_read_string_raises_on_oversized_length(self):
+        """String with length prefix exceeding 131068 bytes."""
+        w = PacketWriter()
+        w.write_uvarint(200000)  # length prefix > 131068
+        w.write_bytes(b"\x00" * 200000)
+        r = PacketReader(w.to_bytes())
+        with pytest.raises(ValueError, match="String length"):
+            r.read_string()
 
 
 class TestReaderState:

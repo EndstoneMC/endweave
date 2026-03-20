@@ -105,6 +105,7 @@ class ProtocolPipeline:
                     f"[SB] {_pname(packet_id)} from {address} "
                     f"EXCEPTION:\n{traceback.format_exc()}"
                 )
+                event.cancel()
                 return
             if wrapper.cancelled:
                 self._logger.debug(f"[SB] {_pname(packet_id)} CANCELLED")
@@ -150,6 +151,7 @@ class ProtocolPipeline:
                     f"[CB] {_pname(packet_id)} to {address} "
                     f"EXCEPTION:\n{traceback.format_exc()}"
                 )
+                event.cancel()
                 return
             if wrapper.cancelled:
                 self._logger.debug(f"[CB] {_pname(packet_id)} CANCELLED")
