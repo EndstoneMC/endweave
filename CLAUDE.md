@@ -70,3 +70,4 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 ## Tooling
 
 - Always use `uv pip` instead of `pip` for package management
+- Use `uv run` to execute scripts (e.g. `uv run tools/fetch_protocol_docs.py`)

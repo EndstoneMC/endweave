@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.repository == 'EndstoneMC/python-plugin-template'
+    if: github.repository == 'EndstoneMC/endweave'
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
