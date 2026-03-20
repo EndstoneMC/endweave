@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
 name = "endstone-endweave"
-version = "0.1.0"
+dynamic = ["version"]
 dependencies = ["endstone>=0.11"]
 description = "Protocol translation plugin for Endstone - allows newer clients on older servers"
 readme = "README.md"
@@ -32,3 +32,9 @@ Issues = "https://github.com/EndstoneMC/endweave/issues"
 
 [project.entry-points."endstone"]
 endweave = "endstone_endweave:EndweavePlugin"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/endstone_endweave/_version.py"
