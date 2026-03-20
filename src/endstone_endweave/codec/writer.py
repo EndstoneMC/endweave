@@ -10,39 +10,50 @@ class PacketWriter:
         self._buf = bytearray()
 
     def to_bytes(self) -> bytes:
+        """Return the accumulated buffer as an immutable bytes object."""
         return bytes(self._buf)
 
     def __len__(self) -> int:
         return len(self._buf)
 
     def write_byte(self, val: int) -> None:
+        """Write a single unsigned byte (uint8)."""
         self._buf.append(val & 0xFF)
 
     def write_bytes(self, data: bytes) -> None:
+        """Write raw bytes directly to the buffer."""
         self._buf.extend(data)
 
     def write_bool(self, val: bool) -> None:
+        """Write a boolean as a single byte (1 or 0)."""
         self._buf.append(1 if val else 0)
 
     def write_short_le(self, val: int) -> None:
+        """Write a signed 16-bit little-endian integer."""
         self._buf.extend(struct.pack("<h", val))
 
     def write_ushort_le(self, val: int) -> None:
+        """Write an unsigned 16-bit little-endian integer."""
         self._buf.extend(struct.pack("<H", val))
 
     def write_int_le(self, val: int) -> None:
+        """Write a signed 32-bit little-endian integer."""
         self._buf.extend(struct.pack("<i", val))
 
     def write_int_be(self, val: int) -> None:
+        """Write a signed 32-bit big-endian integer."""
         self._buf.extend(struct.pack(">i", val))
 
     def write_uint_le(self, val: int) -> None:
+        """Write an unsigned 32-bit little-endian integer."""
         self._buf.extend(struct.pack("<I", val))
 
     def write_long_le(self, val: int) -> None:
+        """Write a signed 64-bit little-endian integer."""
         self._buf.extend(struct.pack("<q", val))
 
     def write_float_le(self, val: float) -> None:
+        """Write a 32-bit little-endian IEEE 754 float."""
         self._buf.extend(struct.pack("<f", val))
 
     def write_uvarint(self, val: int) -> None:

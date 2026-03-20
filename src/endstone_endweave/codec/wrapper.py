@@ -32,7 +32,8 @@ class PacketWrapper:
 
     def user(self) -> "UserConnection":
         """Return the UserConnection associated with this packet."""
-        assert self._user is not None, "No UserConnection set on this PacketWrapper"
+        if self._user is None:
+            raise RuntimeError("No UserConnection set on this PacketWrapper")
         return self._user
 
     @property

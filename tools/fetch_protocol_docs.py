@@ -8,8 +8,6 @@ Usage:
     python tools/fetch_protocol_docs.py r26_u0 r26_u1  # fetch specific versions
 """
 
-from __future__ import annotations
-
 import argparse
 import shutil
 import subprocess

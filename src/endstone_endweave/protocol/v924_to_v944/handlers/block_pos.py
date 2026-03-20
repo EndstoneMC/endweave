@@ -21,6 +21,21 @@ from endstone_endweave.codec import (
     PacketWrapper,
 )
 
+# NoteBlockInstrument remapping constants (TileEvent)
+_NOTE_BLOCK_EVENT = 0
+_TRUMPET_INSERTION_POINT = 16
+_TRUMPET_ID_SHIFT = 4
+
+
+def _net_to_block(wrapper: PacketWrapper) -> None:
+    """Read NetworkBlockPos (v924) and write BlockPos (v944)."""
+    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))
+
+
+def _block_to_net(wrapper: PacketWrapper) -> None:
+    """Read BlockPos (v944) and write NetworkBlockPos (v924)."""
+    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))
+
 
 # ---------------------------------------------------------------------------
 # Clientbound (server -> client): NetworkBlockPos -> BlockPos
@@ -33,7 +48,7 @@ def rewrite_first_net_block_to_block(wrapper: PacketWrapper) -> None:
     Used by: UpdateBlock (21), BlockActorData (56),
     UpdateBlockSynced (110), LecternUpdate (125), OpenSign (303).
     """
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))
+    _net_to_block(wrapper)
 
 
 def rewrite_tile_event(wrapper: PacketWrapper) -> None:
@@ -42,27 +57,27 @@ def rewrite_tile_event(wrapper: PacketWrapper) -> None:
     Converts NetworkBlockPos -> BlockPos, and remaps NoteBlockInstrument IDs.
     v944 inserted Trumpet variants at IDs 16-19, displacing Zombie..Piglin by +4.
     """
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # Position
+    _net_to_block(wrapper)  # Position
     event_type = wrapper.passthrough(VAR_INT)  # EventType
     event_data = wrapper.read(VAR_INT)  # EventData
-    if event_type == 0 and event_data >= 16:
-        event_data += 4  # Shift for Trumpet 16-19 insertion
+    if event_type == _NOTE_BLOCK_EVENT and event_data >= _TRUMPET_INSERTION_POINT:
+        event_data += _TRUMPET_ID_SHIFT
     wrapper.write(VAR_INT, event_data)
 
 
 def rewrite_set_spawn_position(wrapper: PacketWrapper) -> None:
     """SetSpawnPosition (43): spawnType, Position, dimension, SpawnPosition."""
     wrapper.passthrough(VAR_INT)  # spawnType
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # Position
+    _net_to_block(wrapper)  # Position
     wrapper.passthrough(VAR_INT)  # dimension
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # SpawnPosition
+    _net_to_block(wrapper)  # SpawnPosition
 
 
 def rewrite_add_volume_entity(wrapper: PacketWrapper) -> None:
     """AddVolumeEntity (166): RuntimeID, Bounds[0], Bounds[1], then rest."""
     wrapper.passthrough(UVAR_INT)  # RuntimeID
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # MinBound
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # MaxBound
+    _net_to_block(wrapper)  # MinBound
+    _net_to_block(wrapper)  # MaxBound
 
 
 def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
@@ -72,12 +87,12 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
     BlockChangeEntry: BlockPos, uvarint blockRuntimeID, uvarint flags,
     uvarint64 syncedUpdateEntityUniqueID, uvarint syncedUpdateType.
     """
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # SubChunk position
+    _net_to_block(wrapper)  # SubChunk position
 
     # Blocks slice
     blocks_count = wrapper.passthrough(UVAR_INT)
     for _ in range(blocks_count):
-        wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # BlockPos
+        _net_to_block(wrapper)  # BlockPos
         wrapper.passthrough(UVAR_INT)  # blockRuntimeID
         wrapper.passthrough(UVAR_INT)  # flags
         wrapper.passthrough(UVAR_INT64)  # syncedUpdateEntityUniqueID
@@ -86,7 +101,7 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
     # Extra slice
     extra_count = wrapper.passthrough(UVAR_INT)
     for _ in range(extra_count):
-        wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # BlockPos
+        _net_to_block(wrapper)  # BlockPos
         wrapper.passthrough(UVAR_INT)  # blockRuntimeID
         wrapper.passthrough(UVAR_INT)  # flags
         wrapper.passthrough(UVAR_INT64)  # syncedUpdateEntityUniqueID
@@ -96,7 +111,7 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
 def rewrite_play_sound(wrapper: PacketWrapper) -> None:
     """PlaySound (86): Name, Position, Volume, Pitch."""
     wrapper.passthrough(STRING)  # Name
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # Position
+    _net_to_block(wrapper)  # Position
 
 
 def rewrite_map_data(wrapper: PacketWrapper) -> None:
@@ -132,9 +147,7 @@ def rewrite_map_data(wrapper: PacketWrapper) -> None:
             if obj_type == 0:  # Entity
                 wrapper.passthrough(VAR_INT64)  # EntityUniqueID
             elif obj_type == 1:  # Block
-                wrapper.write(
-                    BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS)
-                )  # BlockPosition
+                _net_to_block(wrapper)  # BlockPosition
 
 
 def rewrite_update_client_input_locks(wrapper: PacketWrapper) -> None:
@@ -205,7 +218,7 @@ def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
     # UseItemTransactionData
     wrapper.passthrough(UVAR_INT)  # ActionType
     wrapper.passthrough(UVAR_INT)  # TriggerType
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # BlockPosition
+    _block_to_net(wrapper)  # BlockPosition
     wrapper.passthrough(VAR_INT)  # BlockFace
     wrapper.passthrough(VAR_INT)  # HotBarSlot
     wrapper.passthrough(ITEM_INSTANCE)  # HeldItem
@@ -224,15 +237,15 @@ def rewrite_player_action(wrapper: PacketWrapper) -> None:
     """PlayerAction (36): entityRuntimeID, actionType, BlockPosition, ResultPosition, face."""
     wrapper.passthrough(UVAR_INT64)  # entityRuntimeID
     wrapper.passthrough(VAR_INT)  # actionType
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # BlockPosition
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # ResultPosition
+    _block_to_net(wrapper)  # BlockPosition
+    _block_to_net(wrapper)  # ResultPosition
 
 
 def rewrite_container_open(wrapper: PacketWrapper) -> None:
     """ContainerOpen (46): windowID, type, ContainerPosition, entityUniqueID."""
     wrapper.passthrough(BYTE)  # windowID
     wrapper.passthrough(BYTE)  # type
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # ContainerPosition
+    _block_to_net(wrapper)  # ContainerPosition
 
 
 def _rewrite_structure_settings(wrapper: PacketWrapper) -> None:
@@ -248,8 +261,8 @@ def _rewrite_structure_settings(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # IgnoreEntities
     wrapper.passthrough(BOOL)  # IgnoreBlocks
     wrapper.passthrough(BOOL)  # AllowNonTickingChunks
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Size
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Offset
+    _block_to_net(wrapper)  # Size
+    _block_to_net(wrapper)  # Offset
     wrapper.passthrough(VAR_INT64)  # LastEditingPlayerUniqueID
     wrapper.passthrough(BYTE)  # Rotation
     wrapper.passthrough(BYTE)  # Mirror
@@ -268,7 +281,7 @@ def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
     StructureEditorData: string Name, string DataField, bool IncludePlayers,
     bool ShowBoundingBox, varint StructureBlockType, StructureSettings, varint RedstoneSaveMode.
     """
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Block Position
+    _block_to_net(wrapper)  # Block Position
     # StructureEditorData
     wrapper.passthrough(STRING)  # Name
     wrapper.passthrough(STRING)  # DataField
@@ -283,17 +296,17 @@ def rewrite_command_block_update(wrapper: PacketWrapper) -> None:
     """CommandBlockUpdate (78): IsBlock (bool), then if true: Position first."""
     is_block = wrapper.passthrough(BOOL)
     if is_block:
-        wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Position
+        _block_to_net(wrapper)  # Position
 
 
 def rewrite_structure_template_data_request(wrapper: PacketWrapper) -> None:
     """StructureTemplateDataRequest (132): Name, Position, StructureSettings, RequestedOperation."""
     wrapper.passthrough(STRING)  # Name
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Position
+    _block_to_net(wrapper)  # Position
     _rewrite_structure_settings(wrapper)
 
 
 def rewrite_anvil_damage(wrapper: PacketWrapper) -> None:
     """AnvilDamage (141): Damage, Position."""
     wrapper.passthrough(BYTE)  # Damage
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Position
+    _block_to_net(wrapper)  # Position

@@ -36,6 +36,7 @@ class ConnectionManager:
         self._connections: dict[str, UserConnection] = {}
 
     def get_or_create(self, address: str) -> UserConnection:
+        """Return existing connection for address, or create a new one."""
         if address not in self._connections:
             self._connections[address] = UserConnection(
                 address=address,
@@ -45,9 +46,11 @@ class ConnectionManager:
         return self._connections[address]
 
     def get(self, address: str) -> UserConnection | None:
+        """Return the connection for address, or None if not found."""
         return self._connections.get(address)
 
     def remove_by_address(self, address: str) -> None:
+        """Remove connection by network address (no-op if not found)."""
         self._connections.pop(address, None)
 
     def remove_by_player(self, player: Player) -> None:

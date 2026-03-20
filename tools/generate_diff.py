@@ -13,8 +13,6 @@ Usage:
     python tools/generate_diff.py 924 944          # diff by protocol number
 """
 
-from __future__ import annotations
-
 import argparse
 import json
 import sys

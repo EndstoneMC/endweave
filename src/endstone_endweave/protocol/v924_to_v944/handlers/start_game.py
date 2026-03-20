@@ -45,7 +45,7 @@ def _passthrough_experiments(wrapper: PacketWrapper) -> None:
     """Passthrough Experiments: uint32_le count + entries + ever_toggled bool."""
     count = wrapper.passthrough(UINT_LE)
     for _ in range(count):
-        print(wrapper.passthrough(STRING))
+        wrapper.passthrough(STRING)
         wrapper.passthrough(BOOL)  # enabled
     wrapper.passthrough(BOOL)  # ever_toggled
 

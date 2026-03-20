@@ -25,6 +25,8 @@ class Type(ABC, Generic[T]):
 
 
 class _Byte(Type[int]):
+    """Unsigned byte (uint8)."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_byte()
 
@@ -33,6 +35,8 @@ class _Byte(Type[int]):
 
 
 class _Bool(Type[bool]):
+    """Boolean (single byte, nonzero = True)."""
+
     def read(self, reader: PacketReader) -> bool:
         return reader.read_bool()
 
@@ -41,6 +45,8 @@ class _Bool(Type[bool]):
 
 
 class _ShortLE(Type[int]):
+    """Signed 16-bit little-endian integer."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_short_le()
 
@@ -49,6 +55,8 @@ class _ShortLE(Type[int]):
 
 
 class _UShortLE(Type[int]):
+    """Unsigned 16-bit little-endian integer."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_ushort_le()
 
@@ -57,6 +65,8 @@ class _UShortLE(Type[int]):
 
 
 class _IntLE(Type[int]):
+    """Signed 32-bit little-endian integer."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_int_le()
 
@@ -65,6 +75,8 @@ class _IntLE(Type[int]):
 
 
 class _IntBE(Type[int]):
+    """Signed 32-bit big-endian integer."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_int_be()
 
@@ -73,6 +85,8 @@ class _IntBE(Type[int]):
 
 
 class _UIntLE(Type[int]):
+    """Unsigned 32-bit little-endian integer."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_uint_le()
 
@@ -81,6 +95,8 @@ class _UIntLE(Type[int]):
 
 
 class _LongLE(Type[int]):
+    """Signed 64-bit little-endian integer."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_long_le()
 
@@ -89,6 +105,8 @@ class _LongLE(Type[int]):
 
 
 class _FloatLE(Type[float]):
+    """32-bit little-endian IEEE 754 float."""
+
     def read(self, reader: PacketReader) -> float:
         return reader.read_float_le()
 
@@ -97,6 +115,8 @@ class _FloatLE(Type[float]):
 
 
 class _VarInt(Type[int]):
+    """Signed variable-length integer (zigzag encoded, up to 32 bits)."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_varint()
 
@@ -105,6 +125,8 @@ class _VarInt(Type[int]):
 
 
 class _UVarInt(Type[int]):
+    """Unsigned variable-length integer (LEB128, up to 32 bits)."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_uvarint()
 
@@ -113,6 +135,8 @@ class _UVarInt(Type[int]):
 
 
 class _VarInt64(Type[int]):
+    """Signed variable-length integer (zigzag encoded, up to 64 bits)."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_varint64()
 
@@ -121,6 +145,8 @@ class _VarInt64(Type[int]):
 
 
 class _UVarInt64(Type[int]):
+    """Unsigned variable-length integer (LEB128, up to 64 bits)."""
+
     def read(self, reader: PacketReader) -> int:
         return reader.read_uvarint64()
 
@@ -129,6 +155,8 @@ class _UVarInt64(Type[int]):
 
 
 class _String(Type[str]):
+    """Varint-prefixed UTF-8 string."""
+
     def read(self, reader: PacketReader) -> str:
         return reader.read_string()
 
