@@ -5,11 +5,30 @@ build-backend = "hatchling.build"
 [project]
 name = "endstone-endweave"
 version = "0.1.0"
-dependencies = []
-description = "Protocol translation plugin for Bedrock - allows newer clients on older servers"
+dependencies = ["endstone>=0.11"]
+description = "Protocol translation plugin for Endstone - allows newer clients on older servers"
 readme = "README.md"
 license = { file = "LICENSE" }
 keywords = ["endstone", "plugin", "protocol", "translation"]
+requires-python = ">=3.10"
+authors = [{ name = "Vincent", email = "magicdroidx@gmail.com" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.urls]
+Repository = "https://github.com/EndstoneMC/endweave"
+Issues = "https://github.com/EndstoneMC/endweave/issues"
 
 [project.entry-points."endstone"]
 endweave = "endstone_endweave:EndweavePlugin"
