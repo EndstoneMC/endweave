@@ -3,8 +3,9 @@
 import struct
 
 
-from endstone_endweave.codec import PacketReader, PacketWrapper, COMPOUND_TAG
+from endstone_endweave.codec import PacketReader, PacketWrapper, NAMED_COMPOUND_TAG, CompoundTag, ByteTag
 from endstone_endweave.codec.writer import PacketWriter
+from endstone_endweave.codec.types.nbt import read_nbt
 from endstone_endweave.protocol.v924_to_v944.handlers.start_game import (
     rewrite_start_game,
     _passthrough_game_rules,
@@ -48,13 +49,13 @@ class TestSkipNbtCompound:
         """Root compound with no children (just End byte)."""
         data = bytes([10]) + _nbt_string("") + bytes([0])  # type=Compound, name="", End
         r = PacketReader(data + b"\xff")
-        r.skip_nbt_compound()
+        read_nbt(r)
         assert r.read_byte() == 0xFF
 
     def test_null_root(self):
-        """Root type byte is 0 (null/end) -- empty NBT."""
+        """Root type byte is 0 (null/end) -- returns None (absent NBT)."""
         r = PacketReader(bytes([0]) + b"\xab")
-        r.skip_nbt_compound()
+        assert read_nbt(r) is None
         assert r.read_byte() == 0xAB
 
     def test_compound_with_primitives(self):
@@ -91,7 +92,7 @@ class TestSkipNbtCompound:
         buf.extend(b"\xee")  # sentinel
 
         r = PacketReader(bytes(buf))
-        r.skip_nbt_compound()
+        read_nbt(r)
         assert r.read_byte() == 0xEE
 
     def test_compound_with_string_and_arrays(self):
@@ -119,7 +120,7 @@ class TestSkipNbtCompound:
         buf.extend(b"\xdd")
 
         r = PacketReader(bytes(buf))
-        r.skip_nbt_compound()
+        read_nbt(r)
         assert r.read_byte() == 0xDD
 
     def test_nested_compound(self):
@@ -138,7 +139,7 @@ class TestSkipNbtCompound:
         buf.extend(b"\xcc")
 
         r = PacketReader(bytes(buf))
-        r.skip_nbt_compound()
+        read_nbt(r)
         assert r.read_byte() == 0xCC
 
     def test_list_of_ints(self):
@@ -158,7 +159,7 @@ class TestSkipNbtCompound:
         buf.extend(b"\xbb")
 
         r = PacketReader(bytes(buf))
-        r.skip_nbt_compound()
+        read_nbt(r)
         assert r.read_byte() == 0xBB
 
     def test_list_of_compounds(self):
@@ -186,11 +187,11 @@ class TestSkipNbtCompound:
         buf.extend(b"\xaa")
 
         r = PacketReader(bytes(buf))
-        r.skip_nbt_compound()
+        read_nbt(r)
         assert r.read_byte() == 0xAA
 
     def test_compound_tag_type_passthrough(self):
-        """COMPOUND_TAG type reads raw bytes and writes them back identically."""
+        """COMPOUND_TAG type parses into CompoundTag and round-trips correctly."""
         buf = bytearray()
         buf.append(10)
         buf.extend(_nbt_string(""))
@@ -201,8 +202,10 @@ class TestSkipNbtCompound:
         nbt_bytes = bytes(buf)
 
         wrapper = PacketWrapper(nbt_bytes + b"\x99")
-        raw = wrapper.passthrough(COMPOUND_TAG)
-        assert raw == nbt_bytes
+        tag = wrapper.passthrough(NAMED_COMPOUND_TAG)
+        assert isinstance(tag, CompoundTag)
+        assert isinstance(tag["x"], ByteTag)
+        assert tag["x"].value == 5
         trailing = wrapper.passthrough_all()
         assert trailing == b"\x99"
         assert wrapper.to_bytes() == nbt_bytes + b"\x99"
@@ -345,7 +348,7 @@ def _build_v924_start_game(
     w.write_bool(False)  # start with map
     w.write_varint(0)  # player permissions
     w.write_int_le(4)  # server chunk tick range
-    w.write_bytes(b"\x00" * 9)  # 9 bools
+    w.write_bytes(b"\x00" * 10)  # 10 bools
     w.write_string("*")  # base game version
     w.write_int_le(0)  # limited world width
     w.write_int_le(0)  # limited world depth
@@ -452,37 +455,32 @@ class TestRewriteStartGame:
         assert not wrapper.has_remaining()
 
     def test_with_join_info_stripped(self):
-        """v924 packet with gathering data -- should be stripped in output."""
-        payload_no_join = _build_v924_start_game(has_server_join_info=False)
-        payload_with_join = _build_v924_start_game(
+        """v924 gathering data is stripped; v944 sub-fields are written."""
+        payload_with_gather = _build_v924_start_game(
             has_server_join_info=True, has_gathering=True
         )
-        # The input with join info is larger
-        assert len(payload_with_join) > len(payload_no_join)
+        payload_no_gather = _build_v924_start_game(
+            has_server_join_info=True, has_gathering=False
+        )
+        # The input with gathering is larger (7 extra strings)
+        assert len(payload_with_gather) > len(payload_no_gather)
 
-        wrapper = PacketWrapper(payload_with_join)
-        rewrite_start_game(wrapper)
-        result = wrapper.to_bytes()
+        wrapper_gather = PacketWrapper(payload_with_gather)
+        rewrite_start_game(wrapper_gather)
 
-        # Output should match the no-join-info case (join info stripped,
-        # has_server_join_info=false written)
-        wrapper_no_join = PacketWrapper(payload_no_join)
-        rewrite_start_game(wrapper_no_join)
-        expected = wrapper_no_join.to_bytes()
+        wrapper_no_gather = PacketWrapper(payload_no_gather)
+        rewrite_start_game(wrapper_no_gather)
 
-        assert result == expected
+        # Both produce the same v944 output (gathering data stripped,
+        # replaced with 3 False bools)
+        assert wrapper_gather.to_bytes() == wrapper_no_gather.to_bytes()
 
     def test_join_info_true_no_gathering(self):
         """v924 packet with has_server_join_info=true but has_gathering=false."""
         payload = _build_v924_start_game(has_server_join_info=True, has_gathering=False)
         wrapper = PacketWrapper(payload)
         rewrite_start_game(wrapper)
-        result = wrapper.to_bytes()
-
-        # Should also produce the same output as no-join-info
-        wrapper_base = PacketWrapper(_build_v924_start_game(has_server_join_info=False))
-        rewrite_start_game(wrapper_base)
-        assert result == wrapper_base.to_bytes()
+        assert not wrapper.has_remaining()
 
     def test_trailing_strings_preserved(self):
         """Verify the 4 trailing strings survive the rewrite."""

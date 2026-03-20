@@ -9,7 +9,7 @@ strip the v924 server join info, and write false for v944's has_server_join_info
 from endstone_endweave.codec import (
     BOOL,
     BYTE,
-    COMPOUND_TAG,
+    NAMED_COMPOUND_TAG,
     FLOAT_LE,
     INT_LE,
     LONG_LE,
@@ -145,12 +145,12 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     block_prop_count = wrapper.passthrough(UVAR_INT)
     for _ in range(block_prop_count):
         wrapper.passthrough(STRING)  # block name
-        wrapper.passthrough(COMPOUND_TAG)  # block properties NBT
+        wrapper.passthrough(NAMED_COMPOUND_TAG)  # block properties NBT
 
     wrapper.passthrough(STRING)  # Multiplayer Correlation Id
     wrapper.passthrough(BOOL)  # Enable Item Stack Net Manager
     wrapper.passthrough(STRING)  # Server version
-    wrapper.passthrough(COMPOUND_TAG)  # Player Property Data
+    wrapper.passthrough(NAMED_COMPOUND_TAG)  # Player Property Data
     wrapper.read(LONG_LE)  # Server Block Type Registry Checksum
     wrapper.write(LONG_LE, 0)  # zero checksum to skip validation
     wrapper.passthrough(LONG_LE)  # World Template ID MSB
