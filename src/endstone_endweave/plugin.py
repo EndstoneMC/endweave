@@ -22,6 +22,12 @@ from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
 
 
 class EndweavePlugin(Plugin):
+    """Endstone plugin that enables protocol translation between Bedrock versions.
+
+    Registers event handlers for packet interception and routes packets through
+    a ProtocolPipeline that applies version-specific transformations.
+    """
+
     prefix = "Endweave"  # type: ignore[assignment]
     api_version = "0.11"  # type: ignore[assignment]
 
@@ -62,6 +68,12 @@ class EndweavePlugin(Plugin):
         """Normalize a Minecraft version string to dotted form.
 
         Endstone may return short forms like "26.3" meaning "1.26.3".
+
+        Args:
+            version: Version string from Endstone (e.g. "26.3" or "1.26.3").
+
+        Returns:
+            Dotted version string with major version prefix (e.g. "1.26.3").
         """
         parts = version.split(".")
         if len(parts) == 2:
@@ -70,7 +82,12 @@ class EndweavePlugin(Plugin):
         return version
 
     def _detect_server_protocol(self) -> int:
-        """Detect the server's protocol version from its minecraft_version string."""
+        """Detect the server's protocol version from its minecraft_version string.
+
+        Returns:
+            Protocol version number for the running server. Falls back to
+            the lowest known protocol if detection fails.
+        """
         server_mc_version = self._normalize_mc_version(self.server.minecraft_version)
         ver = get_version_by_name(server_mc_version)
         if ver:

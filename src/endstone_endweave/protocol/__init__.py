@@ -16,6 +16,12 @@ class Protocol:
 
     Handlers receive a PacketWrapper and use passthrough/read/write/cancel
     for field-level transforms. Access the connection via wrapper.user().
+
+    Attributes:
+        server_protocol: Protocol number of the server (older) version.
+        client_protocol: Protocol number of the client (newer) version.
+        _handlers: Per-direction mapping of packet ID to handler callable.
+        _cancel: Per-direction set of packet IDs to silently drop.
     """
 
     def __init__(self, server_protocol: int, client_protocol: int) -> None:
@@ -45,7 +51,13 @@ class Protocol:
     def transform(
         self, direction: Direction, packet_id: int, wrapper: PacketWrapper
     ) -> None:
-        """Run the handler for this packet in the given direction, if any."""
+        """Run the handler for this packet in the given direction, if any.
+
+        Args:
+            direction: Whether the packet is clientbound or serverbound.
+            packet_id: Bedrock packet ID.
+            wrapper: Packet wrapper providing passthrough/read/write/cancel API.
+        """
         if packet_id in self._cancel[direction]:
             wrapper.cancel()
             return

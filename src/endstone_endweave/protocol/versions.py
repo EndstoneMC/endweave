@@ -9,7 +9,14 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class ProtocolVersion:
-    """A known Bedrock protocol version."""
+    """A known Bedrock protocol version.
+
+    Attributes:
+        protocol: Numeric protocol ID (e.g. 924).
+        minecraft_version: Primary Minecraft version string (e.g. "1.26.0").
+        release_tag: BedrockProtocol repo branch tag (e.g. "r26_u0").
+        included_versions: All Minecraft version strings sharing this protocol.
+    """
 
     protocol: int  # e.g. 924
     minecraft_version: str  # e.g. "1.26.0"
@@ -34,10 +41,24 @@ _VERSION_BY_NAME: dict[str, ProtocolVersion] = {
 
 
 def get_version(protocol: int) -> ProtocolVersion | None:
-    """Look up a ProtocolVersion by protocol number."""
+    """Look up a ProtocolVersion by protocol number.
+
+    Args:
+        protocol: Numeric protocol ID to look up.
+
+    Returns:
+        The matching ProtocolVersion, or None if not registered.
+    """
     return VERSIONS.get(protocol)
 
 
 def get_version_by_name(mc_version: str) -> ProtocolVersion | None:
-    """Look up a ProtocolVersion by Minecraft version string."""
+    """Look up a ProtocolVersion by Minecraft version string.
+
+    Args:
+        mc_version: Minecraft version string (e.g. "1.26.0").
+
+    Returns:
+        The matching ProtocolVersion, or None if not registered.
+    """
     return _VERSION_BY_NAME.get(mc_version)

@@ -8,6 +8,9 @@ def rewrite_request_network_settings(wrapper: PacketWrapper) -> None:
 
     RequestNetworkSettings payload:
     - int32 BE: client_network_version (protocol number)
+
+    Args:
+        wrapper: Packet wrapper for RequestNetworkSettings.
     """
     connection = wrapper.user()
     client_protocol = wrapper.read(INT_BE)
@@ -31,6 +34,9 @@ def rewrite_login(wrapper: PacketWrapper) -> None:
     Login payload:
     - int32 BE: protocol_version
     - bytes: JWT chain data
+
+    Args:
+        wrapper: Packet wrapper for Login.
     """
     connection = wrapper.user()
     protocol_in_packet = wrapper.read(INT_BE)

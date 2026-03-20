@@ -6,7 +6,11 @@ from endstone_endweave.protocol.packet_ids import PacketId
 
 
 def detect_client_protocol(wrapper: PacketWrapper) -> None:
-    """Read client protocol from RequestNetworkSettings and store on connection."""
+    """Read client protocol from RequestNetworkSettings and store on connection.
+
+    Args:
+        wrapper: Packet wrapper for the incoming RequestNetworkSettings packet.
+    """
     connection = wrapper.user()
     client_proto = wrapper.passthrough(INT_BE)
     connection.client_protocol = client_proto
@@ -16,7 +20,11 @@ def detect_client_protocol(wrapper: PacketWrapper) -> None:
 
 
 def log_disconnect(wrapper: PacketWrapper) -> None:
-    """Log the reason from a Disconnect packet (does not modify payload)."""
+    """Log the reason from a Disconnect packet (does not modify payload).
+
+    Args:
+        wrapper: Packet wrapper for the outgoing Disconnect packet.
+    """
     connection = wrapper.user()
     try:
         reason = wrapper.passthrough(UVAR_INT)
@@ -34,7 +42,12 @@ def log_disconnect(wrapper: PacketWrapper) -> None:
 
 
 def create_base_protocol(server_protocol: int) -> Protocol:
-    """Create the base protocol that handles version detection and disconnect logging."""
+    """Create the base protocol that handles version detection and disconnect logging.
+
+    Returns:
+        A Protocol instance with handlers for RequestNetworkSettings
+        and Disconnect registered.
+    """
     p = Protocol(server_protocol=server_protocol, client_protocol=0)
     p.register_serverbound(PacketId.REQUEST_NETWORK_SETTINGS, detect_client_protocol)
     p.register_clientbound(PacketId.DISCONNECT, log_disconnect)

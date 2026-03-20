@@ -24,6 +24,15 @@ OUTPUT_DIR = Path(__file__).resolve().parent.parent / "protocol_docs"
 
 
 def fetch_version(name: str, branch: str) -> None:
+    """Fetch protocol docs for a single version from the BedrockProtocol repo.
+
+    Shallow-clones the given branch into a temp directory, then copies the
+    dot/, json/, and changelog files into protocol_docs/<name>/.
+
+    Args:
+        name: Release tag used as the output subdirectory name (e.g. "r26_u0").
+        branch: Git branch to clone (e.g. "r/26_u0").
+    """
     dest = OUTPUT_DIR / name
     if dest.exists():
         print(f"  {dest} already exists, skipping")
@@ -64,6 +73,7 @@ def fetch_version(name: str, branch: str) -> None:
 
 
 def main() -> None:
+    """Entry point: parse CLI args and fetch protocol docs for selected versions."""
     parser = argparse.ArgumentParser(
         description="Fetch protocol docs from BedrockProtocol repo."
     )

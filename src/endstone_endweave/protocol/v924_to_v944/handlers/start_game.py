@@ -25,7 +25,11 @@ from endstone_endweave.codec import (
 
 
 def _passthrough_game_rules(wrapper: PacketWrapper) -> None:
-    """Passthrough GameRules: uvarint count + per-rule entries."""
+    """Passthrough GameRules: uvarint count + per-rule entries.
+
+    Args:
+        wrapper: Packet wrapper positioned at the GameRules section.
+    """
     count = wrapper.passthrough(UVAR_INT)
     for _ in range(count):
         wrapper.passthrough(STRING)
@@ -42,7 +46,11 @@ def _passthrough_game_rules(wrapper: PacketWrapper) -> None:
 
 
 def _passthrough_experiments(wrapper: PacketWrapper) -> None:
-    """Passthrough Experiments: uint32_le count + entries + ever_toggled bool."""
+    """Passthrough Experiments: uint32_le count + entries + ever_toggled bool.
+
+    Args:
+        wrapper: Packet wrapper positioned at the Experiments section.
+    """
     count = wrapper.passthrough(UINT_LE)
     for _ in range(count):
         wrapper.passthrough(STRING)
@@ -51,7 +59,11 @@ def _passthrough_experiments(wrapper: PacketWrapper) -> None:
 
 
 def rewrite_start_game(wrapper: PacketWrapper) -> None:
-    """Rewrite StartGamePacket from v924 to v944 format."""
+    """Rewrite StartGamePacket from v924 to v944 format.
+
+    Args:
+        wrapper: Packet wrapper for StartGamePacket.
+    """
     wrapper.passthrough(VAR_INT64)  # mEntityId
     wrapper.passthrough(UVAR_INT64)  # mRuntimeId
     wrapper.passthrough(VAR_INT)  # mEntityGameType

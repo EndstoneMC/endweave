@@ -26,7 +26,15 @@ from endstone_endweave.protocol.versions import VERSIONS  # noqa: E402
 
 
 def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
-    """Flatten a field tree into a dict keyed by dotted path."""
+    """Flatten a field tree into a dict keyed by dotted path.
+
+    Args:
+        fields: List of field dicts, each with "name", "type", and optional "children".
+        prefix: Dotted path prefix for recursion (empty string at the top level).
+
+    Returns:
+        Dict mapping dotted field paths to their type and attributes info.
+    """
     result = {}
     for field in fields:
         name = field["name"]
@@ -41,7 +49,19 @@ def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
 
 
 def diff_packets(old_packets: list[dict], new_packets: list[dict]) -> dict:
-    """Diff two lists of packet definitions."""
+    """Diff two lists of packet definitions.
+
+    Compares packets by name, identifying additions, removals, and per-packet
+    field changes (added/removed fields, type changes).
+
+    Args:
+        old_packets: Packet definitions from the older protocol version.
+        new_packets: Packet definitions from the newer protocol version.
+
+    Returns:
+        Dict with keys "new_packets", "removed_packets", and "changed_packets"
+        summarizing all differences.
+    """
     old_by_name = {p["name"]: p for p in old_packets}
     new_by_name = {p["name"]: p for p in new_packets}
 
@@ -83,7 +103,15 @@ def diff_packets(old_packets: list[dict], new_packets: list[dict]) -> dict:
 
 
 def _resolve_protocol(arg: str) -> int | None:
-    """Resolve a CLI argument to a protocol number (accepts tag or number)."""
+    """Resolve a CLI argument to a protocol number (accepts tag or number).
+
+    Args:
+        arg: A protocol number string (e.g. "924") or release tag (e.g. "r26_u0").
+
+    Returns:
+        The integer protocol number, or None if the argument does not match
+        any known version.
+    """
     # Try as protocol number
     try:
         proto = int(arg)

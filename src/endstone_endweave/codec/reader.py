@@ -4,7 +4,12 @@ import struct
 
 
 class PacketReader:
-    """Reads binary data from a Bedrock packet payload."""
+    """Reads binary data from a Bedrock packet payload.
+
+    Attributes:
+        _data: The raw packet bytes being read.
+        _pos: Current read offset into _data.
+    """
 
     def __init__(self, data: bytes) -> None:
         self._data = data
@@ -25,7 +30,11 @@ class PacketReader:
         return len(self._data) - self._pos
 
     def skip(self, n: int) -> None:
-        """Advance the read position by n bytes without returning data."""
+        """Advance the read position by n bytes without returning data.
+
+        Args:
+            n: Number of bytes to skip.
+        """
         self._pos += n
 
     def read_byte(self) -> int:
@@ -35,7 +44,11 @@ class PacketReader:
         return val
 
     def read_bytes(self, n: int) -> bytes:
-        """Read exactly n raw bytes."""
+        """Read exactly n raw bytes.
+
+        Args:
+            n: Number of bytes to read.
+        """
         val = self._data[self._pos : self._pos + n]
         self._pos += n
         return val
@@ -148,6 +161,11 @@ class PacketReader:
           compound (10): extra = -1 (read tag headers until End byte)
           list (9):      extra encodes elem_type and remaining count
                          as (elem_type << 32 | remaining)
+
+        Raises:
+            ValueError: If the root tag is not a compound (type 10),
+                nesting depth exceeds 512, or an unknown tag type
+                is encountered.
         """
         _MAX_DEPTH = 512
 
@@ -218,7 +236,14 @@ class PacketReader:
                 raise ValueError(f"Unknown NBT tag type: {tag_type}")
 
     def slice_from(self, start: int) -> bytes:
-        """Return bytes from start position to current position."""
+        """Return bytes from start position to current position.
+
+        Args:
+            start: Beginning byte offset (inclusive).
+
+        Returns:
+            The byte slice from start to the current read position.
+        """
         return self._data[start : self._pos]
 
     def read_string(self) -> str:

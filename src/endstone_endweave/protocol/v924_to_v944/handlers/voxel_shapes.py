@@ -8,6 +8,10 @@ from endstone_endweave.codec import USHORT_LE, PacketWrapper
 
 
 def rewrite_voxel_shapes(wrapper: PacketWrapper) -> None:
-    """Append the missing Custom Shape Count field for v944 clients."""
+    """Append the missing Custom Shape Count field for v944 clients.
+
+    Args:
+        wrapper: Packet wrapper for VoxelShapesPacket.
+    """
     wrapper.passthrough_all()
     wrapper.write(USHORT_LE, 0)

@@ -10,6 +10,11 @@ class ProtocolManager:
 
     Supports chaining protocols for multi-step version gaps,
     inspired by ViaVersion's ProtocolManagerImpl.getProtocolPath().
+
+    Attributes:
+        _protocols: Direct mapping from (server, client) version pair to Protocol.
+        _base_protocols: Always-on protocols that run before version-specific ones.
+        _path_cache: Cached BFS results mapping version pairs to protocol chains.
     """
 
     def __init__(self) -> None:
@@ -18,12 +23,21 @@ class ProtocolManager:
         self._path_cache: dict[tuple[int, int], list[Protocol] | None] = {}
 
     def register(self, protocol: Protocol) -> None:
+        """Register a version-specific protocol for its (server, client) pair.
+
+        Args:
+            protocol: Protocol to register. Clears the path cache.
+        """
         key = (protocol.server_protocol, protocol.client_protocol)
         self._protocols[key] = protocol
         self._path_cache.clear()
 
     def register_base(self, protocol: Protocol) -> None:
-        """Register a base protocol (always-on, runs before version-specific ones)."""
+        """Register a base protocol (always-on, runs before version-specific ones).
+
+        Args:
+            protocol: Base protocol to append to the base protocol list.
+        """
         self._base_protocols.append(protocol)
 
     def get_base_protocols(self) -> list[Protocol]:
@@ -31,7 +45,15 @@ class ProtocolManager:
         return self._base_protocols
 
     def get(self, server_protocol: int, client_protocol: int) -> Protocol | None:
-        """Get a single direct protocol for a version pair."""
+        """Get a single direct protocol for a version pair.
+
+        Args:
+            server_protocol: Server-side protocol number.
+            client_protocol: Client-side protocol number.
+
+        Returns:
+            The registered Protocol, or None if no direct mapping exists.
+        """
         return self._protocols.get((server_protocol, client_protocol))
 
     def get_path(
@@ -41,6 +63,14 @@ class ProtocolManager:
 
         Direct lookup first, then BFS for multi-step chains.
         Results are cached.
+
+        Args:
+            server_protocol: Target server-side protocol number.
+            client_protocol: Source client-side protocol number.
+
+        Returns:
+            Ordered list of Protocols forming the translation chain,
+            an empty list if versions match, or None if unreachable.
         """
         if server_protocol == client_protocol:
             return []
@@ -65,7 +95,16 @@ class ProtocolManager:
         return path
 
     def _bfs(self, server_protocol: int, client_protocol: int) -> list[Protocol] | None:
-        """BFS to find a chain of protocols from client -> server."""
+        """BFS to find a chain of protocols from client -> server.
+
+        Args:
+            server_protocol: Target server-side protocol number.
+            client_protocol: Source client-side protocol number.
+
+        Returns:
+            Ordered list of Protocols forming the shortest chain,
+            or None if no path exists.
+        """
         # Build adjacency: for each protocol (s, c), from c we can reach s
         adjacency: dict[int, list[Protocol]] = {}
         for (s, c), protocol in self._protocols.items():
@@ -88,7 +127,14 @@ class ProtocolManager:
         return None
 
     def get_max_client_version(self, server_protocol: int) -> int | None:
-        """Return the highest client protocol reachable from server_protocol."""
+        """Return the highest client protocol reachable from server_protocol.
+
+        Args:
+            server_protocol: Server-side protocol number to search from.
+
+        Returns:
+            The highest reachable client protocol number, or None if none found.
+        """
         max_version: int | None = None
         # Check all registered client protocols for reachability
         client_protocols = {c for _, c in self._protocols}

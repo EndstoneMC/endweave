@@ -36,7 +36,11 @@ CLIENT_PROTOCOL = 944
 
 
 def create_protocol() -> Protocol:
-    """Create a protocol for v924 server <- v944 client."""
+    """Create a protocol for v924 server <- v944 client.
+
+    Returns:
+        A Protocol instance with all v924-to-v944 handlers registered.
+    """
     p = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
     # Login

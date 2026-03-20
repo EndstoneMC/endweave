@@ -11,7 +11,16 @@ if TYPE_CHECKING:
 
 @dataclass
 class UserConnection:
-    """Tracks a connected player's protocol state."""
+    """Tracks a connected player's protocol state.
+
+    Attributes:
+        address: Network address string ("host:port") used as the lookup key.
+        logger: Endstone logger instance (excluded from repr).
+        client_protocol: Protocol version detected from RequestNetworkSettings (0 until set).
+        server_protocol: Protocol version of the server this player connected to.
+        warned_no_chain: Whether a missing-chain warning has already been logged.
+        protocol_chain: Cached translation chain after first lookup, or None.
+    """
 
     address: str  # "host:port" key
     logger: Logger = field(repr=False)
@@ -28,7 +37,13 @@ class UserConnection:
 
 
 class ConnectionManager:
-    """Manages player connections keyed by network address."""
+    """Manages player connections keyed by network address.
+
+    Attributes:
+        _server_protocol: Default server protocol assigned to new connections.
+        _logger: Endstone logger passed to each new UserConnection.
+        _connections: Mapping of address strings to UserConnection instances.
+    """
 
     def __init__(self, server_protocol: int = 0, logger: Logger | None = None) -> None:
         self._server_protocol = server_protocol
@@ -36,7 +51,14 @@ class ConnectionManager:
         self._connections: dict[str, UserConnection] = {}
 
     def get_or_create(self, address: str) -> UserConnection:
-        """Return existing connection for address, or create a new one."""
+        """Return existing connection for address, or create a new one.
+
+        Args:
+            address: Network address string ("host:port").
+
+        Returns:
+            The existing or newly created UserConnection for the address.
+        """
         if address not in self._connections:
             self._connections[address] = UserConnection(
                 address=address,
@@ -46,13 +68,28 @@ class ConnectionManager:
         return self._connections[address]
 
     def get(self, address: str) -> UserConnection | None:
-        """Return the connection for address, or None if not found."""
+        """Return the connection for address, or None if not found.
+
+        Args:
+            address: Network address string ("host:port").
+
+        Returns:
+            The UserConnection if present, otherwise None.
+        """
         return self._connections.get(address)
 
     def remove_by_address(self, address: str) -> None:
-        """Remove connection by network address (no-op if not found)."""
+        """Remove connection by network address (no-op if not found).
+
+        Args:
+            address: Network address string ("host:port").
+        """
         self._connections.pop(address, None)
 
     def remove_by_player(self, player: Player) -> None:
-        """Remove connection by player object (uses player.address)."""
+        """Remove connection by player object (uses player.address).
+
+        Args:
+            player: Endstone Player whose connection should be removed.
+        """
         self._connections.pop(str(player.address), None)

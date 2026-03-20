@@ -19,10 +19,26 @@ class Type(ABC, Generic[T]):
     """A serializable packet field type."""
 
     @abstractmethod
-    def read(self, reader: PacketReader) -> T: ...
+    def read(self, reader: PacketReader) -> T:
+        """Deserialize a value from the reader.
+
+        Args:
+            reader: The packet reader to read from.
+
+        Returns:
+            The deserialized value.
+        """
+        ...
 
     @abstractmethod
-    def write(self, writer: PacketWriter, value: T) -> None: ...
+    def write(self, writer: PacketWriter, value: T) -> None:
+        """Serialize a value into the writer.
+
+        Args:
+            writer: The packet writer to write to.
+            value: The value to serialize.
+        """
+        ...
 
 
 class _Byte(Type[int]):
@@ -169,6 +185,11 @@ class _Bytes(Type[bytes]):
     """Fixed-length raw bytes."""
 
     def __init__(self, length: int) -> None:
+        """Initialize a fixed-length bytes type.
+
+        Args:
+            length: Exact number of bytes to read or expect.
+        """
         self._length = length
 
     def read(self, reader: PacketReader) -> bytes:
@@ -255,7 +276,17 @@ BLOCK_POS = _BlockPos()
 
 @dataclass
 class ItemInstance:
-    """Deserialized Bedrock ItemInstance."""
+    """Deserialized Bedrock ItemInstance.
+
+    Attributes:
+        network_id: Item network ID. Zero means air (empty slot).
+        count: Stack size.
+        aux_value: Metadata/damage value for the item.
+        has_net_id: Whether the item carries a stack network ID.
+        stack_net_id: Stack network ID for inventory transaction tracking.
+        block_runtime_id: Runtime ID of the block form of this item.
+        user_data: Raw extra data blob (NBT, canPlace/canBreak lists, etc.).
+    """
 
     network_id: int = 0
     count: int = 0
@@ -267,11 +298,18 @@ class ItemInstance:
 
 
 class _ItemInstance(Type[ItemInstance]):
-    """Bedrock ItemInstance -- full deserialization.
+    """Bedrock ItemInstance codec -- full deserialization.
 
-    Format: varint32 NetworkID (0 = air, done), uint16 Count,
-    uvarint32 MetadataValue, bool HasNetID, [varint32 StackNetworkID],
-    varint32 BlockRuntimeID, ByteSlice extraData.
+    Wire format::
+
+        varint32  NetworkID        (0 = air, terminates early)
+        uint16    Count
+        uvarint32 MetadataValue
+        bool      HasNetID
+        varint32  StackNetworkID   (only if HasNetID)
+        varint32  BlockRuntimeID
+        uvarint32 extraDataLength
+        bytes     extraData
     """
 
     def read(self, reader: PacketReader) -> ItemInstance:
@@ -313,5 +351,12 @@ ITEM_INSTANCE = _ItemInstance()
 
 
 def bytes_type(length: int) -> Type[bytes]:
-    """Create a fixed-length bytes type."""
+    """Create a fixed-length bytes type.
+
+    Args:
+        length: Exact number of bytes the type will read/write.
+
+    Returns:
+        A Type instance that reads/writes exactly length bytes.
+    """
     return _Bytes(length)

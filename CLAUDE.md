@@ -57,6 +57,11 @@ Currently translates between protocol 924 (MC 1.26.0) and 944 (MC 1.26.10).
 
 The chaining system automatically handles multi-step gaps (e.g. v960 client -> v924 server).
 
+## Reference
+
+- Always refer to `vendor/ViaVersion/` code as a reference when working on protocol translation logic
+- If the `vendor/ViaVersion/` folder does not exist, clone it from https://github.com/ViaVersion/ViaVersion
+
 ## Git
 
 - Never add a Co-Authored-By line for Claude in commit messages
@@ -66,6 +71,8 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 - Never use non-ASCII characters in code (no em dashes, smart quotes, fancy arrows, etc.) -- use only plain ASCII
 - Never use `from __future__ import annotations`
 - Never use `__slots__`
+- Use Google-style docstrings (`Args:`, `Returns:`, `Attributes:` sections) for non-trivial functions and classes
+- Trivial one-liner docstrings are fine for self-explanatory functions (e.g. `read_byte`, `write_int_le`)
 
 ## Tooling
 

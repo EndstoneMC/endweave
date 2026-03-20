@@ -14,7 +14,15 @@ from endstone_endweave.protocol.manager import ProtocolManager
 
 
 def _pname(packet_id: int) -> str:
-    """Resolve packet ID to name, e.g. 'START_GAME(11)' or '999'."""
+    """Resolve packet ID to name, e.g. 'START_GAME(11)' or '999'.
+
+    Args:
+        packet_id: Numeric Bedrock packet identifier.
+
+    Returns:
+        Human-readable string like 'START_GAME(11)', or the raw number
+        as a string if the ID is not in the PacketId enum.
+    """
     try:
         return f"{PacketId(packet_id).name}({packet_id})"
     except ValueError:
@@ -26,6 +34,11 @@ class ProtocolPipeline:
 
     Like ViaVersion's ProtocolPipelineImpl, creates a single PacketWrapper
     and passes it through each protocol's transform method in sequence.
+
+    Attributes:
+        _manager: ProtocolManager that provides base protocols and version chains.
+        _connections: ConnectionManager for per-player state lookup.
+        _logger: Endstone logger instance for debug and error output.
     """
 
     def __init__(
@@ -39,7 +52,11 @@ class ProtocolPipeline:
         self._logger = logger
 
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
-        """Handle a serverbound (client->server) packet."""
+        """Handle a serverbound (client->server) packet.
+
+        Args:
+            event: Endstone packet receive event with readable/writable payload.
+        """
         address = str(event.address)
         packet_id = event.packet_id
         payload = event.payload
@@ -103,7 +120,11 @@ class ProtocolPipeline:
             event.payload = new_payload
 
     def on_packet_send(self, event: PacketSendEvent) -> None:
-        """Handle a clientbound (server->client) packet."""
+        """Handle a clientbound (server->client) packet.
+
+        Args:
+            event: Endstone packet send event with readable/writable payload.
+        """
         address = str(event.address)
 
         connection = self._connections.get(address)
@@ -154,7 +175,15 @@ class ProtocolPipeline:
             event.payload = new_payload
 
     def _get_chain(self, connection) -> list[Protocol] | None:
-        """Get the protocol chain for a connection, caching the result."""
+        """Get the protocol chain for a connection, caching the result.
+
+        Args:
+            connection: UserConnection whose server/client protocols determine the chain.
+
+        Returns:
+            Ordered list of Protocol instances forming the translation chain,
+            or None if no path exists between the server and client versions.
+        """
         if connection.protocol_chain is not None:
             return connection.protocol_chain
         chain = self._manager.get_path(

@@ -44,7 +44,15 @@ EDGE_RE = re.compile(r"(\d+)\s*->\s*(\d+)")
 
 
 def parse_dot_file(filepath: Path) -> dict | None:
-    """Parse a single .dot file into a structured dict."""
+    """Parse a single .dot file into a structured dict.
+
+    Args:
+        filepath: Path to the .dot file.
+
+    Returns:
+        Dict with "name", "comment", "label", and "fields" keys describing
+        the packet, or None if the file has no root node.
+    """
     text = filepath.read_text(encoding="utf-8", errors="replace")
 
     nodes: dict[int, dict[str, str]] = {}
@@ -110,7 +118,14 @@ def parse_dot_file(filepath: Path) -> dict | None:
 
 
 def parse_dot_version(dot_dir: Path) -> list[dict]:
-    """Parse all .dot files in a directory."""
+    """Parse all .dot files in a directory.
+
+    Args:
+        dot_dir: Path to the directory containing .dot files.
+
+    Returns:
+        List of structured packet dicts parsed from the .dot files.
+    """
     if not dot_dir.exists():
         print(f"  Warning: {dot_dir} does not exist, skipping DOT")
         return []
@@ -129,7 +144,15 @@ def parse_dot_version(dot_dir: Path) -> list[dict]:
 
 
 def _resolve_type(prop: dict) -> str:
-    """Map a JSON Schema property to a DOT-style type name."""
+    """Map a JSON Schema property to a DOT-style type name.
+
+    Args:
+        prop: JSON Schema property dict (may contain x-underlying-type,
+            x-serialization-options, and type).
+
+    Returns:
+        Resolved type name string (e.g. "varint32", "bool", "string").
+    """
     underlying = prop.get("x-underlying-type", "")
     serialization = prop.get("x-serialization-options", [])
     has_compression = "Compression" in serialization
@@ -166,7 +189,15 @@ def _build_fields_from_properties(
     properties: dict,
     definitions: dict,
 ) -> list[dict]:
-    """Convert JSON Schema properties into the DOT-style field list."""
+    """Convert JSON Schema properties into the DOT-style field list.
+
+    Args:
+        properties: Dict of JSON Schema property names to their schemas.
+        definitions: Top-level definitions dict for resolving $ref pointers.
+
+    Returns:
+        List of field dicts sorted by x-ordinal-index.
+    """
     # Sort by x-ordinal-index
     sorted_props = sorted(
         properties.items(),
@@ -181,7 +212,16 @@ def _build_fields_from_properties(
 
 
 def _resolve_ref(prop: dict, definitions: dict) -> dict | None:
-    """Follow a $ref to its definition, returning the definition dict."""
+    """Follow a $ref to its definition, returning the definition dict.
+
+    Args:
+        prop: JSON Schema property dict that may contain a "$ref" key.
+        definitions: Top-level definitions dict for resolving $ref pointers.
+
+    Returns:
+        The referenced definition dict, or None if no $ref is present or
+        the target is not found.
+    """
     ref = prop.get("$ref", "")
     if not ref:
         return None
@@ -191,7 +231,17 @@ def _resolve_ref(prop: dict, definitions: dict) -> dict | None:
 
 
 def _build_field(name: str, prop: dict, definitions: dict) -> dict:
-    """Build a single field dict from a JSON Schema property."""
+    """Build a single field dict from a JSON Schema property.
+
+    Args:
+        name: Field name.
+        prop: JSON Schema property dict for this field.
+        definitions: Top-level definitions dict for resolving $ref pointers.
+
+    Returns:
+        Structured field dict with "name", "type", "attributes", and
+        optional "children" keys.
+    """
     ref_def = _resolve_ref(prop, definitions)
 
     if prop.get("type") == "array":
@@ -273,7 +323,15 @@ def _build_field(name: str, prop: dict, definitions: dict) -> dict:
 
 
 def parse_json_file(filepath: Path) -> dict | None:
-    """Parse a single JSON Schema protocol file into a structured dict."""
+    """Parse a single JSON Schema protocol file into a structured dict.
+
+    Args:
+        filepath: Path to the JSON Schema file.
+
+    Returns:
+        Dict with "name", "comment", "label", and "fields" keys describing
+        the packet, or None if the file is not a valid packet schema.
+    """
     with open(filepath, encoding="utf-8") as f:
         data = json.load(f)
 
@@ -311,7 +369,14 @@ def parse_json_file(filepath: Path) -> dict | None:
 
 
 def parse_json_version(json_dir: Path) -> list[dict]:
-    """Parse all JSON Schema packet files in a directory."""
+    """Parse all JSON Schema packet files in a directory.
+
+    Args:
+        json_dir: Path to the directory containing JSON Schema files.
+
+    Returns:
+        List of structured packet dicts parsed from the JSON files.
+    """
     if not json_dir.exists():
         print(f"  Warning: {json_dir} does not exist, skipping JSON")
         return []
@@ -330,7 +395,15 @@ def parse_json_version(json_dir: Path) -> list[dict]:
 
 
 def merge_packets(dot_packets: list[dict], json_packets: list[dict]) -> list[dict]:
-    """Merge DOT and JSON packets, preferring JSON for overlaps."""
+    """Merge DOT and JSON packets, preferring JSON for overlaps.
+
+    Args:
+        dot_packets: Packet dicts parsed from .dot files.
+        json_packets: Packet dicts parsed from JSON Schema files.
+
+    Returns:
+        Sorted list of merged packet dicts, deduplicated by name.
+    """
     by_name: dict[str, dict] = {}
 
     # Add DOT packets first

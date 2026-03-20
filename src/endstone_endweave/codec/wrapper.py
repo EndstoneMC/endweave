@@ -22,7 +22,14 @@ if TYPE_CHECKING:
 
 
 class PacketWrapper:
-    """Wraps a packet payload for field-level read/transform/write."""
+    """Wraps a packet payload for field-level read/transform/write.
+
+    Attributes:
+        _reader: Input buffer for reading the original packet fields.
+        _writer: Output buffer for building the transformed packet.
+        _cancelled: Whether this packet has been marked for cancellation.
+        _user: The player connection associated with this packet, if any.
+    """
 
     def __init__(self, payload: bytes, user: "UserConnection | None" = None) -> None:
         self._reader = PacketReader(payload)
@@ -31,7 +38,15 @@ class PacketWrapper:
         self._user = user
 
     def user(self) -> "UserConnection":
-        """Return the UserConnection associated with this packet."""
+        """Return the UserConnection associated with this packet.
+
+        Returns:
+            The UserConnection for the player who sent or will receive
+            this packet.
+
+        Raises:
+            RuntimeError: If no UserConnection was set on this wrapper.
+        """
         if self._user is None:
             raise RuntimeError("No UserConnection set on this PacketWrapper")
         return self._user
@@ -55,17 +70,36 @@ class PacketWrapper:
         self._cancelled = True
 
     def passthrough(self, field_type: Type) -> object:
-        """Read a field from input and write it to output. Returns the value."""
+        """Read a field from input and write it to output.
+
+        Args:
+            field_type: The Type descriptor for the field to copy.
+
+        Returns:
+            The deserialized value that was copied through.
+        """
         value = field_type.read(self._reader)
         field_type.write(self._writer, value)
         return value
 
     def read(self, field_type: Type) -> object:
-        """Read a field from input without writing (removes field from output)."""
+        """Read a field from input without writing (removes field from output).
+
+        Args:
+            field_type: The Type descriptor for the field to consume.
+
+        Returns:
+            The deserialized value that was removed from the output.
+        """
         return field_type.read(self._reader)
 
     def write(self, field_type: Type, value: object) -> None:
-        """Write a field to output without reading (inserts a new field)."""
+        """Write a field to output without reading (inserts a new field).
+
+        Args:
+            field_type: The Type descriptor for the field to write.
+            value: The value to serialize into the output.
+        """
         field_type.write(self._writer, value)
 
     def passthrough_all(self) -> bytes:
@@ -79,7 +113,11 @@ class PacketWrapper:
         return self._reader.has_remaining()
 
     def to_bytes(self) -> bytes:
-        """Produce final payload: written output + any unread input bytes."""
+        """Produce final payload: written output + any unread input bytes.
+
+        Returns:
+            The complete transformed packet payload as bytes.
+        """
         if self._reader.has_remaining():
             self._writer.write_bytes(self._reader.read_remaining())
         return self._writer.to_bytes()

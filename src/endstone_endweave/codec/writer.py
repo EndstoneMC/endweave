@@ -4,7 +4,11 @@ import struct
 
 
 class PacketWriter:
-    """Builds binary data for a Bedrock packet payload."""
+    """Builds binary data for a Bedrock packet payload.
+
+    Attributes:
+        _buf: The mutable byte buffer that accumulates written data.
+    """
 
     def __init__(self) -> None:
         self._buf = bytearray()
