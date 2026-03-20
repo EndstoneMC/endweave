@@ -1,65 +1,33 @@
 # Endweave
 
-ViaVersion-like protocol translation plugin for Minecraft Bedrock Edition, built on [Endstone](https://github.com/EndstoneMC/endstone).
+[![Build](https://github.com/EndstoneMC/endweave/actions/workflows/build.yml/badge.svg)](https://github.com/EndstoneMC/endweave/actions/workflows/build.yml)
 
-Allows newer Bedrock clients to connect to servers running older protocol versions by transparently rewriting packets at the network layer. Supports chaining translators for multi-version gaps.
+An [Endstone](https://github.com/EndstoneMC/endstone) plugin that lets newer Bedrock clients connect to older servers by rewriting packets at the network layer. Inspired by [ViaVersion](https://github.com/ViaVersion/ViaVersion).
+
+## Supported Versions
+
+| Server Version         | Supported Clients  |
+|------------------------|--------------------|
+| 1.26.0 (protocol 924) | 1.26.0 - 1.26.10   |
+
+## Quick Start
+
+1. Download the latest `.whl` from [Releases](https://github.com/EndstoneMC/endweave/releases)
+2. Drop it in your server's `plugins/` folder
+3. Restart the server
+
+That's it. Players on newer clients will connect transparently.
 
 ## How It Works
 
-Endweave intercepts packets at the network layer and rewrites fields that differ between protocol versions. It does **not** remap packet IDs (they are stable across Bedrock versions) — instead it modifies packet payloads in-place.
+Bedrock packet IDs are stable across versions, so Endweave doesn't need to remap them. It only touches the packet payloads that actually changed between versions. Players already on the server's protocol version skip deserialization entirely - zero overhead for them.
 
-- **Fast-path skip** — players on the matching protocol version have zero deserialization overhead
-- **Selective rewriting** — only packets with registered translators are deserialized; everything else passes through untouched
-- **Login handshake** — rewrites the `RequestNetworkSettings` protocol field so BDS accepts newer clients
-- **Unknown packets** — cancels new serverbound packet IDs that the older server doesn't understand
-- **Version chaining** — each translator handles one adjacent version step; the pipeline chains them automatically for larger gaps
+Each translator module covers one version step (e.g. 924 to 944). If a client is multiple versions ahead, the pipeline chains translators automatically. New serverbound packet IDs that the older server wouldn't understand get dropped silently.
 
-## Architecture
+## Contributing
 
-```
-src/endstone_endweave/
-├── plugin.py          # Endstone plugin entry point
-├── pipeline.py        # Routes packets through version-specific translator chains
-├── session.py         # Per-player session & protocol version tracking
-├── codec/             # Binary reader/writer (varint, zigzag, LE/BE integers)
-├── protocol/          # Translation infrastructure + version-specific modules
-│   ├── versions.py    # Central ProtocolVersion registry
-│   ├── packet_ids.py  # Shared PacketId enum
-│   ├── registry.py    # TranslatorRegistry with BFS chaining
-│   └── v924_to_v944/  # Version-specific translator module
-├── data/              # Generated protocol data (gitignored)
-```
-
-## Installation
-
-```bash
-pip install endstone-endweave
-```
-
-Or install from source for development:
-
-```bash
-git clone https://github.com/EndstoneMC/endweave.git
-cd endweave
-pip install -e .
-```
-
-## Development
-
-```bash
-# Fetch protocol DOT + JSON files from BedrockProtocol repo
-python tools/fetch_protocol_docs.py
-
-# Parse DOT + JSON into structured JSON
-python tools/parse_protocol_docs.py
-
-# Diff two version JSONs
-python tools/generate_diff.py
-
-# Run tests
-pytest tests/
-```
+Issues and PRs welcome on [GitHub](https://github.com/EndstoneMC/endweave/issues).
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+[MIT](LICENSE)
