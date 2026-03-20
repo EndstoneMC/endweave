@@ -16,6 +16,7 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_set_spawn_position,
     rewrite_structure_block_update,
     rewrite_structure_template_data_request,
+    rewrite_tile_event,
     rewrite_update_client_input_locks,
     rewrite_update_sub_chunk_blocks,
 )
@@ -54,7 +55,7 @@ def create_protocol() -> Protocol:
     # Clientbound rewriters -- BlockPos conversion (NetworkBlockPos -> BlockPos)
     p.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     p.register_clientbound(PacketId.UPDATE_BLOCK, rewrite_first_net_block_to_block)
-    p.register_clientbound(PacketId.TILE_EVENT, rewrite_first_net_block_to_block)
+    p.register_clientbound(PacketId.TILE_EVENT, rewrite_tile_event)
     p.register_clientbound(PacketId.SET_SPAWN_POSITION, rewrite_set_spawn_position)
     p.register_clientbound(PacketId.BLOCK_ACTOR_DATA, rewrite_first_net_block_to_block)
     p.register_clientbound(

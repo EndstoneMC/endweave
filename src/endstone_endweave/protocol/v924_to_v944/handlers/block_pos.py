@@ -30,10 +30,24 @@ from endstone_endweave.codec import (
 def rewrite_first_net_block_to_block(wrapper: PacketWrapper) -> None:
     """Rewrite first-field NetworkBlockPos -> BlockPos.
 
-    Used by: UpdateBlock (21), BlockEvent (26), BlockActorData (56),
+    Used by: UpdateBlock (21), BlockActorData (56),
     UpdateBlockSynced (110), LecternUpdate (125), OpenSign (303).
     """
     wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))
+
+
+def rewrite_tile_event(wrapper: PacketWrapper) -> None:
+    """TileEvent (26): Position, EventType, EventData.
+
+    Converts NetworkBlockPos -> BlockPos, and remaps NoteBlockInstrument IDs.
+    v944 inserted Trumpet variants at IDs 16-19, displacing Zombie..Piglin by +4.
+    """
+    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # Position
+    event_type = wrapper.passthrough(VAR_INT)  # EventType
+    event_data = wrapper.read(VAR_INT)  # EventData
+    if event_type == 0 and event_data >= 16:
+        event_data += 4  # Shift for Trumpet 16-19 insertion
+    wrapper.write(VAR_INT, event_data)
 
 
 def rewrite_set_spawn_position(wrapper: PacketWrapper) -> None:
