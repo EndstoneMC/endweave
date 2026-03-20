@@ -266,12 +266,14 @@ class TestClientboundHandlers:
             w.write_uvarint(100)  # blockRuntimeID
             w.write_uvarint(3)  # flags
             w.write_uvarint64(0)  # syncedUpdateEntityUniqueID
+            w.write_uvarint(0)  # syncedUpdateType
         # 1 extra entry
         w.write_uvarint(1)
         _write_net_block_pos(w, 3, 66, 4)
         w.write_uvarint(200)
         w.write_uvarint(1)
         w.write_uvarint64(99)
+        w.write_uvarint(1)  # syncedUpdateType
         wrapper = PacketWrapper(w.to_bytes())
         rewrite_update_sub_chunk_blocks(wrapper)
         r = PacketReader(wrapper.to_bytes())
@@ -281,15 +283,18 @@ class TestClientboundHandlers:
         assert r.read_uvarint() == 100
         assert r.read_uvarint() == 3
         assert r.read_uvarint64() == 0
+        assert r.read_uvarint() == 0  # syncedUpdateType
         assert _read_block_pos(r) == (1, 65, 2)
         assert r.read_uvarint() == 100
         assert r.read_uvarint() == 3
         assert r.read_uvarint64() == 0
+        assert r.read_uvarint() == 0  # syncedUpdateType
         assert r.read_uvarint() == 1
         assert _read_block_pos(r) == (3, 66, 4)
         assert r.read_uvarint() == 200
         assert r.read_uvarint() == 1
         assert r.read_uvarint64() == 99
+        assert r.read_uvarint() == 1  # syncedUpdateType
         assert not r.has_remaining()
 
     def test_first_field_open_sign(self):

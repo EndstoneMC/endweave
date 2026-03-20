@@ -10,13 +10,14 @@ from endstone_endweave.codec import (
     BYTE,
     FLOAT_LE,
     INT_LE,
+    ITEM_INSTANCE,
     STRING,
     NETWORK_BLOCK_POS,
     UINT_LE,
     UVAR_INT,
-    UVAR_LONG,
+    UVAR_INT64,
     VAR_INT,
-    VAR_LONG,
+    VAR_INT64,
     PacketWrapper,
 )
 
@@ -54,7 +55,8 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
     """UpdateSubChunkBlocks (172): Position, then Blocks/Extra slices.
 
     Each slice is uvarint count + BlockChangeEntry[].
-    BlockChangeEntry: BlockPos + uvarint (blockRuntimeID) + uvarint (flags) + uvarint64 (syncedUpdateEntityUniqueID).
+    BlockChangeEntry: BlockPos, uvarint blockRuntimeID, uvarint flags,
+    uvarint64 syncedUpdateEntityUniqueID, uvarint syncedUpdateType.
     """
     wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # SubChunk position
 
@@ -64,7 +66,8 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
         wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # BlockPos
         wrapper.passthrough(UVAR_INT)  # blockRuntimeID
         wrapper.passthrough(UVAR_INT)  # flags
-        wrapper.passthrough(UVAR_LONG)  # syncedUpdateEntityUniqueID
+        wrapper.passthrough(UVAR_INT64)  # syncedUpdateEntityUniqueID
+        wrapper.passthrough(UVAR_INT)  # syncedUpdateType
 
     # Extra slice
     extra_count = wrapper.passthrough(UVAR_INT)
@@ -72,7 +75,8 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
         wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))  # BlockPos
         wrapper.passthrough(UVAR_INT)  # blockRuntimeID
         wrapper.passthrough(UVAR_INT)  # flags
-        wrapper.passthrough(UVAR_LONG)  # syncedUpdateEntityUniqueID
+        wrapper.passthrough(UVAR_INT64)  # syncedUpdateEntityUniqueID
+        wrapper.passthrough(UVAR_INT)  # syncedUpdateType
 
 
 def rewrite_play_sound(wrapper: PacketWrapper) -> None:
@@ -87,7 +91,7 @@ def rewrite_map_data(wrapper: PacketWrapper) -> None:
     Only the MapTrackedObject.BlockPosition field needs conversion, and only
     when UpdateFlags has the Decoration bit (0x04) and the object Type is Block (1).
     """
-    wrapper.passthrough(VAR_LONG)  # MapID (varint64)
+    wrapper.passthrough(VAR_INT64)  # MapID (varint64)
     types = wrapper.passthrough(UVAR_INT)  # UpdateFlags
     wrapper.passthrough(BYTE)  # Dimension
     wrapper.passthrough(BOOL)  # LockedMap
@@ -101,7 +105,7 @@ def rewrite_map_data(wrapper: PacketWrapper) -> None:
         # mMapIds
         count = wrapper.passthrough(UVAR_INT)
         for _ in range(count):
-            wrapper.passthrough(VAR_LONG)
+            wrapper.passthrough(VAR_INT64)
 
     if types & (TYPE_CREATION | TYPE_DECORATION_UPDATE | TYPE_TEXTURE_UPDATE):
         wrapper.passthrough(BYTE)  # Scale
@@ -112,7 +116,7 @@ def rewrite_map_data(wrapper: PacketWrapper) -> None:
         for _ in range(obj_count):
             obj_type = wrapper.passthrough(INT_LE)  # Type (int32)
             if obj_type == 0:  # Entity
-                wrapper.passthrough(VAR_LONG)  # EntityUniqueID
+                wrapper.passthrough(VAR_INT64)  # EntityUniqueID
             elif obj_type == 1:  # Block
                 wrapper.write(
                     BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS)
@@ -146,9 +150,65 @@ def rewrite_camera_spline(wrapper: PacketWrapper) -> None:
 # ---------------------------------------------------------------------------
 
 
+def _passthrough_inventory_action(wrapper: PacketWrapper) -> None:
+    """Passthrough a single InventoryAction entry."""
+    source_type = wrapper.passthrough(UVAR_INT)  # SourceType
+    if source_type in (
+        0,  # ContainerInventory
+        99999,  # NonImplementedFeatureTODO
+    ):
+        wrapper.passthrough(VAR_INT)  # WindowID
+    elif source_type == 2:  # WorldInteraction
+        wrapper.passthrough(UVAR_INT)  # SourceFlags
+    # GlobalInventory(1), CreativeInventory(3), InvalidInventory(0xFFFFFFFF): no extra fields
+    wrapper.passthrough(UVAR_INT)  # InventorySlot
+    wrapper.passthrough(ITEM_INSTANCE)  # OldItem
+    wrapper.passthrough(ITEM_INSTANCE)  # NewItem
+
+
+def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
+    legacy_request_id = wrapper.passthrough(VAR_INT)
+    if legacy_request_id != 0:
+        # LegacySetItemSlots: uvarint count + [byte ContainerID + ByteSlice Slots]
+        slot_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(slot_count):
+            wrapper.passthrough(BYTE)  # ContainerID
+            # Slots: uvarint length + bytes
+            slots_len = wrapper.passthrough(UVAR_INT)
+            for _ in range(slots_len):
+                wrapper.passthrough(BYTE)
+
+    transaction_type = wrapper.passthrough(UVAR_INT)  # TransactionDataType
+
+    # InventoryActions
+    action_count = wrapper.passthrough(UVAR_INT)
+    for _ in range(action_count):
+        _passthrough_inventory_action(wrapper)
+
+    if transaction_type != 2:  # Not UseItem
+        return  # passthrough remaining bytes unchanged
+
+    # UseItemTransactionData
+    wrapper.passthrough(UVAR_INT)  # ActionType
+    wrapper.passthrough(UVAR_INT)  # TriggerType
+    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # BlockPosition
+    wrapper.passthrough(VAR_INT)  # BlockFace
+    wrapper.passthrough(VAR_INT)  # HotBarSlot
+    wrapper.passthrough(ITEM_INSTANCE)  # HeldItem
+    wrapper.passthrough(FLOAT_LE)  # Position.X
+    wrapper.passthrough(FLOAT_LE)  # Position.Y
+    wrapper.passthrough(FLOAT_LE)  # Position.Z
+    wrapper.passthrough(FLOAT_LE)  # ClickedPosition.X
+    wrapper.passthrough(FLOAT_LE)  # ClickedPosition.Y
+    wrapper.passthrough(FLOAT_LE)  # ClickedPosition.Z
+    wrapper.passthrough(UVAR_INT)  # BlockRuntimeID
+    wrapper.passthrough(UVAR_INT)  # ClientPrediction
+    wrapper.read(BYTE)  # ClientCooldownState (strip -- v924 doesn't have this)
+
+
 def rewrite_player_action(wrapper: PacketWrapper) -> None:
     """PlayerAction (36): entityRuntimeID, actionType, BlockPosition, ResultPosition, face."""
-    wrapper.passthrough(UVAR_LONG)  # entityRuntimeID
+    wrapper.passthrough(UVAR_INT64)  # entityRuntimeID
     wrapper.passthrough(VAR_INT)  # actionType
     wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # BlockPosition
     wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # ResultPosition
@@ -176,7 +236,7 @@ def _rewrite_structure_settings(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # AllowNonTickingChunks
     wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Size
     wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))  # Offset
-    wrapper.passthrough(VAR_LONG)  # LastEditingPlayerUniqueID
+    wrapper.passthrough(VAR_INT64)  # LastEditingPlayerUniqueID
     wrapper.passthrough(BYTE)  # Rotation
     wrapper.passthrough(BYTE)  # Mirror
     wrapper.passthrough(BYTE)  # AnimationMode

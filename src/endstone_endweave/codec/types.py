@@ -112,7 +112,7 @@ class _UVarInt(Type[int]):
         writer.write_uvarint(value)
 
 
-class _VarLong(Type[int]):
+class _VarInt64(Type[int]):
     def read(self, reader: PacketReader) -> int:
         return reader.read_varint64()
 
@@ -120,7 +120,7 @@ class _VarLong(Type[int]):
         writer.write_varint64(value)
 
 
-class _UVarLong(Type[int]):
+class _UVarInt64(Type[int]):
     def read(self, reader: PacketReader) -> int:
         return reader.read_uvarint64()
 
@@ -183,8 +183,8 @@ LONG_LE = _LongLE()
 FLOAT_LE = _FloatLE()
 VAR_INT = _VarInt()
 UVAR_INT = _UVarInt()
-VAR_LONG = _VarLong()
-UVAR_LONG = _UVarLong()
+VAR_INT64 = _VarInt64()
+UVAR_INT64 = _UVarInt64()
 STRING = _String()
 COMPOUND_TAG = _CompoundTag()
 REMAINING_BYTES = _RemainingBytes()
@@ -222,6 +222,38 @@ class _BlockPos(Type[tuple[int, int, int]]):
 
 NETWORK_BLOCK_POS = _NetworkBlockPos()
 BLOCK_POS = _BlockPos()
+
+
+class _ItemInstance(Type[bytes]):
+    """Bedrock ItemInstance -- raw byte passthrough.
+
+    Reads through the variable-length ItemInstance structure and returns
+    the raw bytes, enabling passthrough without full deserialization.
+
+    Format: varint32 NetworkID (0 = air, done), uint16 Count,
+    uvarint32 MetadataValue, bool HasNetID, [varint32 StackNetworkID],
+    varint32 BlockRuntimeID, ByteSlice extraData.
+    """
+
+    def read(self, reader: PacketReader) -> bytes:
+        start = reader.position
+        network_id = reader.read_varint()
+        if network_id != 0:
+            reader.skip(2)  # uint16 Count
+            reader.read_uvarint()  # MetadataValue
+            has_net_id = reader.read_bool()
+            if has_net_id:
+                reader.read_varint()  # StackNetworkID
+            reader.read_varint()  # BlockRuntimeID
+            extra_len = reader.read_uvarint()  # ByteSlice length
+            reader.skip(extra_len)
+        return reader.slice_from(start)
+
+    def write(self, writer: PacketWriter, value: bytes) -> None:
+        writer.write_bytes(value)
+
+
+ITEM_INSTANCE = _ItemInstance()
 
 
 def bytes_type(length: int) -> Type[bytes]:

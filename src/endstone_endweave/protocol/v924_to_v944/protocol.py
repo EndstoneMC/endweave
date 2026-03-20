@@ -9,6 +9,7 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_command_block_update,
     rewrite_container_open,
     rewrite_first_net_block_to_block,
+    rewrite_inventory_transaction,
     rewrite_map_data,
     rewrite_play_sound,
     rewrite_player_action,
@@ -46,8 +47,8 @@ def create_protocol() -> Protocol:
     # Cancel new v944 serverbound packets unknown to v924 (v924 EndId = 340)
     p.cancel_serverbound(
         PacketId.RESOURCE_PACKS_READY_FOR_VALIDATION,  # 340
-        PacketId.PARTY_CHANGED,                         # 342
-        PacketId.SERVERBOUND_DATA_DRIVEN_SCREEN_CLOSED, # 343
+        PacketId.PARTY_CHANGED,  # 342
+        PacketId.SERVERBOUND_DATA_DRIVEN_SCREEN_CLOSED,  # 343
     )
 
     # Clientbound rewriters -- BlockPos conversion (NetworkBlockPos -> BlockPos)
@@ -76,6 +77,9 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
 
     # Serverbound rewriters -- BlockPos conversion (BlockPos -> NetworkBlockPos)
+    p.register_serverbound(
+        PacketId.INVENTORY_TRANSACTION, rewrite_inventory_transaction
+    )
     p.register_serverbound(PacketId.PLAYER_ACTION, rewrite_player_action)
     p.register_serverbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
     p.register_serverbound(PacketId.COMMAND_BLOCK_UPDATE, rewrite_command_block_update)

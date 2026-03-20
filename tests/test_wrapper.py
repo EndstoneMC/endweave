@@ -19,8 +19,8 @@ from endstone_endweave.codec import (
     SHORT_LE,
     USHORT_LE,
     UINT_LE,
-    UVAR_LONG,
-    VAR_LONG,
+    UVAR_INT64,
+    VAR_INT64,
     bytes_type,
 )
 from endstone_endweave.codec.writer import PacketWriter
@@ -219,11 +219,11 @@ class TestTypeRoundtrips:
 
     def test_var_long(self):
         for val in [0, 1, -1, 2147483647]:
-            self._roundtrip(VAR_LONG, val)
+            self._roundtrip(VAR_INT64, val)
 
     def test_uvar_long(self):
         for val in [0, 1, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF]:
-            self._roundtrip(UVAR_LONG, val)
+            self._roundtrip(UVAR_INT64, val)
 
     def test_string(self):
         self._roundtrip(STRING, "hello world")

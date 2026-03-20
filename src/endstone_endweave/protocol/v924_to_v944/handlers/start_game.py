@@ -17,9 +17,9 @@ from endstone_endweave.codec import (
     STRING,
     UINT_LE,
     UVAR_INT,
-    UVAR_LONG,
+    UVAR_INT64,
     VAR_INT,
-    VAR_LONG,
+    VAR_INT64,
     PacketWrapper,
 )
 
@@ -52,8 +52,8 @@ def _passthrough_experiments(wrapper: PacketWrapper) -> None:
 
 def rewrite_start_game(wrapper: PacketWrapper) -> None:
     """Rewrite StartGamePacket from v924 to v944 format."""
-    wrapper.passthrough(VAR_LONG)  # mEntityId
-    wrapper.passthrough(UVAR_LONG)  # mRuntimeId
+    wrapper.passthrough(VAR_INT64)  # mEntityId
+    wrapper.passthrough(UVAR_INT64)  # mRuntimeId
     wrapper.passthrough(VAR_INT)  # mEntityGameType
     wrapper.passthrough(FLOAT_LE)  # mPos.X
     wrapper.passthrough(FLOAT_LE)  # mPos.Y
