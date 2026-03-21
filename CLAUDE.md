@@ -65,6 +65,7 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 ## Git
 
 - Never add a Co-Authored-By line for Claude in commit messages
+- Maintain a `CHANGELOG.md` following https://keepachangelog.com/en/1.0.0/
 
 ## Code Style
 

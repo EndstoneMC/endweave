@@ -8,6 +8,7 @@ from endstone.event import (
     ServerListPingEvent,
     event_handler,
 )
+from endstone.metrics import Metrics
 from endstone.plugin import Plugin
 
 from endstone_endweave.debug import DebugHandler
@@ -67,6 +68,9 @@ class EndweavePlugin(Plugin):
             self._manager, self._connections, self.logger, debug
         )
         self.register_events(self)
+
+        # bStats metrics (https://bstats.org/plugin/bukkit/Endweave/30345)
+        Metrics(self, service_id=30345)
 
     @staticmethod
     def _normalize_mc_version(version: str) -> str:
