@@ -258,15 +258,4 @@ class _BlockPos(Type[tuple[int, int, int]]):
 
 NETWORK_BLOCK_POS = _NetworkBlockPos()
 BLOCK_POS = _BlockPos()
-
-
-def bytes_type(length: int) -> Type[bytes]:
-    """Create a fixed-length bytes type.
-
-    Args:
-        length: Exact number of bytes the type will read/write.
-
-    Returns:
-        A Type instance that reads/writes exactly length bytes.
-    """
-    return _Bytes(length)
+UUID = _Bytes(16)

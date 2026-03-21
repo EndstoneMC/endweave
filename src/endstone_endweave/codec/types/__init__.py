@@ -40,8 +40,8 @@ from endstone_endweave.codec.types.primitives import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    UUID,
     Type,
-    bytes_type,
 )
 
 __all__ = [
@@ -69,7 +69,7 @@ __all__ = [
     "BLOCK_POS",
     "ITEM_INSTANCE",
     "ItemInstance",
-    "bytes_type",
+    "UUID",
     "Tag",
     "ByteTag",
     "ShortTag",

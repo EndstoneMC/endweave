@@ -17,7 +17,7 @@ from endstone_endweave.codec import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
-    bytes_type,
+    UUID,
     PacketWrapper,
 )
 from endstone_endweave.protocol.rewriter import passthrough_actor_data
@@ -121,7 +121,7 @@ def rewrite_add_player(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for AddPlayerPacket.
     """
-    wrapper.passthrough(bytes_type(16))  # UUID
+    wrapper.passthrough(UUID)  # UUID
     wrapper.passthrough(STRING)  # Username
     wrapper.passthrough(UVAR_INT64)  # Entity Runtime ID
     wrapper.passthrough(STRING)  # Platform Chat ID

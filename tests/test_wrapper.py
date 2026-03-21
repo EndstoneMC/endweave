@@ -21,7 +21,7 @@ from endstone_endweave.codec import (
     UINT_LE,
     UVAR_INT64,
     VAR_INT64,
-    bytes_type,
+    UUID,
 )
 from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.connection import UserConnection
@@ -231,9 +231,8 @@ class TestTypeRoundtrips:
     def test_string_empty(self):
         self._roundtrip(STRING, "")
 
-    def test_bytes_type(self):
-        bt = bytes_type(4)
-        self._roundtrip(bt, b"\x01\x02\x03\x04")
+    def test_uuid(self):
+        self._roundtrip(UUID, b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10")
 
     def test_remaining_bytes(self):
         self._roundtrip(REMAINING_BYTES, b"\xde\xad\xbe\xef")
