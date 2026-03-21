@@ -1,4 +1,5 @@
 """Endweave plugin - protocol translation for Bedrock Edition."""
+from typing import Dict, Any
 
 from endstone.event import (
     EventPriority,
@@ -23,7 +24,19 @@ from endstone_endweave.protocol.v924_to_v944 import (
 from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
 
 class EndweaveMetrics(Metrics):
-    """Fix for endstone<=0.11.2 which reads .description instead of ._description."""
+    """Polyfill for endstone<=0.11.2 Metrics which has runtime errors and
+    incorrect data formatting in append_platform_data and append_service_data.
+    """
+
+    def append_platform_data(self, platform_data: Dict[str, Any]) -> None:
+        super().append_platform_data(platform_data)
+        server = self._plugin.server
+        if "minecraftVersion" in platform_data:
+            platform_data.pop("minecraftVersion")
+
+        if "bukkitVersion" not in platform_data:
+            platform_data["bukkitVersion"] = f"{server.version} (MC: {server.minecraft_version})"
+            platform_data["bukkitName"] = server.name
 
     def append_service_data(self, service_data: dict[str, object]) -> None:
         service_data["pluginVersion"] = self._plugin._description.version
