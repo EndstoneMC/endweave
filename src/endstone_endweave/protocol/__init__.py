@@ -1,9 +1,13 @@
 """Protocol translation infrastructure."""
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from endstone_endweave.codec.wrapper import PacketWrapper
 from endstone_endweave.protocol.direction import Direction
+
+if TYPE_CHECKING:
+    from endstone_endweave.connection import UserConnection
 
 PacketHandler = Callable[[PacketWrapper], None]
 
@@ -20,13 +24,20 @@ class Protocol:
     Attributes:
         server_protocol: Protocol number of the server (older) version.
         client_protocol: Protocol number of the client (newer) version.
+        name: Human-readable name for error context (e.g. "v924_to_v944").
         _handlers: Per-direction mapping of packet ID to handler callable.
         _cancel: Per-direction set of packet IDs to silently drop.
     """
 
-    def __init__(self, server_protocol: int, client_protocol: int) -> None:
+    def __init__(
+        self,
+        server_protocol: int,
+        client_protocol: int,
+        name: str = "",
+    ) -> None:
         self.server_protocol = server_protocol
         self.client_protocol = client_protocol
+        self.name = name or f"{server_protocol}->{client_protocol}"
         self._handlers: dict[Direction, dict[int, PacketHandler]] = {
             Direction.CLIENTBOUND: {},
             Direction.SERVERBOUND: {},
@@ -47,6 +58,15 @@ class Protocol:
 
     def cancel_serverbound(self, *packet_ids: int) -> None:
         self._cancel[Direction.SERVERBOUND].update(packet_ids)
+
+    def init(self, connection: "UserConnection") -> None:
+        """Called once per connection when the translation chain is first resolved.
+
+        Override to initialize per-connection state via connection.put().
+
+        Args:
+            connection: The player connection entering this protocol's chain.
+        """
 
     def transform(
         self, direction: Direction, packet_id: int, wrapper: PacketWrapper

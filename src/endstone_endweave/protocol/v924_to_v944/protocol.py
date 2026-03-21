@@ -45,7 +45,11 @@ def create_protocol() -> Protocol:
     Returns:
         A Protocol instance with all v924-to-v944 handlers registered.
     """
-    p = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
+    p = Protocol(
+        server_protocol=SERVER_PROTOCOL,
+        client_protocol=CLIENT_PROTOCOL,
+        name="v924_to_v944",
+    )
 
     # Login
     p.register_serverbound(
