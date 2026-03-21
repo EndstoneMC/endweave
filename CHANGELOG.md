@@ -18,7 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 - Startup logs now show supported client version range
 
-## [0.1.0] - 2026-03-21
+## [0.1.0] - 2026-03-20
 
 ### Added
 - Protocol translation between v924 (MC 1.26.0) and v944 (MC 1.26.10)
