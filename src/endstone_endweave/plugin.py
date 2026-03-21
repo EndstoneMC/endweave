@@ -22,6 +22,11 @@ from endstone_endweave.protocol.v924_to_v944 import (
 )
 from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
 
+class EndweaveMetrics(Metrics):
+    """Fix for endstone<=0.11.2 which reads .description instead of ._description."""
+
+    def append_service_data(self, service_data: dict[str, object]) -> None:
+        service_data["pluginVersion"] = self._plugin._description.version
 
 class EndweavePlugin(Plugin):
     """Endstone plugin that enables protocol translation between Bedrock versions.
@@ -65,7 +70,7 @@ class EndweavePlugin(Plugin):
         self.register_events(self)
 
         # bStats metrics (https://bstats.org/plugin/bukkit/Endweave/30345)
-        self._metrics = Metrics(self, service_id=30345)
+        self._metrics = EndweaveMetrics(self, service_id=30345)
 
     @staticmethod
     def _normalize_mc_version(version: str) -> str:

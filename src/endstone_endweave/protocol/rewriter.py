@@ -10,7 +10,7 @@ from endstone_endweave.codec import (
     BLOCK_POS,
     BOOL,
     BYTE,
-    COMPOUND_TAG,
+    NAMED_COMPOUND_TAG,
     FLOAT_LE,
     ITEM_INSTANCE,
     NETWORK_BLOCK_POS,
@@ -98,7 +98,7 @@ _ACTOR_DATA_TYPES: dict[int, Type[Any]] = {
     2: VAR_INT,  # Int
     3: FLOAT_LE,  # Float
     4: STRING,  # String
-    5: COMPOUND_TAG,  # CompoundTag
+    5: NAMED_COMPOUND_TAG,  # CompoundTag (Bedrock uses named NBT in ActorData)
     # 6 = BlockPos (3x varint), 7 = Int64, 8 = Vec3 (3x float) handled inline
 }
 
@@ -141,8 +141,10 @@ def passthrough_actor_data(
         key = wrapper.passthrough(UVAR_INT)
         type_id = wrapper.passthrough(UVAR_INT)
 
-        if int_remappers and type_id == 2 and key in int_remappers:
-            value = wrapper.read(VAR_INT)
-            wrapper.write(VAR_INT, int_remappers[key](value))
+        if int_remappers and key in int_remappers and type_id in (2, 7):
+            # Type 2 = Int (varint32), Type 7 = Int64 (varint64)
+            field = VAR_INT if type_id == 2 else VAR_INT64
+            value = wrapper.read(field)
+            wrapper.write(field, int_remappers[key](value))
         else:
             _passthrough_actor_data_value(wrapper, type_id)
