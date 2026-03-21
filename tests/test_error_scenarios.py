@@ -116,9 +116,7 @@ class TestInformativeExceptionContext:
         def bad_handler(wrapper):
             raise RuntimeError("test explosion")
 
-        protocol = Protocol(
-            server_protocol=924, client_protocol=944, name="v924_to_v944"
-        )
+        protocol = Protocol(server_protocol=924, client_protocol=944, name="v924_to_v944")
         protocol.register_serverbound(42, bad_handler)
         manager.register(protocol)
 
@@ -159,7 +157,7 @@ class TestDebugHandler:
         assert "should log" in logger.debug.call_args[0][0]
 
     def test_log_packet_via_format(self):
-        """Verify ViaVersion-style log format."""
+        """Verify packet log format."""
         logger = MagicMock()
         handler = DebugHandler(logger, enabled=True)
         handler.log_packet("PRE ", "1.2.3.4:1234", "SERVERBOUND", "LOGIN", 11, 944, 256)
@@ -203,7 +201,7 @@ class TestDebugHandler:
 
 class TestPacketLabel:
     def test_known_packet_id(self):
-        """Verify ViaVersion-style hex format: NAME(id) (0xHH)."""
+        """Verify hex format: NAME(id) (0xHH)."""
         label = packet_label(11)
         assert "START_GAME(11)" in label
         assert "(0x0B)" in label

@@ -20,8 +20,14 @@ from endstone_endweave.codec import (
 )
 from endstone_endweave.protocol.rewriter import (
     block_to_net as _block_to_net,
+)
+from endstone_endweave.protocol.rewriter import (
     net_to_block as _net_to_block,
+)
+from endstone_endweave.protocol.rewriter import (
     passthrough_inventory_action as _passthrough_inventory_action,
+)
+from endstone_endweave.protocol.rewriter import (
     passthrough_structure_settings as _rewrite_structure_settings,
 )
 

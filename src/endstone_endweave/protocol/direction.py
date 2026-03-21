@@ -1,4 +1,8 @@
-"""Packet direction enum, matching ViaVersion's Direction."""
+"""Packet direction enum for serverbound/clientbound classification.
+
+See Also:
+    com.viaversion.viaversion.api.protocol.packet.Direction
+"""
 
 from enum import Enum
 

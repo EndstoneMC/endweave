@@ -1,7 +1,10 @@
 """Structured error context for protocol translation failures.
 
-Aligned with ViaVersion's InformativeException: stores ordered key-value
-context entries, formats as comma-separated pairs, supports source tracking.
+Stores ordered key-value context entries, formats as comma-separated pairs,
+and supports source tracking.
+
+See Also:
+    com.viaversion.viaversion.exception.InformativeException
 """
 
 _MAX_VALUE_LENGTH = 256
@@ -52,19 +55,18 @@ class InformativeException(Exception):
     def get_message(self) -> str:
         """Format the error with all context for logging.
 
-        Matches ViaVersion's InformativeException.getMessage() format:
-        comma-separated "Key: Value" pairs on a single line after a
-        header message.
+        Produces comma-separated "Key: Value" pairs on a single line
+        after a header message.
 
         Returns:
             Formatted error string with context.
+
+        See Also:
+            com.viaversion.viaversion.exception.InformativeException#getMessage
         """
         parts = []
         for key, value in self._entries:
             parts.append(f"{key}: {value}")
         context = ", ".join(parts) if parts else "(no context)"
         cause_type = type(self.__cause__).__name__
-        return (
-            f"Please report this on the Endweave GitHub repository\n"
-            f"{context}, Cause: {cause_type}: {self.__cause__}"
-        )
+        return f"Please report this on the Endweave GitHub repository\n{context}, Cause: {cause_type}: {self.__cause__}"

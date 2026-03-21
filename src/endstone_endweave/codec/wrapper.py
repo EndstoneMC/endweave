@@ -1,4 +1,4 @@
-"""PacketWrapper -- ViaVersion-style read/transform/write packet manipulation.
+"""PacketWrapper -- read/transform/write packet manipulation.
 
 Holds separate read (input) and write (output) buffers. Handlers use three
 operations to transform packets field-by-field:
@@ -9,13 +9,16 @@ operations to transform packets field-by-field:
 
 After all handlers run, the wrapper produces the final payload from its
 write buffer plus any unread trailing bytes.
+
+See Also:
+    com.viaversion.viaversion.api.type.Types
 """
 
 from typing import TYPE_CHECKING, TypeVar
 
 from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.codec.types import Type
+from endstone_endweave.codec.writer import PacketWriter
 
 if TYPE_CHECKING:
     from endstone_endweave.connection import UserConnection

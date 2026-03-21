@@ -9,10 +9,10 @@ strip the v924 server join info, and write false for v944's has_server_join_info
 from endstone_endweave.codec import (
     BOOL,
     BYTE,
-    NAMED_COMPOUND_TAG,
     FLOAT_LE,
     INT_LE,
     LONG_LE,
+    NAMED_COMPOUND_TAG,
     SHORT_LE,
     STRING,
     UINT_LE,

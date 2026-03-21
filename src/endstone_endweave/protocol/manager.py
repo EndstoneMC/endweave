@@ -8,13 +8,16 @@ from endstone_endweave.protocol import Protocol
 class ProtocolManager:
     """Maps (server_protocol, client_protocol) -> Protocol.
 
-    Supports chaining protocols for multi-step version gaps,
-    inspired by ViaVersion's ProtocolManagerImpl.getProtocolPath().
+    Supports chaining protocols for multi-step version gaps
+    using BFS to find the shortest translation path.
 
     Attributes:
         _protocols: Direct mapping from (server, client) version pair to Protocol.
         _base_protocols: Always-on protocols that run before version-specific ones.
         _path_cache: Cached BFS results mapping version pairs to protocol chains.
+
+    See Also:
+        com.viaversion.viaversion.protocol.ProtocolManagerImpl#getProtocolPath
     """
 
     def __init__(self) -> None:
@@ -56,9 +59,7 @@ class ProtocolManager:
         """
         return self._protocols.get((server_protocol, client_protocol))
 
-    def get_path(
-        self, server_protocol: int, client_protocol: int
-    ) -> list[Protocol] | None:
+    def get_path(self, server_protocol: int, client_protocol: int) -> list[Protocol] | None:
         """Return ordered list of protocols to chain, or None if no path exists.
 
         Direct lookup first, then BFS for multi-step chains.

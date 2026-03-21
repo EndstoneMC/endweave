@@ -1,6 +1,6 @@
 """Initial base protocol -- always-on handlers for version detection and disconnect logging."""
 
-from endstone_endweave.codec import UVAR_INT, BOOL, STRING, INT_BE, PacketWrapper
+from endstone_endweave.codec import BOOL, INT_BE, STRING, UVAR_INT, PacketWrapper
 from endstone_endweave.connection import ConnectionState
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
@@ -17,8 +17,7 @@ def detect_client_protocol(wrapper: PacketWrapper) -> None:
     connection.client_protocol = client_proto
     connection.state = ConnectionState.LOGIN
     connection.logger.debug(
-        f"User connected with protocol: {client_proto} "
-        f"and serverProtocol: {connection.server_protocol}"
+        f"User connected with protocol: {client_proto} and serverProtocol: {connection.server_protocol}"
     )
 
 
@@ -47,13 +46,9 @@ def log_disconnect(wrapper: PacketWrapper) -> None:
         message = ""
         if not skip_message and wrapper.has_remaining():
             message = wrapper.passthrough(STRING)
-        connection.logger.info(
-            f"Disconnect {connection.address}: reason={reason} message={message!r}"
-        )
+        connection.logger.info(f"Disconnect {connection.address}: reason={reason} message={message!r}")
     except Exception:
-        connection.logger.info(
-            f"Disconnect {connection.address}: could not parse reason"
-        )
+        connection.logger.info(f"Disconnect {connection.address}: could not parse reason")
 
 
 def create_base_protocol(server_protocol: int) -> Protocol:

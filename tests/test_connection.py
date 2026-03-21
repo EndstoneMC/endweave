@@ -3,8 +3,8 @@
 from unittest.mock import MagicMock
 
 from endstone_endweave.connection import (
-    ConnectionState,
     ConnectionManager,
+    ConnectionState,
     UserConnection,
 )
 

@@ -2,7 +2,9 @@
 
 Each Type knows how to read from a PacketReader and write to a PacketWriter,
 enabling the PacketWrapper's passthrough() pattern (read + write in one call).
-Inspired by ViaVersion's Type<T> system.
+
+See Also:
+    com.viaversion.viaversion.api.type.Type
 """
 
 from abc import ABC, abstractmethod

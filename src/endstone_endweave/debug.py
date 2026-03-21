@@ -1,7 +1,10 @@
 """Debug packet logging with per-packet-type filtering.
 
-Aligned with ViaVersion's DebugHandler: supports pre/post transform logging
-phases, packet type filtering, and a structured log format.
+Supports pre/post transform logging phases, packet type filtering,
+and a structured log format.
+
+See Also:
+    com.viaversion.viaversion.api.debug.DebugHandler
 """
 
 from endstone import Logger
@@ -10,13 +13,16 @@ from endstone_endweave.protocol.packet_ids import PacketId
 
 
 def packet_label(packet_id: int) -> str:
-    """Format a packet ID as 'NAME(id) (0xHH)' like ViaVersion's ProtocolUtil.
+    """Format a packet ID as 'NAME(id) (0xHH)' for debug display.
 
     Args:
         packet_id: Bedrock packet ID.
 
     Returns:
         e.g. 'START_GAME(11) (0x0B)' or '999 (0x03E7)'.
+
+    See Also:
+        com.viaversion.viaversion.util.ProtocolUtil
     """
     hex_str = format(packet_id, "X")
     nice_hex = ("0x0" if len(hex_str) == 1 else "0x") + hex_str
@@ -30,10 +36,8 @@ def packet_label(packet_id: int) -> str:
 class DebugHandler:
     """Controls debug logging with optional packet ID filtering.
 
-    Aligned with ViaVersion's DebugHandler interface:
-    - Master enabled flag
-    - Separate pre/post transform logging phases
-    - Packet ID filter set (empty = log all)
+    Provides a master enabled flag, separate pre/post transform logging
+    phases, and a packet ID filter set (empty = log all).
 
     Attributes:
         _logger: Endstone logger instance.
@@ -41,6 +45,9 @@ class DebugHandler:
         _log_pre: Log packets before transformation (default True when enabled).
         _log_post: Log packets after transformation (default False).
         _filter: Set of packet IDs to log (empty = all).
+
+    See Also:
+        com.viaversion.viaversion.api.debug.DebugHandler
     """
 
     def __init__(
@@ -91,25 +98,26 @@ class DebugHandler:
         client_version: int,
         size: int,
     ) -> None:
-        """Log a packet event in ViaVersion-aligned format.
+        """Log a packet event in structured format.
 
         Format: {STAGE}: {ADDRESS} {DIRECTION} {STATE}: {PACKET_LABEL} [{VERSION}] {SIZE}b
 
         Args:
-            stage: "PRE " or "POST" (padded to 4 chars like ViaVersion).
+            stage: "PRE " or "POST" (padded to 4 chars).
             address: Connection address string.
             direction: "SERVERBOUND" or "CLIENTBOUND".
             state: Connection state (e.g. "LOGIN", "PLAY").
             packet_id: Bedrock packet ID.
             client_version: Client protocol version number.
             size: Payload size in bytes.
+
+        See Also:
+            com.viaversion.viaversion.protocol.ProtocolPipelineImpl#logPacket
         """
         if not self.should_log(packet_id):
             return
         label = packet_label(packet_id)
-        self._logger.debug(
-            f"{stage}: {address} {direction} {state}: {label} [{client_version}] {size}b"
-        )
+        self._logger.debug(f"{stage}: {address} {direction} {state}: {label} [{client_version}] {size}b")
 
     def log(self, packet_id: int, message: str) -> None:
         """Log a debug message if the packet ID passes the filter.

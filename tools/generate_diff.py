@@ -127,9 +127,7 @@ def _resolve_protocol(arg: str) -> int | None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Diff two protocol version packet JSONs."
-    )
+    parser = argparse.ArgumentParser(description="Diff two protocol version packet JSONs.")
     parser.add_argument(
         "old",
         nargs="?",
@@ -175,9 +173,7 @@ def main() -> None:
     with open(new_path, encoding="utf-8") as f:
         new_packets = json.load(f)
 
-    print(
-        f"Comparing {len(old_packets)} old packets vs {len(new_packets)} new packets..."
-    )
+    print(f"Comparing {len(old_packets)} old packets vs {len(new_packets)} new packets...")
     diff = diff_packets(old_packets, new_packets)
 
     print(f"  New packets: {len(diff['new_packets'])}")

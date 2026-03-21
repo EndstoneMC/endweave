@@ -68,9 +68,7 @@ class Protocol:
             connection: The player connection entering this protocol's chain.
         """
 
-    def transform(
-        self, direction: Direction, packet_id: int, wrapper: PacketWrapper
-    ) -> None:
+    def transform(self, direction: Direction, packet_id: int, wrapper: PacketWrapper) -> None:
         """Run the handler for this packet in the given direction, if any.
 
         Args:

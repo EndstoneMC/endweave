@@ -36,11 +36,11 @@ from endstone_endweave.codec.types.primitives import (
     STRING,
     UINT_LE,
     USHORT_LE,
+    UUID,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
-    UUID,
     Type,
 )
 

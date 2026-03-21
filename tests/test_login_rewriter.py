@@ -3,7 +3,6 @@
 import struct
 from unittest.mock import MagicMock
 
-
 from endstone_endweave.codec import PacketWrapper
 from endstone_endweave.connection import UserConnection
 from endstone_endweave.protocol.direction import Direction
@@ -15,9 +14,7 @@ from endstone_endweave.protocol.v924_to_v944.handlers.login import (
 
 class TestRequestNetworkSettings:
     def setup_method(self):
-        self.connection = UserConnection(
-            address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924
-        )
+        self.connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
 
     def test_rewrites_944_to_924(self):
         payload = struct.pack(">i", 944)
@@ -43,9 +40,7 @@ class TestRequestNetworkSettings:
 
 class TestLoginPacket:
     def setup_method(self):
-        self.connection = UserConnection(
-            address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924
-        )
+        self.connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
 
     def test_rewrites_protocol_version(self):
         payload = struct.pack(">i", 944) + b"\x00" * 100

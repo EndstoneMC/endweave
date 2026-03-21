@@ -3,11 +3,10 @@
 import struct
 from unittest.mock import MagicMock
 
-
 from endstone_endweave.codec import REMAINING_BYTES
 from endstone_endweave.codec.wrapper import PacketWrapper
+from endstone_endweave.connection import ConnectionManager, UserConnection
 from endstone_endweave.pipeline import ProtocolPipeline
-from endstone_endweave.connection import UserConnection, ConnectionManager
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.base import create_base_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
@@ -76,9 +75,7 @@ class TestProtocolManager:
 
 
 class TestProtocolPipeline:
-    def _make_event(
-        self, packet_id: int, payload: bytes, address: str = "1.2.3.4:1234"
-    ):
+    def _make_event(self, packet_id: int, payload: bytes, address: str = "1.2.3.4:1234"):
         event = MagicMock()
         event.packet_id = packet_id
         event.payload = payload
@@ -207,12 +204,12 @@ class TestNormalizeMcVersion:
 
 class TestGetVersionByName:
     def test_patch_version_maps_to_base(self):
-        from endstone_endweave.protocol.versions import get_version_by_name, R26_U0
+        from endstone_endweave.protocol.versions import R26_U0, get_version_by_name
 
         assert get_version_by_name("1.26.2") is R26_U0
 
     def test_exact_version_match(self):
-        from endstone_endweave.protocol.versions import get_version_by_name, R26_U1
+        from endstone_endweave.protocol.versions import R26_U1, get_version_by_name
 
         assert get_version_by_name("1.26.10") is R26_U1
 

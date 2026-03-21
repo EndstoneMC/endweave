@@ -4,11 +4,11 @@ import struct
 from unittest.mock import MagicMock
 
 from endstone_endweave.codec import BYTE
+from endstone_endweave.connection import ConnectionManager
 from endstone_endweave.pipeline import ProtocolPipeline
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.base import create_base_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
-from endstone_endweave.connection import ConnectionManager
 
 
 def _make_event(packet_id, payload, address="1.2.3.4:1234"):

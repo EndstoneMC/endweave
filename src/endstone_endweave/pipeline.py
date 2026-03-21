@@ -1,9 +1,11 @@
 """Packet translation pipeline - routes packets through the appropriate protocol.
 
-Aligned with ViaVersion's ProtocolPipelineImpl:
 - Pre/post transform debug logging with packet ID, hex, direction, state
 - InformativeException for structured error context
 - Active flag on UserConnection for fast-path skip
+
+See Also:
+    com.viaversion.viaversion.protocol.ProtocolPipelineImpl
 """
 
 import traceback
@@ -23,15 +25,18 @@ from endstone_endweave.protocol.manager import ProtocolManager
 class ProtocolPipeline:
     """Intercepts packet events and applies protocol translation.
 
-    Like ViaVersion's ProtocolPipelineImpl, creates a single PacketWrapper
-    and passes it through each protocol's transform method in sequence.
-    Logs packets before and after transformation when debug is enabled.
+    Creates a single PacketWrapper and passes it through each protocol's
+    transform method in sequence. Logs packets before and after
+    transformation when debug is enabled.
 
     Attributes:
         _manager: ProtocolManager that provides base protocols and version chains.
         _connections: ConnectionManager for per-player state lookup.
         _logger: Endstone logger instance for error output.
         _debug: Debug handler for filtered packet logging.
+
+    See Also:
+        com.viaversion.viaversion.protocol.ProtocolPipelineImpl
     """
 
     def __init__(
@@ -229,8 +234,7 @@ class ProtocolPipeline:
     def _get_chain(self, connection) -> list[Protocol] | None:
         """Get the protocol chain for a connection, caching the result.
 
-        Calls Protocol.init() on each protocol when the chain is first resolved,
-        matching ViaVersion's ProtocolPipelineImpl.add() behavior.
+        Calls Protocol.init() on each protocol when the chain is first resolved.
 
         Args:
             connection: UserConnection whose server/client protocols determine the chain.
@@ -238,12 +242,13 @@ class ProtocolPipeline:
         Returns:
             Ordered list of Protocol instances forming the translation chain,
             or None if no path exists between the server and client versions.
+
+        See Also:
+            com.viaversion.viaversion.protocol.ProtocolPipelineImpl#add
         """
         if connection.protocol_chain is not None:
             return connection.protocol_chain
-        chain = self._manager.get_path(
-            connection.server_protocol, connection.client_protocol
-        )
+        chain = self._manager.get_path(connection.server_protocol, connection.client_protocol)
         if chain is not None:
             for protocol in chain:
                 protocol.init(connection)

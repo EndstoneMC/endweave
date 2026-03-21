@@ -5,7 +5,7 @@ import struct
 import pytest
 
 from endstone_endweave.codec import PacketReader
-from endstone_endweave.codec.types import ItemInstance, ITEM_INSTANCE
+from endstone_endweave.codec.types import ITEM_INSTANCE, ItemInstance
 from endstone_endweave.codec.writer import PacketWriter
 
 

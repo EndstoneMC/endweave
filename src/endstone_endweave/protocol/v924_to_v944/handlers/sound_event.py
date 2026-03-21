@@ -13,11 +13,11 @@ from endstone_endweave.codec import (
     FLOAT_LE,
     ITEM_INSTANCE,
     STRING,
+    UUID,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
-    UUID,
     PacketWrapper,
 )
 from endstone_endweave.protocol.rewriter import passthrough_actor_data

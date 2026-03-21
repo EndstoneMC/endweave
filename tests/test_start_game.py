@@ -2,22 +2,20 @@
 
 import struct
 
-
 from endstone_endweave.codec import (
+    NAMED_COMPOUND_TAG,
+    ByteTag,
+    CompoundTag,
     PacketReader,
     PacketWrapper,
-    NAMED_COMPOUND_TAG,
-    CompoundTag,
-    ByteTag,
 )
-from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.codec.types.nbt import read_nbt
+from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.protocol.v924_to_v944.handlers.start_game import (
-    rewrite_start_game,
-    _passthrough_game_rules,
     _passthrough_experiments,
+    _passthrough_game_rules,
+    rewrite_start_game,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helper to build Bedrock network NBT bytes
@@ -291,9 +289,7 @@ class TestPassthroughExperiments:
 # ---------------------------------------------------------------------------
 
 
-def _build_v924_start_game(
-    has_server_join_info: bool, has_gathering: bool = False
-) -> bytes:
+def _build_v924_start_game(has_server_join_info: bool, has_gathering: bool = False) -> bytes:
     """Build a synthetic v924 StartGamePacket payload."""
     w = PacketWriter()
 
@@ -462,12 +458,8 @@ class TestRewriteStartGame:
 
     def test_with_join_info_stripped(self):
         """v924 gathering data is stripped; v944 sub-fields are written."""
-        payload_with_gather = _build_v924_start_game(
-            has_server_join_info=True, has_gathering=True
-        )
-        payload_no_gather = _build_v924_start_game(
-            has_server_join_info=True, has_gathering=False
-        )
+        payload_with_gather = _build_v924_start_game(has_server_join_info=True, has_gathering=True)
+        payload_no_gather = _build_v924_start_game(has_server_join_info=True, has_gathering=False)
         # The input with gathering is larger (7 extra strings)
         assert len(payload_with_gather) > len(payload_no_gather)
 
@@ -510,6 +502,4 @@ class TestRewriteStartGame:
                 payload = _build_v924_start_game(has_join, has_gather)
                 wrapper = PacketWrapper(payload)
                 rewrite_start_game(wrapper)
-                assert not wrapper.has_remaining(), (
-                    f"Unread bytes remain (join={has_join}, gather={has_gather})"
-                )
+                assert not wrapper.has_remaining(), f"Unread bytes remain (join={has_join}, gather={has_gather})"

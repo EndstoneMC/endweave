@@ -74,9 +74,7 @@ def fetch_version(name: str, branch: str) -> None:
 
 def main() -> None:
     """Entry point: parse CLI args and fetch protocol docs for selected versions."""
-    parser = argparse.ArgumentParser(
-        description="Fetch protocol docs from BedrockProtocol repo."
-    )
+    parser = argparse.ArgumentParser(description="Fetch protocol docs from BedrockProtocol repo.")
     parser.add_argument(
         "versions",
         nargs="*",
@@ -85,18 +83,13 @@ def main() -> None:
     args = parser.parse_args()
 
     # Build tag -> branch mapping from versions registry
-    all_versions = {
-        v.release_tag: f"r/{v.release_tag.replace('r', '', 1)}"
-        for v in VERSIONS.values()
-    }
+    all_versions = {v.release_tag: f"r/{v.release_tag.replace('r', '', 1)}" for v in VERSIONS.values()}
 
     if args.versions:
         selected = {}
         for tag in args.versions:
             if tag not in all_versions:
-                print(
-                    f"Error: unknown version tag '{tag}'. Known: {', '.join(all_versions)}"
-                )
+                print(f"Error: unknown version tag '{tag}'. Known: {', '.join(all_versions)}")
                 sys.exit(1)
             selected[tag] = all_versions[tag]
     else:

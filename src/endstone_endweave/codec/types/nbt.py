@@ -282,7 +282,6 @@ def _read_value(reader: PacketReader, tag_type: int, depth: int) -> Tag:
 def read_nbt(reader: PacketReader, read_name: bool = True) -> CompoundTag | None:
     """Read a network NBT root compound tag.
 
-    Mirrors ViaVersion's ``NamedCompoundTagType.read(buf, maxBytes, readName)``.
     A root type of 0 (End) returns None (absent NBT).
 
     Args:
@@ -296,6 +295,9 @@ def read_nbt(reader: PacketReader, read_name: bool = True) -> CompoundTag | None
 
     Raises:
         ValueError: If the root tag type is not compound (10) or end (0).
+
+    See Also:
+        com.viaversion.viaversion.api.type.types.misc.NamedCompoundTagType#read
     """
     root_type = reader.read_byte()
     if root_type == TAG_END:
@@ -361,12 +363,9 @@ def _write_value(writer: PacketWriter, tag: Tag) -> None:
         raise ValueError(f"Unknown tag type: {type(tag).__name__}")
 
 
-def write_nbt(
-    writer: PacketWriter, tag: CompoundTag | None, name: str | None = ""
-) -> None:
+def write_nbt(writer: PacketWriter, tag: CompoundTag | None, name: str | None = "") -> None:
     """Write a network NBT root compound tag.
 
-    Mirrors ViaVersion's ``NamedCompoundTagType.write(buf, tag, name)``.
     None is written as a single End byte (0).
 
     Args:
@@ -374,6 +373,9 @@ def write_nbt(
         tag: The root CompoundTag to serialize, or None for absent NBT.
         name: Root name to write. Pass ``""`` for Bedrock named format,
             or ``None`` to omit the name (Java 1.20.2+ nameless format).
+
+    See Also:
+        com.viaversion.viaversion.api.type.types.misc.NamedCompoundTagType#write
     """
     if tag is None:
         writer.write_byte(TAG_END)
@@ -392,8 +394,11 @@ def write_nbt(
 class NamedCompoundTagType(Type[CompoundTag | None]):
     """NBT CompoundTag with root name prefix (Bedrock network format).
 
-    Mirrors ViaVersion's ``NamedCompoundTagType``. Returns None for an
-    absent root (TAG_END), and a CompoundTag for a present root.
+    Returns None for an absent root (TAG_END), and a CompoundTag for a
+    present root.
+
+    See Also:
+        com.viaversion.viaversion.api.type.types.misc.NamedCompoundTagType
     """
 
     def read(self, reader: PacketReader) -> CompoundTag | None:
@@ -406,8 +411,10 @@ class NamedCompoundTagType(Type[CompoundTag | None]):
 class CompoundTagType(Type[CompoundTag | None]):
     """NBT CompoundTag without root name prefix (Java 1.20.2+ format).
 
-    Mirrors ViaVersion's ``CompoundTagType``. Delegates to
-    ``read_nbt``/``write_nbt`` with name handling disabled.
+    Delegates to ``read_nbt``/``write_nbt`` with name handling disabled.
+
+    See Also:
+        com.viaversion.viaversion.api.type.types.misc.CompoundTagType
     """
 
     def read(self, reader: PacketReader) -> CompoundTag | None:

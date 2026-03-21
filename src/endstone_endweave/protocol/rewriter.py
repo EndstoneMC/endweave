@@ -20,8 +20,8 @@ from endstone_endweave.codec import (
     UVAR_INT,
     VAR_INT,
     VAR_INT64,
-    Type,
     PacketWrapper,
+    Type,
 )
 
 

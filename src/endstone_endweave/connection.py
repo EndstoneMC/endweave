@@ -13,12 +13,14 @@ _T = TypeVar("_T")
 
 
 class ConnectionState(Enum):
-    """Lifecycle state of a player connection.
+    """Lifecycle state of a player connection, adapted for Bedrock Edition.
 
-    Aligned with ViaVersion's State enum, adapted for Bedrock Edition:
-    - HANDSHAKE: Initial state before version negotiation (ViaVersion: HANDSHAKE)
-    - LOGIN: After RequestNetworkSettings, during authentication (ViaVersion: LOGIN)
-    - PLAY: After StartGame, in-game packets (ViaVersion: PLAY)
+    - HANDSHAKE: Initial state before version negotiation
+    - LOGIN: After RequestNetworkSettings, during authentication
+    - PLAY: After StartGame, in-game packets
+
+    See Also:
+        com.viaversion.viaversion.api.protocol.packet.State
     """
 
     HANDSHAKE = "handshake"
@@ -30,10 +32,8 @@ class ConnectionState(Enum):
 class UserConnection:
     """Tracks a connected player's protocol state.
 
-    Aligned with ViaVersion's UserConnectionImpl:
-    - active: whether non-base protocols should be applied (fast-path skip)
-    - pending_disconnect: set to prevent further processing after disconnect
-    - state: connection lifecycle phase (HANDSHAKE -> LOGIN -> PLAY)
+    Stores per-player translation context including version detection,
+    connection lifecycle phase, and type-keyed storage for handler state.
 
     Attributes:
         address: Network address string ("host:port") used as the lookup key.
@@ -41,11 +41,14 @@ class UserConnection:
         client_protocol: Protocol version detected from RequestNetworkSettings (0 until set).
         server_protocol: Protocol version of the server this player connected to.
         state: Current connection lifecycle state.
-        active: Whether non-base protocols are applied (ViaVersion: UserConnection.isActive).
+        active: Whether non-base protocols are applied.
         pending_disconnect: Set when disconnect detected, prevents further processing.
         warned_no_chain: Whether a missing-chain warning has already been logged.
         protocol_chain: Cached translation chain after first lookup, or None.
         _storage: Type-keyed storage for per-connection state (entity tracking, etc.).
+
+    See Also:
+        com.viaversion.viaversion.connection.UserConnectionImpl
     """
 
     address: str  # "host:port" key
@@ -61,9 +64,7 @@ class UserConnection:
 
     @property
     def needs_translation(self) -> bool:
-        return (
-            self.client_protocol != 0 and self.client_protocol != self.server_protocol
-        )
+        return self.client_protocol != 0 and self.client_protocol != self.server_protocol
 
     def get(self, cls: type[_T]) -> _T | None:
         """Return stored object for the given type, or None.

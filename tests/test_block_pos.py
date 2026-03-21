@@ -5,8 +5,8 @@ from endstone_endweave.codec import (
     NETWORK_BLOCK_POS,
     PacketWrapper,
 )
-from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.codec.reader import PacketReader
+from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_add_volume_entity,
     rewrite_anvil_damage,
@@ -14,15 +14,14 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_command_block_update,
     rewrite_container_open,
     rewrite_first_net_block_to_block,
-    rewrite_structure_block_update,
     rewrite_play_sound,
     rewrite_player_action,
     rewrite_set_spawn_position,
+    rewrite_structure_block_update,
     rewrite_structure_template_data_request,
     rewrite_update_client_input_locks,
     rewrite_update_sub_chunk_blocks,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

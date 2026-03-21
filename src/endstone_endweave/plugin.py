@@ -11,9 +11,9 @@ from endstone.event import (
 from endstone.metrics import Metrics
 from endstone.plugin import Plugin
 
+from endstone_endweave.connection import ConnectionManager
 from endstone_endweave.debug import DebugHandler
 from endstone_endweave.pipeline import ProtocolPipeline
-from endstone_endweave.connection import ConnectionManager
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.base import create_base_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
@@ -40,9 +40,7 @@ class EndweavePlugin(Plugin):
             self.logger.set_level(self.logger.DEBUG)
 
         server_protocol = self._detect_server_protocol()
-        self._connections = ConnectionManager(
-            server_protocol=server_protocol, logger=self.logger
-        )
+        self._connections = ConnectionManager(server_protocol=server_protocol, logger=self.logger)
         self._manager = ProtocolManager()
 
         # Register base protocol (version detection + disconnect logging)
@@ -60,13 +58,10 @@ class EndweavePlugin(Plugin):
             max_ver = VERSIONS.get(self._max_client_version)
             if server_ver and max_ver:
                 self.logger.info(
-                    f"Supported client versions: "
-                    f"{server_ver.minecraft_version}-{max_ver.minecraft_version}"
+                    f"Supported client versions: {server_ver.minecraft_version}-{max_ver.minecraft_version}"
                 )
 
-        self._pipeline = ProtocolPipeline(
-            self._manager, self._connections, self.logger, debug
-        )
+        self._pipeline = ProtocolPipeline(self._manager, self._connections, self.logger, debug)
         self.register_events(self)
 
         # bStats metrics (https://bstats.org/plugin/bukkit/Endweave/30345)
@@ -100,15 +95,10 @@ class EndweavePlugin(Plugin):
         server_mc_version = self._normalize_mc_version(self.server.minecraft_version)
         ver = get_version_by_name(server_mc_version)
         if ver:
-            self.logger.info(
-                f"Detected server protocol {ver.protocol} (MC {server_mc_version})"
-            )
+            self.logger.info(f"Detected server protocol {ver.protocol} (MC {server_mc_version})")
             return ver.protocol
         fallback = min(VERSIONS.keys()) if VERSIONS else 0
-        self.logger.warning(
-            f"Could not detect server protocol for MC {server_mc_version}, "
-            f"falling back to {fallback}"
-        )
+        self.logger.warning(f"Could not detect server protocol for MC {server_mc_version}, falling back to {fallback}")
         return fallback
 
     def _register_protocol(self, protocol: Protocol) -> None:

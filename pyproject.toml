@@ -33,6 +33,12 @@ Issues = "https://github.com/EndstoneMC/endweave/issues"
 [project.entry-points."endstone"]
 endweave = "endstone_endweave:EndweavePlugin"
 
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["I", "E", "F"]
+
 [tool.hatch.version]
 source = "vcs"
 

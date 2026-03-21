@@ -252,9 +252,7 @@ def _build_field(name: str, prop: dict, definitions: dict) -> dict:
         if items_ref:
             # Array of a referenced type
             element_title = items_ref.get("title", "element")
-            element_children = _build_fields_from_properties(
-                items_ref.get("properties", {}), definitions
-            )
+            element_children = _build_fields_from_properties(items_ref.get("properties", {}), definitions)
             element_field = (
                 {
                     "name": element_title,
@@ -288,9 +286,7 @@ def _build_field(name: str, prop: dict, definitions: dict) -> dict:
     if ref_def:
         # Referenced composite type
         ref_title = ref_def.get("title", name)
-        child_fields = _build_fields_from_properties(
-            ref_def.get("properties", {}), definitions
-        )
+        child_fields = _build_fields_from_properties(ref_def.get("properties", {}), definitions)
         if child_fields:
             return {
                 "name": name,
@@ -418,9 +414,7 @@ def merge_packets(dot_packets: list[dict], json_packets: list[dict]) -> list[dic
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Parse protocol DOT + JSON docs into structured JSON."
-    )
+    parser = argparse.ArgumentParser(description="Parse protocol DOT + JSON docs into structured JSON.")
     parser.add_argument(
         "versions",
         nargs="*",
@@ -442,9 +436,7 @@ def main() -> None:
         selected = {}
         for tag in args.versions:
             if tag not in all_configs:
-                print(
-                    f"Error: unknown version tag '{tag}'. Known: {', '.join(all_configs)}"
-                )
+                print(f"Error: unknown version tag '{tag}'. Known: {', '.join(all_configs)}")
                 sys.exit(1)
             selected[tag] = all_configs[tag]
     else:
