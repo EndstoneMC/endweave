@@ -41,7 +41,9 @@ class EndweaveMetrics(Metrics):
             platform_data["bukkitName"] = server.name
 
     def append_service_data(self, service_data: dict[str, object]) -> None:
-        service_data["pluginVersion"] = self._plugin._description.version
+        description = self._plugin._description
+        if description is not None:
+            service_data["pluginVersion"] = description.version
 
 
 class EndweavePlugin(Plugin):
