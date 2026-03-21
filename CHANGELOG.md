@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-03-21
+
+### Fixed
+- ActorData CompoundTag parsing and Int64 remapping
+- bStats metrics reporting incorrect platform and plugin data
+
+### Changed
+- License changed from MIT to Apache 2.0
+
 ## [0.2.0] - 2026-03-21
 
 ### Added

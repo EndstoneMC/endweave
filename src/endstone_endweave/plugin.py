@@ -1,5 +1,6 @@
 """Endweave plugin - protocol translation for Bedrock Edition."""
-from typing import Dict, Any
+
+from typing import Any, Dict
 
 from endstone.event import (
     EventPriority,
@@ -23,6 +24,7 @@ from endstone_endweave.protocol.v924_to_v944 import (
 )
 from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
 
+
 class EndweaveMetrics(Metrics):
     """Polyfill for endstone<=0.11.2 Metrics which has runtime errors and
     incorrect data formatting in append_platform_data and append_service_data.
@@ -40,6 +42,7 @@ class EndweaveMetrics(Metrics):
 
     def append_service_data(self, service_data: dict[str, object]) -> None:
         service_data["pluginVersion"] = self._plugin._description.version
+
 
 class EndweavePlugin(Plugin):
     """Endstone plugin that enables protocol translation between Bedrock versions.
