@@ -10,6 +10,7 @@ from endstone.event import (
 )
 from endstone.plugin import Plugin
 
+from endstone_endweave.debug import DebugHandler
 from endstone_endweave.pipeline import ProtocolPipeline
 from endstone_endweave.connection import ConnectionManager
 from endstone_endweave.protocol import Protocol
@@ -33,7 +34,8 @@ class EndweavePlugin(Plugin):
 
     def on_enable(self) -> None:
         self.save_default_config()
-        if self.config.get("debug", {}).get("enabled", False):
+        debug = DebugHandler.from_config(self.logger, self.config)
+        if debug.enabled:
             self.logger.set_level(self.logger.DEBUG)
 
         server_protocol = self._detect_server_protocol()
@@ -52,16 +54,19 @@ class EndweavePlugin(Plugin):
         # Determine highest client version we support
         self._max_client_version = self._manager.get_max_client_version(server_protocol)
 
-        self._pipeline = ProtocolPipeline(self._manager, self._connections, self.logger)
-        self.register_events(self)
+        if self._max_client_version:
+            server_ver = VERSIONS.get(server_protocol)
+            max_ver = VERSIONS.get(self._max_client_version)
+            if server_ver and max_ver:
+                self.logger.info(
+                    f"Supported client versions: "
+                    f"{server_ver.minecraft_version}-{max_ver.minecraft_version}"
+                )
 
-        max_ver = (
-            VERSIONS.get(self._max_client_version) if self._max_client_version else None
+        self._pipeline = ProtocolPipeline(
+            self._manager, self._connections, self.logger, debug
         )
-        self.logger.info(
-            f"Endweave enabled - server proto {server_protocol}, "
-            f"max client: {max_ver.minecraft_version if max_ver else 'none'}"
-        )
+        self.register_events(self)
 
     @staticmethod
     def _normalize_mc_version(version: str) -> str:
@@ -104,10 +109,6 @@ class EndweavePlugin(Plugin):
 
     def _register_protocol(self, protocol: Protocol) -> None:
         self._manager.register(protocol)
-        self.logger.info(
-            f"Registered protocol: "
-            f"{protocol.server_protocol} -> {protocol.client_protocol}"
-        )
 
     @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value]
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:

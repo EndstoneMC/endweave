@@ -1,4 +1,10 @@
-"""Packet translation pipeline - routes packets through the appropriate protocol."""
+"""Packet translation pipeline - routes packets through the appropriate protocol.
+
+Aligned with ViaVersion's ProtocolPipelineImpl:
+- Pre/post transform debug logging with packet ID, hex, direction, state
+- InformativeException for structured error context
+- Active flag on UserConnection for fast-path skip
+"""
 
 import traceback
 
@@ -7,26 +13,11 @@ from endstone.event import PacketReceiveEvent, PacketSendEvent
 
 from endstone_endweave.codec.wrapper import PacketWrapper
 from endstone_endweave.connection import ConnectionManager
+from endstone_endweave.debug import DebugHandler, packet_label
+from endstone_endweave.exception import InformativeException
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.direction import Direction
-from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.manager import ProtocolManager
-
-
-def _pname(packet_id: int) -> str:
-    """Resolve packet ID to name, e.g. 'START_GAME(11)' or '999'.
-
-    Args:
-        packet_id: Numeric Bedrock packet identifier.
-
-    Returns:
-        Human-readable string like 'START_GAME(11)', or the raw number
-        as a string if the ID is not in the PacketId enum.
-    """
-    try:
-        return f"{PacketId(packet_id).name}({packet_id})"
-    except ValueError:
-        return str(packet_id)
 
 
 class ProtocolPipeline:
@@ -34,11 +25,13 @@ class ProtocolPipeline:
 
     Like ViaVersion's ProtocolPipelineImpl, creates a single PacketWrapper
     and passes it through each protocol's transform method in sequence.
+    Logs packets before and after transformation when debug is enabled.
 
     Attributes:
         _manager: ProtocolManager that provides base protocols and version chains.
         _connections: ConnectionManager for per-player state lookup.
-        _logger: Endstone logger instance for debug and error output.
+        _logger: Endstone logger instance for error output.
+        _debug: Debug handler for filtered packet logging.
     """
 
     def __init__(
@@ -46,10 +39,12 @@ class ProtocolPipeline:
         manager: ProtocolManager,
         connections: ConnectionManager,
         logger: Logger,
+        debug: DebugHandler | None = None,
     ) -> None:
         self._manager = manager
         self._connections = connections
         self._logger = logger
+        self._debug = debug or DebugHandler(logger)
 
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
         """Handle a serverbound (client->server) packet.
@@ -79,8 +74,6 @@ class ProtocolPipeline:
                 event.payload = payload
             return
 
-        self._logger.debug(f"[SB] {_pname(packet_id)} ({len(payload)}b)")
-
         chain = self._get_chain(connection)
         if chain is None:
             if not connection.warned_no_chain:
@@ -93,6 +86,18 @@ class ProtocolPipeline:
                 event.payload = payload
             return
 
+        # PRE transform logging (ViaVersion: logPrePacketTransform)
+        if self._debug.log_pre_packet_transform:
+            self._debug.log_packet(
+                "PRE ",
+                address,
+                "SERVERBOUND",
+                connection.state.value.upper(),
+                packet_id,
+                connection.client_protocol,
+                len(payload),
+            )
+
         # Fresh wrapper from base protocol output for version-specific chain
         wrapper = PacketWrapper(payload, user=connection)
 
@@ -100,25 +105,42 @@ class ProtocolPipeline:
         for protocol in chain:
             try:
                 protocol.transform(Direction.SERVERBOUND, packet_id, wrapper)
-            except Exception:
-                self._logger.error(
-                    f"[SB] {_pname(packet_id)} from {address} "
-                    f"EXCEPTION:\n{traceback.format_exc()}"
+            except Exception as exc:
+                err = (
+                    InformativeException(exc)
+                    .set("Direction", "SERVERBOUND")
+                    .set("Packet ID", packet_label(packet_id))
+                    .set("Protocol", protocol.name)
+                    .set("Address", address)
+                    .set("State", connection.state.value.upper())
                 )
+                if err.should_be_printed:
+                    self._logger.error(f"{err.get_message()}\n{traceback.format_exc()}")
                 event.cancel()
                 return
             if wrapper.cancelled:
-                self._logger.debug(f"[SB] {_pname(packet_id)} CANCELLED")
+                self._debug.log(
+                    packet_id,
+                    f"Cancelled serverbound {packet_label(packet_id)} for {address}",
+                )
                 event.cancel()
                 return
 
         new_payload = wrapper.to_bytes()
         if new_payload != payload:
-            self._logger.debug(
-                f"[SB] {_pname(packet_id)} rewritten "
-                f"{len(event.payload)}b -> {len(new_payload)}b"
-            )
             event.payload = new_payload
+
+        # POST transform logging (ViaVersion: logPostPacketTransform)
+        if self._debug.log_post_packet_transform:
+            self._debug.log_packet(
+                "POST",
+                address,
+                "SERVERBOUND",
+                connection.state.value.upper(),
+                packet_id,
+                connection.client_protocol,
+                len(event.payload),
+            )
 
     def on_packet_send(self, event: PacketSendEvent) -> None:
         """Handle a clientbound (server->client) packet.
@@ -129,8 +151,8 @@ class ProtocolPipeline:
         address = str(event.address)
 
         connection = self._connections.get(address)
-        if connection is None or not connection.needs_translation:
-            return  # fast path
+        if connection is None or not connection.active:
+            return  # fast path (ViaVersion: !connection.isActive())
 
         chain = self._get_chain(connection)
         if chain is None:
@@ -138,23 +160,43 @@ class ProtocolPipeline:
 
         packet_id = event.packet_id
         payload = event.payload
-        wrapper = PacketWrapper(payload, user=connection)
 
-        self._logger.debug(f"[CB] {_pname(packet_id)} ({len(payload)}b)")
+        # PRE transform logging
+        if self._debug.log_pre_packet_transform:
+            self._debug.log_packet(
+                "PRE ",
+                address,
+                "CLIENTBOUND",
+                connection.state.value.upper(),
+                packet_id,
+                connection.client_protocol,
+                len(payload),
+            )
+
+        wrapper = PacketWrapper(payload, user=connection)
 
         # Clientbound: apply chain in reverse order (server -> client direction)
         for protocol in reversed(chain):
             try:
                 protocol.transform(Direction.CLIENTBOUND, packet_id, wrapper)
-            except Exception:
-                self._logger.error(
-                    f"[CB] {_pname(packet_id)} to {address} "
-                    f"EXCEPTION:\n{traceback.format_exc()}"
+            except Exception as exc:
+                err = (
+                    InformativeException(exc)
+                    .set("Direction", "CLIENTBOUND")
+                    .set("Packet ID", packet_label(packet_id))
+                    .set("Protocol", protocol.name)
+                    .set("Address", address)
+                    .set("State", connection.state.value.upper())
                 )
+                if err.should_be_printed:
+                    self._logger.error(f"{err.get_message()}\n{traceback.format_exc()}")
                 event.cancel()
                 return
             if wrapper.cancelled:
-                self._logger.debug(f"[CB] {_pname(packet_id)} CANCELLED")
+                self._debug.log(
+                    packet_id,
+                    f"Cancelled clientbound {packet_label(packet_id)} for {address}",
+                )
                 event.cancel()
                 return
 
@@ -170,14 +212,25 @@ class ProtocolPipeline:
 
         new_payload = wrapper.to_bytes()
         if new_payload != event.payload:
-            self._logger.debug(
-                f"[CB] {_pname(packet_id)} rewritten "
-                f"{len(event.payload)}b -> {len(new_payload)}b"
-            )
             event.payload = new_payload
+
+        # POST transform logging
+        if self._debug.log_post_packet_transform:
+            self._debug.log_packet(
+                "POST",
+                address,
+                "CLIENTBOUND",
+                connection.state.value.upper(),
+                packet_id,
+                connection.client_protocol,
+                len(event.payload),
+            )
 
     def _get_chain(self, connection) -> list[Protocol] | None:
         """Get the protocol chain for a connection, caching the result.
+
+        Calls Protocol.init() on each protocol when the chain is first resolved,
+        matching ViaVersion's ProtocolPipelineImpl.add() behavior.
 
         Args:
             connection: UserConnection whose server/client protocols determine the chain.
@@ -192,5 +245,8 @@ class ProtocolPipeline:
             connection.server_protocol, connection.client_protocol
         )
         if chain is not None:
+            for protocol in chain:
+                protocol.init(connection)
             connection.protocol_chain = chain
+            connection.active = True  # ViaVersion: setActive(true) after pipeline setup
         return chain

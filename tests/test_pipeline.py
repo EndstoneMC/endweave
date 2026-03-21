@@ -181,6 +181,10 @@ class TestProtocolPipeline:
         event = self._make_event(193, payload)
         pipeline.on_packet_receive(event)
 
+        # Trigger chain resolution (sets connection.active = True)
+        event_sb = self._make_event(99, b"\x00")
+        pipeline.on_packet_receive(event_sb)
+
         event2 = self._make_event(42, b"\x00\x01")
         pipeline.on_packet_send(event2)
         event2.cancel.assert_called_once()

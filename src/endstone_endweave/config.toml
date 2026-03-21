@@ -1,3 +1,8 @@
 [debug]
 # Enable verbose debug logging for packet translation
 enabled = false
+# Filter to specific packet IDs (empty = log all packets)
+# Example: packets = [11, 193]
+packets = []
+# Log packets after transformation (pre-transform is always logged when debug is enabled)
+log_post_transform = false
