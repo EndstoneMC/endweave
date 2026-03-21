@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 PacketHandler = Callable[[PacketWrapper], None]
 
+__all__ = ["PacketHandler", "Protocol"]
+
 
 class Protocol:
     """Translates packets between two protocol versions.

@@ -13,7 +13,7 @@ keywords = ["endstone", "plugin", "protocol", "translation"]
 requires-python = ">=3.10"
 authors = [{ name = "Vincent", email = "magicdroidx@gmail.com" }]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "mypy", "ruff"]
 
 [project.urls]
 Repository = "https://github.com/EndstoneMC/endweave"

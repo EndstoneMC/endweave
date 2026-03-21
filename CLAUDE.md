@@ -8,14 +8,18 @@ Currently translates between protocol 924 (MC 1.26.0) and 944 (MC 1.26.10).
 
 - **Plugin** (`plugin.py`): Endstone plugin entry point, registers event handlers and protocols
 - **Pipeline** (`pipeline.py`): `ProtocolPipeline` -- pure dispatcher routing packets through base + version-specific protocols
-- **Connection** (`connection.py`): `UserConnection` (per-player state) and `ConnectionManager`
+- **Connection** (`connection.py`): `UserConnection` (per-player state), `ConnectionState`, and `ConnectionManager`
+- **Debug** (`debug.py`): `DebugHandler` with per-packet-ID filtering and structured log format
+- **Exception** (`exception.py`): `InformativeException` with fluent `.set()` context for error reporting
 - **Codec** (`codec/`): Binary reader/writer for Bedrock packet serialization (varint, zigzag, LE/BE integers)
 - **Protocol** (`protocol/`): Translation infrastructure + version-specific protocol modules
+  - `__init__.py`: `Protocol` class and `PacketHandler` type alias
+  - `direction.py`: `Direction` enum (CLIENTBOUND / SERVERBOUND)
   - `versions.py`: Central `ProtocolVersion` registry (single source of truth for all known versions)
   - `packet_ids.py`: Shared `PacketId` enum (Bedrock IDs are stable across versions)
   - `manager.py`: `ProtocolManager` with BFS chaining for multi-step version gaps + base protocol support
-  - `base.py`: `Protocol` class and `PacketAction` result type
-  - `base_protocol.py`: `BaseProtocol` -- always-on handlers for version detection and disconnect logging
+  - `base.py`: `create_base_protocol()` -- always-on handlers for version detection and disconnect logging
+  - `rewriter.py`: Shared field conversion helpers (BlockPos, ActorData, StructureSettings)
   - `v924_to_v944/`: Version-specific protocol module (exports `create_protocol`, `SERVER_PROTOCOL`, `CLIENT_PROTOCOL`)
 - **Tools** (`tools/`): Offline scripts to fetch protocol docs, parse DOT + JSON files, generate diffs
 
@@ -31,14 +35,16 @@ Currently translates between protocol 924 (MC 1.26.0) and 944 (MC 1.26.10).
 
 ## Development
 
-- `python tools/fetch_protocol_docs.py [tags...]` -- fetch protocol DOT + JSON files from BedrockProtocol repo
-- `python tools/parse_protocol_docs.py [tags...]` -- parse DOT + JSON -> structured JSON
-- `python tools/generate_diff.py [old new]` -- diff two version JSONs
-- `pytest tests/` -- run unit tests
+- `uv run tools/fetch_protocol_docs.py [tags...]` -- fetch protocol DOT + JSON files from BedrockProtocol repo
+- `uv run tools/parse_protocol_docs.py [tags...]` -- parse DOT + JSON -> structured JSON
+- `uv run tools/generate_diff.py [old new]` -- diff two version JSONs
+- `uv run pytest tests/` -- run unit tests
+- `uv run ruff check src/ tests/` -- lint
+- `uv run mypy src/endstone_endweave/ --strict` -- type check
 
 ## Key Design Decisions
 
-- Fast-path skip when `not connection.needs_translation` (no deserialization overhead for matching clients)
+- Fast-path skip: serverbound uses `not connection.needs_translation`, clientbound uses `not connection.active`
 - Only deserialize packets that have registered rewriters (pass-through by default)
 - Base protocol detects client version from `RequestNetworkSettings` and logs disconnects (always-on, separate from version-specific protocols)
 - Version-specific protocols rewrite `RequestNetworkSettings` protocol field to server's version so BDS accepts newer clients
@@ -61,11 +67,13 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 
 - Always refer to `vendor/ViaVersion/` code as a reference when working on protocol translation logic
 - If the `vendor/ViaVersion/` folder does not exist, clone it from https://github.com/ViaVersion/ViaVersion
+- Use `See Also:` docstring sections with fully qualified Java paths when referencing ViaVersion classes
 
 ## Git
 
 - Never add a Co-Authored-By line for Claude in commit messages
 - Maintain a `CHANGELOG.md` following https://keepachangelog.com/en/1.0.0/
+- No double dashes in user-facing prose (README, CHANGELOG)
 
 ## Code Style
 
@@ -75,6 +83,9 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 - Use Google-style docstrings (`Args:`, `Returns:`, `Attributes:` sections) for non-trivial functions and classes
 - Trivial one-liner docstrings are fine for self-explanatory functions (e.g. `read_byte`, `write_int_le`)
 - Inline comments next to wrapper.passthrough/read/write calls must use the exact field names from `data/v924_packets.json` (or v944 for new fields)
+- Add `__all__` (alphabetically sorted) to `__init__.py` files that re-export symbols; skip empty package markers
+- Use `_T` (underscore prefix) for TypeVar names
+- Prefer `@property` over getter methods for no-arg methods that return state
 
 ## Tooling
 

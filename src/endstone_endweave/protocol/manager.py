@@ -137,7 +137,5 @@ class ProtocolManager:
         Returns:
             The highest reachable client protocol number, or None if none found.
         """
-        reachable = [
-            c for _, c in self._protocols if self.get_path(server_protocol, c) is not None
-        ]
+        reachable = [c for _, c in self._protocols if self.get_path(server_protocol, c) is not None]
         return max(reachable) if reachable else None
