@@ -9,7 +9,7 @@ from endstone import Logger, Player
 if TYPE_CHECKING:
     from endstone_endweave.protocol import Protocol
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 
 class ConnectionState(Enum):
@@ -65,7 +65,7 @@ class UserConnection:
             self.client_protocol != 0 and self.client_protocol != self.server_protocol
         )
 
-    def get(self, cls: type[T]) -> T | None:
+    def get(self, cls: type[_T]) -> _T | None:
         """Return stored object for the given type, or None.
 
         Args:

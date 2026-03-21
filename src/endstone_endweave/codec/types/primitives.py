@@ -11,14 +11,14 @@ from typing import Generic, TypeVar
 from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.writer import PacketWriter
 
-T = TypeVar("T")
+_T = TypeVar("_T")
 
 
-class Type(ABC, Generic[T]):
+class Type(ABC, Generic[_T]):
     """A serializable packet field type."""
 
     @abstractmethod
-    def read(self, reader: PacketReader) -> T:
+    def read(self, reader: PacketReader) -> _T:
         """Deserialize a value from the reader.
 
         Args:
@@ -30,7 +30,7 @@ class Type(ABC, Generic[T]):
         ...
 
     @abstractmethod
-    def write(self, writer: PacketWriter, value: T) -> None:
+    def write(self, writer: PacketWriter, value: _T) -> None:
         """Serialize a value into the writer.
 
         Args:

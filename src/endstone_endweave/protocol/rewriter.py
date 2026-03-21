@@ -3,7 +3,8 @@
 These helpers are used by multiple version-specific protocol modules.
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
+from typing import Any
 
 from endstone_endweave.codec import (
     BLOCK_POS,
@@ -19,6 +20,7 @@ from endstone_endweave.codec import (
     UVAR_INT,
     VAR_INT,
     VAR_INT64,
+    Type,
     PacketWrapper,
 )
 
@@ -90,7 +92,7 @@ def passthrough_structure_settings(wrapper: PacketWrapper) -> None:
 # ---------------------------------------------------------------------------
 
 # ActorData value type IDs -> how to passthrough each
-_ACTOR_DATA_TYPES = {
+_ACTOR_DATA_TYPES: dict[int, Type[Any]] = {
     0: BYTE,  # Byte
     1: SHORT_LE,  # Short
     2: VAR_INT,  # Int
@@ -124,7 +126,7 @@ def _passthrough_actor_data_value(wrapper: PacketWrapper, type_id: int) -> None:
 
 def passthrough_actor_data(
     wrapper: PacketWrapper,
-    int_remappers: dict[int, Callable[[int], int]] | None = None,
+    int_remappers: Mapping[int, Callable[[int], int]] | None = None,
 ) -> None:
     """Passthrough ActorData entries, optionally remapping Int (type 2) values.
 

@@ -11,7 +11,7 @@ After all handlers run, the wrapper produces the final payload from its
 write buffer plus any unread trailing bytes.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.writer import PacketWriter
@@ -19,6 +19,8 @@ from endstone_endweave.codec.types import Type
 
 if TYPE_CHECKING:
     from endstone_endweave.connection import UserConnection
+
+_T = TypeVar("_T")
 
 
 class PacketWrapper:
@@ -69,7 +71,7 @@ class PacketWrapper:
         """Mark this packet for cancellation (will be dropped)."""
         self._cancelled = True
 
-    def passthrough(self, field_type: Type) -> object:
+    def passthrough(self, field_type: Type[_T]) -> _T:
         """Read a field from input and write it to output.
 
         Args:
@@ -82,7 +84,7 @@ class PacketWrapper:
         field_type.write(self._writer, value)
         return value
 
-    def read(self, field_type: Type) -> object:
+    def read(self, field_type: Type[_T]) -> _T:
         """Read a field from input without writing (removes field from output).
 
         Args:
@@ -93,7 +95,7 @@ class PacketWrapper:
         """
         return field_type.read(self._reader)
 
-    def write(self, field_type: Type, value: object) -> None:
+    def write(self, field_type: Type[_T], value: _T) -> None:
         """Write a field to output without reading (inserts a new field).
 
         Args:
