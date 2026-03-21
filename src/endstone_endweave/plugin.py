@@ -1,5 +1,5 @@
 """Endweave plugin - protocol translation for Bedrock Edition."""
-
+import platform
 from typing import Any, Dict
 
 from endstone.event import (
@@ -39,6 +39,11 @@ class EndweaveMetrics(Metrics):
         if "bukkitVersion" not in platform_data:
             platform_data["bukkitVersion"] = f"{server.version} (MC: {server.minecraft_version})"
             platform_data["bukkitName"] = server.name
+
+        os_arch = platform.machine().lower()
+        if os_arch == "x86_64":
+            os_arch = "amd64"
+        platform_data["osArch"] = os_arch
 
     def append_service_data(self, service_data: dict[str, object]) -> None:
         description = self._plugin._description
