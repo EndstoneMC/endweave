@@ -12,7 +12,7 @@ def rewrite_request_network_settings(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for RequestNetworkSettings.
     """
-    connection = wrapper.user()
+    connection = wrapper.user
     client_protocol = wrapper.read(INT_BE)  # ClientNetworkVersion
 
     if client_protocol == connection.server_protocol:
@@ -34,7 +34,7 @@ def rewrite_login(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for Login.
     """
-    connection = wrapper.user()
+    connection = wrapper.user
     protocol_in_packet = wrapper.read(INT_BE)  # Client Network Version
 
     if protocol_in_packet == connection.server_protocol:

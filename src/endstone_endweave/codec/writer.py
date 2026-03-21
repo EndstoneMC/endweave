@@ -52,7 +52,7 @@ class PacketWriter:
         """Write an unsigned 32-bit little-endian integer."""
         self._buf.extend(struct.pack("<I", val))
 
-    def write_long_le(self, val: int) -> None:
+    def write_int64_le(self, val: int) -> None:
         """Write a signed 64-bit little-endian integer."""
         self._buf.extend(struct.pack("<q", val))
 

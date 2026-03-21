@@ -12,7 +12,7 @@ def detect_client_protocol(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for the incoming RequestNetworkSettings packet.
     """
-    connection = wrapper.user()
+    connection = wrapper.user
     client_proto = wrapper.passthrough(INT_BE)
     connection.client_protocol = client_proto
     connection.state = ConnectionState.LOGIN
@@ -27,7 +27,7 @@ def _transition_to_play(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for the outgoing StartGame packet.
     """
-    connection = wrapper.user()
+    connection = wrapper.user
     if connection.state != ConnectionState.PLAY:
         connection.state = ConnectionState.PLAY
 
@@ -38,13 +38,13 @@ def log_disconnect(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for the outgoing Disconnect packet.
     """
-    connection = wrapper.user()
+    connection = wrapper.user
     connection.pending_disconnect = True
     try:
         reason = wrapper.passthrough(UVAR_INT)
         skip_message = wrapper.passthrough(BOOL)
         message = ""
-        if not skip_message and wrapper.has_remaining():
+        if not skip_message and wrapper.has_remaining:
             message = wrapper.passthrough(STRING)
         connection.logger.info(f"Disconnect {connection.address}: reason={reason} message={message!r}")
     except Exception:

@@ -253,7 +253,7 @@ class TestClientboundHandlers:
         assert _read_block_pos(r) == (10, 64, 20)
         assert r.read_uvarint() == 0
         assert r.read_uvarint() == 0
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_update_sub_chunk_blocks_with_entries(self):
         w = PacketWriter()
@@ -294,7 +294,7 @@ class TestClientboundHandlers:
         assert r.read_uvarint() == 1
         assert r.read_uvarint64() == 99
         assert r.read_uvarint() == 1  # syncedUpdateType
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_first_field_open_sign(self):
         w = PacketWriter()
@@ -317,7 +317,7 @@ class TestClientboundHandlers:
         result = wrapper.to_bytes()
         r = PacketReader(result)
         assert r.read_uvarint() == 0x0F
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_camera_spline(self):
         w = PacketWriter()
@@ -329,7 +329,7 @@ class TestClientboundHandlers:
         assert r.read_bytes(3) == b"\x01\x02\x03"
         assert r.read_bool() is False  # has SplineIdentifier
         assert r.read_bool() is False  # has LoadFromJson
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_play_sound(self):
         w = PacketWriter()
@@ -343,7 +343,7 @@ class TestClientboundHandlers:
         assert r.read_string() == "mob.zombie.say"
         assert _read_block_pos(r) == (100, 64, -200)
         assert r.read_float_le() == 1.0  # Volume
-        assert r.remaining() == 4  # Pitch passthrough
+        assert r.remaining == 4  # Pitch passthrough
 
 
 # ---------------------------------------------------------------------------
@@ -451,4 +451,4 @@ class TestServerboundHandlers:
         r = PacketReader(wrapper.to_bytes())
         assert r.read_byte() == 3
         assert _read_net_block_pos(r) == (-10, 50, 30)
-        assert not r.has_remaining()
+        assert not r.has_remaining

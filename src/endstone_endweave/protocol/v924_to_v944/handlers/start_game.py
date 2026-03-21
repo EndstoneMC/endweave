@@ -11,7 +11,7 @@ from endstone_endweave.codec import (
     BYTE,
     FLOAT_LE,
     INT_LE,
-    LONG_LE,
+    INT64_LE,
     NAMED_COMPOUND_TAG,
     SHORT_LE,
     STRING,
@@ -72,7 +72,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(FLOAT_LE)  # Position.Z
     wrapper.passthrough(FLOAT_LE)  # Rotation.X
     wrapper.passthrough(FLOAT_LE)  # Rotation.Y
-    wrapper.passthrough(LONG_LE)  # Settings.Seed
+    wrapper.passthrough(INT64_LE)  # Settings.Seed
     wrapper.passthrough(SHORT_LE)  # Settings.SpawnSettings.BiomeType
     wrapper.passthrough(STRING)  # Settings.SpawnSettings.UserDefinedBiomeName
     wrapper.passthrough(VAR_INT)  # Settings.SpawnSettings.Dimension
@@ -138,7 +138,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # Is Trial?
     wrapper.passthrough(VAR_INT)  # Movement Settings.RewindHistorySize
     wrapper.passthrough(BOOL)  # Movement Settings.ServerAuthBlockBreaking
-    wrapper.passthrough(LONG_LE)  # Level Current Time
+    wrapper.passthrough(INT64_LE)  # Level Current Time
     wrapper.passthrough(VAR_INT)  # Enchantment Seed
 
     # Block Properties: uvarint count + [string + CompoundTag][]
@@ -151,10 +151,10 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # Enable Item Stack Net Manager
     wrapper.passthrough(STRING)  # Server version
     wrapper.passthrough(NAMED_COMPOUND_TAG)  # Player Property Data
-    wrapper.read(LONG_LE)  # Server Block Type Registry Checksum
-    wrapper.write(LONG_LE, 0)  # zero checksum to skip validation
-    wrapper.passthrough(LONG_LE)  # World Template ID (MSB)
-    wrapper.passthrough(LONG_LE)  # World Template ID (LSB)
+    wrapper.read(INT64_LE)  # Server Block Type Registry Checksum
+    wrapper.write(INT64_LE, 0)  # zero checksum to skip validation
+    wrapper.passthrough(INT64_LE)  # World Template ID (MSB)
+    wrapper.passthrough(INT64_LE)  # World Template ID (LSB)
     wrapper.passthrough(BOOL)  # Server Enabled ClientSide Generation
     wrapper.passthrough(BOOL)  # BlockNetworkIds Are Hashes
     wrapper.passthrough(BOOL)  # NetworkPermissions

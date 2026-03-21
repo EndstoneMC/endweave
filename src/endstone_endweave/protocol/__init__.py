@@ -19,7 +19,7 @@ class Protocol:
     Unregistered packets pass through unchanged.
 
     Handlers receive a PacketWrapper and use passthrough/read/write/cancel
-    for field-level transforms. Access the connection via wrapper.user().
+    for field-level transforms. Access the connection via wrapper.user.
 
     Attributes:
         server_protocol: Protocol number of the server (older) version.

@@ -9,12 +9,16 @@ See Also:
 """
 
 import traceback
+from typing import TYPE_CHECKING
 
 from endstone import Logger
 from endstone.event import PacketReceiveEvent, PacketSendEvent
 
 from endstone_endweave.codec.wrapper import PacketWrapper
 from endstone_endweave.connection import ConnectionManager
+
+if TYPE_CHECKING:
+    from endstone_endweave.connection import UserConnection
 from endstone_endweave.debug import DebugHandler, packet_label
 from endstone_endweave.exception import InformativeException
 from endstone_endweave.protocol import Protocol
@@ -65,7 +69,7 @@ class ProtocolPipeline:
         connection = self._connections.get_or_create(address)
         wrapper = PacketWrapper(payload, user=connection)
 
-        for base in self._manager.get_base_protocols():
+        for base in self._manager.base_protocols:
             base.transform(Direction.SERVERBOUND, packet_id, wrapper)
             if wrapper.cancelled:
                 event.cancel()
@@ -120,7 +124,7 @@ class ProtocolPipeline:
                     .set("State", connection.state.value.upper())
                 )
                 if err.should_be_printed:
-                    self._logger.error(f"{err.get_message()}\n{traceback.format_exc()}")
+                    self._logger.error(f"{err.message}\n{traceback.format_exc()}")
                 event.cancel()
                 return
             if wrapper.cancelled:
@@ -194,7 +198,7 @@ class ProtocolPipeline:
                     .set("State", connection.state.value.upper())
                 )
                 if err.should_be_printed:
-                    self._logger.error(f"{err.get_message()}\n{traceback.format_exc()}")
+                    self._logger.error(f"{err.message}\n{traceback.format_exc()}")
                 event.cancel()
                 return
             if wrapper.cancelled:
@@ -209,7 +213,7 @@ class ProtocolPipeline:
         payload = wrapper.to_bytes()
         wrapper = PacketWrapper(payload, user=connection)
 
-        for base in self._manager.get_base_protocols():
+        for base in self._manager.base_protocols:
             base.transform(Direction.CLIENTBOUND, packet_id, wrapper)
             if wrapper.cancelled:
                 event.cancel()
@@ -231,7 +235,7 @@ class ProtocolPipeline:
                 len(event.payload),
             )
 
-    def _get_chain(self, connection) -> list[Protocol] | None:
+    def _get_chain(self, connection: "UserConnection") -> list[Protocol] | None:
         """Get the protocol chain for a connection, caching the result.
 
         Calls Protocol.init() on each protocol when the chain is first resolved.

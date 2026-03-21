@@ -112,14 +112,14 @@ class _UIntLE(Type[int]):
         writer.write_uint_le(value)
 
 
-class _LongLE(Type[int]):
+class _Int64LE(Type[int]):
     """Signed 64-bit little-endian integer."""
 
     def read(self, reader: PacketReader) -> int:
-        return reader.read_long_le()
+        return reader.read_int64_le()
 
     def write(self, writer: PacketWriter, value: int) -> None:
-        writer.write_long_le(value)
+        writer.write_int64_le(value)
 
 
 class _FloatLE(Type[float]):
@@ -218,7 +218,7 @@ USHORT_LE = _UShortLE()
 INT_LE = _IntLE()
 INT_BE = _IntBE()
 UINT_LE = _UIntLE()
-LONG_LE = _LongLE()
+INT64_LE = _Int64LE()
 FLOAT_LE = _FloatLE()
 VAR_INT = _VarInt()
 UVAR_INT = _UVarInt()

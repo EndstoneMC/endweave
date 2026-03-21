@@ -43,8 +43,9 @@ class ProtocolManager:
         """
         self._base_protocols.append(protocol)
 
-    def get_base_protocols(self) -> list[Protocol]:
-        """Return all registered base protocols."""
+    @property
+    def base_protocols(self) -> list[Protocol]:
+        """All registered base protocols."""
         return self._base_protocols
 
     def get(self, server_protocol: int, client_protocol: int) -> Protocol | None:
@@ -136,11 +137,7 @@ class ProtocolManager:
         Returns:
             The highest reachable client protocol number, or None if none found.
         """
-        max_version: int | None = None
-        # Check all registered client protocols for reachability
-        client_protocols = {c for _, c in self._protocols}
-        for client in client_protocols:
-            if self.get_path(server_protocol, client) is not None:
-                if max_version is None or client > max_version:
-                    max_version = client
-        return max_version
+        reachable = [
+            c for _, c in self._protocols if self.get_path(server_protocol, c) is not None
+        ]
+        return max(reachable) if reachable else None

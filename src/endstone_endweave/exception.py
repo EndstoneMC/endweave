@@ -52,7 +52,8 @@ class InformativeException(Exception):
         self._sources += 1
         return self
 
-    def get_message(self) -> str:
+    @property
+    def message(self) -> str:
         """Format the error with all context for logging.
 
         Produces comma-separated "Key: Value" pairs on a single line

@@ -28,7 +28,7 @@ from endstone_endweave.protocol.rewriter import (
     passthrough_inventory_action as _passthrough_inventory_action,
 )
 from endstone_endweave.protocol.rewriter import (
-    passthrough_structure_settings as _rewrite_structure_settings,
+    passthrough_structure_settings as _passthrough_structure_settings,
 )
 
 # NoteBlockInstrument remapping constants (TileEvent)
@@ -278,7 +278,7 @@ def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # IncludePlayers
     wrapper.passthrough(BOOL)  # ShowBoundingBox
     wrapper.passthrough(VAR_INT)  # StructureBlockType
-    _rewrite_structure_settings(wrapper)
+    _passthrough_structure_settings(wrapper)
     wrapper.passthrough(VAR_INT)  # RedstoneSaveMode
 
 
@@ -301,7 +301,7 @@ def rewrite_structure_template_data_request(wrapper: PacketWrapper) -> None:
     """
     wrapper.passthrough(STRING)  # Structure Name
     _block_to_net(wrapper)  # Structure Position
-    _rewrite_structure_settings(wrapper)
+    _passthrough_structure_settings(wrapper)
 
 
 def rewrite_anvil_damage(wrapper: PacketWrapper) -> None:

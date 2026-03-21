@@ -42,6 +42,7 @@ class PacketWrapper:
         self._cancelled = False
         self._user = user
 
+    @property
     def user(self) -> "UserConnection":
         """Return the UserConnection associated with this packet.
 
@@ -113,9 +114,10 @@ class PacketWrapper:
         self._writer.write_bytes(remaining)
         return remaining
 
+    @property
     def has_remaining(self) -> bool:
         """Check if there are unread bytes in the input."""
-        return self._reader.has_remaining()
+        return self._reader.has_remaining
 
     def to_bytes(self) -> bytes:
         """Produce final payload: written output + any unread input bytes.
@@ -123,6 +125,6 @@ class PacketWrapper:
         Returns:
             The complete transformed packet payload as bytes.
         """
-        if self._reader.has_remaining():
+        if self._reader.has_remaining:
             self._writer.write_bytes(self._reader.read_remaining())
         return self._writer.to_bytes()

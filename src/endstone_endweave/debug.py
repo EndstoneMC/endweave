@@ -130,7 +130,7 @@ class DebugHandler:
             self._logger.debug(message)
 
     @staticmethod
-    def from_config(logger: Logger, config: dict) -> "DebugHandler":
+    def from_config(logger: Logger, config: dict[str, object]) -> "DebugHandler":
         """Create a DebugHandler from a plugin config dict.
 
         Args:
@@ -140,10 +140,10 @@ class DebugHandler:
         Returns:
             Configured DebugHandler instance.
         """
-        debug_cfg = config.get("debug", {}) or {}
-        enabled = debug_cfg.get("enabled", False)
-        packets = debug_cfg.get("packets", []) or []
-        log_post = debug_cfg.get("log_post_transform", False)
+        debug_cfg: dict[str, object] = config.get("debug", {}) or {}  # type: ignore[assignment]
+        enabled = bool(debug_cfg.get("enabled", False))
+        packets: list[int] = debug_cfg.get("packets", []) or []  # type: ignore[assignment]
+        log_post = bool(debug_cfg.get("log_post_transform", False))
         return DebugHandler(
             logger,
             enabled=enabled,

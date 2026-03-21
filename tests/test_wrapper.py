@@ -9,7 +9,7 @@ from endstone_endweave.codec import (
     FLOAT_LE,
     INT_BE,
     INT_LE,
-    LONG_LE,
+    INT64_LE,
     REMAINING_BYTES,
     SHORT_LE,
     STRING,
@@ -99,16 +99,16 @@ class TestPacketWrapperBasics:
 
     def test_has_remaining(self):
         wrapper = PacketWrapper(b"\x01\x02")
-        assert wrapper.has_remaining()
+        assert wrapper.has_remaining
         wrapper.read(BYTE)
-        assert wrapper.has_remaining()
+        assert wrapper.has_remaining
         wrapper.read(BYTE)
-        assert not wrapper.has_remaining()
+        assert not wrapper.has_remaining
 
     def test_user(self):
         conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
         wrapper = PacketWrapper(b"\x00", user=conn)
-        assert wrapper.user() is conn
+        assert wrapper.user is conn
 
 
 class TestPacketWrapperTransform:
@@ -196,7 +196,7 @@ class TestTypeRoundtrips:
         self._roundtrip(UINT_LE, 0xDEADBEEF)
 
     def test_long_le(self):
-        self._roundtrip(LONG_LE, 1234567890123)
+        self._roundtrip(INT64_LE, 1234567890123)
 
     def test_float_le(self):
         w = PacketWriter()
@@ -240,7 +240,7 @@ class TestWrapperHandlerIntegration:
 
     def test_wrapper_handler_rewrites_packet(self):
         def rewrite_protocol(wrapper: PacketWrapper) -> None:
-            conn = wrapper.user()
+            conn = wrapper.user
             wrapper.read(INT_BE)
             wrapper.write(INT_BE, conn.server_protocol)
 

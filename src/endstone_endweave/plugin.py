@@ -104,11 +104,11 @@ class EndweavePlugin(Plugin):
     def _register_protocol(self, protocol: Protocol) -> None:
         self._manager.register(protocol)
 
-    @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value]
+    @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value,untyped-decorator]
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
         self._pipeline.on_packet_receive(event)
 
-    @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value]
+    @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value,untyped-decorator]
     def on_packet_send(self, event: PacketSendEvent) -> None:
         self._pipeline.on_packet_send(event)
 

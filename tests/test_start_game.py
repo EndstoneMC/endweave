@@ -302,7 +302,7 @@ def _build_v924_start_game(has_server_join_info: bool, has_gathering: bool = Fal
     w.write_float_le(1.0)  # mPos.Z
     w.write_float_le(0.0)  # mRot.X
     w.write_float_le(0.0)  # mRot.Y
-    w.write_long_le(12345)  # seed
+    w.write_int64_le(12345)  # seed
     w.write_short_le(0)  # spawn settings type
     w.write_string("")  # biome name
     w.write_varint(0)  # dimension
@@ -368,7 +368,7 @@ def _build_v924_start_game(has_server_join_info: bool, has_gathering: bool = Fal
     w.write_bool(False)  # is trial
     w.write_varint(0)  # rewind history size
     w.write_bool(True)  # server auth block breaking
-    w.write_long_le(1000)  # level current time
+    w.write_int64_le(1000)  # level current time
     w.write_varint(0)  # enchantment seed
 
     # Block Properties: 0
@@ -384,9 +384,9 @@ def _build_v924_start_game(has_server_join_info: bool, has_gathering: bool = Fal
     w.write_uvarint(0)  # empty name
     w.write_byte(0)  # End tag
 
-    w.write_long_le(0)  # block registry checksum
-    w.write_long_le(0)  # world template MSB
-    w.write_long_le(0)  # world template LSB
+    w.write_int64_le(0)  # block registry checksum
+    w.write_int64_le(0)  # world template MSB
+    w.write_int64_le(0)  # world template LSB
     w.write_bool(False)  # clientside generation
     w.write_bool(True)  # block network ids are hashes
     w.write_bool(False)  # server auth sound
@@ -433,7 +433,7 @@ class TestRewriteStartGame:
         for _ in range(4):
             r.read_float_le()  # pos + rot (partial)
         r.read_float_le()  # rot Y
-        r.read_long_le()  # seed
+        r.read_int64_le()  # seed
         r.read_short_le()  # spawn settings type
         r.read_string()  # biome
         r.read_varint()  # dimension
@@ -454,7 +454,7 @@ class TestRewriteStartGame:
         # are at the end. Seek to near end by skipping the bulk.
         # Instead, verify the total output is valid by checking the wrapper
         # consumed all input.
-        assert not wrapper.has_remaining()
+        assert not wrapper.has_remaining
 
     def test_with_join_info_stripped(self):
         """v924 gathering data is stripped; v944 sub-fields are written."""
@@ -478,7 +478,7 @@ class TestRewriteStartGame:
         payload = _build_v924_start_game(has_server_join_info=True, has_gathering=False)
         wrapper = PacketWrapper(payload)
         rewrite_start_game(wrapper)
-        assert not wrapper.has_remaining()
+        assert not wrapper.has_remaining
 
     def test_trailing_strings_preserved(self):
         """Verify the 4 trailing strings survive the rewrite."""
@@ -502,4 +502,4 @@ class TestRewriteStartGame:
                 payload = _build_v924_start_game(has_join, has_gather)
                 wrapper = PacketWrapper(payload)
                 rewrite_start_game(wrapper)
-                assert not wrapper.has_remaining(), f"Unread bytes remain (join={has_join}, gather={has_gather})"
+                assert not wrapper.has_remaining, f"Unread bytes remain (join={has_join}, gather={has_gather})"

@@ -140,9 +140,9 @@ class TestPrimitives:
 
     def test_long_le(self):
         w = PacketWriter()
-        w.write_long_le(1234567890123)
+        w.write_int64_le(1234567890123)
         r = PacketReader(w.to_bytes())
-        assert r.read_long_le() == 1234567890123
+        assert r.read_int64_le() == 1234567890123
 
     def test_float_le(self):
         w = PacketWriter()
@@ -185,7 +185,7 @@ class TestReaderBoundsChecks:
     def test_skip_exact_remaining_ok(self):
         r = PacketReader(b"\x00\x01")
         r.skip(2)
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_read_string_raises_on_oversized_length(self):
         """String with length prefix exceeding 131068 bytes."""
@@ -206,15 +206,15 @@ class TestReaderState:
 
     def test_has_remaining(self):
         r = PacketReader(b"\x00")
-        assert r.has_remaining()
+        assert r.has_remaining
         r.read_byte()
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_remaining(self):
         r = PacketReader(b"\x00\x01\x02")
-        assert r.remaining() == 3
+        assert r.remaining == 3
         r.read_byte()
-        assert r.remaining() == 2
+        assert r.remaining == 2
 
     def test_skip(self):
         r = PacketReader(b"\x00\x01\x02\x03")
@@ -225,7 +225,7 @@ class TestReaderState:
         r = PacketReader(b"\x00\x01\x02\x03")
         r.read_byte()
         assert r.read_remaining() == b"\x01\x02\x03"
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
 
 class TestItemInstance:
@@ -236,7 +236,7 @@ class TestItemInstance:
         r = PacketReader(w.to_bytes())
         result = ITEM_INSTANCE.read(r)
         assert result.network_id == 0
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_full_roundtrip(self):
         item = ItemInstance(
@@ -253,7 +253,7 @@ class TestItemInstance:
         r = PacketReader(w.to_bytes())
         result = ITEM_INSTANCE.read(r)
         assert result == item
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_roundtrip_no_net_id(self):
         item = ItemInstance(
@@ -270,7 +270,7 @@ class TestItemInstance:
         r = PacketReader(w.to_bytes())
         result = ITEM_INSTANCE.read(r)
         assert result == item
-        assert not r.has_remaining()
+        assert not r.has_remaining
 
     def test_byte_identical_passthrough(self):
         """Write -> bytes -> read -> write again produces identical bytes."""

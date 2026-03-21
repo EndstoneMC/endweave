@@ -59,9 +59,9 @@ class TestTruncatedPayload:
         pipeline, connections, manager, logger = _setup_pipeline()
 
         def greedy_handler(wrapper):
-            from endstone_endweave.codec import LONG_LE
+            from endstone_endweave.codec import INT64_LE
 
-            wrapper.passthrough(LONG_LE)
+            wrapper.passthrough(INT64_LE)
 
         protocol = Protocol(server_protocol=924, client_protocol=944)
         protocol.register_clientbound(42, greedy_handler)
@@ -84,7 +84,7 @@ class TestInformativeExceptionContext:
     def test_set_chaining(self):
         cause = ValueError("bad data")
         err = InformativeException(cause).set("Direction", "SB").set("Packet", "FOO(1)")
-        msg = err.get_message()
+        msg = err.message
         assert "Direction: SB" in msg
         assert "Packet: FOO(1)" in msg
         assert "bad data" in msg
@@ -92,21 +92,21 @@ class TestInformativeExceptionContext:
     def test_format_includes_cause_type(self):
         cause = IndexError("out of bounds")
         err = InformativeException(cause)
-        msg = err.get_message()
+        msg = err.message
         assert "IndexError" in msg
         assert "out of bounds" in msg
 
     def test_add_source(self):
         cause = RuntimeError("boom")
         err = InformativeException(cause).add_source(dict).add_source(list)
-        msg = err.get_message()
+        msg = err.message
         assert "Source 0: dict" in msg
         assert "Source 1: list" in msg
 
     def test_comma_separated_format(self):
         cause = RuntimeError("x")
         err = InformativeException(cause).set("A", "1").set("B", "2")
-        msg = err.get_message()
+        msg = err.message
         assert "A: 1, B: 2" in msg
 
     def test_error_log_contains_structured_context(self):

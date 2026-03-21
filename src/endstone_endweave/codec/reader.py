@@ -23,9 +23,11 @@ class PacketReader:
     def position(self, value: int) -> None:
         self._pos = value
 
+    @property
     def has_remaining(self) -> bool:
         return self._pos < len(self._data)
 
+    @property
     def remaining(self) -> int:
         return len(self._data) - self._pos
 
@@ -38,8 +40,8 @@ class PacketReader:
         Raises:
             ValueError: If n is negative or would move past end of data.
         """
-        if n < 0 or n > self.remaining():
-            raise ValueError(f"skip({n}) out of bounds (remaining={self.remaining()})")
+        if n < 0 or n > self.remaining:
+            raise ValueError(f"skip({n}) out of bounds (remaining={self.remaining})")
         self._pos += n
 
     def read_byte(self) -> int:
@@ -57,8 +59,8 @@ class PacketReader:
         Raises:
             ValueError: If n is negative or exceeds remaining bytes.
         """
-        if n < 0 or n > self.remaining():
-            raise ValueError(f"read_bytes({n}) out of bounds (remaining={self.remaining()})")
+        if n < 0 or n > self.remaining:
+            raise ValueError(f"read_bytes({n}) out of bounds (remaining={self.remaining})")
         val = self._data[self._pos : self._pos + n]
         self._pos += n
         return val
@@ -75,43 +77,43 @@ class PacketReader:
 
     def read_short_le(self) -> int:
         """Read a signed 16-bit little-endian integer."""
-        val = struct.unpack_from("<h", self._data, self._pos)[0]
+        val: int = struct.unpack_from("<h", self._data, self._pos)[0]
         self._pos += 2
         return val
 
     def read_ushort_le(self) -> int:
         """Read an unsigned 16-bit little-endian integer."""
-        val = struct.unpack_from("<H", self._data, self._pos)[0]
+        val: int = struct.unpack_from("<H", self._data, self._pos)[0]
         self._pos += 2
         return val
 
     def read_int_le(self) -> int:
         """Read a signed 32-bit little-endian integer."""
-        val = struct.unpack_from("<i", self._data, self._pos)[0]
+        val: int = struct.unpack_from("<i", self._data, self._pos)[0]
         self._pos += 4
         return val
 
     def read_int_be(self) -> int:
         """Read a signed 32-bit big-endian integer."""
-        val = struct.unpack_from(">i", self._data, self._pos)[0]
+        val: int = struct.unpack_from(">i", self._data, self._pos)[0]
         self._pos += 4
         return val
 
     def read_uint_le(self) -> int:
         """Read an unsigned 32-bit little-endian integer."""
-        val = struct.unpack_from("<I", self._data, self._pos)[0]
+        val: int = struct.unpack_from("<I", self._data, self._pos)[0]
         self._pos += 4
         return val
 
-    def read_long_le(self) -> int:
+    def read_int64_le(self) -> int:
         """Read a signed 64-bit little-endian integer."""
-        val = struct.unpack_from("<q", self._data, self._pos)[0]
+        val: int = struct.unpack_from("<q", self._data, self._pos)[0]
         self._pos += 8
         return val
 
     def read_float_le(self) -> float:
         """Read a 32-bit little-endian IEEE 754 float."""
-        val = struct.unpack_from("<f", self._data, self._pos)[0]
+        val: float = struct.unpack_from("<f", self._data, self._pos)[0]
         self._pos += 4
         return val
 
