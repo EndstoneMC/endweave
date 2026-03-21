@@ -2,6 +2,13 @@
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.protocol.v924_to_v944.handlers.sound_event import (
+    rewrite_add_actor,
+    rewrite_add_item_actor,
+    rewrite_add_player,
+    rewrite_level_sound_event,
+    rewrite_set_actor_data,
+)
 from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_add_volume_entity,
     rewrite_anvil_damage,
@@ -45,11 +52,7 @@ def create_protocol() -> Protocol:
     Returns:
         A Protocol instance with all v924-to-v944 handlers registered.
     """
-    p = Protocol(
-        server_protocol=SERVER_PROTOCOL,
-        client_protocol=CLIENT_PROTOCOL,
-        name="v924_to_v944",
-    )
+    p = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
     # Login
     p.register_serverbound(
@@ -96,6 +99,13 @@ def create_protocol() -> Protocol:
         rewrite_close_all_screens,
     )
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
+
+    # Clientbound rewriters -- LevelSoundEvent remapping
+    p.register_clientbound(PacketId.LEVEL_SOUND_EVENT, rewrite_level_sound_event)
+    p.register_clientbound(PacketId.ADD_PLAYER, rewrite_add_player)
+    p.register_clientbound(PacketId.ADD_ACTOR, rewrite_add_actor)
+    p.register_clientbound(PacketId.ADD_ITEM_ACTOR, rewrite_add_item_actor)
+    p.register_clientbound(PacketId.SET_ACTOR_DATA, rewrite_set_actor_data)
 
     # Serverbound rewriters -- BlockPos conversion (BlockPos -> NetworkBlockPos)
     p.register_serverbound(
