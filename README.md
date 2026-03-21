@@ -35,4 +35,4 @@ Issues and PRs welcome on [GitHub](https://github.com/EndstoneMC/endweave/issues
 
 ## License
 
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE)
