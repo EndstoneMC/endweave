@@ -35,6 +35,7 @@ endweave = "endstone_endweave:EndweavePlugin"
 
 [tool.ruff]
 line-length = 120
+exclude = ["src/endstone_endweave/_version.py"]
 
 [tool.ruff.lint]
 select = ["I", "E", "F"]
