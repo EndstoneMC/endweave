@@ -27,6 +27,10 @@ from endstone_endweave.protocol.v924_to_v944.handlers.login import (
 from endstone_endweave.protocol.v924_to_v944.handlers.start_game import (
     rewrite_start_game,
 )
+from endstone_endweave.protocol.v924_to_v944.handlers.data_driven_ui import (
+    rewrite_close_all_screens,
+    rewrite_show_screen,
+)
 from endstone_endweave.protocol.v924_to_v944.handlers.voxel_shapes import (
     rewrite_voxel_shapes,
 )
@@ -79,6 +83,14 @@ def create_protocol() -> Protocol:
         PacketId.PLAYER_CLIENT_INPUT_PERMISSIONS, rewrite_update_client_input_locks
     )
     p.register_clientbound(PacketId.VOXEL_SHAPES, rewrite_voxel_shapes)
+    p.register_clientbound(
+        PacketId.CLIENTBOUND_DATA_DRIVEN_UI_SHOW_SCREEN,
+        rewrite_show_screen,
+    )
+    p.register_clientbound(
+        PacketId.CLIENTBOUND_DATA_DRIVEN_UI_CLOSE_ALL_SCREENS,
+        rewrite_close_all_screens,
+    )
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
 
     # Serverbound rewriters -- BlockPos conversion (BlockPos -> NetworkBlockPos)
