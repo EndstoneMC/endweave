@@ -46,9 +46,9 @@ def rewrite_level_sound_event(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for LevelSoundEventPacket.
     """
-    event_id = wrapper.read(UVAR_INT)  # Event ID (LevelSoundEvent)
+    event_id = wrapper.read(UVAR_INT)  # Event ID
     wrapper.write(UVAR_INT, _remap_sound_clientbound(event_id))
-    wrapper.passthrough_all()  # Position, Data, ActorIdentifier, BabyMob, Global
+    wrapper.passthrough_all()  # Position, Data, Actor Identifier, Is Baby, Is Global, Actor Unique Id
 
 
 def rewrite_set_actor_data(wrapper: PacketWrapper) -> None:
@@ -59,7 +59,7 @@ def rewrite_set_actor_data(wrapper: PacketWrapper) -> None:
     """
     wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
     passthrough_actor_data(wrapper, _INT_REMAPPERS)
-    wrapper.passthrough_all()  # PropertySyncData + Tick
+    wrapper.passthrough_all()  # Synched Properties, Tick
 
 
 def rewrite_add_actor(wrapper: PacketWrapper) -> None:
@@ -68,30 +68,27 @@ def rewrite_add_actor(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for AddActorPacket.
     """
-    wrapper.passthrough(VAR_INT64)  # Entity Unique ID
-    wrapper.passthrough(UVAR_INT64)  # Entity Runtime ID
-    wrapper.passthrough(STRING)  # Entity Type
-    # Position (Vec3)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    # Velocity (Vec3)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)  # Pitch
-    wrapper.passthrough(FLOAT_LE)  # Yaw
-    wrapper.passthrough(FLOAT_LE)  # Head Yaw
-    wrapper.passthrough(FLOAT_LE)  # Body Yaw
-    # Attributes list (varuint count + entries)
-    attr_count = wrapper.passthrough(UVAR_INT)
+    wrapper.passthrough(VAR_INT64)  # Target Actor ID
+    wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
+    wrapper.passthrough(STRING)  # Actor Type
+    wrapper.passthrough(FLOAT_LE)  # Position.X
+    wrapper.passthrough(FLOAT_LE)  # Position.Y
+    wrapper.passthrough(FLOAT_LE)  # Position.Z
+    wrapper.passthrough(FLOAT_LE)  # Velocity.X
+    wrapper.passthrough(FLOAT_LE)  # Velocity.Y
+    wrapper.passthrough(FLOAT_LE)  # Velocity.Z
+    wrapper.passthrough(FLOAT_LE)  # Rotation.X
+    wrapper.passthrough(FLOAT_LE)  # Rotation.Y
+    wrapper.passthrough(FLOAT_LE)  # Y Head Rotation
+    wrapper.passthrough(FLOAT_LE)  # Y Body Rotation
+    attr_count = wrapper.passthrough(UVAR_INT)  # Attributes List
     for _ in range(attr_count):
-        wrapper.passthrough(STRING)  # Name
-        wrapper.passthrough(FLOAT_LE)  # Min
-        wrapper.passthrough(FLOAT_LE)  # Current
-        wrapper.passthrough(FLOAT_LE)  # Max
+        wrapper.passthrough(STRING)  # Attribute Name
+        wrapper.passthrough(FLOAT_LE)  # Min Value
+        wrapper.passthrough(FLOAT_LE)  # Current Value
+        wrapper.passthrough(FLOAT_LE)  # Max Value
     passthrough_actor_data(wrapper, _INT_REMAPPERS)
-    wrapper.passthrough_all()  # PropertySyncData + ActorLinks
+    wrapper.passthrough_all()  # Synched Properties, Actor Links
 
 
 def rewrite_add_item_actor(wrapper: PacketWrapper) -> None:
@@ -100,19 +97,17 @@ def rewrite_add_item_actor(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for AddItemActorPacket.
     """
-    wrapper.passthrough(VAR_INT64)  # Entity Unique ID
-    wrapper.passthrough(UVAR_INT64)  # Entity Runtime ID
+    wrapper.passthrough(VAR_INT64)  # Target Actor ID
+    wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
     wrapper.passthrough(ITEM_INSTANCE)  # Item
-    # Position (Vec3)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    # Velocity (Vec3)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
+    wrapper.passthrough(FLOAT_LE)  # Position.X
+    wrapper.passthrough(FLOAT_LE)  # Position.Y
+    wrapper.passthrough(FLOAT_LE)  # Position.Z
+    wrapper.passthrough(FLOAT_LE)  # Velocity.X
+    wrapper.passthrough(FLOAT_LE)  # Velocity.Y
+    wrapper.passthrough(FLOAT_LE)  # Velocity.Z
     passthrough_actor_data(wrapper, _INT_REMAPPERS)
-    wrapper.passthrough_all()  # FromFishing
+    wrapper.passthrough_all()  # From Fishing?
 
 
 def rewrite_add_player(wrapper: PacketWrapper) -> None:
@@ -122,21 +117,19 @@ def rewrite_add_player(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for AddPlayerPacket.
     """
     wrapper.passthrough(UUID)  # UUID
-    wrapper.passthrough(STRING)  # Username
-    wrapper.passthrough(UVAR_INT64)  # Entity Runtime ID
-    wrapper.passthrough(STRING)  # Platform Chat ID
-    # Position (Vec3)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    # Velocity (Vec3)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)  # Pitch
-    wrapper.passthrough(FLOAT_LE)  # Yaw
-    wrapper.passthrough(FLOAT_LE)  # Head Yaw
-    wrapper.passthrough(ITEM_INSTANCE)  # Held Item
-    wrapper.passthrough(VAR_INT)  # Game Type
+    wrapper.passthrough(STRING)  # Player Name
+    wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
+    wrapper.passthrough(STRING)  # Platform Chat Id
+    wrapper.passthrough(FLOAT_LE)  # Position.X
+    wrapper.passthrough(FLOAT_LE)  # Position.Y
+    wrapper.passthrough(FLOAT_LE)  # Position.Z
+    wrapper.passthrough(FLOAT_LE)  # Velocity.X
+    wrapper.passthrough(FLOAT_LE)  # Velocity.Y
+    wrapper.passthrough(FLOAT_LE)  # Velocity.Z
+    wrapper.passthrough(FLOAT_LE)  # Rotation.X
+    wrapper.passthrough(FLOAT_LE)  # Rotation.Y
+    wrapper.passthrough(FLOAT_LE)  # Y-Head Rotation
+    wrapper.passthrough(ITEM_INSTANCE)  # Carried Item
+    wrapper.passthrough(VAR_INT)  # Player Game Type
     passthrough_actor_data(wrapper, _INT_REMAPPERS)
-    wrapper.passthrough_all()  # PropertySyncData + AbilityData + Links + ...
+    wrapper.passthrough_all()  # Synched Properties, AbilitiesData, Actor Links, Device Id, Build Platform

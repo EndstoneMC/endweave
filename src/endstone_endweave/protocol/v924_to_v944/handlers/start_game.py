@@ -64,24 +64,24 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for StartGamePacket.
     """
-    wrapper.passthrough(VAR_INT64)  # mEntityId
-    wrapper.passthrough(UVAR_INT64)  # mRuntimeId
-    wrapper.passthrough(VAR_INT)  # mEntityGameType
-    wrapper.passthrough(FLOAT_LE)  # mPos.X
-    wrapper.passthrough(FLOAT_LE)  # mPos.Y
-    wrapper.passthrough(FLOAT_LE)  # mPos.Z
-    wrapper.passthrough(FLOAT_LE)  # mRot.X
-    wrapper.passthrough(FLOAT_LE)  # mRot.Y
-    wrapper.passthrough(LONG_LE)  # mLevelSettings.mSeed
-    wrapper.passthrough(SHORT_LE)  # mLevelSettings.mSpawnSettings.type
-    wrapper.passthrough(STRING)  # mLevelSettings.mSpawnSettings.userDefinedBiomeName
-    wrapper.passthrough(VAR_INT)  # mLevelSettings.mSpawnSettings.dimension
-    wrapper.passthrough(VAR_INT)  # mLevelSettings.mGenerator
-    wrapper.passthrough(VAR_INT)  # mLevelSettings.mGameType
-    wrapper.passthrough(BOOL)  # mLevelSettings.mIsHardcore
-    wrapper.passthrough(VAR_INT)  # mLevelSettings.mGameDifficulty
+    wrapper.passthrough(VAR_INT64)  # Entity ID
+    wrapper.passthrough(UVAR_INT64)  # Runtime ID
+    wrapper.passthrough(VAR_INT)  # Game Type
+    wrapper.passthrough(FLOAT_LE)  # Position.X
+    wrapper.passthrough(FLOAT_LE)  # Position.Y
+    wrapper.passthrough(FLOAT_LE)  # Position.Z
+    wrapper.passthrough(FLOAT_LE)  # Rotation.X
+    wrapper.passthrough(FLOAT_LE)  # Rotation.Y
+    wrapper.passthrough(LONG_LE)  # Settings.Seed
+    wrapper.passthrough(SHORT_LE)  # Settings.SpawnSettings.BiomeType
+    wrapper.passthrough(STRING)  # Settings.SpawnSettings.UserDefinedBiomeName
+    wrapper.passthrough(VAR_INT)  # Settings.SpawnSettings.Dimension
+    wrapper.passthrough(VAR_INT)  # Settings.Generator
+    wrapper.passthrough(VAR_INT)  # Settings.GameType
+    wrapper.passthrough(BOOL)  # Settings.IsHardcore
+    wrapper.passthrough(VAR_INT)  # Settings.GameDifficulty
 
-    # mLevelSettings.mDefaultSpawn -- Y encoding changed
+    # Settings.DefaultSpawn -- Y encoding changed
     wrapper.passthrough(VAR_INT)  # X (same)
     y = wrapper.read(UVAR_INT)  # Y: uvarint in v924
     wrapper.write(VAR_INT, y)  # Y: varint in v944
@@ -135,17 +135,17 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(STRING)  # Level ID
     wrapper.passthrough(STRING)  # Level Name
     wrapper.passthrough(STRING)  # Template Content Identity
-    wrapper.passthrough(BOOL)  # Is Trial
-    wrapper.passthrough(VAR_INT)  # SyncedPlayerMovementSettings.RewindHistorySize
-    wrapper.passthrough(BOOL)  # SyncedPlayerMovementSettings.ServerAuthBlockBreaking
+    wrapper.passthrough(BOOL)  # Is Trial?
+    wrapper.passthrough(VAR_INT)  # Movement Settings.RewindHistorySize
+    wrapper.passthrough(BOOL)  # Movement Settings.ServerAuthBlockBreaking
     wrapper.passthrough(LONG_LE)  # Level Current Time
     wrapper.passthrough(VAR_INT)  # Enchantment Seed
 
     # Block Properties: uvarint count + [string + CompoundTag][]
     block_prop_count = wrapper.passthrough(UVAR_INT)
     for _ in range(block_prop_count):
-        wrapper.passthrough(STRING)  # block name
-        wrapper.passthrough(NAMED_COMPOUND_TAG)  # block properties NBT
+        wrapper.passthrough(STRING)  # Block Name
+        wrapper.passthrough(NAMED_COMPOUND_TAG)  # Block Definition
 
     wrapper.passthrough(STRING)  # Multiplayer Correlation Id
     wrapper.passthrough(BOOL)  # Enable Item Stack Net Manager
@@ -153,17 +153,17 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(NAMED_COMPOUND_TAG)  # Player Property Data
     wrapper.read(LONG_LE)  # Server Block Type Registry Checksum
     wrapper.write(LONG_LE, 0)  # zero checksum to skip validation
-    wrapper.passthrough(LONG_LE)  # World Template ID MSB
-    wrapper.passthrough(LONG_LE)  # World Template ID LSB
+    wrapper.passthrough(LONG_LE)  # World Template ID (MSB)
+    wrapper.passthrough(LONG_LE)  # World Template ID (LSB)
     wrapper.passthrough(BOOL)  # Server Enabled ClientSide Generation
     wrapper.passthrough(BOOL)  # BlockNetworkIds Are Hashes
-    wrapper.passthrough(BOOL)  # serverAuthSoundEnabled (NetworkPermissions)
+    wrapper.passthrough(BOOL)  # NetworkPermissions
 
     # -- Server join info divergence --
-    # v924: has_server_join_info (bool) + optional gathering data
-    # v944: has_server_join_info (bool) + different structure
+    # v924: Does the packet contain server join information. (bool) + optional gathering data
+    # v944: Does the packet contain server join information. (bool) + different structure
     # Strip v924 data and write false for v944
-    has_server_join_info = wrapper.passthrough(BOOL)
+    has_server_join_info = wrapper.passthrough(BOOL)  # Does the packet contain server join information.
     if has_server_join_info:
         has_gathering = wrapper.read(BOOL)
         if has_gathering:
@@ -173,8 +173,8 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
         wrapper.write(BOOL, False)  # has client store entry point information
         wrapper.write(BOOL, False)  # has presence information
 
-    # Trailing strings (identical in both versions)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
+    # Server Telemetry Data (Social::Events::ServerTelemetryData)
+    wrapper.passthrough(STRING)  # Server Telemetry Data[0]
+    wrapper.passthrough(STRING)  # Server Telemetry Data[1]
+    wrapper.passthrough(STRING)  # Server Telemetry Data[2]
+    wrapper.passthrough(STRING)  # Server Telemetry Data[3]

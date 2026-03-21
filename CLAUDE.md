@@ -73,6 +73,7 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 - Never use `__slots__`
 - Use Google-style docstrings (`Args:`, `Returns:`, `Attributes:` sections) for non-trivial functions and classes
 - Trivial one-liner docstrings are fine for self-explanatory functions (e.g. `read_byte`, `write_int_le`)
+- Inline comments next to wrapper.passthrough/read/write calls must use the exact field names from `data/v924_packets.json` (or v944 for new fields)
 
 ## Tooling
 

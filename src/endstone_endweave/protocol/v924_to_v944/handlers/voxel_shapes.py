@@ -14,4 +14,4 @@ def rewrite_voxel_shapes(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for VoxelShapesPacket.
     """
     wrapper.passthrough_all()
-    wrapper.write(USHORT_LE, 0)
+    wrapper.write(USHORT_LE, 0)  # Custom Shape Count (new in v944)

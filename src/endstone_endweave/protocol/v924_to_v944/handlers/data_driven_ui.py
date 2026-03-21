@@ -18,10 +18,8 @@ def rewrite_show_screen(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for ShowScreen.
     """
     wrapper.passthrough_all()
-    # FormID (uint32) -- new in v944, default to 0.
-    wrapper.write(UINT_LE, 0)
-    # DataInstanceID (uint32) -- new in v944, default to 0.
-    wrapper.write(UINT_LE, 0)
+    wrapper.write(UINT_LE, 0)  # FormId (new in v944)
+    wrapper.write(UINT_LE, 0)  # DataInstanceId (new in v944)
 
 
 def rewrite_close_all_screens(wrapper: PacketWrapper) -> None:
@@ -31,6 +29,4 @@ def rewrite_close_all_screens(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for CloseAllScreens / CloseScreen.
     """
     wrapper.passthrough_all()
-    # FormID (uint32) -- v924 had no fields, v944 expects a form ID.
-    # 0 = no specific form = close all screens (matches v924 semantics).
-    wrapper.write(UINT_LE, 0)
+    wrapper.write(UINT_LE, 0)  # FormId (new in v944, 0 = close all)

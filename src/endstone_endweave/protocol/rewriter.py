@@ -64,31 +64,25 @@ def passthrough_inventory_action(wrapper: PacketWrapper) -> None:
 def passthrough_structure_settings(wrapper: PacketWrapper) -> None:
     """Passthrough StructureSettings, converting BlockPos -> NetworkBlockPos.
 
-    Layout: string PaletteName, bool IgnoreEntities, bool IgnoreBlocks,
-    bool AllowNonTickingChunks, BlockPos Size, BlockPos Offset,
-    varint64 LastEditingPlayerUniqueID, byte Rotation, byte Mirror,
-    byte AnimationMode, float AnimationSeconds, float IntegrityValue,
-    uint32 IntegritySeed, Vec3 RotationPivot.
-
     Args:
         wrapper: Packet wrapper positioned at a StructureSettings block.
     """
-    wrapper.passthrough(STRING)  # PaletteName
-    wrapper.passthrough(BOOL)  # IgnoreEntities
-    wrapper.passthrough(BOOL)  # IgnoreBlocks
-    wrapper.passthrough(BOOL)  # AllowNonTickingChunks
-    block_to_net(wrapper)  # Size
-    block_to_net(wrapper)  # Offset
-    wrapper.passthrough(VAR_INT64)  # LastEditingPlayerUniqueID
+    wrapper.passthrough(STRING)  # Structure Palette Name
+    wrapper.passthrough(BOOL)  # Should ignore entities?
+    wrapper.passthrough(BOOL)  # Should ignore blocks?
+    wrapper.passthrough(BOOL)  # Should Allow Non Ticking Player and Ticking Area Chunks
+    block_to_net(wrapper)  # Structure Size
+    block_to_net(wrapper)  # Structure Offset
+    wrapper.passthrough(VAR_INT64)  # Last Edit Player
     wrapper.passthrough(BYTE)  # Rotation
     wrapper.passthrough(BYTE)  # Mirror
-    wrapper.passthrough(BYTE)  # AnimationMode
-    wrapper.passthrough(FLOAT_LE)  # AnimationSeconds
-    wrapper.passthrough(FLOAT_LE)  # IntegrityValue
-    wrapper.passthrough(UINT_LE)  # IntegritySeed
-    wrapper.passthrough(FLOAT_LE)  # RotationPivot.X
-    wrapper.passthrough(FLOAT_LE)  # RotationPivot.Y
-    wrapper.passthrough(FLOAT_LE)  # RotationPivot.Z
+    wrapper.passthrough(BYTE)  # Animation Mode
+    wrapper.passthrough(FLOAT_LE)  # Animation Seconds
+    wrapper.passthrough(FLOAT_LE)  # Integrity Value
+    wrapper.passthrough(UINT_LE)  # Integrity Seed
+    wrapper.passthrough(FLOAT_LE)  # Rotation Pivot.X
+    wrapper.passthrough(FLOAT_LE)  # Rotation Pivot.Y
+    wrapper.passthrough(FLOAT_LE)  # Rotation Pivot.Z
 
 
 # ---------------------------------------------------------------------------
