@@ -12,37 +12,23 @@ from endstone_endweave.codec import (
     INT_LE,
     ITEM_INSTANCE,
     STRING,
-    NETWORK_BLOCK_POS,
-    UINT_LE,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
     PacketWrapper,
 )
+from endstone_endweave.protocol.rewriter import (
+    block_to_net as _block_to_net,
+    net_to_block as _net_to_block,
+    passthrough_inventory_action as _passthrough_inventory_action,
+    passthrough_structure_settings as _rewrite_structure_settings,
+)
 
 # NoteBlockInstrument remapping constants (TileEvent)
 _NOTE_BLOCK_EVENT = 0
 _TRUMPET_INSERTION_POINT = 16
 _TRUMPET_ID_SHIFT = 4
-
-
-def _net_to_block(wrapper: PacketWrapper) -> None:
-    """Read NetworkBlockPos (v924) and write BlockPos (v944).
-
-    Args:
-        wrapper: Packet wrapper positioned at a NetworkBlockPos field.
-    """
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))
-
-
-def _block_to_net(wrapper: PacketWrapper) -> None:
-    """Read BlockPos (v944) and write NetworkBlockPos (v924).
-
-    Args:
-        wrapper: Packet wrapper positioned at a BlockPos field.
-    """
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))
 
 
 # ---------------------------------------------------------------------------
@@ -215,26 +201,6 @@ def rewrite_camera_spline(wrapper: PacketWrapper) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _passthrough_inventory_action(wrapper: PacketWrapper) -> None:
-    """Passthrough a single InventoryAction entry.
-
-    Args:
-        wrapper: Packet wrapper positioned at an InventoryAction entry.
-    """
-    source_type = wrapper.passthrough(UVAR_INT)  # SourceType
-    if source_type in (
-        0,  # ContainerInventory
-        99999,  # NonImplementedFeatureTODO
-    ):
-        wrapper.passthrough(VAR_INT)  # WindowID
-    elif source_type == 2:  # WorldInteraction
-        wrapper.passthrough(UVAR_INT)  # SourceFlags
-    # GlobalInventory(1), CreativeInventory(3), InvalidInventory(0xFFFFFFFF): no extra fields
-    wrapper.passthrough(UVAR_INT)  # InventorySlot
-    wrapper.passthrough(ITEM_INSTANCE)  # OldItem
-    wrapper.passthrough(ITEM_INSTANCE)  # NewItem
-
-
 def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
     """Rewrite InventoryTransaction: convert BlockPos -> NetworkBlockPos in UseItem data.
 
@@ -301,36 +267,6 @@ def rewrite_container_open(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BYTE)  # windowID
     wrapper.passthrough(BYTE)  # type
     _block_to_net(wrapper)  # ContainerPosition
-
-
-def _rewrite_structure_settings(wrapper: PacketWrapper) -> None:
-    """Passthrough StructureSettings, converting BlockPos -> NetworkBlockPos.
-
-    Layout: string PaletteName, bool IgnoreEntities, bool IgnoreBlocks,
-    bool AllowNonTickingChunks, BlockPos Size, BlockPos Offset,
-    varint64 LastEditingPlayerUniqueID, byte Rotation, byte Mirror,
-    byte AnimationMode, float AnimationSeconds, float IntegrityValue,
-    uint32 IntegritySeed, Vec3 RotationPivot.
-
-    Args:
-        wrapper: Packet wrapper positioned at a StructureSettings block.
-    """
-    wrapper.passthrough(STRING)  # PaletteName
-    wrapper.passthrough(BOOL)  # IgnoreEntities
-    wrapper.passthrough(BOOL)  # IgnoreBlocks
-    wrapper.passthrough(BOOL)  # AllowNonTickingChunks
-    _block_to_net(wrapper)  # Size
-    _block_to_net(wrapper)  # Offset
-    wrapper.passthrough(VAR_INT64)  # LastEditingPlayerUniqueID
-    wrapper.passthrough(BYTE)  # Rotation
-    wrapper.passthrough(BYTE)  # Mirror
-    wrapper.passthrough(BYTE)  # AnimationMode
-    wrapper.passthrough(FLOAT_LE)  # AnimationSeconds
-    wrapper.passthrough(FLOAT_LE)  # IntegrityValue
-    wrapper.passthrough(UINT_LE)  # IntegritySeed
-    wrapper.passthrough(FLOAT_LE)  # RotationPivot.X
-    wrapper.passthrough(FLOAT_LE)  # RotationPivot.Y
-    wrapper.passthrough(FLOAT_LE)  # RotationPivot.Z
 
 
 def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:

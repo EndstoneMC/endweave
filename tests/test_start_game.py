@@ -3,7 +3,13 @@
 import struct
 
 
-from endstone_endweave.codec import PacketReader, PacketWrapper, NAMED_COMPOUND_TAG, CompoundTag, ByteTag
+from endstone_endweave.codec import (
+    PacketReader,
+    PacketWrapper,
+    NAMED_COMPOUND_TAG,
+    CompoundTag,
+    ByteTag,
+)
 from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.codec.types.nbt import read_nbt
 from endstone_endweave.protocol.v924_to_v944.handlers.start_game import (

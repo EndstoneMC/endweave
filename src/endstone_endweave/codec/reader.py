@@ -39,9 +39,7 @@ class PacketReader:
             ValueError: If n is negative or would move past end of data.
         """
         if n < 0 or n > self.remaining():
-            raise ValueError(
-                f"skip({n}) out of bounds (remaining={self.remaining()})"
-            )
+            raise ValueError(f"skip({n}) out of bounds (remaining={self.remaining()})")
         self._pos += n
 
     def read_byte(self) -> int:
