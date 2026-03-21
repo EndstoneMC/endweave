@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-21
+
 ### Added
 - Sound event remapping so v944 clients hear the correct sounds on v924 servers
 - Data-Driven UI screen packet translation (show/close screens)
