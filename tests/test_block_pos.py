@@ -345,6 +345,20 @@ class TestClientboundHandlers:
         assert r.read_float_le() == 1.0  # Volume
         assert r.remaining == 4  # Pitch passthrough
 
+    def test_container_open(self):
+        w = PacketWriter()
+        w.write_byte(5)  # windowID
+        w.write_byte(2)  # type
+        _write_net_block_pos(w, -3, 80, 7)  # ContainerPosition
+        w.write_varint64(-1)  # entityUniqueID
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_container_open(wrapper)
+        r = PacketReader(wrapper.to_bytes())
+        assert r.read_byte() == 5
+        assert r.read_byte() == 2
+        assert _read_block_pos(r) == (-3, 80, 7)
+        assert r.read_varint64() == -1
+
 
 # ---------------------------------------------------------------------------
 # Tests: Serverbound packet handlers
@@ -367,20 +381,6 @@ class TestServerboundHandlers:
         assert _read_net_block_pos(r) == (10, 64, 20)
         assert _read_net_block_pos(r) == (11, 65, 21)
         assert r.read_varint() == 1
-
-    def test_container_open(self):
-        w = PacketWriter()
-        w.write_byte(5)  # windowID
-        w.write_byte(2)  # type
-        _write_block_pos(w, -3, 80, 7)  # ContainerPosition
-        w.write_varint64(-1)  # entityUniqueID
-        wrapper = PacketWrapper(w.to_bytes())
-        rewrite_container_open(wrapper)
-        r = PacketReader(wrapper.to_bytes())
-        assert r.read_byte() == 5
-        assert r.read_byte() == 2
-        assert _read_net_block_pos(r) == (-3, 80, 7)
-        assert r.read_varint64() == -1
 
     def test_command_block_update_is_block(self):
         w = PacketWriter()

@@ -255,14 +255,14 @@ def rewrite_player_action(wrapper: PacketWrapper) -> None:
 
 
 def rewrite_container_open(wrapper: PacketWrapper) -> None:
-    """ContainerOpen (46): convert BlockPos -> NetworkBlockPos.
+    """ContainerOpen (46): convert NetworkBlockPos -> BlockPos.
 
     Args:
         wrapper: Packet wrapper for ContainerOpen.
     """
     wrapper.passthrough(BYTE)  # Container Id
     wrapper.passthrough(BYTE)  # Container Type
-    _block_to_net(wrapper)  # Position
+    _net_to_block(wrapper)  # Position
 
 
 def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:

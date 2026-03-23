@@ -91,6 +91,7 @@ def create_protocol() -> Protocol:
         rewrite_close_all_screens,
     )
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
+    p.register_clientbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
 
     # Clientbound rewriters -- LevelSoundEvent remapping
     p.register_clientbound(PacketId.LEVEL_SOUND_EVENT, rewrite_level_sound_event)
@@ -102,7 +103,6 @@ def create_protocol() -> Protocol:
     # Serverbound rewriters -- BlockPos conversion (BlockPos -> NetworkBlockPos)
     p.register_serverbound(PacketId.INVENTORY_TRANSACTION, rewrite_inventory_transaction)
     p.register_serverbound(PacketId.PLAYER_ACTION, rewrite_player_action)
-    p.register_serverbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
     p.register_serverbound(PacketId.COMMAND_BLOCK_UPDATE, rewrite_command_block_update)
     p.register_serverbound(PacketId.STRUCTURE_BLOCK_UPDATE, rewrite_structure_block_update)
     p.register_serverbound(
