@@ -84,7 +84,9 @@ jobs:
 
       - name: Push
         if: ${{ !inputs.dry_run }}
-        run: git push origin main --follow-tags
+        run: |
+          git push origin main
+          git push origin "v$VERSION"
 
       - name: Create GitHub release
         if: ${{ !inputs.dry_run }}
