@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-03-23
+
 ### Fixed
 - ContainerOpen packet registered as serverbound instead of clientbound, preventing v944 clients from opening chests and other containers
 - bStats OS architecture not normalized across platforms
