@@ -20,6 +20,7 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_update_sub_chunk_blocks,
 )
 from endstone_endweave.protocol.v924_to_v944.handlers.camera import (
+    rewrite_camera_instruction,
     rewrite_camera_spline,
 )
 from endstone_endweave.protocol.v924_to_v944.handlers.data_driven_ui import (
@@ -92,6 +93,7 @@ def create_protocol() -> Protocol:
         PacketId.CLIENTBOUND_DATA_DRIVEN_UI_CLOSE_ALL_SCREENS,
         rewrite_close_all_screens,
     )
+    p.register_clientbound(PacketId.CAMERA_INSTRUCTION, rewrite_camera_instruction)
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
     p.register_clientbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
 

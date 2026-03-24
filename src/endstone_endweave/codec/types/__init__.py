@@ -41,6 +41,8 @@ from endstone_endweave.codec.types.primitives import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    VEC2,
+    VEC3,
     Type,
 )
 
@@ -83,6 +85,8 @@ __all__ = [
     "UVAR_INT64",
     "VAR_INT",
     "VAR_INT64",
+    "VEC2",
+    "VEC3",
     "read_nbt",
     "write_nbt",
 ]

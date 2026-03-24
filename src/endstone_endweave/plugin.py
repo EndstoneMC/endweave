@@ -1,4 +1,5 @@
 """Endweave plugin - protocol translation for Bedrock Edition."""
+
 import platform
 from typing import Any, Dict
 

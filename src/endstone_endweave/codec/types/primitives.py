@@ -258,6 +258,36 @@ class _BlockPos(Type[tuple[int, int, int]]):
         writer.write_varint(value[2])
 
 
+class _Vec3(Type[tuple[float, float, float]]):
+    """Vec3: three little-endian floats (X, Y, Z)."""
+
+    def read(self, reader: PacketReader) -> tuple[float, float, float]:
+        x = reader.read_float_le()
+        y = reader.read_float_le()
+        z = reader.read_float_le()
+        return (x, y, z)
+
+    def write(self, writer: PacketWriter, value: tuple[float, float, float]) -> None:
+        writer.write_float_le(value[0])
+        writer.write_float_le(value[1])
+        writer.write_float_le(value[2])
+
+
+class _Vec2(Type[tuple[float, float]]):
+    """Vec2: two little-endian floats (X, Y)."""
+
+    def read(self, reader: PacketReader) -> tuple[float, float]:
+        x = reader.read_float_le()
+        y = reader.read_float_le()
+        return (x, y)
+
+    def write(self, writer: PacketWriter, value: tuple[float, float]) -> None:
+        writer.write_float_le(value[0])
+        writer.write_float_le(value[1])
+
+
 NETWORK_BLOCK_POS = _NetworkBlockPos()
 BLOCK_POS = _BlockPos()
+VEC3 = _Vec3()
+VEC2 = _Vec2()
 UUID = _Bytes(16)
