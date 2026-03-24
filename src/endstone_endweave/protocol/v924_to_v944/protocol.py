@@ -5,7 +5,6 @@ from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_add_volume_entity,
     rewrite_anvil_damage,
-    rewrite_camera_spline,
     rewrite_command_block_update,
     rewrite_container_open,
     rewrite_first_net_block_to_block,
@@ -19,6 +18,9 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_tile_event,
     rewrite_update_client_input_locks,
     rewrite_update_sub_chunk_blocks,
+)
+from endstone_endweave.protocol.v924_to_v944.handlers.camera import (
+    rewrite_camera_spline,
 )
 from endstone_endweave.protocol.v924_to_v944.handlers.data_driven_ui import (
     rewrite_close_all_screens,

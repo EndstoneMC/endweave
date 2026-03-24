@@ -10,7 +10,6 @@ from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_add_volume_entity,
     rewrite_anvil_damage,
-    rewrite_camera_spline,
     rewrite_command_block_update,
     rewrite_container_open,
     rewrite_first_net_block_to_block,
@@ -21,6 +20,9 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_structure_template_data_request,
     rewrite_update_client_input_locks,
     rewrite_update_sub_chunk_blocks,
+)
+from endstone_endweave.protocol.v924_to_v944.handlers.camera import (
+    rewrite_camera_spline,
 )
 
 # ---------------------------------------------------------------------------
@@ -319,16 +321,14 @@ class TestClientboundHandlers:
         assert r.read_uvarint() == 0x0F
         assert not r.has_remaining
 
-    def test_camera_spline(self):
+    def test_camera_spline_zero(self):
         w = PacketWriter()
-        w.write_bytes(b"\x01\x02\x03")  # fake existing payload
+        w.write_uvarint(0)  # Camera Data Splines count
         wrapper = PacketWrapper(w.to_bytes())
         rewrite_camera_spline(wrapper)
         result = wrapper.to_bytes()
         r = PacketReader(result)
-        assert r.read_bytes(3) == b"\x01\x02\x03"
-        assert r.read_bool() is False  # has SplineIdentifier
-        assert r.read_bool() is False  # has LoadFromJson
+        assert r.read_uvarint() == 0
         assert not r.has_remaining
 
     def test_play_sound(self):

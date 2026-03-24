@@ -181,17 +181,6 @@ def rewrite_update_client_input_locks(wrapper: PacketWrapper) -> None:
     wrapper.read(FLOAT_LE)  # discard Server Pos.Z
 
 
-def rewrite_camera_spline(wrapper: PacketWrapper) -> None:
-    """CameraSpline (338): append SplineIdentifier + LoadFromJson optionals added in v944.
-
-    Args:
-        wrapper: Packet wrapper for CameraSpline.
-    """
-    wrapper.passthrough_all()
-    wrapper.write(BOOL, False)  # has SplineIdentifier
-    wrapper.write(BOOL, False)  # has LoadFromJson
-
-
 # ---------------------------------------------------------------------------
 # Serverbound (client -> server): BlockPos -> NetworkBlockPos
 # ---------------------------------------------------------------------------

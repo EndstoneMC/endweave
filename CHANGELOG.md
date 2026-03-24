@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- CameraSpline packet handler appending trailing bytes instead of per-spline fields, breaking login when `experimental_creator_cameras` is enabled
+
 ## [0.2.2] - 2026-03-23
 
 ### Fixed
