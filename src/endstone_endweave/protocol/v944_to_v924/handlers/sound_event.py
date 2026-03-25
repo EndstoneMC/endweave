@@ -51,7 +51,7 @@ def rewrite_level_sound_event(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for LevelSoundEventPacket.
     """
-    event_id = wrapper.read(UVAR_INT)
+    event_id = wrapper.read(UVAR_INT)  # Event ID
     wrapper.write(UVAR_INT, _remap_sound_clientbound(event_id))
     wrapper.passthrough_all()
 
