@@ -27,10 +27,6 @@ from endstone_endweave.protocol.v924_to_v944.handlers.data_driven_ui import (
     rewrite_close_all_screens,
     rewrite_show_screen,
 )
-from endstone_endweave.protocol.v924_to_v944.handlers.login import (
-    rewrite_login,
-    rewrite_request_network_settings,
-)
 from endstone_endweave.protocol.v924_to_v944.handlers.sound_event import (
     rewrite_add_actor,
     rewrite_add_item_actor,
@@ -56,10 +52,6 @@ def create_protocol() -> Protocol:
         A Protocol instance with all v924-to-v944 handlers registered.
     """
     p = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
-
-    # Login
-    p.register_serverbound(PacketId.REQUEST_NETWORK_SETTINGS, rewrite_request_network_settings)
-    p.register_serverbound(PacketId.LOGIN, rewrite_login)
 
     # Cancel new v944 serverbound packets unknown to v924 (v924 EndId = 340)
     p.cancel_serverbound(

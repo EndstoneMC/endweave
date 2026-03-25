@@ -132,6 +132,16 @@ class _FloatLE(Type[float]):
         writer.write_float_le(value)
 
 
+class _DoubleLE(Type[float]):
+    """64-bit little-endian IEEE 754 float."""
+
+    def read(self, reader: PacketReader) -> float:
+        return reader.read_double_le()
+
+    def write(self, writer: PacketWriter, value: float) -> None:
+        writer.write_double_le(value)
+
+
 class _VarInt(Type[int]):
     """Signed variable-length integer (zigzag encoded, up to 32 bits)."""
 
@@ -220,6 +230,7 @@ INT_BE = _IntBE()
 UINT_LE = _UIntLE()
 INT64_LE = _Int64LE()
 FLOAT_LE = _FloatLE()
+DOUBLE_LE = _DoubleLE()
 VAR_INT = _VarInt()
 UVAR_INT = _UVarInt()
 VAR_INT64 = _VarInt64()

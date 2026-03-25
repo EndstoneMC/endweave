@@ -178,7 +178,7 @@ class TestProtocolPipeline:
         event = self._make_event(193, payload)
         pipeline.on_packet_receive(event)
 
-        # Trigger chain resolution (sets connection.active = True)
+        # Trigger pipeline resolution via a second serverbound packet
         event_sb = self._make_event(99, b"\x00")
         pipeline.on_packet_receive(event_sb)
 
@@ -204,14 +204,14 @@ class TestNormalizeMcVersion:
 
 class TestGetVersionByName:
     def test_patch_version_maps_to_base(self):
-        from endstone_endweave.protocol.versions import R26_U0, get_version_by_name
+        from endstone_endweave.protocol.versions import get_version_by_name, v1_26_0
 
-        assert get_version_by_name("1.26.2") is R26_U0
+        assert get_version_by_name("1.26.2") is v1_26_0
 
     def test_exact_version_match(self):
-        from endstone_endweave.protocol.versions import R26_U1, get_version_by_name
+        from endstone_endweave.protocol.versions import get_version_by_name, v1_26_10
 
-        assert get_version_by_name("1.26.10") is R26_U1
+        assert get_version_by_name("1.26.10") is v1_26_10
 
     def test_unknown_version_returns_none(self):
         from endstone_endweave.protocol.versions import get_version_by_name

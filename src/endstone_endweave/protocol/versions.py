@@ -14,21 +14,32 @@ class ProtocolVersion:
     Attributes:
         protocol: Numeric protocol ID (e.g. 924).
         minecraft_version: Primary Minecraft version string (e.g. "1.26.0").
-        release_tag: BedrockProtocol repo branch tag (e.g. "r26_u0").
         included_versions: All Minecraft version strings sharing this protocol.
     """
 
     protocol: int  # e.g. 924
     minecraft_version: str  # e.g. "1.26.0"
-    release_tag: str  # e.g. "r26_u0" (BedrockProtocol repo branch)
     included_versions: frozenset[str] = frozenset()  # all MC versions sharing this protocol
 
+    @property
+    def release_tag(self) -> str:
+        """Derive the BedrockProtocol repo branch tag (e.g. "r26_u0").
 
-# Registry — add new versions here
-R26_U0 = ProtocolVersion(924, "1.26.0", "r26_u0", frozenset({"1.26.0", "1.26.1", "1.26.2", "1.26.3"}))
-R26_U1 = ProtocolVersion(944, "1.26.10", "r26_u1", frozenset({"1.26.10"}))
+        Convention: ``r{minor}_u{patch // 10}`` from ``1.{minor}.{patch}``.
+        """
+        parts = self.minecraft_version.split(".")
+        minor, patch = parts[1], int(parts[2])
+        return f"r{minor}_u{patch // 10}"
 
-VERSIONS: dict[int, ProtocolVersion] = {v.protocol: v for v in [R26_U0, R26_U1]}
+
+# Registry -- add new versions here
+v1_21_120 = ProtocolVersion(859, "1.21.120", frozenset({"1.21.120"}))
+v1_21_124 = ProtocolVersion(860, "1.21.124", frozenset({"1.21.124"}))
+v1_21_130 = ProtocolVersion(898, "1.21.130", frozenset({"1.21.130", "1.21.131", "1.21.132"}))
+v1_26_0 = ProtocolVersion(924, "1.26.0", frozenset({"1.26.0", "1.26.1", "1.26.2", "1.26.3"}))
+v1_26_10 = ProtocolVersion(944, "1.26.10", frozenset({"1.26.10"}))
+
+VERSIONS: dict[int, ProtocolVersion] = {v.protocol: v for v in [v1_21_120, v1_21_124, v1_21_130, v1_26_0, v1_26_10]}
 
 # Reverse lookup: MC version string -> ProtocolVersion
 _VERSION_BY_NAME: dict[str, ProtocolVersion] = {name: v for v in VERSIONS.values() for name in v.included_versions}

@@ -5,11 +5,8 @@ from unittest.mock import MagicMock
 
 from endstone_endweave.codec import PacketWrapper
 from endstone_endweave.connection import UserConnection
+from endstone_endweave.protocol.base import _rewrite_login, detect_client_protocol
 from endstone_endweave.protocol.direction import Direction
-from endstone_endweave.protocol.v924_to_v944.handlers.login import (
-    rewrite_login,
-    rewrite_request_network_settings,
-)
 
 
 class TestRequestNetworkSettings:
@@ -19,20 +16,20 @@ class TestRequestNetworkSettings:
     def test_rewrites_944_to_924(self):
         payload = struct.pack(">i", 944)
         wrapper = PacketWrapper(payload, user=self.connection)
-        rewrite_request_network_settings(wrapper)
+        detect_client_protocol(wrapper)
         result = wrapper.to_bytes()
         assert struct.unpack(">i", result[:4])[0] == 924
 
     def test_no_rewrite_when_matching(self):
         payload = struct.pack(">i", 924)
         wrapper = PacketWrapper(payload, user=self.connection)
-        rewrite_request_network_settings(wrapper)
+        detect_client_protocol(wrapper)
         assert wrapper.to_bytes() == payload
 
     def test_preserves_trailing_data(self):
         payload = struct.pack(">i", 944) + b"\xde\xad\xbe\xef"
         wrapper = PacketWrapper(payload, user=self.connection)
-        rewrite_request_network_settings(wrapper)
+        detect_client_protocol(wrapper)
         result = wrapper.to_bytes()
         assert struct.unpack(">i", result[:4])[0] == 924
         assert result[4:] == b"\xde\xad\xbe\xef"
@@ -45,7 +42,7 @@ class TestLoginPacket:
     def test_rewrites_protocol_version(self):
         payload = struct.pack(">i", 944) + b"\x00" * 100
         wrapper = PacketWrapper(payload, user=self.connection)
-        rewrite_login(wrapper)
+        _rewrite_login(wrapper)
         result = wrapper.to_bytes()
         assert struct.unpack(">i", result[:4])[0] == 924
         assert len(result) == len(payload)
@@ -53,7 +50,7 @@ class TestLoginPacket:
     def test_no_rewrite_when_matching(self):
         payload = struct.pack(">i", 924) + b"\x00" * 100
         wrapper = PacketWrapper(payload, user=self.connection)
-        rewrite_login(wrapper)
+        _rewrite_login(wrapper)
         assert wrapper.to_bytes() == payload
 
 

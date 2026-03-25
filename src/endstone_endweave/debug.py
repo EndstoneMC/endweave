@@ -93,20 +93,18 @@ class DebugHandler:
         stage: str,
         address: str,
         direction: str,
-        state: str,
         packet_id: int,
         client_version: int,
         size: int,
     ) -> None:
         """Log a packet event in structured format.
 
-        Format: {STAGE}: {ADDRESS} {DIRECTION} {STATE}: {PACKET_LABEL} [{VERSION}] {SIZE}b
+        Format: {STAGE}: {ADDRESS} {DIRECTION}: {PACKET_LABEL} [{VERSION}] {SIZE}b
 
         Args:
             stage: "PRE " or "POST" (padded to 4 chars).
             address: Connection address string.
             direction: "SERVERBOUND" or "CLIENTBOUND".
-            state: Connection state (e.g. "LOGIN", "PLAY").
             packet_id: Bedrock packet ID.
             client_version: Client protocol version number.
             size: Payload size in bytes.
@@ -117,7 +115,7 @@ class DebugHandler:
         if not self.should_log(packet_id):
             return
         label = packet_label(packet_id)
-        self._logger.debug(f"{stage}: {address} {direction} {state}: {label} [{client_version}] {size}b")
+        self._logger.debug(f"{stage}: {address} {direction}: {label} [{client_version}] {size}b")
 
     def log(self, packet_id: int, message: str) -> None:
         """Log a debug message if the packet ID passes the filter.

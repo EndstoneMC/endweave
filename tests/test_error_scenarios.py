@@ -70,7 +70,7 @@ class TestTruncatedPayload:
         rns = _make_event(193, struct.pack(">i", 944))
         pipeline.on_packet_receive(rns)
 
-        # Trigger chain resolution (sets connection.active = True)
+        # Trigger pipeline resolution via a second serverbound packet
         sb_event = _make_event(99, b"\x00")
         pipeline.on_packet_receive(sb_event)
 
@@ -160,11 +160,10 @@ class TestDebugHandler:
         """Verify packet log format."""
         logger = MagicMock()
         handler = DebugHandler(logger, enabled=True)
-        handler.log_packet("PRE ", "1.2.3.4:1234", "SERVERBOUND", "LOGIN", 11, 944, 256)
+        handler.log_packet("PRE ", "1.2.3.4:1234", "SERVERBOUND", 11, 944, 256)
         msg = logger.debug.call_args[0][0]
         assert "PRE :" in msg
         assert "SERVERBOUND" in msg
-        assert "LOGIN" in msg
         assert "START_GAME(11)" in msg
         assert "0x0B" in msg
         assert "[944]" in msg

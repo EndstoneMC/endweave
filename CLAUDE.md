@@ -54,7 +54,7 @@ Currently translates between protocol 924 (MC 1.26.0) and 944 (MC 1.26.10).
 
 ## Adding a New Version Pair
 
-1. Add `R27_U0 = ProtocolVersion(960, "1.27.0", "r27_u0")` to `protocol/versions.py`
+1. Add `v1_27_0 = ProtocolVersion(960, "1.27.0", "r27_u0")` to `protocol/versions.py`
 2. Run tools to fetch + parse + diff the new protocol docs
 3. Create `protocol/v944_to_v960/` with:
    - `protocol.py` -- `SERVER_PROTOCOL = 944`, `CLIENT_PROTOCOL = 960`, `create_protocol()`

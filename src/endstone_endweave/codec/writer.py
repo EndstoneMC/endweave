@@ -60,6 +60,10 @@ class PacketWriter:
         """Write a 32-bit little-endian IEEE 754 float."""
         self._buf.extend(struct.pack("<f", val))
 
+    def write_double_le(self, val: float) -> None:
+        """Write a 64-bit little-endian IEEE 754 float."""
+        self._buf.extend(struct.pack("<d", val))
+
     def write_uvarint(self, val: int) -> None:
         """Write an unsigned variable-length integer (LEB128)."""
         val &= 0xFFFFFFFF  # treat as unsigned 32-bit

@@ -117,6 +117,12 @@ class PacketReader:
         self._pos += 4
         return val
 
+    def read_double_le(self) -> float:
+        """Read a 64-bit little-endian IEEE 754 float."""
+        val: float = struct.unpack_from("<d", self._data, self._pos)[0]
+        self._pos += 8
+        return val
+
     def read_uvarint(self) -> int:
         """Read an unsigned variable-length integer (LEB128)."""
         result = 0

@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 
 from endstone_endweave.connection import (
     ConnectionManager,
-    ConnectionState,
     UserConnection,
 )
 
@@ -97,16 +96,3 @@ class TestConnectionManagerCleanup:
         mgr.remove_by_address("1.2.3.4:1234")
         # Verify storage was cleared (accessing conn directly since we still hold ref)
         assert not conn.has(Tracker)
-
-
-class TestConnectionState:
-    def test_default_state_is_pre_login(self):
-        conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock())
-        assert conn.state == ConnectionState.HANDSHAKE
-
-    def test_state_transitions(self):
-        conn = UserConnection(address="1.2.3.4:1234", logger=MagicMock())
-        conn.state = ConnectionState.LOGIN
-        assert conn.state == ConnectionState.LOGIN
-        conn.state = ConnectionState.PLAY
-        assert conn.state == ConnectionState.PLAY
