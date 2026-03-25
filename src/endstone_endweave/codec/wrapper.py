@@ -3,9 +3,10 @@
 Holds separate read (input) and write (output) buffers. Handlers use three
 operations to transform packets field-by-field:
 
-    passthrough(type) -- read from input, copy to output, return value
-    read(type)        -- read from input, do NOT write (removes a field)
-    write(type, val)  -- write to output without reading (inserts a field)
+    passthrough(type)      -- read from input, copy to output, return value
+    read(type)             -- read from input, do NOT write (removes a field)
+    write(type, val)       -- write to output without reading (inserts a field)
+    map(old_type, new_type) -- read with old type, write with new type (converts encoding)
 
 After all handlers run, the wrapper produces the final payload from its
 write buffer plus any unread trailing bytes.
@@ -107,6 +108,23 @@ class PacketWrapper:
             value: The value to serialize into the output.
         """
         field_type.write(self._writer, value)
+
+    def map(self, old_type: Type[_T], new_type: Type[_T]) -> _T:
+        """Read a field with one type and write it with another.
+
+        Args:
+            old_type: The Type descriptor to read the input field.
+            new_type: The Type descriptor to write the output field.
+
+        Returns:
+            The deserialized value.
+
+        See Also:
+            com.viaversion.viaversion.api.protocol.remapper.PacketHandlers#map
+        """
+        value = old_type.read(self._reader)
+        new_type.write(self._writer, value)
+        return value
 
     def passthrough_all(self) -> bytes:
         """Copy all remaining input bytes to output."""

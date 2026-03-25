@@ -20,6 +20,8 @@ from endstone_endweave.codec import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    VEC2,
+    VEC3,
     PacketWrapper,
 )
 
@@ -67,11 +69,8 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(VAR_INT64)  # Entity ID
     wrapper.passthrough(UVAR_INT64)  # Runtime ID
     wrapper.passthrough(VAR_INT)  # Game Type
-    wrapper.passthrough(FLOAT_LE)  # Position.X
-    wrapper.passthrough(FLOAT_LE)  # Position.Y
-    wrapper.passthrough(FLOAT_LE)  # Position.Z
-    wrapper.passthrough(FLOAT_LE)  # Rotation.X
-    wrapper.passthrough(FLOAT_LE)  # Rotation.Y
+    wrapper.passthrough(VEC3)  # Position
+    wrapper.passthrough(VEC2)  # Rotation
     wrapper.passthrough(INT64_LE)  # Settings.Seed
     wrapper.passthrough(SHORT_LE)  # Settings.SpawnSettings.BiomeType
     wrapper.passthrough(STRING)  # Settings.SpawnSettings.UserDefinedBiomeName

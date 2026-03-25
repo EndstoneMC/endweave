@@ -1,4 +1,8 @@
-"""Packet handlers for BlockPos changes (v944 -> v924)."""
+"""Packet handlers for BlockPos changes (v944 -> v924).
+
+Clientbound handlers read BlockPos (from v944 server) and write NetworkBlockPos (for v924 client).
+Serverbound handlers read NetworkBlockPos (from v924 client) and write BlockPos (for v944 server).
+"""
 
 from endstone_endweave.codec import (
     BLOCK_POS,
@@ -6,77 +10,55 @@ from endstone_endweave.codec import (
     BYTE,
     FLOAT_LE,
     INT_LE,
+    INVENTORY_ACTION,
     ITEM_INSTANCE,
     NETWORK_BLOCK_POS,
     STRING,
+    STRUCTURE_SETTINGS_V924,
+    STRUCTURE_SETTINGS_V944,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    VEC3,
+    ArrayType,
     PacketWrapper,
 )
 
+# NoteBlockInstrument remapping constants (TileEvent)
 _NOTE_BLOCK_EVENT = 0
 _TRUMPET_INSERTION_POINT = 16
 _TRUMPET_ID_SHIFT = 4
 
 
-def _block_to_net(wrapper: PacketWrapper) -> None:
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))
-
-
-def _net_to_block(wrapper: PacketWrapper) -> None:
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))
-
-
-def _passthrough_inventory_action(wrapper: PacketWrapper) -> None:
-    source_type = wrapper.passthrough(UVAR_INT)
-    if source_type in (0, 99999):
-        wrapper.passthrough(VAR_INT)
-    elif source_type == 2:
-        wrapper.passthrough(UVAR_INT)
-    wrapper.passthrough(UVAR_INT)
-    wrapper.passthrough(ITEM_INSTANCE)
-    wrapper.passthrough(ITEM_INSTANCE)
-
-
-def _passthrough_structure_settings_up(wrapper: PacketWrapper) -> None:
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    _net_to_block(wrapper)
-    _net_to_block(wrapper)
-    wrapper.passthrough(VAR_INT64)
-    wrapper.passthrough(BYTE)
-    wrapper.passthrough(BYTE)
-    wrapper.passthrough(BYTE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(INT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
+# ---------------------------------------------------------------------------
+# Clientbound (server -> client): BlockPos -> NetworkBlockPos
+# ---------------------------------------------------------------------------
 
 
 def rewrite_first_block_to_net(wrapper: PacketWrapper) -> None:
     """Rewrite first-field BlockPos -> NetworkBlockPos.
 
+    Used by: UpdateBlock (21), BlockActorData (56),
+    UpdateBlockSynced (110), LecternUpdate (125), OpenSign (303).
+
     Args:
         wrapper: Packet wrapper positioned at the first field.
     """
-    _block_to_net(wrapper)
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)
 
 
 def rewrite_tile_event(wrapper: PacketWrapper) -> None:
     """BlockEventPacket (26): convert BlockPos -> NetworkBlockPos, remap NoteBlockInstrument.
 
+    v944 inserted Trumpet variants at IDs 16-19, displacing Zombie..Piglin by +4.
+
     Args:
         wrapper: Packet wrapper for TileEvent.
     """
-    _block_to_net(wrapper)
-    event_type = wrapper.passthrough(VAR_INT)
-    event_data = wrapper.read(VAR_INT)
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position
+    event_type = wrapper.passthrough(VAR_INT)  # Event Type
+    event_data = wrapper.read(VAR_INT)  # Event Value
     if event_type == _NOTE_BLOCK_EVENT and event_data >= _TRUMPET_INSERTION_POINT + _TRUMPET_ID_SHIFT:
         event_data -= _TRUMPET_ID_SHIFT
     wrapper.write(VAR_INT, event_data)
@@ -88,10 +70,10 @@ def rewrite_set_spawn_position(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for SetSpawnPosition.
     """
-    wrapper.passthrough(VAR_INT)
-    _block_to_net(wrapper)
-    wrapper.passthrough(VAR_INT)
-    _block_to_net(wrapper)
+    wrapper.passthrough(VAR_INT)  # Spawn Position Type
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position
+    wrapper.passthrough(VAR_INT)  # Dimension type
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Spawn Block Pos
 
 
 def rewrite_add_volume_entity(wrapper: PacketWrapper) -> None:
@@ -100,9 +82,9 @@ def rewrite_add_volume_entity(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for AddVolumeEntity.
     """
-    wrapper.passthrough(UVAR_INT)
-    _block_to_net(wrapper)
-    _block_to_net(wrapper)
+    wrapper.passthrough(UVAR_INT)  # Entity Network Id
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Min Bounds
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Max Bounds
 
 
 def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
@@ -111,22 +93,25 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for UpdateSubChunkBlocks.
     """
-    _block_to_net(wrapper)
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Sub Chunk Block Position
+
+    # Blocks Changed - Standards
     blocks_count = wrapper.passthrough(UVAR_INT)
     for _ in range(blocks_count):
-        _block_to_net(wrapper)
-        wrapper.passthrough(UVAR_INT)
-        wrapper.passthrough(UVAR_INT)
-        wrapper.passthrough(UVAR_INT64)
-        wrapper.passthrough(UVAR_INT)
+        wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Pos
+        wrapper.passthrough(UVAR_INT)  # Runtime Id
+        wrapper.passthrough(UVAR_INT)  # Update Flags
+        wrapper.passthrough(UVAR_INT64)  # Sync Message - Entity Unique ID
+        wrapper.passthrough(UVAR_INT)  # Sync Message - Message
 
+    # Blocks Changed - Extras
     extra_count = wrapper.passthrough(UVAR_INT)
     for _ in range(extra_count):
-        _block_to_net(wrapper)
-        wrapper.passthrough(UVAR_INT)
-        wrapper.passthrough(UVAR_INT)
-        wrapper.passthrough(UVAR_INT64)
-        wrapper.passthrough(UVAR_INT)
+        wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Pos
+        wrapper.passthrough(UVAR_INT)  # Runtime Id
+        wrapper.passthrough(UVAR_INT)  # Update Flags
+        wrapper.passthrough(UVAR_INT64)  # Sync Message - Entity Unique ID
+        wrapper.passthrough(UVAR_INT)  # Sync Message - Message
 
 
 def rewrite_play_sound(wrapper: PacketWrapper) -> None:
@@ -135,106 +120,56 @@ def rewrite_play_sound(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for PlaySound.
     """
-    wrapper.passthrough(STRING)
-    _block_to_net(wrapper)
+    wrapper.passthrough(STRING)  # Name
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Position
 
 
 def rewrite_map_data(wrapper: PacketWrapper) -> None:
     """ClientboundMapItemData (67): convert tracked block object positions.
 
+    Only converts when Type Flags has the Decoration bit (0x04)
+    and the object Type is Block (1).
+
     Args:
         wrapper: Packet wrapper for ClientboundMapItemData.
     """
-    wrapper.passthrough(VAR_INT64)
-    types = wrapper.passthrough(UVAR_INT)
-    wrapper.passthrough(BYTE)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(NETWORK_BLOCK_POS)
+    wrapper.passthrough(VAR_INT64)  # Map ID
+    types = wrapper.passthrough(UVAR_INT)  # Type Flags
+    wrapper.passthrough(BYTE)  # Dimension
+    wrapper.passthrough(BOOL)  # Is Locked Map?
+    wrapper.passthrough(BLOCK_POS)  # Map Origin
 
-    type_texture_update = 0x02
-    type_decoration_update = 0x04
-    type_creation = 0x08
+    TYPE_TEXTURE_UPDATE = 0x02
+    TYPE_DECORATION_UPDATE = 0x04
+    TYPE_CREATION = 0x08
 
-    if types & type_creation:
-        count = wrapper.passthrough(UVAR_INT)
-        for _ in range(count):
-            wrapper.passthrough(VAR_INT64)
+    if types & TYPE_CREATION:
+        wrapper.passthrough(ArrayType(VAR_INT64))  # Map ID List
 
-    if types & (type_creation | type_decoration_update | type_texture_update):
-        wrapper.passthrough(BYTE)
+    if types & (TYPE_CREATION | TYPE_DECORATION_UPDATE | TYPE_TEXTURE_UPDATE):
+        wrapper.passthrough(BYTE)  # Scale
 
-    if types & type_decoration_update:
-        object_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(object_count):
-            object_type = wrapper.passthrough(INT_LE)
-            if object_type == 0:
-                wrapper.passthrough(VAR_INT64)
-            elif object_type == 1:
-                _block_to_net(wrapper)
+    if types & TYPE_DECORATION_UPDATE:
+        # Actor IDs
+        obj_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(obj_count):
+            obj_type = wrapper.passthrough(INT_LE)  # Type
+            if obj_type == 0:  # Entity
+                wrapper.passthrough(VAR_INT64)  # MapItemTrackedActor::UniqueId
+            elif obj_type == 1:  # Block
+                wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position
 
 
 def rewrite_update_client_input_locks(wrapper: PacketWrapper) -> None:
-    """UpdateClientInputLocks (196): append removed Server Pos.
+    """UpdateClientInputLocks (196): append Server Pos not present in v944.
 
     Args:
         wrapper: Packet wrapper for UpdateClientInputLocks.
     """
-    wrapper.passthrough(UVAR_INT)
-    wrapper.write(FLOAT_LE, 0.0)
-    wrapper.write(FLOAT_LE, 0.0)
-    wrapper.write(FLOAT_LE, 0.0)
-
-
-def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
-    """Rewrite InventoryTransaction: convert NetworkBlockPos -> BlockPos in UseItem data.
-
-    Args:
-        wrapper: Packet wrapper for InventoryTransaction.
-    """
-    legacy_request_id = wrapper.passthrough(VAR_INT)
-    if legacy_request_id != 0:
-        slot_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(slot_count):
-            wrapper.passthrough(BYTE)
-            slots_len = wrapper.passthrough(UVAR_INT)
-            for _ in range(slots_len):
-                wrapper.passthrough(BYTE)
-
-    transaction_type = wrapper.passthrough(UVAR_INT)
-    action_count = wrapper.passthrough(UVAR_INT)
-    for _ in range(action_count):
-        _passthrough_inventory_action(wrapper)
-
-    if transaction_type != 2:
-        return
-
-    wrapper.passthrough(UVAR_INT)
-    wrapper.passthrough(UVAR_INT)
-    _net_to_block(wrapper)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(ITEM_INSTANCE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(UVAR_INT)
-    wrapper.passthrough(UVAR_INT)
-    wrapper.write(BYTE, 0)
-
-
-def rewrite_player_action(wrapper: PacketWrapper) -> None:
-    """PlayerAction (36): convert NetworkBlockPos -> BlockPos.
-
-    Args:
-        wrapper: Packet wrapper for PlayerAction.
-    """
-    wrapper.passthrough(UVAR_INT64)
-    wrapper.passthrough(VAR_INT)
-    _net_to_block(wrapper)
-    _net_to_block(wrapper)
+    wrapper.passthrough(UVAR_INT)  # Input Lock ComponentData
+    wrapper.write(FLOAT_LE, 0.0)  # Server Pos.X
+    wrapper.write(FLOAT_LE, 0.0)  # Server Pos.Y
+    wrapper.write(FLOAT_LE, 0.0)  # Server Pos.Z
 
 
 def rewrite_container_open(wrapper: PacketWrapper) -> None:
@@ -243,9 +178,67 @@ def rewrite_container_open(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for ContainerOpen.
     """
-    wrapper.passthrough(BYTE)
-    wrapper.passthrough(BYTE)
-    _block_to_net(wrapper)
+    wrapper.passthrough(BYTE)  # Container Id
+    wrapper.passthrough(BYTE)  # Container Type
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Position
+
+
+# ---------------------------------------------------------------------------
+# Serverbound (client -> server): NetworkBlockPos -> BlockPos
+# ---------------------------------------------------------------------------
+
+
+def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
+    """Rewrite InventoryTransaction: convert NetworkBlockPos -> BlockPos in UseItem data.
+
+    Args:
+        wrapper: Packet wrapper for InventoryTransaction.
+    """
+    legacy_request_id = wrapper.passthrough(VAR_INT)  # Raw Id (32 bit signed)
+    if legacy_request_id != 0:
+        # Legacy Set Item Slots
+        slot_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(slot_count):
+            wrapper.passthrough(BYTE)  # Container Enum
+            # Slot vector
+            slots_len = wrapper.passthrough(UVAR_INT)
+            for _ in range(slots_len):
+                wrapper.passthrough(BYTE)  # Slot
+
+    transaction_type = wrapper.passthrough(UVAR_INT)  # Transaction Type
+
+    # InventoryActions
+    action_count = wrapper.passthrough(UVAR_INT)
+    for _ in range(action_count):
+        wrapper.passthrough(INVENTORY_ACTION)
+
+    if transaction_type != 2:  # Not UseItem
+        return  # passthrough remaining bytes unchanged
+
+    # UseItemTransactionData
+    wrapper.passthrough(UVAR_INT)  # ActionType
+    wrapper.passthrough(UVAR_INT)  # TriggerType
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # BlockPosition
+    wrapper.passthrough(VAR_INT)  # BlockFace
+    wrapper.passthrough(VAR_INT)  # HotBarSlot
+    wrapper.passthrough(ITEM_INSTANCE)  # HeldItem
+    wrapper.passthrough(VEC3)  # Position
+    wrapper.passthrough(VEC3)  # ClickedPosition
+    wrapper.passthrough(UVAR_INT)  # BlockRuntimeID
+    wrapper.passthrough(UVAR_INT)  # ClientPrediction
+    wrapper.write(BYTE, 0)  # ClientCooldownState (add -- v944 expects this)
+
+
+def rewrite_player_action(wrapper: PacketWrapper) -> None:
+    """PlayerAction (36): convert NetworkBlockPos -> BlockPos.
+
+    Args:
+        wrapper: Packet wrapper for PlayerAction.
+    """
+    wrapper.passthrough(UVAR_INT64)  # Player Runtime ID
+    wrapper.passthrough(VAR_INT)  # Action
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Result Pos
 
 
 def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
@@ -254,14 +247,15 @@ def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for StructureBlockUpdate.
     """
-    _net_to_block(wrapper)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(VAR_INT)
-    _passthrough_structure_settings_up(wrapper)
-    wrapper.passthrough(VAR_INT)
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position
+    # StructureEditorData
+    wrapper.passthrough(STRING)  # Name
+    wrapper.passthrough(STRING)  # DataField
+    wrapper.passthrough(BOOL)  # IncludePlayers
+    wrapper.passthrough(BOOL)  # ShowBoundingBox
+    wrapper.passthrough(VAR_INT)  # StructureBlockType
+    wrapper.map(STRUCTURE_SETTINGS_V924, STRUCTURE_SETTINGS_V944)
+    wrapper.passthrough(VAR_INT)  # RedstoneSaveMode
 
 
 def rewrite_command_block_update(wrapper: PacketWrapper) -> None:
@@ -270,9 +264,9 @@ def rewrite_command_block_update(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for CommandBlockUpdate.
     """
-    is_block = wrapper.passthrough(BOOL)
+    is_block = wrapper.passthrough(BOOL)  # Is Block?
     if is_block:
-        _net_to_block(wrapper)
+        wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position
 
 
 def rewrite_structure_template_data_request(wrapper: PacketWrapper) -> None:
@@ -281,9 +275,9 @@ def rewrite_structure_template_data_request(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for StructureTemplateDataRequest.
     """
-    wrapper.passthrough(STRING)
-    _net_to_block(wrapper)
-    _passthrough_structure_settings_up(wrapper)
+    wrapper.passthrough(STRING)  # Structure Name
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Structure Position
+    wrapper.map(STRUCTURE_SETTINGS_V924, STRUCTURE_SETTINGS_V944)
 
 
 def rewrite_anvil_damage(wrapper: PacketWrapper) -> None:
@@ -292,5 +286,5 @@ def rewrite_anvil_damage(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for AnvilDamage.
     """
-    wrapper.passthrough(BYTE)
-    _net_to_block(wrapper)
+    wrapper.passthrough(BYTE)  # Damage Amount
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position

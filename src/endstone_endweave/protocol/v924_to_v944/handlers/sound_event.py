@@ -1,4 +1,4 @@
-"""Handlers for LevelSoundEvent remapping -- v924 to v944.
+"""Handlers for LevelSoundEvent remapping - v924 to v944.
 
 v944 added PauseGrowth (597) and ResetGrowth (598) to LevelSoundEvent,
 displacing Undefined from 597 to 599. This affects:
@@ -9,7 +9,10 @@ displacing Undefined from 597 to 599. This affects:
   AddItemActorPacket (15), AddPlayerPacket (12)
 """
 
+from collections.abc import Callable
+
 from endstone_endweave.codec import (
+    ACTOR_DATA_LIST,
     FLOAT_LE,
     ITEM_INSTANCE,
     STRING,
@@ -18,9 +21,10 @@ from endstone_endweave.codec import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    VEC2,
+    VEC3,
     PacketWrapper,
 )
-from endstone_endweave.protocol.rewriter import passthrough_actor_data
 
 # ActorData key for heartbeat sound
 _HEARTBEAT_SOUND_EVENT = 126
@@ -37,7 +41,18 @@ def _remap_sound_clientbound(value: int) -> int:
     return value
 
 
-_INT_REMAPPERS = {_HEARTBEAT_SOUND_EVENT: _remap_sound_clientbound}
+_INT_REMAPPERS: dict[int, Callable[[int], int]] = {
+    _HEARTBEAT_SOUND_EVENT: _remap_sound_clientbound,
+}
+
+
+def _remap_actor_data(wrapper: PacketWrapper) -> None:
+    """Read ActorData, remap sound event IDs, write back."""
+    entries = wrapper.read(ACTOR_DATA_LIST)
+    for entry in entries:
+        if entry.key in _INT_REMAPPERS and entry.type_id in (2, 7):
+            entry.value = _INT_REMAPPERS[entry.key](entry.value)
+    wrapper.write(ACTOR_DATA_LIST, entries)
 
 
 def rewrite_level_sound_event(wrapper: PacketWrapper) -> None:
@@ -58,7 +73,7 @@ def rewrite_set_actor_data(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for SetActorDataPacket.
     """
     wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
-    passthrough_actor_data(wrapper, _INT_REMAPPERS)
+    _remap_actor_data(wrapper)
     wrapper.passthrough_all()  # Synched Properties, Tick
 
 
@@ -71,14 +86,9 @@ def rewrite_add_actor(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(VAR_INT64)  # Target Actor ID
     wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
     wrapper.passthrough(STRING)  # Actor Type
-    wrapper.passthrough(FLOAT_LE)  # Position.X
-    wrapper.passthrough(FLOAT_LE)  # Position.Y
-    wrapper.passthrough(FLOAT_LE)  # Position.Z
-    wrapper.passthrough(FLOAT_LE)  # Velocity.X
-    wrapper.passthrough(FLOAT_LE)  # Velocity.Y
-    wrapper.passthrough(FLOAT_LE)  # Velocity.Z
-    wrapper.passthrough(FLOAT_LE)  # Rotation.X
-    wrapper.passthrough(FLOAT_LE)  # Rotation.Y
+    wrapper.passthrough(VEC3)  # Position
+    wrapper.passthrough(VEC3)  # Velocity
+    wrapper.passthrough(VEC2)  # Rotation
     wrapper.passthrough(FLOAT_LE)  # Y Head Rotation
     wrapper.passthrough(FLOAT_LE)  # Y Body Rotation
     attr_count = wrapper.passthrough(UVAR_INT)  # Attributes List
@@ -87,7 +97,7 @@ def rewrite_add_actor(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(FLOAT_LE)  # Min Value
         wrapper.passthrough(FLOAT_LE)  # Current Value
         wrapper.passthrough(FLOAT_LE)  # Max Value
-    passthrough_actor_data(wrapper, _INT_REMAPPERS)
+    _remap_actor_data(wrapper)
     wrapper.passthrough_all()  # Synched Properties, Actor Links
 
 
@@ -100,13 +110,9 @@ def rewrite_add_item_actor(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(VAR_INT64)  # Target Actor ID
     wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
     wrapper.passthrough(ITEM_INSTANCE)  # Item
-    wrapper.passthrough(FLOAT_LE)  # Position.X
-    wrapper.passthrough(FLOAT_LE)  # Position.Y
-    wrapper.passthrough(FLOAT_LE)  # Position.Z
-    wrapper.passthrough(FLOAT_LE)  # Velocity.X
-    wrapper.passthrough(FLOAT_LE)  # Velocity.Y
-    wrapper.passthrough(FLOAT_LE)  # Velocity.Z
-    passthrough_actor_data(wrapper, _INT_REMAPPERS)
+    wrapper.passthrough(VEC3)  # Position
+    wrapper.passthrough(VEC3)  # Velocity
+    _remap_actor_data(wrapper)
     wrapper.passthrough_all()  # From Fishing?
 
 
@@ -120,16 +126,11 @@ def rewrite_add_player(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(STRING)  # Player Name
     wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
     wrapper.passthrough(STRING)  # Platform Chat Id
-    wrapper.passthrough(FLOAT_LE)  # Position.X
-    wrapper.passthrough(FLOAT_LE)  # Position.Y
-    wrapper.passthrough(FLOAT_LE)  # Position.Z
-    wrapper.passthrough(FLOAT_LE)  # Velocity.X
-    wrapper.passthrough(FLOAT_LE)  # Velocity.Y
-    wrapper.passthrough(FLOAT_LE)  # Velocity.Z
-    wrapper.passthrough(FLOAT_LE)  # Rotation.X
-    wrapper.passthrough(FLOAT_LE)  # Rotation.Y
+    wrapper.passthrough(VEC3)  # Position
+    wrapper.passthrough(VEC3)  # Velocity
+    wrapper.passthrough(VEC2)  # Rotation
     wrapper.passthrough(FLOAT_LE)  # Y-Head Rotation
     wrapper.passthrough(ITEM_INSTANCE)  # Carried Item
     wrapper.passthrough(VAR_INT)  # Player Game Type
-    passthrough_actor_data(wrapper, _INT_REMAPPERS)
+    _remap_actor_data(wrapper)
     wrapper.passthrough_all()  # Synched Properties, AbilitiesData, Actor Links, Device Id, Build Platform

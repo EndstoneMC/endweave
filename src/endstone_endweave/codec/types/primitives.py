@@ -245,6 +245,8 @@ class _NetworkBlockPos(Type[tuple[int, int, int]]):
     def read(self, reader: PacketReader) -> tuple[int, int, int]:
         x = reader.read_varint()
         y = reader.read_uvarint()
+        if y >= 0x80000000:
+            y -= 0x100000000
         z = reader.read_varint()
         return (x, y, z)
 
@@ -302,3 +304,57 @@ BLOCK_POS = _BlockPos()
 VEC3 = _Vec3()
 VEC2 = _Vec2()
 UUID = _Bytes(16)
+
+
+class ArrayType(Type[list[_T]]):
+    """Count-prefixed array wrapper for any Type.
+
+    Reads a uvarint count, then N elements of the inner type.
+    Writes a uvarint count followed by each element.
+
+    See Also:
+        com.viaversion.viaversion.api.type.types.ArrayType
+    """
+
+    def __init__(self, inner: Type[_T]) -> None:
+        self._inner = inner
+
+    def read(self, reader: PacketReader) -> list[_T]:
+        count = reader.read_uvarint()
+        return [self._inner.read(reader) for _ in range(count)]
+
+    def write(self, writer: PacketWriter, value: list[_T]) -> None:
+        writer.write_uvarint(len(value))
+        for item in value:
+            self._inner.write(writer, item)
+
+
+class OptionalType(Type[_T | None]):
+    """Bool-prefixed optional wrapper for any Type.
+
+    Reads a boolean; if true, reads the inner type. If false, returns None.
+    Writes a boolean prefix followed by the inner value (if not None).
+
+    See Also:
+        com.viaversion.viaversion.api.type.OptionalType
+    """
+
+    def __init__(self, inner: Type[_T]) -> None:
+        self._inner = inner
+
+    def read(self, reader: PacketReader) -> _T | None:
+        if reader.read_bool():
+            return self._inner.read(reader)
+        return None
+
+    def write(self, writer: PacketWriter, value: _T | None) -> None:
+        if value is not None:
+            writer.write_bool(True)
+            self._inner.write(writer, value)
+        else:
+            writer.write_bool(False)
+
+
+OPTIONAL_BOOL = OptionalType(BOOL)
+OPTIONAL_VEC2 = OptionalType(VEC2)
+OPTIONAL_VEC3 = OptionalType(VEC3)
