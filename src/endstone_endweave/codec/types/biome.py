@@ -1,8 +1,8 @@
 """Biome generation compound types for BiomeDefinitionList packet translation.
 
 All inner structures are shared between v898 and v924. The only difference is
-ChunkGenData: v924 appends a trailing village_type field (BOOL + BYTE) that
-v898 does not have. BiomeDefinition delegates to the appropriate ChunkGenData
+BiomeDefinitionChunkGenData: v924 appends a trailing village_type field (BOOL + BYTE) that
+v898 does not have. BiomeDefinitionData delegates to the appropriate BiomeDefinitionChunkGenData
 variant.
 """
 
@@ -23,12 +23,12 @@ from endstone_endweave.codec.types.primitives import (
 from endstone_endweave.codec.writer import PacketWriter
 
 # ---------------------------------------------------------------------------
-# Climate
+# BiomeClimateData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class Climate:
+class BiomeClimateData:
     """Biome climate parameters."""
 
     temperature: float
@@ -37,91 +37,91 @@ class Climate:
     red_spores: float
 
 
-class _ClimateType(Type["Climate"]):
+class _BiomeClimateDataType(Type["BiomeClimateData"]):
     """4 FLOAT_LE fields."""
 
-    def read(self, reader: PacketReader) -> Climate:
-        return Climate(
+    def read(self, reader: PacketReader) -> BiomeClimateData:
+        return BiomeClimateData(
             temperature=FLOAT_LE.read(reader),
             downfall=FLOAT_LE.read(reader),
             ash=FLOAT_LE.read(reader),
             red_spores=FLOAT_LE.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: Climate) -> None:
+    def write(self, writer: PacketWriter, value: BiomeClimateData) -> None:
         FLOAT_LE.write(writer, value.temperature)
         FLOAT_LE.write(writer, value.downfall)
         FLOAT_LE.write(writer, value.ash)
         FLOAT_LE.write(writer, value.red_spores)
 
 
-_CLIMATE = _ClimateType()
+_CLIMATE = _BiomeClimateDataType()
 
 # ---------------------------------------------------------------------------
-# Weight
+# BiomeWeightedData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class Weight:
+class BiomeWeightedData:
     """A weighted block entry."""
 
     weight: int
     block: int
 
 
-class _WeightType(Type["Weight"]):
+class _BiomeWeightedDataType(Type["BiomeWeightedData"]):
     """SHORT_LE + INT_LE pair."""
 
-    def read(self, reader: PacketReader) -> Weight:
-        return Weight(
+    def read(self, reader: PacketReader) -> BiomeWeightedData:
+        return BiomeWeightedData(
             weight=SHORT_LE.read(reader),
             block=INT_LE.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: Weight) -> None:
+    def write(self, writer: PacketWriter, value: BiomeWeightedData) -> None:
         SHORT_LE.write(writer, value.weight)
         INT_LE.write(writer, value.block)
 
 
-_WEIGHT = _WeightType()
+_WEIGHT = _BiomeWeightedDataType()
 
 # ---------------------------------------------------------------------------
-# WeightedTemperature
+# BiomeWeightedTemperatureData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class WeightedTemperature:
+class BiomeWeightedTemperatureData:
     """A weighted temperature entry."""
 
     temperature: int
     weight: int
 
 
-class _WeightedTemperatureType(Type["WeightedTemperature"]):
+class _BiomeWeightedTemperatureDataType(Type["BiomeWeightedTemperatureData"]):
     """VAR_INT + INT_LE pair."""
 
-    def read(self, reader: PacketReader) -> WeightedTemperature:
-        return WeightedTemperature(
+    def read(self, reader: PacketReader) -> BiomeWeightedTemperatureData:
+        return BiomeWeightedTemperatureData(
             temperature=VAR_INT.read(reader),
             weight=INT_LE.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: WeightedTemperature) -> None:
+    def write(self, writer: PacketWriter, value: BiomeWeightedTemperatureData) -> None:
         VAR_INT.write(writer, value.temperature)
         INT_LE.write(writer, value.weight)
 
 
-_WEIGHTED_TEMPERATURE = _WeightedTemperatureType()
+_WEIGHTED_TEMPERATURE = _BiomeWeightedTemperatureDataType()
 
 # ---------------------------------------------------------------------------
-# Coordinate
+# BiomeCoordinateData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class Coordinate:
+class BiomeCoordinateData:
     """A biome generation coordinate expression."""
 
     expr_op1: int
@@ -133,11 +133,11 @@ class Coordinate:
     varint: int
 
 
-class _CoordinateType(Type["Coordinate"]):
+class _BiomeCoordinateDataType(Type["BiomeCoordinateData"]):
     """VAR_INT, SHORT_LE, VAR_INT, SHORT_LE, INT_LE, INT_LE, VAR_INT."""
 
-    def read(self, reader: PacketReader) -> Coordinate:
-        return Coordinate(
+    def read(self, reader: PacketReader) -> BiomeCoordinateData:
+        return BiomeCoordinateData(
             expr_op1=VAR_INT.read(reader),
             short1=SHORT_LE.read(reader),
             expr_op2=VAR_INT.read(reader),
@@ -147,7 +147,7 @@ class _CoordinateType(Type["Coordinate"]):
             varint=VAR_INT.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: Coordinate) -> None:
+    def write(self, writer: PacketWriter, value: BiomeCoordinateData) -> None:
         VAR_INT.write(writer, value.expr_op1)
         SHORT_LE.write(writer, value.short1)
         VAR_INT.write(writer, value.expr_op2)
@@ -157,15 +157,15 @@ class _CoordinateType(Type["Coordinate"]):
         VAR_INT.write(writer, value.varint)
 
 
-_COORDINATE = _CoordinateType()
+_COORDINATE = _BiomeCoordinateDataType()
 
 # ---------------------------------------------------------------------------
-# SurfaceMaterial
+# BiomeSurfaceMaterialData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class SurfaceMaterial:
+class BiomeSurfaceMaterialData:
     """Surface material block palette."""
 
     block1: int
@@ -176,11 +176,11 @@ class SurfaceMaterial:
     extra: int
 
 
-class _SurfaceMaterialType(Type["SurfaceMaterial"]):
+class _BiomeSurfaceMaterialDataType(Type["BiomeSurfaceMaterialData"]):
     """5x INT_LE blocks + INT_LE extra."""
 
-    def read(self, reader: PacketReader) -> SurfaceMaterial:
-        return SurfaceMaterial(
+    def read(self, reader: PacketReader) -> BiomeSurfaceMaterialData:
+        return BiomeSurfaceMaterialData(
             block1=INT_LE.read(reader),
             block2=INT_LE.read(reader),
             block3=INT_LE.read(reader),
@@ -189,7 +189,7 @@ class _SurfaceMaterialType(Type["SurfaceMaterial"]):
             extra=INT_LE.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: SurfaceMaterial) -> None:
+    def write(self, writer: PacketWriter, value: BiomeSurfaceMaterialData) -> None:
         INT_LE.write(writer, value.block1)
         INT_LE.write(writer, value.block2)
         INT_LE.write(writer, value.block3)
@@ -198,15 +198,15 @@ class _SurfaceMaterialType(Type["SurfaceMaterial"]):
         INT_LE.write(writer, value.extra)
 
 
-_SURFACE_MATERIAL = _SurfaceMaterialType()
+_SURFACE_MATERIAL = _BiomeSurfaceMaterialDataType()
 
 # ---------------------------------------------------------------------------
-# BiomeElement
+# BiomeElementData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class BiomeElement:
+class BiomeElementData:
     """A biome height/surface element."""
 
     float1: float
@@ -216,14 +216,14 @@ class BiomeElement:
     short1: int
     expr_op2: int
     short2: int
-    surface_material: SurfaceMaterial
+    surface_material: BiomeSurfaceMaterialData
 
 
-class _BiomeElementType(Type["BiomeElement"]):
-    """3 FLOAT_LE + 2x (VAR_INT + SHORT_LE) + SurfaceMaterial."""
+class _BiomeElementDataType(Type["BiomeElementData"]):
+    """3 FLOAT_LE + 2x (VAR_INT + SHORT_LE) + BiomeSurfaceMaterialData."""
 
-    def read(self, reader: PacketReader) -> BiomeElement:
-        return BiomeElement(
+    def read(self, reader: PacketReader) -> BiomeElementData:
+        return BiomeElementData(
             float1=FLOAT_LE.read(reader),
             float2=FLOAT_LE.read(reader),
             float3=FLOAT_LE.read(reader),
@@ -234,7 +234,7 @@ class _BiomeElementType(Type["BiomeElement"]):
             surface_material=_SURFACE_MATERIAL.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: BiomeElement) -> None:
+    def write(self, writer: PacketWriter, value: BiomeElementData) -> None:
         FLOAT_LE.write(writer, value.float1)
         FLOAT_LE.write(writer, value.float2)
         FLOAT_LE.write(writer, value.float3)
@@ -245,15 +245,15 @@ class _BiomeElementType(Type["BiomeElement"]):
         _SURFACE_MATERIAL.write(writer, value.surface_material)
 
 
-_BIOME_ELEMENT = _BiomeElementType()
+_BIOME_ELEMENT = _BiomeElementDataType()
 
 # ---------------------------------------------------------------------------
-# ScatterParam
+# BiomeScatterParamData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class ScatterParam:
+class BiomeScatterParamData:
     """Scatter parameters for consolidated features.
 
     Attributes:
@@ -267,7 +267,7 @@ class ScatterParam:
         short2: Short parameter.
     """
 
-    coordinates: list[Coordinate] = field(default_factory=list)
+    coordinates: list[BiomeCoordinateData] = field(default_factory=list)
     varint1: int = 0
     varint2: int = 0
     short1: int = 0
@@ -277,13 +277,13 @@ class ScatterParam:
     short2: int = 0
 
 
-class _ScatterParamType(Type["ScatterParam"]):
-    """Array of Coordinate + 3 VAR_INT + 2 SHORT_LE + 2 INT_LE."""
+class _BiomeScatterParamDataType(Type["BiomeScatterParamData"]):
+    """Array of BiomeCoordinateData + 3 VAR_INT + 2 SHORT_LE + 2 INT_LE."""
 
-    def read(self, reader: PacketReader) -> ScatterParam:
+    def read(self, reader: PacketReader) -> BiomeScatterParamData:
         count = UVAR_INT.read(reader)
         coordinates = [_COORDINATE.read(reader) for _ in range(count)]
-        return ScatterParam(
+        return BiomeScatterParamData(
             coordinates=coordinates,
             varint1=VAR_INT.read(reader),
             varint2=VAR_INT.read(reader),
@@ -294,7 +294,7 @@ class _ScatterParamType(Type["ScatterParam"]):
             short2=SHORT_LE.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: ScatterParam) -> None:
+    def write(self, writer: PacketWriter, value: BiomeScatterParamData) -> None:
         UVAR_INT.write(writer, len(value.coordinates))
         for coord in value.coordinates:
             _COORDINATE.write(writer, coord)
@@ -307,29 +307,29 @@ class _ScatterParamType(Type["ScatterParam"]):
         SHORT_LE.write(writer, value.short2)
 
 
-_SCATTER_PARAM = _ScatterParamType()
+_SCATTER_PARAM = _BiomeScatterParamDataType()
 
 # ---------------------------------------------------------------------------
-# ConsolidatedFeature
+# BiomeConsolidatedFeatureData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class ConsolidatedFeature:
+class BiomeConsolidatedFeatureData:
     """A consolidated biome feature entry."""
 
-    scatter_param: ScatterParam
+    scatter_param: BiomeScatterParamData
     short1: int
     short2: int
     short3: int
     flag: bool
 
 
-class _ConsolidatedFeatureType(Type["ConsolidatedFeature"]):
-    """ScatterParam + 3 SHORT_LE + BOOL."""
+class _BiomeConsolidatedFeatureDataType(Type["BiomeConsolidatedFeatureData"]):
+    """BiomeScatterParamData + 3 SHORT_LE + BOOL."""
 
-    def read(self, reader: PacketReader) -> ConsolidatedFeature:
-        return ConsolidatedFeature(
+    def read(self, reader: PacketReader) -> BiomeConsolidatedFeatureData:
+        return BiomeConsolidatedFeatureData(
             scatter_param=_SCATTER_PARAM.read(reader),
             short1=SHORT_LE.read(reader),
             short2=SHORT_LE.read(reader),
@@ -337,7 +337,7 @@ class _ConsolidatedFeatureType(Type["ConsolidatedFeature"]):
             flag=BOOL.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: ConsolidatedFeature) -> None:
+    def write(self, writer: PacketWriter, value: BiomeConsolidatedFeatureData) -> None:
         _SCATTER_PARAM.write(writer, value.scatter_param)
         SHORT_LE.write(writer, value.short1)
         SHORT_LE.write(writer, value.short2)
@@ -345,15 +345,15 @@ class _ConsolidatedFeatureType(Type["ConsolidatedFeature"]):
         BOOL.write(writer, value.flag)
 
 
-_CONSOLIDATED_FEATURE = _ConsolidatedFeatureType()
+_CONSOLIDATED_FEATURE = _BiomeConsolidatedFeatureDataType()
 
 # ---------------------------------------------------------------------------
-# MountainParams
+# BiomeMountainParamsData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class MountainParams:
+class BiomeMountainParamsData:
     """Mountain generation parameters."""
 
     block: int
@@ -364,11 +364,11 @@ class MountainParams:
     flag5: bool
 
 
-class _MountainParamsType(Type["MountainParams"]):
+class _BiomeMountainParamsDataType(Type["BiomeMountainParamsData"]):
     """INT_LE block + 5 BOOLs."""
 
-    def read(self, reader: PacketReader) -> MountainParams:
-        return MountainParams(
+    def read(self, reader: PacketReader) -> BiomeMountainParamsData:
+        return BiomeMountainParamsData(
             block=INT_LE.read(reader),
             flag1=BOOL.read(reader),
             flag2=BOOL.read(reader),
@@ -377,7 +377,7 @@ class _MountainParamsType(Type["MountainParams"]):
             flag5=BOOL.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: MountainParams) -> None:
+    def write(self, writer: PacketWriter, value: BiomeMountainParamsData) -> None:
         INT_LE.write(writer, value.block)
         BOOL.write(writer, value.flag1)
         BOOL.write(writer, value.flag2)
@@ -386,15 +386,15 @@ class _MountainParamsType(Type["MountainParams"]):
         BOOL.write(writer, value.flag5)
 
 
-_MOUNTAIN_PARAMS = _MountainParamsType()
+_MOUNTAIN_PARAMS = _BiomeMountainParamsDataType()
 
 # ---------------------------------------------------------------------------
-# MesaSurface
+# BiomeMesaSurfaceData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class MesaSurface:
+class BiomeMesaSurfaceData:
     """Mesa surface parameters."""
 
     block1: int
@@ -403,33 +403,33 @@ class MesaSurface:
     flag2: bool
 
 
-class _MesaSurfaceType(Type["MesaSurface"]):
+class _BiomeMesaSurfaceDataType(Type["BiomeMesaSurfaceData"]):
     """2 INT_LE blocks + 2 BOOLs."""
 
-    def read(self, reader: PacketReader) -> MesaSurface:
-        return MesaSurface(
+    def read(self, reader: PacketReader) -> BiomeMesaSurfaceData:
+        return BiomeMesaSurfaceData(
             block1=INT_LE.read(reader),
             block2=INT_LE.read(reader),
             flag1=BOOL.read(reader),
             flag2=BOOL.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: MesaSurface) -> None:
+    def write(self, writer: PacketWriter, value: BiomeMesaSurfaceData) -> None:
         INT_LE.write(writer, value.block1)
         INT_LE.write(writer, value.block2)
         BOOL.write(writer, value.flag1)
         BOOL.write(writer, value.flag2)
 
 
-_MESA_SURFACE = _MesaSurfaceType()
+_MESA_SURFACE = _BiomeMesaSurfaceDataType()
 
 # ---------------------------------------------------------------------------
-# CappedSurface
+# BiomeCappedSurfaceData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class CappedSurface:
+class BiomeCappedSurfaceData:
     """Capped surface parameters.
 
     Attributes:
@@ -447,10 +447,10 @@ class CappedSurface:
     optional_block3: int | None = None
 
 
-class _CappedSurfaceType(Type["CappedSurface"]):
+class _BiomeCappedSurfaceDataType(Type["BiomeCappedSurfaceData"]):
     """2 block arrays + 3 optional blocks."""
 
-    def read(self, reader: PacketReader) -> CappedSurface:
+    def read(self, reader: PacketReader) -> BiomeCappedSurfaceData:
         count1 = UVAR_INT.read(reader)
         blocks1 = [INT_LE.read(reader) for _ in range(count1)]
         count2 = UVAR_INT.read(reader)
@@ -458,7 +458,7 @@ class _CappedSurfaceType(Type["CappedSurface"]):
         optional_block1 = INT_LE.read(reader) if BOOL.read(reader) else None
         optional_block2 = INT_LE.read(reader) if BOOL.read(reader) else None
         optional_block3 = INT_LE.read(reader) if BOOL.read(reader) else None
-        return CappedSurface(
+        return BiomeCappedSurfaceData(
             blocks1=blocks1,
             blocks2=blocks2,
             optional_block1=optional_block1,
@@ -466,7 +466,7 @@ class _CappedSurfaceType(Type["CappedSurface"]):
             optional_block3=optional_block3,
         )
 
-    def write(self, writer: PacketWriter, value: CappedSurface) -> None:
+    def write(self, writer: PacketWriter, value: BiomeCappedSurfaceData) -> None:
         UVAR_INT.write(writer, len(value.blocks1))
         for block in value.blocks1:
             INT_LE.write(writer, block)
@@ -490,35 +490,35 @@ class _CappedSurfaceType(Type["CappedSurface"]):
             BOOL.write(writer, False)
 
 
-_CAPPED_SURFACE = _CappedSurfaceType()
+_CAPPED_SURFACE = _BiomeCappedSurfaceDataType()
 
 # ---------------------------------------------------------------------------
-# ConditionalTransformation
+# BiomeConditionalTransformationData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class ConditionalTransformation:
+class BiomeConditionalTransformationData:
     """A conditional block transformation rule."""
 
-    weights: list[Weight] = field(default_factory=list)
+    weights: list[BiomeWeightedData] = field(default_factory=list)
     short1: int = 0
     int1: int = 0
 
 
-class _ConditionalTransformationType(Type["ConditionalTransformation"]):
-    """Weight array + SHORT_LE + INT_LE."""
+class _BiomeConditionalTransformationDataType(Type["BiomeConditionalTransformationData"]):
+    """BiomeWeightedData array + SHORT_LE + INT_LE."""
 
-    def read(self, reader: PacketReader) -> ConditionalTransformation:
+    def read(self, reader: PacketReader) -> BiomeConditionalTransformationData:
         count = UVAR_INT.read(reader)
         weights = [_WEIGHT.read(reader) for _ in range(count)]
-        return ConditionalTransformation(
+        return BiomeConditionalTransformationData(
             weights=weights,
             short1=SHORT_LE.read(reader),
             int1=INT_LE.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: ConditionalTransformation) -> None:
+    def write(self, writer: PacketWriter, value: BiomeConditionalTransformationData) -> None:
         UVAR_INT.write(writer, len(value.weights))
         for w in value.weights:
             _WEIGHT.write(writer, w)
@@ -526,15 +526,15 @@ class _ConditionalTransformationType(Type["ConditionalTransformation"]):
         INT_LE.write(writer, value.int1)
 
 
-_CONDITIONAL_TRANSFORMATION = _ConditionalTransformationType()
+_CONDITIONAL_TRANSFORMATION = _BiomeConditionalTransformationDataType()
 
 # ---------------------------------------------------------------------------
-# OverworldGenRules
+# BiomeOverworldGenRulesData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class OverworldGenRules:
+class BiomeOverworldGenRulesData:
     """Overworld biome generation rules.
 
     Attributes:
@@ -547,40 +547,40 @@ class OverworldGenRules:
         weighted_temperatures: Weighted temperature array.
     """
 
-    weights1: list[Weight] = field(default_factory=list)
-    weights2: list[Weight] = field(default_factory=list)
-    weights3: list[Weight] = field(default_factory=list)
-    weights4: list[Weight] = field(default_factory=list)
-    transformations1: list[ConditionalTransformation] = field(default_factory=list)
-    transformations2: list[ConditionalTransformation] = field(default_factory=list)
-    weighted_temperatures: list[WeightedTemperature] = field(default_factory=list)
+    weights1: list[BiomeWeightedData] = field(default_factory=list)
+    weights2: list[BiomeWeightedData] = field(default_factory=list)
+    weights3: list[BiomeWeightedData] = field(default_factory=list)
+    weights4: list[BiomeWeightedData] = field(default_factory=list)
+    transformations1: list[BiomeConditionalTransformationData] = field(default_factory=list)
+    transformations2: list[BiomeConditionalTransformationData] = field(default_factory=list)
+    weighted_temperatures: list[BiomeWeightedTemperatureData] = field(default_factory=list)
 
 
-class _OverworldGenRulesType(Type["OverworldGenRules"]):
+class _BiomeOverworldGenRulesDataType(Type["BiomeOverworldGenRulesData"]):
     """4 weight arrays + 2 conditional transformation arrays + 1 weighted temperature array."""
 
-    def _read_weights(self, reader: PacketReader) -> list[Weight]:
+    def _read_weights(self, reader: PacketReader) -> list[BiomeWeightedData]:
         count = UVAR_INT.read(reader)
         return [_WEIGHT.read(reader) for _ in range(count)]
 
-    def _write_weights(self, writer: PacketWriter, weights: list[Weight]) -> None:
+    def _write_weights(self, writer: PacketWriter, weights: list[BiomeWeightedData]) -> None:
         UVAR_INT.write(writer, len(weights))
         for w in weights:
             _WEIGHT.write(writer, w)
 
-    def _read_transformations(self, reader: PacketReader) -> list[ConditionalTransformation]:
+    def _read_transformations(self, reader: PacketReader) -> list[BiomeConditionalTransformationData]:
         count = UVAR_INT.read(reader)
         return [_CONDITIONAL_TRANSFORMATION.read(reader) for _ in range(count)]
 
     def _write_transformations(
-        self, writer: PacketWriter, transformations: list[ConditionalTransformation]
+        self, writer: PacketWriter, transformations: list[BiomeConditionalTransformationData]
     ) -> None:
         UVAR_INT.write(writer, len(transformations))
         for t in transformations:
             _CONDITIONAL_TRANSFORMATION.write(writer, t)
 
-    def read(self, reader: PacketReader) -> OverworldGenRules:
-        return OverworldGenRules(
+    def read(self, reader: PacketReader) -> BiomeOverworldGenRulesData:
+        return BiomeOverworldGenRulesData(
             weights1=self._read_weights(reader),
             weights2=self._read_weights(reader),
             weights3=self._read_weights(reader),
@@ -593,7 +593,7 @@ class _OverworldGenRulesType(Type["OverworldGenRules"]):
             ],
         )
 
-    def write(self, writer: PacketWriter, value: OverworldGenRules) -> None:
+    def write(self, writer: PacketWriter, value: BiomeOverworldGenRulesData) -> None:
         self._write_weights(writer, value.weights1)
         self._write_weights(writer, value.weights2)
         self._write_weights(writer, value.weights3)
@@ -605,15 +605,15 @@ class _OverworldGenRulesType(Type["OverworldGenRules"]):
             _WEIGHTED_TEMPERATURE.write(writer, wt)
 
 
-_OVERWORLD_GEN_RULES = _OverworldGenRulesType()
+_OVERWORLD_GEN_RULES = _BiomeOverworldGenRulesDataType()
 
 # ---------------------------------------------------------------------------
-# MultinoiseGenRules
+# BiomeMultinoiseGenRulesData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class MultinoiseGenRules:
+class BiomeMultinoiseGenRulesData:
     """Multinoise biome generation rules."""
 
     float1: float
@@ -623,11 +623,11 @@ class MultinoiseGenRules:
     float5: float
 
 
-class _MultinoiseGenRulesType(Type["MultinoiseGenRules"]):
+class _BiomeMultinoiseGenRulesDataType(Type["BiomeMultinoiseGenRulesData"]):
     """5 FLOAT_LE fields."""
 
-    def read(self, reader: PacketReader) -> MultinoiseGenRules:
-        return MultinoiseGenRules(
+    def read(self, reader: PacketReader) -> BiomeMultinoiseGenRulesData:
+        return BiomeMultinoiseGenRulesData(
             float1=FLOAT_LE.read(reader),
             float2=FLOAT_LE.read(reader),
             float3=FLOAT_LE.read(reader),
@@ -635,7 +635,7 @@ class _MultinoiseGenRulesType(Type["MultinoiseGenRules"]):
             float5=FLOAT_LE.read(reader),
         )
 
-    def write(self, writer: PacketWriter, value: MultinoiseGenRules) -> None:
+    def write(self, writer: PacketWriter, value: BiomeMultinoiseGenRulesData) -> None:
         FLOAT_LE.write(writer, value.float1)
         FLOAT_LE.write(writer, value.float2)
         FLOAT_LE.write(writer, value.float3)
@@ -643,36 +643,36 @@ class _MultinoiseGenRulesType(Type["MultinoiseGenRules"]):
         FLOAT_LE.write(writer, value.float5)
 
 
-_MULTINOISE_GEN_RULES = _MultinoiseGenRulesType()
+_MULTINOISE_GEN_RULES = _BiomeMultinoiseGenRulesDataType()
 
 # ---------------------------------------------------------------------------
-# LegacyWorldGenRules
+# BiomeLegacyWorldGenRulesData
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class LegacyWorldGenRules:
+class BiomeLegacyWorldGenRulesData:
     """Legacy world generation rules."""
 
-    transformations: list[ConditionalTransformation] = field(default_factory=list)
+    transformations: list[BiomeConditionalTransformationData] = field(default_factory=list)
 
 
-class _LegacyWorldGenRulesType(Type["LegacyWorldGenRules"]):
-    """Array of ConditionalTransformation."""
+class _BiomeLegacyWorldGenRulesDataType(Type["BiomeLegacyWorldGenRulesData"]):
+    """Array of BiomeConditionalTransformationData."""
 
-    def read(self, reader: PacketReader) -> LegacyWorldGenRules:
+    def read(self, reader: PacketReader) -> BiomeLegacyWorldGenRulesData:
         count = UVAR_INT.read(reader)
-        return LegacyWorldGenRules(
+        return BiomeLegacyWorldGenRulesData(
             transformations=[_CONDITIONAL_TRANSFORMATION.read(reader) for _ in range(count)],
         )
 
-    def write(self, writer: PacketWriter, value: LegacyWorldGenRules) -> None:
+    def write(self, writer: PacketWriter, value: BiomeLegacyWorldGenRulesData) -> None:
         UVAR_INT.write(writer, len(value.transformations))
         for t in value.transformations:
             _CONDITIONAL_TRANSFORMATION.write(writer, t)
 
 
-_LEGACY_WORLD_GEN_RULES = _LegacyWorldGenRulesType()
+_LEGACY_WORLD_GEN_RULES = _BiomeLegacyWorldGenRulesDataType()
 
 # ---------------------------------------------------------------------------
 # BiomeReplacementData
@@ -731,12 +731,12 @@ class _BiomeReplacementDataType(Type["BiomeReplacementData"]):
 _BIOME_REPLACEMENT_DATA = _BiomeReplacementDataType()
 
 # ---------------------------------------------------------------------------
-# ChunkGenData (version-specific)
+# BiomeDefinitionChunkGenData (version-specific)
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class ChunkGenData:
+class BiomeDefinitionChunkGenData:
     """Chunk generation data for a biome definition.
 
     All optional sub-structures are bool-prefixed. The village_type field
@@ -761,47 +761,47 @@ class ChunkGenData:
         village_type: Optional village type (v924 only).
     """
 
-    climate: Climate | None = None
-    consolidated_features: list[ConsolidatedFeature] | None = None
-    mountain_params: MountainParams | None = None
-    biome_elements: list[BiomeElement] | None = None
-    surface_material: SurfaceMaterial | None = None
+    climate: BiomeClimateData | None = None
+    consolidated_features: list[BiomeConsolidatedFeatureData] | None = None
+    mountain_params: BiomeMountainParamsData | None = None
+    biome_elements: list[BiomeElementData] | None = None
+    surface_material: BiomeSurfaceMaterialData | None = None
     flag1: bool = False
     flag2: bool = False
     flag3: bool = False
     flag4: bool = False
-    mesa_surface: MesaSurface | None = None
-    capped_surface: CappedSurface | None = None
-    overworld_gen_rules: OverworldGenRules | None = None
-    multinoise_gen_rules: MultinoiseGenRules | None = None
-    legacy_world_gen_rules: LegacyWorldGenRules | None = None
+    mesa_surface: BiomeMesaSurfaceData | None = None
+    capped_surface: BiomeCappedSurfaceData | None = None
+    overworld_gen_rules: BiomeOverworldGenRulesData | None = None
+    multinoise_gen_rules: BiomeMultinoiseGenRulesData | None = None
+    legacy_world_gen_rules: BiomeLegacyWorldGenRulesData | None = None
     biome_replacement_data: BiomeReplacementData | None = None
     village_type: int | None = None
 
 
-class _ChunkGenDataV898Type(Type["ChunkGenData"]):
-    """v898 ChunkGenData: no village_type field."""
+class _BiomeDefinitionChunkGenDataV898Type(Type["BiomeDefinitionChunkGenData"]):
+    """v898 BiomeDefinitionChunkGenData: no village_type field."""
 
-    def _read_common(self, reader: PacketReader) -> ChunkGenData:
+    def _read_common(self, reader: PacketReader) -> BiomeDefinitionChunkGenData:
         """Read all fields shared between v898 and v924.
 
         Args:
             reader: The packet reader to read from.
 
         Returns:
-            A ChunkGenData with all common fields populated.
+            A BiomeDefinitionChunkGenData with all common fields populated.
         """
         # optional climate
         climate = _CLIMATE.read(reader) if BOOL.read(reader) else None
         # optional consolidated features array
-        consolidated_features: list[ConsolidatedFeature] | None = None
+        consolidated_features: list[BiomeConsolidatedFeatureData] | None = None
         if BOOL.read(reader):
             count = UVAR_INT.read(reader)
             consolidated_features = [_CONSOLIDATED_FEATURE.read(reader) for _ in range(count)]
         # optional mountain params
         mountain_params = _MOUNTAIN_PARAMS.read(reader) if BOOL.read(reader) else None
         # optional biome elements array
-        biome_elements: list[BiomeElement] | None = None
+        biome_elements: list[BiomeElementData] | None = None
         if BOOL.read(reader):
             count = UVAR_INT.read(reader)
             biome_elements = [_BIOME_ELEMENT.read(reader) for _ in range(count)]
@@ -828,7 +828,7 @@ class _ChunkGenDataV898Type(Type["ChunkGenData"]):
         biome_replacement_data = (
             _BIOME_REPLACEMENT_DATA.read(reader) if BOOL.read(reader) else None
         )
-        return ChunkGenData(
+        return BiomeDefinitionChunkGenData(
             climate=climate,
             consolidated_features=consolidated_features,
             mountain_params=mountain_params,
@@ -846,12 +846,12 @@ class _ChunkGenDataV898Type(Type["ChunkGenData"]):
             biome_replacement_data=biome_replacement_data,
         )
 
-    def _write_common(self, writer: PacketWriter, value: ChunkGenData) -> None:
+    def _write_common(self, writer: PacketWriter, value: BiomeDefinitionChunkGenData) -> None:
         """Write all fields shared between v898 and v924.
 
         Args:
             writer: The packet writer to write to.
-            value: The ChunkGenData to serialize.
+            value: The BiomeDefinitionChunkGenData to serialize.
         """
         # optional climate
         if value.climate is not None:
@@ -929,24 +929,24 @@ class _ChunkGenDataV898Type(Type["ChunkGenData"]):
         else:
             BOOL.write(writer, False)
 
-    def read(self, reader: PacketReader) -> ChunkGenData:
+    def read(self, reader: PacketReader) -> BiomeDefinitionChunkGenData:
         return self._read_common(reader)
 
-    def write(self, writer: PacketWriter, value: ChunkGenData) -> None:
+    def write(self, writer: PacketWriter, value: BiomeDefinitionChunkGenData) -> None:
         self._write_common(writer, value)
 
 
-class _ChunkGenDataV924Type(_ChunkGenDataV898Type):
-    """v924 ChunkGenData: common fields + trailing village_type (BOOL + BYTE)."""
+class _BiomeDefinitionChunkGenDataV924Type(_BiomeDefinitionChunkGenDataV898Type):
+    """v924 BiomeDefinitionChunkGenData: common fields + trailing village_type (BOOL + BYTE)."""
 
-    def read(self, reader: PacketReader) -> ChunkGenData:
+    def read(self, reader: PacketReader) -> BiomeDefinitionChunkGenData:
         data = self._read_common(reader)
         # village_type (v924 only)
         if BOOL.read(reader):
             data.village_type = BYTE.read(reader)
         return data
 
-    def write(self, writer: PacketWriter, value: ChunkGenData) -> None:
+    def write(self, writer: PacketWriter, value: BiomeDefinitionChunkGenData) -> None:
         self._write_common(writer, value)
         # village_type (v924 only)
         if value.village_type is not None:
@@ -957,12 +957,12 @@ class _ChunkGenDataV924Type(_ChunkGenDataV898Type):
 
 
 # ---------------------------------------------------------------------------
-# BiomeDefinition (version-specific)
+# BiomeDefinitionData (version-specific)
 # ---------------------------------------------------------------------------
 
 
 @dataclass
-class BiomeDefinition:
+class BiomeDefinitionData:
     """A single biome definition entry.
 
     Attributes:
@@ -987,15 +987,15 @@ class BiomeDefinition:
     int1: int = 0
     flag: bool = False
     tags: list[int] | None = None
-    chunk_gen_data: ChunkGenData | None = None
+    chunk_gen_data: BiomeDefinitionChunkGenData | None = None
 
 
-class _BiomeDefinitionV898Type(Type["BiomeDefinition"]):
-    """v898 BiomeDefinition: uses v898 ChunkGenData (no village_type)."""
+class _BiomeDefinitionDataV898Type(Type["BiomeDefinitionData"]):
+    """v898 BiomeDefinitionData: uses v898 BiomeDefinitionChunkGenData (no village_type)."""
 
-    _chunk_gen_data_type: Type[ChunkGenData] = _ChunkGenDataV898Type()
+    _chunk_gen_data_type: Type[BiomeDefinitionChunkGenData] = _BiomeDefinitionChunkGenDataV898Type()
 
-    def read(self, reader: PacketReader) -> BiomeDefinition:
+    def read(self, reader: PacketReader) -> BiomeDefinitionData:
         short1 = SHORT_LE.read(reader)
         float1 = FLOAT_LE.read(reader)
         float2 = FLOAT_LE.read(reader)
@@ -1011,7 +1011,7 @@ class _BiomeDefinitionV898Type(Type["BiomeDefinition"]):
             tags = [USHORT_LE.read(reader) for _ in range(count)]
         # optional chunk gen data
         chunk_gen_data = self._chunk_gen_data_type.read(reader) if BOOL.read(reader) else None
-        return BiomeDefinition(
+        return BiomeDefinitionData(
             short1=short1,
             float1=float1,
             float2=float2,
@@ -1024,7 +1024,7 @@ class _BiomeDefinitionV898Type(Type["BiomeDefinition"]):
             chunk_gen_data=chunk_gen_data,
         )
 
-    def write(self, writer: PacketWriter, value: BiomeDefinition) -> None:
+    def write(self, writer: PacketWriter, value: BiomeDefinitionData) -> None:
         SHORT_LE.write(writer, value.short1)
         FLOAT_LE.write(writer, value.float1)
         FLOAT_LE.write(writer, value.float2)
@@ -1049,15 +1049,15 @@ class _BiomeDefinitionV898Type(Type["BiomeDefinition"]):
             BOOL.write(writer, False)
 
 
-class _BiomeDefinitionV924Type(_BiomeDefinitionV898Type):
-    """v924 BiomeDefinition: uses v924 ChunkGenData (with village_type)."""
+class _BiomeDefinitionDataV924Type(_BiomeDefinitionDataV898Type):
+    """v924 BiomeDefinitionData: uses v924 BiomeDefinitionChunkGenData (with village_type)."""
 
-    _chunk_gen_data_type: Type[ChunkGenData] = _ChunkGenDataV924Type()
+    _chunk_gen_data_type: Type[BiomeDefinitionChunkGenData] = _BiomeDefinitionChunkGenDataV924Type()
 
 
 # ---------------------------------------------------------------------------
 # Singletons
 # ---------------------------------------------------------------------------
 
-BIOME_DEFINITION_V898 = _BiomeDefinitionV898Type()
-BIOME_DEFINITION_V924 = _BiomeDefinitionV924Type()
+BIOME_DEFINITION_V898 = _BiomeDefinitionDataV898Type()
+BIOME_DEFINITION_V924 = _BiomeDefinitionDataV924Type()

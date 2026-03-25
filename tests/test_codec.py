@@ -228,7 +228,7 @@ class TestReaderState:
         assert not r.has_remaining
 
 
-class TestItemInstance:
+class TestNetworkItemInstanceDescriptor:
     def test_air_roundtrip(self):
         item = ItemInstance(network_id=0)
         w = PacketWriter()

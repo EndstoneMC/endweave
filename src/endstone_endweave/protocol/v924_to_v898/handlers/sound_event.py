@@ -14,7 +14,7 @@ from endstone_endweave.codec import (
     VAR_INT64,
     VEC2,
     VEC3,
-    ActorDataEntry,
+    ActorDataItem,
     PacketWrapper,
 )
 
@@ -37,7 +37,7 @@ _INT_REMAPPERS: dict[int, Callable[[int], int]] = {
 def _remap_actor_data(wrapper: PacketWrapper) -> None:
     """Read ActorData, filter dropped keys, remap sound events, write back."""
     entries = wrapper.read(ACTOR_DATA_LIST)
-    filtered: list[ActorDataEntry] = []
+    filtered: list[ActorDataItem] = []
     for entry in entries:
         if entry.key in _DROPPED_ACTOR_DATA_KEYS:
             continue

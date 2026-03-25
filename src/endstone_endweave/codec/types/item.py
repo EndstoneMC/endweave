@@ -30,7 +30,7 @@ class ItemInstance:
     user_data: bytes = b""
 
 
-class _ItemInstance(Type[ItemInstance]):
+class _ItemInstanceType(Type["ItemInstance"]):
     """Bedrock ItemInstance codec -- full deserialization.
 
     Wire format::
@@ -80,4 +80,4 @@ class _ItemInstance(Type[ItemInstance]):
         writer.write_bytes(value.user_data)
 
 
-ITEM_INSTANCE = _ItemInstance()
+ITEM_INSTANCE = _ItemInstanceType()

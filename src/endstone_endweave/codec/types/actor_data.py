@@ -38,7 +38,7 @@ _VALUE_TYPES: dict[int, Type[Any]] = {
 
 
 @dataclass
-class ActorDataEntry:
+class ActorDataItem:
     """A single ActorData (entity metadata) entry.
 
     Attributes:
@@ -53,20 +53,20 @@ class ActorDataEntry:
     value: Any
 
 
-class _ActorDataListType(Type[list["ActorDataEntry"]]):
+class _ActorDataListType(Type[list["ActorDataItem"]]):
     """ActorData list: uvarint count + entries of (key, type_id, value)."""
 
-    def read(self, reader: PacketReader) -> list[ActorDataEntry]:
+    def read(self, reader: PacketReader) -> list[ActorDataItem]:
         count = UVAR_INT.read(reader)
-        entries: list[ActorDataEntry] = []
+        entries: list[ActorDataItem] = []
         for _ in range(count):
             key = UVAR_INT.read(reader)
             type_id = UVAR_INT.read(reader)
             value = _VALUE_TYPES[type_id].read(reader)
-            entries.append(ActorDataEntry(key, type_id, value))
+            entries.append(ActorDataItem(key, type_id, value))
         return entries
 
-    def write(self, writer: PacketWriter, value: list[ActorDataEntry]) -> None:
+    def write(self, writer: PacketWriter, value: list[ActorDataItem]) -> None:
         UVAR_INT.write(writer, len(value))
         for entry in value:
             UVAR_INT.write(writer, entry.key)

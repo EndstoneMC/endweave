@@ -2,7 +2,7 @@
 
 from endstone_endweave.codec.types.actor_data import (
     ACTOR_DATA_LIST,
-    ActorDataEntry,
+    ActorDataItem,
 )
 from endstone_endweave.codec.types.biome import (
     BIOME_DEFINITION_V898,
@@ -93,7 +93,6 @@ from endstone_endweave.codec.types.structure import (
 
 __all__ = [
     "ACTOR_DATA_LIST",
-    "ActorDataEntry",
     "ArrayType",
     "BIOME_DEFINITION_V898",
     "BIOME_DEFINITION_V924",
@@ -109,6 +108,7 @@ __all__ = [
     "ChangeValue",
     "CompoundTag",
     "CompoundTagType",
+    "ActorDataItem",
     "DOUBLE_LE",
     "DoubleTag",
     "EXPERIMENTS",
@@ -128,7 +128,6 @@ __all__ = [
     "IntArrayTag",
     "IntTag",
     "InventoryAction",
-    "ItemInstance",
     "KeyFrame",
     "ListTag",
     "LongArrayTag",
@@ -136,6 +135,7 @@ __all__ = [
     "NAMED_COMPOUND_TAG",
     "NETWORK_BLOCK_POS",
     "NamedCompoundTagType",
+    "ItemInstance",
     "OPTIONAL_BOOL",
     "OPTIONAL_VEC2",
     "OPTIONAL_VEC3",
