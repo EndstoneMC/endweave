@@ -234,6 +234,8 @@ class _NetworkBlockPos(Type[tuple[int, int, int]]):
     def read(self, reader: PacketReader) -> tuple[int, int, int]:
         x = reader.read_varint()
         y = reader.read_uvarint()
+        if y >= 0x80000000:
+            y -= 0x100000000
         z = reader.read_varint()
         return (x, y, z)
 

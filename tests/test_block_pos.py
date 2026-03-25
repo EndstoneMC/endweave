@@ -126,6 +126,23 @@ class TestBlockPosTypes:
         assert pos == (5, 100, -5)
         assert wrapper.to_bytes() == w.to_bytes()
 
+    def test_network_block_pos_negative_y(self):
+        """Negative Y must survive roundtrip (uvarint reinterpreted as signed)."""
+        for y in (-1, -10, -64):
+            w = PacketWriter()
+            NETWORK_BLOCK_POS.write(w, (100, y, 50))
+            r = PacketReader(w.to_bytes())
+            assert NETWORK_BLOCK_POS.read(r) == (100, y, 50)
+
+    def test_passthrough_network_block_pos_negative_y(self):
+        """Passthrough with negative Y must produce identical bytes."""
+        w = PacketWriter()
+        _write_net_block_pos(w, 5, -10, -5)
+        wrapper = PacketWrapper(w.to_bytes())
+        pos = wrapper.passthrough(NETWORK_BLOCK_POS)
+        assert pos == (5, -10, -5)
+        assert wrapper.to_bytes() == w.to_bytes()
+
 
 # ---------------------------------------------------------------------------
 # Tests: Read/write transform (NetworkBlockPos -> BlockPos and back)
@@ -172,6 +189,26 @@ class TestTransformReadWrite:
         wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))
         r = PacketReader(wrapper.to_bytes())
         assert _read_block_pos(r) == (100, 320, -100)
+
+    def test_net_block_to_block_negative_y(self):
+        """NetworkBlockPos -> BlockPos with negative Y (issue #3)."""
+        for y in (-1, -10, -64):
+            w = PacketWriter()
+            _write_net_block_pos(w, 100, y, 50)
+            wrapper = PacketWrapper(w.to_bytes())
+            wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))
+            r = PacketReader(wrapper.to_bytes())
+            assert _read_block_pos(r) == (100, y, 50)
+
+    def test_block_to_net_block_negative_y(self):
+        """BlockPos -> NetworkBlockPos with negative Y."""
+        for y in (-1, -10, -64):
+            w = PacketWriter()
+            _write_block_pos(w, 100, y, 50)
+            wrapper = PacketWrapper(w.to_bytes())
+            wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))
+            r = PacketReader(wrapper.to_bytes())
+            assert _read_net_block_pos(r) == (100, y & 0xFFFFFFFF, 50)
 
 
 # ---------------------------------------------------------------------------
@@ -357,6 +394,21 @@ class TestClientboundHandlers:
         assert r.read_byte() == 5
         assert r.read_byte() == 2
         assert _read_block_pos(r) == (-3, 80, 7)
+        assert r.read_varint64() == -1
+
+    def test_container_open_negative_y(self):
+        """ContainerOpen at Y < 0 must produce correct BlockPos (issue #3)."""
+        w = PacketWriter()
+        w.write_byte(1)  # windowID
+        w.write_byte(0)  # type
+        _write_net_block_pos(w, 100, -10, 50)  # ContainerPosition
+        w.write_varint64(-1)  # entityUniqueID
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_container_open(wrapper)
+        r = PacketReader(wrapper.to_bytes())
+        assert r.read_byte() == 1
+        assert r.read_byte() == 0
+        assert _read_block_pos(r) == (100, -10, 50)
         assert r.read_varint64() == -1
 
 
