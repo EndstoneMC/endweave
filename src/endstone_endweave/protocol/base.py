@@ -7,18 +7,30 @@ from endstone_endweave.protocol.packet_ids import PacketId
 
 
 def detect_client_protocol(wrapper: PacketWrapper) -> None:
-    """Read client protocol from RequestNetworkSettings and store on connection.
+    """Read client protocol from RequestNetworkSettings, store on connection, and rewrite to server protocol.
 
     Args:
         wrapper: Packet wrapper for the incoming RequestNetworkSettings packet.
     """
     connection = wrapper.user
-    client_proto = wrapper.passthrough(INT_BE)
+    client_proto = wrapper.read(INT_BE)
     connection.client_protocol = client_proto
     connection.state = ConnectionState.LOGIN
+    wrapper.write(INT_BE, connection.server_protocol)
     connection.logger.debug(
         f"User connected with protocol: {client_proto} and serverProtocol: {connection.server_protocol}"
     )
+
+
+def _rewrite_login(wrapper: PacketWrapper) -> None:
+    """Rewrite the Login packet's protocol version to the server protocol.
+
+    Args:
+        wrapper: Packet wrapper for the incoming Login packet.
+    """
+    connection = wrapper.user
+    wrapper.read(INT_BE)
+    wrapper.write(INT_BE, connection.server_protocol)
 
 
 def _transition_to_play(wrapper: PacketWrapper) -> None:
@@ -61,8 +73,9 @@ def create_base_protocol(server_protocol: int) -> Protocol:
         A Protocol instance with handlers for RequestNetworkSettings
         and Disconnect registered.
     """
-    p = Protocol(server_protocol=server_protocol, client_protocol=0, name="base")
+    p = Protocol(server_protocol=server_protocol, client_protocol=0, name="base", is_base=True)
     p.register_serverbound(PacketId.REQUEST_NETWORK_SETTINGS, detect_client_protocol)
+    p.register_serverbound(PacketId.LOGIN, _rewrite_login)
     p.register_clientbound(PacketId.START_GAME, _transition_to_play)
     p.register_clientbound(PacketId.DISCONNECT, log_disconnect)
     return p

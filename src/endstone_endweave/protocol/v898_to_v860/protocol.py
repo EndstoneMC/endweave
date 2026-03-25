@@ -19,10 +19,6 @@ from endstone_endweave.protocol.v898_to_v860.handlers.gameplay import (
     rewrite_resource_pack_stack,
     rewrite_start_game,
 )
-from endstone_endweave.protocol.v898_to_v860.handlers.login import (
-    rewrite_login,
-    rewrite_request_network_settings,
-)
 from endstone_endweave.protocol.v898_to_v860.handlers.sound_event import (
     rewrite_actor_event,
     rewrite_add_actor,
@@ -40,8 +36,6 @@ def create_protocol() -> Protocol:
     """Create a protocol for v898 server <- v860 client translation."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
-    protocol.register_serverbound(PacketId.REQUEST_NETWORK_SETTINGS, rewrite_request_network_settings)
-    protocol.register_serverbound(PacketId.LOGIN, rewrite_login)
     protocol.register_serverbound(PacketId.ANIMATE, rewrite_animate_clientbound)
     protocol.register_serverbound(PacketId.INTERACT, rewrite_interact)
     protocol.register_serverbound(PacketId.COMMAND_REQUEST, rewrite_command_request)

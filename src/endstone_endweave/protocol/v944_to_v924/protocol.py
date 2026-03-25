@@ -27,10 +27,6 @@ from endstone_endweave.protocol.v944_to_v924.handlers.data_driven_ui import (
     rewrite_close_screen,
     rewrite_show_screen,
 )
-from endstone_endweave.protocol.v944_to_v924.handlers.login import (
-    rewrite_login,
-    rewrite_request_network_settings,
-)
 from endstone_endweave.protocol.v944_to_v924.handlers.sound_event import (
     rewrite_add_actor,
     rewrite_add_item_actor,
@@ -52,9 +48,6 @@ CLIENT_PROTOCOL = 924
 def create_protocol() -> Protocol:
     """Create a protocol for v944 server <- v924 client."""
     p = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
-
-    p.register_serverbound(PacketId.REQUEST_NETWORK_SETTINGS, rewrite_request_network_settings)
-    p.register_serverbound(PacketId.LOGIN, rewrite_login)
 
     p.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     p.register_clientbound(PacketId.UPDATE_BLOCK, rewrite_first_block_to_net)

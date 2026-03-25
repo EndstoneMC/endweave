@@ -41,11 +41,9 @@ class UserConnection:
         client_protocol: Protocol version detected from RequestNetworkSettings (0 until set).
         server_protocol: Protocol version of the server this player connected to.
         state: Current connection lifecycle state.
-        active: Whether non-base protocols are applied.
         pending_disconnect: Set when disconnect detected, prevents further processing.
         warned_no_chain: Whether a missing-chain warning has already been logged.
-        protocol_chain: Cached translation chain after first lookup, or None.
-        _storage: Type-keyed storage for per-connection state (entity tracking, etc.).
+        protocol_pipeline: Cached protocol list (base + version chain), or None before resolution.
 
     See Also:
         com.viaversion.viaversion.connection.UserConnectionImpl
@@ -56,10 +54,9 @@ class UserConnection:
     client_protocol: int = 0  # Detected from RequestNetworkSettings
     server_protocol: int = 0  # Set by ConnectionManager
     state: ConnectionState = ConnectionState.HANDSHAKE
-    active: bool = False  # True once protocol chain is resolved
     pending_disconnect: bool = False
     warned_no_chain: bool = False
-    protocol_chain: "list[Protocol] | None" = None  # cached after first lookup
+    protocol_pipeline: "list[Protocol] | None" = None  # [base, ...chain] cached after resolution
     _storage: dict[type, object] = field(default_factory=dict, repr=False)
 
     @property

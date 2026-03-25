@@ -64,7 +64,7 @@ class TestMultiStepChain:
         rns_event = _make_event(193, rns_payload)
         pipeline.on_packet_receive(rns_event)
 
-        # Trigger chain resolution (sets connection.active = True)
+        # Trigger pipeline resolution via a second serverbound packet
         sb_event = _make_event(99, b"\x00")
         pipeline.on_packet_receive(sb_event)
 

@@ -1,8 +1,9 @@
 """Packet translation pipeline - routes packets through the appropriate protocol.
 
-- Pre/post transform debug logging with packet ID, hex, direction, state
-- InformativeException for structured error context
-- Active flag on UserConnection for fast-path skip
+Base protocols and version-specific protocols are merged into a single list
+per connection (ViaVersion: ProtocolPipelineImpl). Serverbound iterates the
+list in order (base first, then chain); clientbound iterates with base first
+and version chain reversed.
 
 See Also:
     com.viaversion.viaversion.protocol.ProtocolPipelineImpl
@@ -29,9 +30,8 @@ from endstone_endweave.protocol.manager import ProtocolManager
 class ProtocolPipeline:
     """Intercepts packet events and applies protocol translation.
 
-    Creates a single PacketWrapper and passes it through each protocol's
-    transform method in sequence. Logs packets before and after
-    transformation when debug is enabled.
+    Builds a per-connection protocol list (base + version chain) and
+    iterates it in a single pass per packet, matching ViaVersion's design.
 
     Attributes:
         _manager: ProtocolManager that provides base protocols and version chains.
@@ -65,38 +65,11 @@ class ProtocolPipeline:
         packet_id = event.packet_id
         payload = event.payload
 
-        # Run base protocols first (always, even before needs_translation check)
         connection = self._connections.get_or_create(address)
-        wrapper = PacketWrapper(payload, user=connection)
-
-        for base in self._manager.base_protocols:
-            base.transform(Direction.SERVERBOUND, packet_id, wrapper)
-            if wrapper.cancelled:
-                event.cancel()
-                return
-
-        # Finalize base protocol output before version-specific chain
-        payload = wrapper.to_bytes()
-
-        if not connection.needs_translation:
-            if payload != event.payload:
-                event.payload = payload
-            return
-
-        chain = self._get_chain(connection)
-        if chain is None:
-            if not connection.warned_no_chain:
-                connection.warned_no_chain = True
-                self._logger.warning(
-                    f"No protocol chain for server={connection.server_protocol} "
-                    f"client={connection.client_protocol} from {address}"
-                )
-            if payload != event.payload:
-                event.payload = payload
-            return
+        pipeline = self._get_pipeline(connection)
 
         # PRE transform logging (ViaVersion: logPrePacketTransform)
-        if self._debug.log_pre_packet_transform:
+        if connection.needs_translation and self._debug.log_pre_packet_transform:
             self._debug.log_packet(
                 "PRE ",
                 address,
@@ -107,9 +80,9 @@ class ProtocolPipeline:
                 len(payload),
             )
 
-        # Serverbound: apply chain in order (client -> server direction).
+        # Serverbound: [base, chain...] in order.
         # Each protocol gets a fresh wrapper from the previous protocol's output.
-        for protocol in chain:
+        for protocol in pipeline:
             wrapper = PacketWrapper(payload, user=connection)
             try:
                 protocol.transform(Direction.SERVERBOUND, packet_id, wrapper)
@@ -139,7 +112,7 @@ class ProtocolPipeline:
             event.payload = payload
 
         # POST transform logging (ViaVersion: logPostPacketTransform)
-        if self._debug.log_post_packet_transform:
+        if connection.needs_translation and self._debug.log_post_packet_transform:
             self._debug.log_packet(
                 "POST",
                 address,
@@ -159,18 +132,14 @@ class ProtocolPipeline:
         address = str(event.address)
 
         connection = self._connections.get(address)
-        if connection is None or not connection.active:
-            return  # fast path (ViaVersion: !connection.isActive())
-
-        chain = self._get_chain(connection)
-        if chain is None:
-            return
+        if connection is None or connection.protocol_pipeline is None:
+            return  # pre-handshake: no pipeline yet
 
         packet_id = event.packet_id
         payload = event.payload
 
         # PRE transform logging
-        if self._debug.log_pre_packet_transform:
+        if connection.needs_translation and self._debug.log_pre_packet_transform:
             self._debug.log_packet(
                 "PRE ",
                 address,
@@ -181,9 +150,9 @@ class ProtocolPipeline:
                 len(payload),
             )
 
-        # Clientbound: apply chain in reverse order (server -> client direction).
+        # Clientbound: [base, ...reversed chain] (ViaVersion: reversedProtocolList).
         # Each protocol gets a fresh wrapper from the previous protocol's output.
-        for protocol in reversed(chain):
+        for protocol in self._clientbound_order(connection):
             wrapper = PacketWrapper(payload, user=connection)
             try:
                 protocol.transform(Direction.CLIENTBOUND, packet_id, wrapper)
@@ -209,21 +178,11 @@ class ProtocolPipeline:
                 return
             payload = wrapper.to_bytes()
 
-        # Finalize version chain output, then run base protocols with fresh wrapper
-        wrapper = PacketWrapper(payload, user=connection)
-
-        for base in self._manager.base_protocols:
-            base.transform(Direction.CLIENTBOUND, packet_id, wrapper)
-            if wrapper.cancelled:
-                event.cancel()
-                return
-
-        new_payload = wrapper.to_bytes()
-        if new_payload != event.payload:
-            event.payload = new_payload
+        if payload != event.payload:
+            event.payload = payload
 
         # POST transform logging
-        if self._debug.log_post_packet_transform:
+        if connection.needs_translation and self._debug.log_post_packet_transform:
             self._debug.log_packet(
                 "POST",
                 address,
@@ -234,27 +193,70 @@ class ProtocolPipeline:
                 len(event.payload),
             )
 
-    def _get_chain(self, connection: "UserConnection") -> list[Protocol] | None:
-        """Get the protocol chain for a connection, caching the result.
+    def _get_pipeline(self, connection: "UserConnection") -> list[Protocol]:
+        """Build or return the cached protocol pipeline for a connection.
 
-        Calls Protocol.init() on each protocol when the chain is first resolved.
+        The pipeline is a flat list: [base protocols, version chain...].
+        Base protocols are always included. The version chain is appended
+        once the client protocol is known and a path exists.
 
         Args:
             connection: UserConnection whose server/client protocols determine the chain.
 
         Returns:
-            Ordered list of Protocol instances forming the translation chain,
-            or None if no path exists between the server and client versions.
+            Ordered list of Protocol instances (base + chain).
 
         See Also:
             com.viaversion.viaversion.protocol.ProtocolPipelineImpl#add
         """
-        if connection.protocol_chain is not None:
-            return connection.protocol_chain
+        if connection.protocol_pipeline is not None:
+            return connection.protocol_pipeline
+
+        base = list(self._manager.base_protocols)
+
+        if connection.client_protocol == 0:
+            # Not yet detected (pre-handshake): return base-only without caching
+            return base
+
+        if not connection.needs_translation:
+            # Same version: cache base-only pipeline
+            connection.protocol_pipeline = base
+            return base
+
         chain = self._manager.get_path(connection.server_protocol, connection.client_protocol)
-        if chain is not None:
-            for protocol in chain:
-                protocol.init(connection)
-            connection.protocol_chain = chain
-            connection.active = True  # ViaVersion: setActive(true) after pipeline setup
-        return chain
+        if chain is None:
+            if not connection.warned_no_chain:
+                connection.warned_no_chain = True
+                self._logger.warning(
+                    f"No protocol chain for server={connection.server_protocol} "
+                    f"client={connection.client_protocol} from {connection.address}"
+                )
+            connection.protocol_pipeline = base
+            return base
+
+        for protocol in chain:
+            protocol.init(connection)
+
+        pipeline = base + chain
+        connection.protocol_pipeline = pipeline
+        return pipeline
+
+    @staticmethod
+    def _clientbound_order(connection: "UserConnection") -> list[Protocol]:
+        """Return the clientbound iteration order: base first, then chain reversed.
+
+        Mirrors ViaVersion's ``refreshReversedList()``: base protocols in
+        regular order, followed by non-base protocols in reverse order.
+
+        See Also:
+            com.viaversion.viaversion.protocol.ProtocolPipelineImpl#refreshReversedList
+        """
+        pipeline = connection.protocol_pipeline
+        if pipeline is None:
+            return []
+
+        # Find where base protocols end and version chain begins.
+        # Base protocols have name="base" (convention from create_base_protocol).
+        base = [p for p in pipeline if p.is_base]
+        chain = [p for p in pipeline if not p.is_base]
+        return base + list(reversed(chain))

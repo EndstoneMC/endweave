@@ -178,7 +178,7 @@ class TestProtocolPipeline:
         event = self._make_event(193, payload)
         pipeline.on_packet_receive(event)
 
-        # Trigger chain resolution (sets connection.active = True)
+        # Trigger pipeline resolution via a second serverbound packet
         event_sb = self._make_event(99, b"\x00")
         pipeline.on_packet_receive(event_sb)
 

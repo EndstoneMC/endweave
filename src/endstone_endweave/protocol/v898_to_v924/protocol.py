@@ -10,10 +10,6 @@ from endstone_endweave.protocol.v898_to_v924.handlers.gameplay import (
     rewrite_camera_aim_assist_presets,
     rewrite_start_game,
 )
-from endstone_endweave.protocol.v924_to_v898.handlers.login import (
-    rewrite_login,
-    rewrite_request_network_settings,
-)
 from endstone_endweave.protocol.v924_to_v898.handlers.text import (
     rewrite_text_clientbound,
     rewrite_text_serverbound,
@@ -27,8 +23,6 @@ def create_protocol() -> Protocol:
     """Create a protocol for v898 server <- v924 client."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
-    protocol.register_serverbound(PacketId.REQUEST_NETWORK_SETTINGS, rewrite_request_network_settings)
-    protocol.register_serverbound(PacketId.LOGIN, rewrite_login)
     protocol.register_serverbound(PacketId.TEXT, rewrite_text_clientbound)
     protocol.register_serverbound(PacketId.SERVERBOUND_DATA_STORE, rewrite_serverbound_data_store)
 

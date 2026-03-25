@@ -36,10 +36,12 @@ class Protocol:
         server_protocol: int,
         client_protocol: int,
         name: str = "",
+        is_base: bool = False,
     ) -> None:
         self.server_protocol = server_protocol
         self.client_protocol = client_protocol
         self.name = name or f"{server_protocol}->{client_protocol}"
+        self.is_base = is_base
         self._handlers: dict[Direction, dict[int, PacketHandler]] = {
             Direction.CLIENTBOUND: {},
             Direction.SERVERBOUND: {},

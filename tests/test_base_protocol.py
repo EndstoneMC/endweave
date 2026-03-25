@@ -25,7 +25,7 @@ class TestDetectClientProtocol:
         assert connection.client_protocol == 944
         assert connection.state == ConnectionState.LOGIN
         assert not wrapper.cancelled
-        assert wrapper.to_bytes() == payload
+        assert wrapper.to_bytes() == struct.pack(">i", 924)  # rewritten to server protocol
 
     def test_short_payload_no_crash(self):
         connection = UserConnection(address="1.2.3.4:1234", logger=MagicMock(), server_protocol=924)
