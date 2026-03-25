@@ -19,6 +19,7 @@ from endstone_endweave.codec.types.primitives import (
     VAR_INT,
     VAR_INT64,
     VEC3,
+    ArrayType,
     Type,
 )
 from endstone_endweave.codec.writer import PacketWriter
@@ -53,25 +54,20 @@ class ActorDataItem:
     value: Any
 
 
-class _ActorDataListType(Type[list["ActorDataItem"]]):
-    """ActorData list: uvarint count + entries of (key, type_id, value)."""
+class _ActorDataItemType(Type["ActorDataItem"]):
+    """Single ActorData entry: key (uvarint) + type_id (uvarint) + typed value."""
 
-    def read(self, reader: PacketReader) -> list[ActorDataItem]:
-        count = UVAR_INT.read(reader)
-        entries: list[ActorDataItem] = []
-        for _ in range(count):
-            key = UVAR_INT.read(reader)
-            type_id = UVAR_INT.read(reader)
-            value = _VALUE_TYPES[type_id].read(reader)
-            entries.append(ActorDataItem(key, type_id, value))
-        return entries
+    def read(self, reader: PacketReader) -> ActorDataItem:
+        key = UVAR_INT.read(reader)
+        type_id = UVAR_INT.read(reader)
+        value = _VALUE_TYPES[type_id].read(reader)
+        return ActorDataItem(key, type_id, value)
 
-    def write(self, writer: PacketWriter, value: list[ActorDataItem]) -> None:
-        UVAR_INT.write(writer, len(value))
-        for entry in value:
-            UVAR_INT.write(writer, entry.key)
-            UVAR_INT.write(writer, entry.type_id)
-            _VALUE_TYPES[entry.type_id].write(writer, entry.value)
+    def write(self, writer: PacketWriter, value: ActorDataItem) -> None:
+        UVAR_INT.write(writer, value.key)
+        UVAR_INT.write(writer, value.type_id)
+        _VALUE_TYPES[value.type_id].write(writer, value.value)
 
 
-ACTOR_DATA_LIST = _ActorDataListType()
+ACTOR_DATA_ITEM = _ActorDataItemType()
+ACTOR_DATA_LIST = ArrayType(ACTOR_DATA_ITEM)

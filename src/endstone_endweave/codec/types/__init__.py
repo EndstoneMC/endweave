@@ -1,6 +1,7 @@
 """Packet field types for read/write/passthrough operations."""
 
 from endstone_endweave.codec.types.actor_data import (
+    ACTOR_DATA_ITEM,
     ACTOR_DATA_LIST,
     ActorDataItem,
 )
@@ -92,6 +93,7 @@ from endstone_endweave.codec.types.structure import (
 )
 
 __all__ = [
+    "ACTOR_DATA_ITEM",
     "ACTOR_DATA_LIST",
     "ArrayType",
     "BIOME_DEFINITION_V898",
