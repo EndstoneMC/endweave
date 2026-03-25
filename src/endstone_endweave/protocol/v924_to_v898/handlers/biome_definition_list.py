@@ -1,5 +1,7 @@
 """BiomeDefinitionList handler for v924 to v898."""
 
+from collections.abc import Callable
+
 from endstone_endweave.codec import (
     BOOL,
     BYTE,
@@ -14,13 +16,13 @@ from endstone_endweave.codec import (
 )
 
 
-def _passthrough_array(wrapper: PacketWrapper, item_reader) -> None:
+def _passthrough_array(wrapper: PacketWrapper, item_reader: Callable[[PacketWrapper], object]) -> None:
     count = wrapper.passthrough(UVAR_INT)
     for _ in range(count):
         item_reader(wrapper)
 
 
-def _passthrough_optional(wrapper: PacketWrapper, item_reader) -> None:
+def _passthrough_optional(wrapper: PacketWrapper, item_reader: Callable[[PacketWrapper], object]) -> None:
     if wrapper.passthrough(BOOL):
         item_reader(wrapper)
 

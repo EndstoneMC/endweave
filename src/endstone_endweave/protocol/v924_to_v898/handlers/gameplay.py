@@ -15,6 +15,7 @@ from endstone_endweave.codec import (
     VAR_INT,
     VAR_INT64,
     VEC3,
+    CompoundTag,
     PacketWrapper,
 )
 
@@ -150,7 +151,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     current_tick = wrapper.read(INT64_LE)
     enchantment_seed = wrapper.read(VAR_INT)
 
-    block_properties: list[tuple[str, object]] = []
+    block_properties: list[tuple[str, CompoundTag | None]] = []
     block_property_count = wrapper.read(UVAR_INT)
     for _ in range(block_property_count):
         block_properties.append((wrapper.read(STRING), wrapper.read(NAMED_COMPOUND_TAG)))
