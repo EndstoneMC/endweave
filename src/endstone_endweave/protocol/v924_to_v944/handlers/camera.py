@@ -11,12 +11,14 @@ from endstone_endweave.codec import (
     FLOAT_LE,
     INT64_LE,
     INT_LE,
+    OPTIONAL_BOOL,
+    OPTIONAL_VEC2,
+    OPTIONAL_VEC3,
     SPLINE_INSTRUCTION_V924,
     SPLINE_INSTRUCTION_V944,
     STRING,
     UVAR_INT,
-    VEC2,
-    VEC3,
+    OptionalType,
     PacketWrapper,
 )
 
@@ -66,29 +68,15 @@ def rewrite_camera_instruction(wrapper: PacketWrapper) -> None:
         if wrapper.passthrough(BOOL):
             wrapper.passthrough(BYTE)  # type
             wrapper.passthrough(FLOAT_LE)  # time
-        # optional pos (PosOption)
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(VEC3)  # Pos
-        # optional rot (RotOption)
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(VEC2)  # x, y
-        # optional facing (FacingOption)
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(VEC3)  # pos
-        # optional view_offset (ViewOffsetOption)
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(VEC2)  # x, y
-        # optional entity_offset (EntityOffsetOption)
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(VEC3)  # entity_offset_x/y/z
-        # optional default
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(BOOL)
+        wrapper.passthrough(OPTIONAL_VEC3)  # pos (PosOption)
+        wrapper.passthrough(OPTIONAL_VEC2)  # rot (RotOption)
+        wrapper.passthrough(OPTIONAL_VEC3)  # facing (FacingOption)
+        wrapper.passthrough(OPTIONAL_VEC2)  # view_offset (ViewOffsetOption)
+        wrapper.passthrough(OPTIONAL_VEC3)  # entity_offset (EntityOffsetOption)
+        wrapper.passthrough(OPTIONAL_BOOL)  # default
         wrapper.passthrough(BOOL)  # removeIgnoreStartingValuesComponent
 
-    # optional Clear
-    if wrapper.passthrough(BOOL):
-        wrapper.passthrough(BOOL)
+    wrapper.passthrough(OPTIONAL_BOOL)  # Clear
 
     # optional Fade (CameraInstruction::FadeInstruction)
     if wrapper.passthrough(BOOL):
@@ -105,14 +93,10 @@ def rewrite_camera_instruction(wrapper: PacketWrapper) -> None:
 
     # optional Target (CameraInstruction::TargetInstruction)
     if wrapper.passthrough(BOOL):
-        # optional Target Center Offset
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(VEC3)
+        wrapper.passthrough(OPTIONAL_VEC3)  # Target Center Offset
         wrapper.passthrough(INT64_LE)  # Target Actor ID
 
-    # optional RemoveTarget
-    if wrapper.passthrough(BOOL):
-        wrapper.passthrough(BOOL)
+    wrapper.passthrough(OPTIONAL_BOOL)  # RemoveTarget
 
     # optional FieldOfView (CameraInstruction::FovInstruction)
     if wrapper.passthrough(BOOL):
@@ -125,10 +109,5 @@ def rewrite_camera_instruction(wrapper: PacketWrapper) -> None:
     if wrapper.passthrough(BOOL):
         wrapper.map(SPLINE_INSTRUCTION_V924, SPLINE_INSTRUCTION_V944)
 
-    # optional AttachToEntity (CameraInstruction::AttachToEntityInstruction)
-    if wrapper.passthrough(BOOL):
-        wrapper.passthrough(INT64_LE)  # Entity Actor ID
-
-    # optional DetachFromEntity
-    if wrapper.passthrough(BOOL):
-        wrapper.passthrough(BOOL)
+    wrapper.passthrough(OptionalType(INT64_LE))  # AttachToEntity
+    wrapper.passthrough(OPTIONAL_BOOL)  # DetachFromEntity

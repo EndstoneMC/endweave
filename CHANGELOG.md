@@ -10,8 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `map(old_type, new_type)` to PacketWrapper for cross-type field conversion
 - Replace `net_to_block`/`block_to_net` helpers with direct `wrapper.map()` calls
 - Extract compound Type objects for SplineInstruction, InventoryAction, StructureSettings, and ActorData
-- Add generic `OptionalType` wrapper for bool-prefixed optional fields
+- Add generic `OptionalType` and `ArrayType` wrappers following ViaVersion's pattern
+- Register `OPTIONAL_BOOL`, `OPTIONAL_VEC2`, `OPTIONAL_VEC3` singletons in central type registry
 - Use VEC3/VEC2 types instead of inline FLOAT_LE calls in handlers
+- Replace inline optional/array patterns with type wrappers in camera and block_pos handlers
 
 ### Removed
 - `protocol/rewriter.py` (all helpers migrated to compound Type objects)

@@ -21,6 +21,7 @@ from endstone_endweave.codec import (
     VAR_INT,
     VAR_INT64,
     VEC3,
+    ArrayType,
     PacketWrapper,
 )
 
@@ -143,10 +144,7 @@ def rewrite_map_data(wrapper: PacketWrapper) -> None:
     TYPE_CREATION = 0x08
 
     if types & TYPE_CREATION:
-        # Map ID List
-        count = wrapper.passthrough(UVAR_INT)
-        for _ in range(count):
-            wrapper.passthrough(VAR_INT64)  # Map ID entry
+        wrapper.passthrough(ArrayType(VAR_INT64))  # Map ID List
 
     if types & (TYPE_CREATION | TYPE_DECORATION_UPDATE | TYPE_TEXTURE_UPDATE):
         wrapper.passthrough(BYTE)  # Scale
