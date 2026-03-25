@@ -3,6 +3,9 @@
 import struct
 
 from endstone_endweave.codec import (
+    BOOL,
+    EXPERIMENTS,
+    GAME_RULES,
     NAMED_COMPOUND_TAG,
     ByteTag,
     CompoundTag,
@@ -12,8 +15,6 @@ from endstone_endweave.codec import (
 from endstone_endweave.codec.types.nbt import read_nbt
 from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.protocol.v924_to_v944.handlers.start_game import (
-    _passthrough_experiments,
-    _passthrough_game_rules,
     rewrite_start_game,
 )
 
@@ -226,7 +227,7 @@ class TestPassthroughGameRules:
         w.write_uvarint(0)
         w.write_byte(0xFF)
         wrapper = PacketWrapper(w.to_bytes())
-        _passthrough_game_rules(wrapper)
+        wrapper.passthrough(GAME_RULES)
         result = wrapper.to_bytes()
         # Output should contain the rules (0 count) + sentinel
         assert result == w.to_bytes()
@@ -251,12 +252,12 @@ class TestPassthroughGameRules:
         w.write_float_le(1.5)
         payload = w.to_bytes()
         wrapper = PacketWrapper(payload)
-        _passthrough_game_rules(wrapper)
+        wrapper.passthrough(GAME_RULES)
         assert wrapper.to_bytes() == payload
 
 
 # ---------------------------------------------------------------------------
-# Tests: _passthrough_experiments
+# Tests: EXPERIMENTS type
 # ---------------------------------------------------------------------------
 
 
@@ -267,7 +268,8 @@ class TestPassthroughExperiments:
         w.write_bool(False)  # ever_toggled
         payload = w.to_bytes()
         wrapper = PacketWrapper(payload)
-        _passthrough_experiments(wrapper)
+        wrapper.passthrough(EXPERIMENTS)
+        wrapper.passthrough(BOOL)  # ever_toggled
         assert wrapper.to_bytes() == payload
 
     def test_with_experiments(self):
@@ -280,7 +282,8 @@ class TestPassthroughExperiments:
         w.write_bool(True)  # ever_toggled
         payload = w.to_bytes()
         wrapper = PacketWrapper(payload)
-        _passthrough_experiments(wrapper)
+        wrapper.passthrough(EXPERIMENTS)
+        wrapper.passthrough(BOOL)  # ever_toggled
         assert wrapper.to_bytes() == payload
 
 

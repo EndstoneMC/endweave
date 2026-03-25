@@ -1,47 +1,27 @@
 """Gameplay packet handlers for v898 server to v924 client translation."""
 
 from endstone_endweave.codec import (
+    BLOCK_PROPERTY,
     BOOL,
     BYTE,
+    EXPERIMENTS,
     FLOAT_LE,
     INT64_LE,
     INT_LE,
+    ITEM_SETTING,
     NAMED_COMPOUND_TAG,
+    PRIORITY,
     SHORT_LE,
     STRING,
-    UINT_LE,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
     VEC3,
+    ArrayType,
     OptionalType,
     PacketWrapper,
 )
-
-
-def _passthrough_experiments(wrapper: PacketWrapper) -> None:
-    count = wrapper.passthrough(UINT_LE)
-    for _ in range(count):
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(BOOL)
-
-
-def _passthrough_block_properties(wrapper: PacketWrapper) -> None:
-    count = wrapper.passthrough(UVAR_INT)
-    for _ in range(count):
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(NAMED_COMPOUND_TAG)
-
-
-def _passthrough_priority(wrapper: PacketWrapper) -> None:
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(INT_LE)
-
-
-def _passthrough_item_setting(wrapper: PacketWrapper) -> None:
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
 
 
 def rewrite_start_game(wrapper: PacketWrapper) -> None:
@@ -103,7 +83,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
         else:
             raise ValueError(f"Unknown game rule type: {game_rule_type}")
 
-    _passthrough_experiments(wrapper)
+    wrapper.passthrough(EXPERIMENTS)
     wrapper.passthrough(BOOL)
 
     wrapper.passthrough(BOOL)
@@ -143,7 +123,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)
     wrapper.passthrough(INT64_LE)
     wrapper.passthrough(VAR_INT)
-    _passthrough_block_properties(wrapper)
+    wrapper.passthrough(ArrayType(BLOCK_PROPERTY))
     wrapper.passthrough(STRING)
     wrapper.passthrough(BOOL)
     wrapper.passthrough(STRING)
@@ -172,17 +152,11 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
     for _ in range(category_count):
         wrapper.passthrough(STRING)
 
-        entity_priority_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(entity_priority_count):
-            _passthrough_priority(wrapper)
+        wrapper.passthrough(ArrayType(PRIORITY))
 
-        block_priority_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(block_priority_count):
-            _passthrough_priority(wrapper)
+        wrapper.passthrough(ArrayType(PRIORITY))
 
-        block_tag_priority_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(block_tag_priority_count):
-            _passthrough_priority(wrapper)
+        wrapper.passthrough(ArrayType(PRIORITY))
 
         wrapper.write(UVAR_INT, 0)
 
@@ -211,9 +185,7 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
         for _ in range(liquid_count):
             wrapper.passthrough(STRING)
 
-        item_setting_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(item_setting_count):
-            _passthrough_item_setting(wrapper)
+        wrapper.passthrough(ArrayType(ITEM_SETTING))
 
         wrapper.passthrough(OptionalType(STRING))
         wrapper.passthrough(OptionalType(STRING))

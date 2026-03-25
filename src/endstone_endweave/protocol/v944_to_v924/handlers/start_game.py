@@ -5,64 +5,26 @@ v944 also restructured the server join info block near the end of the packet.
 """
 
 from endstone_endweave.codec import (
+    BLOCK_PROPERTY,
     BOOL,
     BYTE,
+    EXPERIMENTS,
     FLOAT_LE,
+    GAME_RULES,
     INT64_LE,
     INT_LE,
     NAMED_COMPOUND_TAG,
     SHORT_LE,
     STRING,
-    UINT_LE,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
     VEC2,
     VEC3,
+    ArrayType,
     PacketWrapper,
 )
-
-
-def _passthrough_game_rules(wrapper: PacketWrapper) -> None:
-    """Passthrough GameRules: uvarint count + per-rule entries.
-
-    Args:
-        wrapper: Packet wrapper positioned at the GameRules section.
-    """
-    count = wrapper.passthrough(UVAR_INT)
-    for _ in range(count):
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(BOOL)  # editable
-        rule_type = wrapper.passthrough(UVAR_INT)  # rule type
-        if rule_type == 1:  # bool
-            wrapper.passthrough(BOOL)
-        elif rule_type == 2:  # varint
-            wrapper.passthrough(VAR_INT)
-        elif rule_type == 3:  # float
-            wrapper.passthrough(FLOAT_LE)
-        else:
-            raise ValueError(f"Unknown game rule type: {rule_type}")
-
-
-def _passthrough_experiments(wrapper: PacketWrapper) -> None:
-    """Passthrough Experiments: uint32_le count + entries + ever_toggled bool.
-
-    Args:
-        wrapper: Packet wrapper positioned at the Experiments section.
-    """
-    count = wrapper.passthrough(UINT_LE)
-    for _ in range(count):
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(BOOL)  # enabled
-    wrapper.passthrough(BOOL)  # ever_toggled
-
-
-def _passthrough_block_properties(wrapper: PacketWrapper) -> None:
-    count = wrapper.passthrough(UVAR_INT)
-    for _ in range(count):
-        wrapper.passthrough(STRING)  # Block Name
-        wrapper.passthrough(NAMED_COMPOUND_TAG)  # Block Definition
 
 
 def rewrite_start_game(wrapper: PacketWrapper) -> None:
@@ -109,8 +71,9 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(VAR_INT)  # Platform Broadcast Setting
     wrapper.passthrough(BOOL)  # Commands Enabled
     wrapper.passthrough(BOOL)  # Texture Packs Required
-    _passthrough_game_rules(wrapper)  # GameRules
-    _passthrough_experiments(wrapper)  # Experiments
+    wrapper.passthrough(GAME_RULES)  # GameRules
+    wrapper.passthrough(EXPERIMENTS)  # Experiments
+    wrapper.passthrough(BOOL)  # ever_toggled
     wrapper.passthrough(BOOL)  # Has Bonus Chest
     wrapper.passthrough(BOOL)  # Start with Map
     wrapper.passthrough(VAR_INT)  # Player Permissions
@@ -144,7 +107,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # Movement Settings.ServerAuthBlockBreaking
     wrapper.passthrough(INT64_LE)  # Level Current Time
     wrapper.passthrough(VAR_INT)  # Enchantment Seed
-    _passthrough_block_properties(wrapper)  # Block Properties
+    wrapper.passthrough(ArrayType(BLOCK_PROPERTY))  # Block Properties
     wrapper.passthrough(STRING)  # Multiplayer Correlation Id
     wrapper.passthrough(BOOL)  # Enable Item Stack Net Manager
     wrapper.passthrough(STRING)  # Server version
