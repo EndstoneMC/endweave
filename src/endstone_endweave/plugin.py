@@ -20,6 +20,12 @@ from endstone_endweave.pipeline import ProtocolPipeline
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.base import create_base_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
+from endstone_endweave.protocol.v859_to_v860 import (
+    create_protocol as create_v859_to_v860,
+)
+from endstone_endweave.protocol.v860_to_v859 import (
+    create_protocol as create_v860_to_v859,
+)
 from endstone_endweave.protocol.v860_to_v898 import (
     create_protocol as create_v860_to_v898,
 )
@@ -91,10 +97,10 @@ class EndweavePlugin(Plugin):
         self._manager.register_base(create_base_protocol(server_protocol))
 
         # Register version-specific protocols
-        self._register_protocol(create_v898_to_v860())
-        self._register_protocol(create_v898_to_v860(859))
+        self._register_protocol(create_v859_to_v860())
+        self._register_protocol(create_v860_to_v859())
         self._register_protocol(create_v860_to_v898())
-        self._register_protocol(create_v860_to_v898(859))
+        self._register_protocol(create_v898_to_v860())
         self._register_protocol(create_v898_to_v924())
         self._register_protocol(create_v924_to_v898())
         self._register_protocol(create_v924_to_v944())
@@ -103,6 +109,10 @@ class EndweavePlugin(Plugin):
 
         self._supported_versions = self._manager.get_supported_versions(server_protocol)
         self._advertised_protocol = max(self._supported_versions) if self._supported_versions else server_protocol
+
+        for protocol in self._supported_versions:
+            if protocol not in VERSIONS:
+                self.logger.warning(f"Supported protocol {protocol} has no entry in VERSIONS registry")
 
         supported_names = [
             VERSIONS[protocol].minecraft_version

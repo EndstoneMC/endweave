@@ -107,7 +107,8 @@ class ProtocolPipeline:
                 len(payload),
             )
 
-        # Serverbound: apply chain in order (client -> server direction)
+        # Serverbound: apply chain in order (client -> server direction).
+        # Each protocol gets a fresh wrapper from the previous protocol's output.
         for protocol in chain:
             wrapper = PacketWrapper(payload, user=connection)
             try:
@@ -180,7 +181,8 @@ class ProtocolPipeline:
                 len(payload),
             )
 
-        # Clientbound: apply chain in reverse order (server -> client direction)
+        # Clientbound: apply chain in reverse order (server -> client direction).
+        # Each protocol gets a fresh wrapper from the previous protocol's output.
         for protocol in reversed(chain):
             wrapper = PacketWrapper(payload, user=connection)
             try:

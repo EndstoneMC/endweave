@@ -1,4 +1,4 @@
-"""Protocol factory for v898 (1.21.130) server <- v859/v860 client."""
+"""Protocol factory for v898 (1.21.130) server <- v860 (1.21.124) client."""
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
@@ -36,9 +36,9 @@ SERVER_PROTOCOL = 898
 CLIENT_PROTOCOL = 860
 
 
-def create_protocol(client_protocol: int = CLIENT_PROTOCOL) -> Protocol:
-    """Create a protocol for v898 server <- v859/v860 client translation."""
-    protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=client_protocol)
+def create_protocol() -> Protocol:
+    """Create a protocol for v898 server <- v860 client translation."""
+    protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
     protocol.register_serverbound(PacketId.REQUEST_NETWORK_SETTINGS, rewrite_request_network_settings)
     protocol.register_serverbound(PacketId.LOGIN, rewrite_login)
