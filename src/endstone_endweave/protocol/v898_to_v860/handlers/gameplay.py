@@ -118,7 +118,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     game_rule_count = wrapper.passthrough(UVAR_INT)
     for _ in range(game_rule_count):
         wrapper.passthrough(STRING)
-        wrapper.passthrough(BOOL)
+        wrapper.read(BOOL)  # Editable (strip for v860)
         game_rule_type = wrapper.passthrough(UVAR_INT)
         if game_rule_type == 1:
             wrapper.passthrough(BOOL)
