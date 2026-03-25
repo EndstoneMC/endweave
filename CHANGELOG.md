@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-03-25
+
 ### Fixed
 - Block interactions (chests, signs, etc.) failing at Y < 0 due to NetworkBlockPosition reading Y as unsigned
 
