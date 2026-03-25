@@ -29,6 +29,9 @@ from endstone_endweave.protocol.v860_to_v898 import (
 from endstone_endweave.protocol.v924_to_v944 import (
     create_protocol as create_v924_to_v944,
 )
+from endstone_endweave.protocol.v898_to_v924 import (
+    create_protocol as create_v898_to_v924,
+)
 from endstone_endweave.protocol.v924_to_v898 import (
     create_protocol as create_v924_to_v898,
 )
@@ -92,6 +95,7 @@ class EndweavePlugin(Plugin):
         self._register_protocol(create_v898_to_v860(859))
         self._register_protocol(create_v860_to_v898())
         self._register_protocol(create_v860_to_v898(859))
+        self._register_protocol(create_v898_to_v924())
         self._register_protocol(create_v924_to_v898())
         self._register_protocol(create_v924_to_v944())
         self._register_protocol(create_v944_to_v924())

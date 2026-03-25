@@ -9,5 +9,5 @@ def rewrite_voxel_shapes(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for VoxelShapesPacket.
     """
-    wrapper.passthrough_all()
     wrapper.read(USHORT_LE)
+    wrapper.passthrough_all()
