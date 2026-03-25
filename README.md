@@ -25,8 +25,6 @@ rewriting packets at the network layer. Inspired by [ViaVersion](https://github.
 
 Players on newer clients will connect transparently. No additional configuration needed.
 
-Current translation chain coverage is `859/860 <-> 898 <-> 924 <-> 944`.
-
 ## How It Works
 
 When Minecraft updates, players who update can't join servers still on the old version. Instead of waiting for an
