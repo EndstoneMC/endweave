@@ -1,6 +1,8 @@
 from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.types import (
     ACTOR_DATA_LIST,
+    BIOME_DEFINITION_V898,
+    BIOME_DEFINITION_V924,
     BLOCK_POS,
     BLOCK_PROPERTY,
     BOOL,
@@ -81,6 +83,8 @@ __all__ = [
     "ACTOR_DATA_LIST",
     "ActorDataEntry",
     "ArrayType",
+    "BIOME_DEFINITION_V898",
+    "BIOME_DEFINITION_V924",
     "BLOCK_POS",
     "BLOCK_PROPERTY",
     "BlockProperty",

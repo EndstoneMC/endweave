@@ -4,6 +4,10 @@ from endstone_endweave.codec.types.actor_data import (
     ACTOR_DATA_LIST,
     ActorDataEntry,
 )
+from endstone_endweave.codec.types.biome import (
+    BIOME_DEFINITION_V898,
+    BIOME_DEFINITION_V924,
+)
 from endstone_endweave.codec.types.camera import (
     SPLINE_INSTRUCTION_V898,
     SPLINE_INSTRUCTION_V924,
@@ -91,6 +95,8 @@ __all__ = [
     "ACTOR_DATA_LIST",
     "ActorDataEntry",
     "ArrayType",
+    "BIOME_DEFINITION_V898",
+    "BIOME_DEFINITION_V924",
     "BLOCK_POS",
     "BLOCK_PROPERTY",
     "BlockProperty",
