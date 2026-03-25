@@ -10,20 +10,17 @@ from endstone_endweave.codec import (
     BYTE,
     FLOAT_LE,
     INT_LE,
+    INVENTORY_ACTION,
     ITEM_INSTANCE,
     NETWORK_BLOCK_POS,
     STRING,
+    STRUCTURE_SETTINGS_V924,
+    STRUCTURE_SETTINGS_V944,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
     PacketWrapper,
-)
-from endstone_endweave.protocol.rewriter import (
-    passthrough_inventory_action as _passthrough_inventory_action,
-)
-from endstone_endweave.protocol.rewriter import (
-    passthrough_structure_settings as _passthrough_structure_settings,
 )
 
 # NoteBlockInstrument remapping constants (TileEvent)
@@ -203,7 +200,7 @@ def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
     # InventoryActions
     action_count = wrapper.passthrough(UVAR_INT)
     for _ in range(action_count):
-        _passthrough_inventory_action(wrapper)
+        wrapper.passthrough(INVENTORY_ACTION)
 
     if transaction_type != 2:  # Not UseItem
         return  # passthrough remaining bytes unchanged
@@ -262,7 +259,7 @@ def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # IncludePlayers
     wrapper.passthrough(BOOL)  # ShowBoundingBox
     wrapper.passthrough(VAR_INT)  # StructureBlockType
-    _passthrough_structure_settings(wrapper)
+    wrapper.map(STRUCTURE_SETTINGS_V944, STRUCTURE_SETTINGS_V924)
     wrapper.passthrough(VAR_INT)  # RedstoneSaveMode
 
 
@@ -285,7 +282,7 @@ def rewrite_structure_template_data_request(wrapper: PacketWrapper) -> None:
     """
     wrapper.passthrough(STRING)  # Structure Name
     wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Structure Position
-    _passthrough_structure_settings(wrapper)
+    wrapper.map(STRUCTURE_SETTINGS_V944, STRUCTURE_SETTINGS_V924)
 
 
 def rewrite_anvil_damage(wrapper: PacketWrapper) -> None:

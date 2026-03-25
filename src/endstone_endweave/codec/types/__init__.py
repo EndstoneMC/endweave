@@ -1,5 +1,13 @@
 """Packet field types for read/write/passthrough operations."""
 
+from endstone_endweave.codec.types.camera import (
+    SPLINE_INSTRUCTION_V924,
+    SPLINE_INSTRUCTION_V944,
+    KeyFrame,
+    RotationKeyFrame,
+    SplineInstruction,
+)
+from endstone_endweave.codec.types.inventory import INVENTORY_ACTION, InventoryAction
 from endstone_endweave.codec.types.item import ITEM_INSTANCE, ItemInstance
 from endstone_endweave.codec.types.nbt import (
     COMPOUND_TAG,
@@ -45,6 +53,11 @@ from endstone_endweave.codec.types.primitives import (
     VEC3,
     Type,
 )
+from endstone_endweave.codec.types.structure import (
+    STRUCTURE_SETTINGS_V924,
+    STRUCTURE_SETTINGS_V944,
+    StructureSettings,
+)
 
 __all__ = [
     "BLOCK_POS",
@@ -61,10 +74,13 @@ __all__ = [
     "INT64_LE",
     "INT_BE",
     "INT_LE",
+    "INVENTORY_ACTION",
     "ITEM_INSTANCE",
     "IntArrayTag",
     "IntTag",
+    "InventoryAction",
     "ItemInstance",
+    "KeyFrame",
     "ListTag",
     "LongArrayTag",
     "LongTag",
@@ -72,10 +88,17 @@ __all__ = [
     "NETWORK_BLOCK_POS",
     "NamedCompoundTagType",
     "REMAINING_BYTES",
+    "RotationKeyFrame",
     "SHORT_LE",
+    "SPLINE_INSTRUCTION_V924",
+    "SPLINE_INSTRUCTION_V944",
     "STRING",
+    "STRUCTURE_SETTINGS_V924",
+    "STRUCTURE_SETTINGS_V944",
     "ShortTag",
+    "SplineInstruction",
     "StringTag",
+    "StructureSettings",
     "Tag",
     "Type",
     "UINT_LE",

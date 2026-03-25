@@ -11,35 +11,14 @@ from endstone_endweave.codec import (
     FLOAT_LE,
     INT64_LE,
     INT_LE,
+    SPLINE_INSTRUCTION_V924,
+    SPLINE_INSTRUCTION_V944,
     STRING,
     UVAR_INT,
     VEC2,
     VEC3,
     PacketWrapper,
 )
-
-
-def _passthrough_spline_instruction(wrapper: PacketWrapper) -> None:
-    """Passthrough a CameraInstruction::SplineInstruction."""
-    wrapper.passthrough(FLOAT_LE)  # totalTime
-    wrapper.passthrough(BYTE)  # type
-    # curve
-    curve_count = wrapper.passthrough(UVAR_INT)
-    for _ in range(curve_count):
-        wrapper.passthrough(VEC3)
-    # progressKeyFrames
-    pk_count = wrapper.passthrough(UVAR_INT)
-    for _ in range(pk_count):
-        wrapper.passthrough(FLOAT_LE)  # Key frame value
-        wrapper.passthrough(FLOAT_LE)  # Key frame time
-        wrapper.passthrough(INT_LE)  # Key frame easing func
-    # rotationOption
-    rk_count = wrapper.passthrough(UVAR_INT)
-    for _ in range(rk_count):
-        wrapper.passthrough(VEC3)  # Key frame value
-        wrapper.passthrough(FLOAT_LE)  # Key frame time
-        wrapper.passthrough(INT_LE)  # Key frame easing func
-
 
 # ---------------------------------------------------------------------------
 # CameraSplinePacket (338)
@@ -62,10 +41,7 @@ def rewrite_camera_spline(wrapper: PacketWrapper) -> None:
     spline_count = wrapper.passthrough(UVAR_INT)  # Camera Data Splines
     for _ in range(spline_count):
         wrapper.passthrough(STRING)  # CameraSplineDefinition.name
-        _passthrough_spline_instruction(wrapper)
-        # v944 additions per CameraSplineDefinition
-        wrapper.write(STRING, "")  # splineIdentifier
-        wrapper.write(BOOL, False)  # loadFromJson
+        wrapper.map(SPLINE_INSTRUCTION_V924, SPLINE_INSTRUCTION_V944)
 
 
 # ---------------------------------------------------------------------------
@@ -145,11 +121,9 @@ def rewrite_camera_instruction(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(BYTE)  # FOV Ease Type
         wrapper.passthrough(BOOL)  # Field of View Clear
 
-    # optional Spline (CameraInstruction::SplineInstruction) -- append v944 fields
+    # optional Spline (CameraInstruction::SplineInstruction)
     if wrapper.passthrough(BOOL):
-        _passthrough_spline_instruction(wrapper)
-        wrapper.write(STRING, "")  # splineIdentifier (v944)
-        wrapper.write(BOOL, False)  # loadFromJson (v944)
+        wrapper.map(SPLINE_INSTRUCTION_V924, SPLINE_INSTRUCTION_V944)
 
     # optional AttachToEntity (CameraInstruction::AttachToEntityInstruction)
     if wrapper.passthrough(BOOL):
