@@ -40,22 +40,21 @@ def fetch_version(name: str, branch: str) -> None:
 
     with tempfile.TemporaryDirectory() as tmp:
         print(f"  Cloning branch {branch}...")
-        subprocess.run(
-            [
-                "git",
-                "clone",
-                "--depth",
-                "1",
-                "--branch",
-                branch,
-                "--single-branch",
-                REPO_URL,
-                tmp,
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
+        clone_cmd = [
+            "git", "clone", "--depth", "1", "--branch", branch,
+            "--single-branch", REPO_URL, tmp,
+        ]
+        result = subprocess.run(clone_cmd, capture_output=True, text=True)
+        if result.returncode != 0:
+            # Retry with uppercase variant (Mojang uses e.g. r/21_U12 not r/21_u12)
+            parts = branch.rsplit("_", 1)
+            if len(parts) == 2:
+                alt_branch = f"{parts[0]}_{parts[1].upper()}"
+                print(f"  Branch {branch} not found, trying {alt_branch}...")
+                clone_cmd[5] = alt_branch
+                subprocess.run(clone_cmd, check=True, capture_output=True, text=True)
+            else:
+                result.check_returncode()
 
         dest.mkdir(parents=True, exist_ok=True)
 
