@@ -1,5 +1,6 @@
 from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.types import (
+    ACTOR_DATA_LIST,
     BLOCK_POS,
     BOOL,
     BYTE,
@@ -28,6 +29,7 @@ from endstone_endweave.codec.types import (
     VAR_INT64,
     VEC2,
     VEC3,
+    ActorDataEntry,
     ByteArrayTag,
     ByteTag,
     CompoundTag,
@@ -43,6 +45,7 @@ from endstone_endweave.codec.types import (
     LongArrayTag,
     LongTag,
     NamedCompoundTagType,
+    OptionalType,
     RotationKeyFrame,
     ShortTag,
     SplineInstruction,
@@ -56,6 +59,8 @@ from endstone_endweave.codec.types import (
 from endstone_endweave.codec.wrapper import PacketWrapper
 
 __all__ = [
+    "ACTOR_DATA_LIST",
+    "ActorDataEntry",
     "BLOCK_POS",
     "BOOL",
     "BYTE",
@@ -83,6 +88,7 @@ __all__ = [
     "NAMED_COMPOUND_TAG",
     "NETWORK_BLOCK_POS",
     "NamedCompoundTagType",
+    "OptionalType",
     "PacketReader",
     "PacketWrapper",
     "REMAINING_BYTES",

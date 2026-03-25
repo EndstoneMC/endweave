@@ -1,5 +1,9 @@
 """Packet field types for read/write/passthrough operations."""
 
+from endstone_endweave.codec.types.actor_data import (
+    ACTOR_DATA_LIST,
+    ActorDataEntry,
+)
 from endstone_endweave.codec.types.camera import (
     SPLINE_INSTRUCTION_V924,
     SPLINE_INSTRUCTION_V944,
@@ -51,6 +55,7 @@ from endstone_endweave.codec.types.primitives import (
     VAR_INT64,
     VEC2,
     VEC3,
+    OptionalType,
     Type,
 )
 from endstone_endweave.codec.types.structure import (
@@ -60,6 +65,8 @@ from endstone_endweave.codec.types.structure import (
 )
 
 __all__ = [
+    "ACTOR_DATA_LIST",
+    "ActorDataEntry",
     "BLOCK_POS",
     "BOOL",
     "BYTE",
@@ -87,6 +94,7 @@ __all__ = [
     "NAMED_COMPOUND_TAG",
     "NETWORK_BLOCK_POS",
     "NamedCompoundTagType",
+    "OptionalType",
     "REMAINING_BYTES",
     "RotationKeyFrame",
     "SHORT_LE",

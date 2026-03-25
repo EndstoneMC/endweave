@@ -20,6 +20,7 @@ from endstone_endweave.codec import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    VEC3,
     PacketWrapper,
 )
 
@@ -212,12 +213,8 @@ def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(VAR_INT)  # BlockFace
     wrapper.passthrough(VAR_INT)  # HotBarSlot
     wrapper.passthrough(ITEM_INSTANCE)  # HeldItem
-    wrapper.passthrough(FLOAT_LE)  # Position.X
-    wrapper.passthrough(FLOAT_LE)  # Position.Y
-    wrapper.passthrough(FLOAT_LE)  # Position.Z
-    wrapper.passthrough(FLOAT_LE)  # ClickedPosition.X
-    wrapper.passthrough(FLOAT_LE)  # ClickedPosition.Y
-    wrapper.passthrough(FLOAT_LE)  # ClickedPosition.Z
+    wrapper.passthrough(VEC3)  # Position
+    wrapper.passthrough(VEC3)  # ClickedPosition
     wrapper.passthrough(UVAR_INT)  # BlockRuntimeID
     wrapper.passthrough(UVAR_INT)  # ClientPrediction
     wrapper.read(BYTE)  # ClientCooldownState (strip -- v924 doesn't have this)

@@ -293,3 +293,29 @@ BLOCK_POS = _BlockPos()
 VEC3 = _Vec3()
 VEC2 = _Vec2()
 UUID = _Bytes(16)
+
+
+class OptionalType(Type[_T | None]):
+    """Bool-prefixed optional wrapper for any Type.
+
+    Reads a boolean; if true, reads the inner type. If false, returns None.
+    Writes a boolean prefix followed by the inner value (if not None).
+
+    See Also:
+        com.viaversion.viaversion.api.type.OptionalType
+    """
+
+    def __init__(self, inner: Type[_T]) -> None:
+        self._inner = inner
+
+    def read(self, reader: PacketReader) -> _T | None:
+        if reader.read_bool():
+            return self._inner.read(reader)
+        return None
+
+    def write(self, writer: PacketWriter, value: _T | None) -> None:
+        if value is not None:
+            writer.write_bool(True)
+            self._inner.write(writer, value)
+        else:
+            writer.write_bool(False)

@@ -12,6 +12,7 @@ from endstone_endweave.codec.types.primitives import (
     STRING,
     UINT_LE,
     VAR_INT64,
+    VEC3,
     Type,
 )
 from endstone_endweave.codec.writer import PacketWriter
@@ -74,7 +75,7 @@ class _StructureSettingsV924Type(Type["StructureSettings"]):
             animation_seconds=FLOAT_LE.read(reader),
             integrity_value=FLOAT_LE.read(reader),
             integrity_seed=UINT_LE.read(reader),
-            pivot=(FLOAT_LE.read(reader), FLOAT_LE.read(reader), FLOAT_LE.read(reader)),
+            pivot=VEC3.read(reader),
         )
 
     def write(self, writer: PacketWriter, value: StructureSettings) -> None:
@@ -91,9 +92,7 @@ class _StructureSettingsV924Type(Type["StructureSettings"]):
         FLOAT_LE.write(writer, value.animation_seconds)
         FLOAT_LE.write(writer, value.integrity_value)
         UINT_LE.write(writer, value.integrity_seed)
-        FLOAT_LE.write(writer, value.pivot[0])
-        FLOAT_LE.write(writer, value.pivot[1])
-        FLOAT_LE.write(writer, value.pivot[2])
+        VEC3.write(writer, value.pivot)
 
 
 class _StructureSettingsV944Type(_StructureSettingsV924Type):

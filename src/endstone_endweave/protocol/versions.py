@@ -34,18 +34,6 @@ VERSIONS: dict[int, ProtocolVersion] = {v.protocol: v for v in [R26_U0, R26_U1]}
 _VERSION_BY_NAME: dict[str, ProtocolVersion] = {name: v for v in VERSIONS.values() for name in v.included_versions}
 
 
-def get_version(protocol: int) -> ProtocolVersion | None:
-    """Look up a ProtocolVersion by protocol number.
-
-    Args:
-        protocol: Numeric protocol ID to look up.
-
-    Returns:
-        The matching ProtocolVersion, or None if not registered.
-    """
-    return VERSIONS.get(protocol)
-
-
 def get_version_by_name(mc_version: str) -> ProtocolVersion | None:
     """Look up a ProtocolVersion by Minecraft version string.
 
