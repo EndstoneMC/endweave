@@ -2,6 +2,7 @@
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v924_to_v898.handlers.biome_definition_list import (
     rewrite_biome_definition_list,
 )
@@ -20,13 +21,6 @@ from endstone_endweave.protocol.v924_to_v898.handlers.gameplay import (
     rewrite_graphics_parameter_override,
     rewrite_start_game,
 )
-from endstone_endweave.protocol.v924_to_v898.handlers.sound_event import (
-    rewrite_add_actor,
-    rewrite_add_item_actor,
-    rewrite_add_player,
-    rewrite_level_sound_event,
-    rewrite_set_actor_data,
-)
 from endstone_endweave.protocol.v924_to_v898.handlers.text import (
     rewrite_text_clientbound,
     rewrite_text_serverbound,
@@ -34,6 +28,18 @@ from endstone_endweave.protocol.v924_to_v898.handlers.text import (
 
 SERVER_PROTOCOL = 924
 CLIENT_PROTOCOL = 898
+
+# v898 Undefined = 578; all v924 sounds >= 578 collapse to Undefined
+_HEARTBEAT = 127
+_OLD_UNDEFINED = 578
+_DROPPED_KEYS = {136, 137, 138}
+
+
+def _remap_sound(v: int) -> int:
+    """Remap LevelSoundEvent from v924 -> v898 (cap at Undefined)."""
+    if v >= _OLD_UNDEFINED:
+        return _OLD_UNDEFINED
+    return v
 
 
 def create_protocol() -> Protocol:
@@ -49,11 +55,12 @@ def create_protocol() -> Protocol:
     protocol.register_clientbound(PacketId.CLIENTBOUND_DATA_STORE, rewrite_clientbound_data_store)
     protocol.register_clientbound(PacketId.CAMERA_AIM_ASSIST_PRESETS, rewrite_camera_aim_assist_presets)
     protocol.register_clientbound(PacketId.BIOME_DEFINITION_LIST, rewrite_biome_definition_list)
-    protocol.register_clientbound(PacketId.LEVEL_SOUND_EVENT, rewrite_level_sound_event)
-    protocol.register_clientbound(PacketId.ADD_PLAYER, rewrite_add_player)
-    protocol.register_clientbound(PacketId.ADD_ACTOR, rewrite_add_actor)
-    protocol.register_clientbound(PacketId.ADD_ITEM_ACTOR, rewrite_add_item_actor)
-    protocol.register_clientbound(PacketId.SET_ACTOR_DATA, rewrite_set_actor_data)
+    sound = SoundRewriter(
+        sound_remap=_remap_sound,
+        actor_data_int_remappers={_HEARTBEAT: _remap_sound},
+        dropped_actor_data_keys=_DROPPED_KEYS,
+    )
+    sound.register(protocol)
     protocol.register_clientbound(PacketId.GRAPHICS_PARAMETER_OVERRIDE, rewrite_graphics_parameter_override)
     protocol.register_clientbound(PacketId.CAMERA_INSTRUCTION, rewrite_camera_instruction)
 

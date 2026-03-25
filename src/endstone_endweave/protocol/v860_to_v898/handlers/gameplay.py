@@ -19,6 +19,7 @@ from endstone_endweave.codec import (
     PacketWrapper,
 )
 
+_ENTITY_EVENT_INSERT_AT = 80
 _MOUSEOVER = 4
 
 
@@ -297,3 +298,16 @@ def rewrite_mob_effect(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(VAR_INT)
     wrapper.passthrough(UVAR_INT64)
     wrapper.write(BOOL, False)
+
+
+def rewrite_actor_event(wrapper: PacketWrapper) -> None:
+    """Remap EntityEvent ids for v898 clients.
+
+    Args:
+        wrapper: Packet wrapper for EntityEvent.
+    """
+    wrapper.passthrough(UVAR_INT64)
+    event_id = wrapper.read(BYTE)
+    remapped = event_id + 1 if event_id >= _ENTITY_EVENT_INSERT_AT else event_id
+    wrapper.write(BYTE, remapped)
+    wrapper.passthrough(VAR_INT)

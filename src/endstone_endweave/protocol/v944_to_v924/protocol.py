@@ -2,6 +2,7 @@
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v944_to_v924.handlers.block_pos import (
     rewrite_add_volume_entity,
     rewrite_anvil_damage,
@@ -27,13 +28,6 @@ from endstone_endweave.protocol.v944_to_v924.handlers.data_driven_ui import (
     rewrite_close_screen,
     rewrite_show_screen,
 )
-from endstone_endweave.protocol.v944_to_v924.handlers.sound_event import (
-    rewrite_add_actor,
-    rewrite_add_item_actor,
-    rewrite_add_player,
-    rewrite_level_sound_event,
-    rewrite_set_actor_data,
-)
 from endstone_endweave.protocol.v944_to_v924.handlers.start_game import (
     rewrite_start_game,
 )
@@ -43,6 +37,21 @@ from endstone_endweave.protocol.v944_to_v924.handlers.voxel_shapes import (
 
 SERVER_PROTOCOL = 944
 CLIENT_PROTOCOL = 924
+
+# v944 inserted PauseGrowth(597) + ResetGrowth(598), Undefined moved to 599
+_HEARTBEAT = 126
+_V944_GROWTH_EVENT = 597
+_V944_UNDEFINED = 599
+_SOUND_SHIFT = 2
+
+
+def _remap_sound(v: int) -> int:
+    """Remap LevelSoundEvent from v944 -> v924 (collapse growth events)."""
+    if v >= _V944_UNDEFINED:
+        return v - _SOUND_SHIFT
+    if v >= _V944_GROWTH_EVENT:
+        return 597
+    return v
 
 
 def create_protocol() -> Protocol:
@@ -68,11 +77,11 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.CAMERA_INSTRUCTION, rewrite_camera_instruction)
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
     p.register_clientbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
-    p.register_clientbound(PacketId.LEVEL_SOUND_EVENT, rewrite_level_sound_event)
-    p.register_clientbound(PacketId.ADD_PLAYER, rewrite_add_player)
-    p.register_clientbound(PacketId.ADD_ACTOR, rewrite_add_actor)
-    p.register_clientbound(PacketId.ADD_ITEM_ACTOR, rewrite_add_item_actor)
-    p.register_clientbound(PacketId.SET_ACTOR_DATA, rewrite_set_actor_data)
+    sound = SoundRewriter(
+        sound_remap=_remap_sound,
+        actor_data_int_remappers={_HEARTBEAT: _remap_sound},
+    )
+    sound.register(p)
 
     p.cancel_clientbound(
         PacketId.LOCATOR_BAR,

@@ -23,6 +23,7 @@ from endstone_endweave.protocol.v860_to_v898.handlers.gameplay import (
     rewrite_animate_serverbound,
 )
 
+_ENTITY_EVENT_INSERT_AT = 80
 _MOUSEOVER = 4
 
 
@@ -274,7 +275,24 @@ def rewrite_mob_effect(wrapper: PacketWrapper) -> None:
     wrapper.read(BOOL)
 
 
+def rewrite_actor_event(wrapper: PacketWrapper) -> None:
+    """Remap EntityEvent ids for v860 clients.
+
+    Args:
+        wrapper: Packet wrapper for EntityEvent.
+    """
+    wrapper.passthrough(UVAR_INT64)
+    event_id = wrapper.read(BYTE)
+    if event_id == _ENTITY_EVENT_INSERT_AT:
+        wrapper.cancel()
+        return
+    remapped = event_id - 1 if event_id > _ENTITY_EVENT_INSERT_AT else event_id
+    wrapper.write(BYTE, remapped)
+    wrapper.passthrough(VAR_INT)
+
+
 __all__ = [
+    "rewrite_actor_event",
     "rewrite_animate_clientbound",
     "rewrite_animate_serverbound",
     "rewrite_camera_aim_assist_presets",

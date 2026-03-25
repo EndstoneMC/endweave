@@ -2,6 +2,7 @@
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v860_to_v898.handlers.commands import (
     rewrite_available_commands,
     rewrite_command_output,
@@ -10,6 +11,7 @@ from endstone_endweave.protocol.v860_to_v898.handlers.commands import (
     rewrite_text_serverbound,
 )
 from endstone_endweave.protocol.v860_to_v898.handlers.gameplay import (
+    rewrite_actor_event,
     rewrite_animate_clientbound,
     rewrite_animate_serverbound,
     rewrite_camera_aim_assist_presets,
@@ -19,17 +21,21 @@ from endstone_endweave.protocol.v860_to_v898.handlers.gameplay import (
     rewrite_resource_pack_stack,
     rewrite_start_game,
 )
-from endstone_endweave.protocol.v860_to_v898.handlers.sound_event import (
-    rewrite_actor_event,
-    rewrite_add_actor,
-    rewrite_add_item_actor,
-    rewrite_add_player,
-    rewrite_level_sound_event,
-    rewrite_set_actor_data,
-)
 
 SERVER_PROTOCOL = 860
 CLIENT_PROTOCOL = 898
+
+# v898 inserted 12 new sounds starting at index 566
+_HEARTBEAT = 127
+_SOUND_INSERT_AT = 566
+_SOUND_SHIFT = 12
+
+
+def _remap_sound(v: int) -> int:
+    """Remap LevelSoundEvent from v860 -> v898 (shift >= 566 by +12)."""
+    if v >= _SOUND_INSERT_AT:
+        return v + _SOUND_SHIFT
+    return v
 
 
 def create_protocol() -> Protocol:
@@ -42,11 +48,12 @@ def create_protocol() -> Protocol:
     protocol.register_serverbound(PacketId.COMMAND_REQUEST, rewrite_command_request)
     protocol.register_serverbound(PacketId.TEXT, rewrite_text_serverbound)
 
-    protocol.register_clientbound(PacketId.ADD_PLAYER, rewrite_add_player)
-    protocol.register_clientbound(PacketId.ADD_ACTOR, rewrite_add_actor)
-    protocol.register_clientbound(PacketId.ADD_ITEM_ACTOR, rewrite_add_item_actor)
+    sound = SoundRewriter(
+        sound_remap=_remap_sound,
+        actor_data_int_remappers={_HEARTBEAT: _remap_sound},
+    )
+    sound.register(protocol)
     protocol.register_clientbound(PacketId.ACTOR_EVENT, rewrite_actor_event)
-    protocol.register_clientbound(PacketId.SET_ACTOR_DATA, rewrite_set_actor_data)
     protocol.register_clientbound(PacketId.ANIMATE, rewrite_animate_clientbound)
     protocol.register_clientbound(PacketId.MOB_EFFECT, rewrite_mob_effect)
     protocol.register_clientbound(PacketId.RESOURCE_PACK_STACK, rewrite_resource_pack_stack)
@@ -55,7 +62,6 @@ def create_protocol() -> Protocol:
     protocol.register_clientbound(PacketId.LEGACY_TELEMETRY_EVENT, rewrite_event)
     protocol.register_clientbound(PacketId.AVAILABLE_COMMANDS, rewrite_available_commands)
     protocol.register_clientbound(PacketId.COMMAND_OUTPUT, rewrite_command_output)
-    protocol.register_clientbound(PacketId.LEVEL_SOUND_EVENT, rewrite_level_sound_event)
     protocol.register_clientbound(PacketId.CAMERA_AIM_ASSIST_PRESETS, rewrite_camera_aim_assist_presets)
 
     return protocol

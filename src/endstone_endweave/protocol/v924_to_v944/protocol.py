@@ -2,6 +2,7 @@
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_add_volume_entity,
     rewrite_anvil_damage,
@@ -27,13 +28,6 @@ from endstone_endweave.protocol.v924_to_v944.handlers.data_driven_ui import (
     rewrite_close_all_screens,
     rewrite_show_screen,
 )
-from endstone_endweave.protocol.v924_to_v944.handlers.sound_event import (
-    rewrite_add_actor,
-    rewrite_add_item_actor,
-    rewrite_add_player,
-    rewrite_level_sound_event,
-    rewrite_set_actor_data,
-)
 from endstone_endweave.protocol.v924_to_v944.handlers.start_game import (
     rewrite_start_game,
 )
@@ -43,6 +37,18 @@ from endstone_endweave.protocol.v924_to_v944.handlers.voxel_shapes import (
 
 SERVER_PROTOCOL = 924
 CLIENT_PROTOCOL = 944
+
+# v924 Undefined = 597, v944 inserted PauseGrowth(597) + ResetGrowth(598)
+_HEARTBEAT = 126
+_V924_UNDEFINED = 597
+_SOUND_SHIFT = 2
+
+
+def _remap_sound(v: int) -> int:
+    """Remap LevelSoundEvent from v924 -> v944 (shift >= Undefined by +2)."""
+    if v >= _V924_UNDEFINED:
+        return v + _SOUND_SHIFT
+    return v
 
 
 def create_protocol() -> Protocol:
@@ -90,11 +96,11 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
 
     # Clientbound rewriters -- LevelSoundEvent remapping
-    p.register_clientbound(PacketId.LEVEL_SOUND_EVENT, rewrite_level_sound_event)
-    p.register_clientbound(PacketId.ADD_PLAYER, rewrite_add_player)
-    p.register_clientbound(PacketId.ADD_ACTOR, rewrite_add_actor)
-    p.register_clientbound(PacketId.ADD_ITEM_ACTOR, rewrite_add_item_actor)
-    p.register_clientbound(PacketId.SET_ACTOR_DATA, rewrite_set_actor_data)
+    sound = SoundRewriter(
+        sound_remap=_remap_sound,
+        actor_data_int_remappers={_HEARTBEAT: _remap_sound},
+    )
+    sound.register(p)
 
     # Serverbound rewriters -- BlockPos conversion (BlockPos -> NetworkBlockPos)
     p.register_serverbound(PacketId.INVENTORY_TRANSACTION, rewrite_inventory_transaction)
