@@ -7,7 +7,6 @@ strip the v924 server join info, and write false for v944's has_server_join_info
 """
 
 from endstone_endweave.codec import (
-    BLOCK_PROPERTY,
     BOOL,
     BYTE,
     EXPERIMENTS,
@@ -24,7 +23,6 @@ from endstone_endweave.codec import (
     VAR_INT64,
     VEC2,
     VEC3,
-    ArrayType,
     PacketWrapper,
 )
 
@@ -110,7 +108,10 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(INT64_LE)  # Level Current Time
     wrapper.passthrough(VAR_INT)  # Enchantment Seed
 
-    wrapper.passthrough(ArrayType(BLOCK_PROPERTY))  # Block Properties
+    block_prop_count = wrapper.passthrough(UVAR_INT)  # Block Properties
+    for _ in range(block_prop_count):
+        wrapper.passthrough(STRING)
+        wrapper.passthrough(NAMED_COMPOUND_TAG)
 
     wrapper.passthrough(STRING)  # Multiplayer Correlation Id
     wrapper.passthrough(BOOL)  # Enable Item Stack Net Manager

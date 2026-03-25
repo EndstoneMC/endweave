@@ -7,9 +7,7 @@ from endstone_endweave.codec import (
     FLOAT_LE,
     INT64_LE,
     INT_LE,
-    ITEM_SETTING,
     NAMED_COMPOUND_TAG,
-    PRIORITY,
     SHORT_LE,
     STRING,
     UVAR_INT,
@@ -17,7 +15,6 @@ from endstone_endweave.codec import (
     VAR_INT,
     VAR_INT64,
     VEC3,
-    ArrayType,
     CompoundTag,
     OptionalType,
     PacketWrapper,
@@ -183,13 +180,25 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
     for _ in range(category_count):
         wrapper.passthrough(STRING)
 
-        wrapper.passthrough(ArrayType(PRIORITY))
+        count = wrapper.passthrough(UVAR_INT)
+        for _ in range(count):
+            wrapper.passthrough(STRING)
+            wrapper.passthrough(INT_LE)
 
-        wrapper.passthrough(ArrayType(PRIORITY))
+        count = wrapper.passthrough(UVAR_INT)
+        for _ in range(count):
+            wrapper.passthrough(STRING)
+            wrapper.passthrough(INT_LE)
 
-        wrapper.passthrough(ArrayType(PRIORITY))
+        count = wrapper.passthrough(UVAR_INT)
+        for _ in range(count):
+            wrapper.passthrough(STRING)
+            wrapper.passthrough(INT_LE)
 
-        wrapper.read(ArrayType(PRIORITY))
+        count = wrapper.read(UVAR_INT)
+        for _ in range(count):
+            wrapper.read(STRING)
+            wrapper.read(INT_LE)
 
         wrapper.passthrough(OptionalType(INT_LE))
         wrapper.passthrough(OptionalType(INT_LE))
@@ -218,7 +227,10 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
         for _ in range(liquid_count):
             wrapper.passthrough(STRING)
 
-        wrapper.passthrough(ArrayType(ITEM_SETTING))
+        item_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(item_count):
+            wrapper.passthrough(STRING)
+            wrapper.passthrough(STRING)
 
         wrapper.passthrough(OptionalType(STRING))
         wrapper.passthrough(OptionalType(STRING))

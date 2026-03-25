@@ -22,17 +22,11 @@ from endstone_endweave.codec.types.data_store import (
     ChangeValue,
 )
 from endstone_endweave.codec.types.gameplay import (
-    BLOCK_PROPERTY,
     EXPERIMENTS,
     EXPERIMENTS_V860,
     GAME_RULES,
-    ITEM_SETTING,
-    PRIORITY,
-    BlockProperty,
     Experiment,
     GameRule,
-    ItemSetting,
-    Priority,
 )
 from endstone_endweave.codec.types.inventory import INVENTORY_ACTION, InventoryAction
 from endstone_endweave.codec.types.item import ITEM_INSTANCE, ItemInstance
@@ -99,8 +93,6 @@ __all__ = [
     "BIOME_DEFINITION_V898",
     "BIOME_DEFINITION_V924",
     "BLOCK_POS",
-    "BLOCK_PROPERTY",
-    "BlockProperty",
     "BOOL",
     "BYTE",
     "ByteArrayTag",
@@ -124,9 +116,7 @@ __all__ = [
     "INT_BE",
     "INT_LE",
     "INVENTORY_ACTION",
-    "ITEM_SETTING",
     "ITEM_INSTANCE",
-    "ItemSetting",
     "IntArrayTag",
     "IntTag",
     "InventoryAction",
@@ -142,8 +132,6 @@ __all__ = [
     "OPTIONAL_VEC2",
     "OPTIONAL_VEC3",
     "OptionalType",
-    "PRIORITY",
-    "Priority",
     "REMAINING_BYTES",
     "RotationKeyFrame",
     "SHORT_LE",

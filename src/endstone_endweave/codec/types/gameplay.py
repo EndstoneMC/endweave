@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import Any
 
 from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types.nbt import NAMED_COMPOUND_TAG, CompoundTag
 from endstone_endweave.codec.types.primitives import (
     BOOL,
     FLOAT_LE,
@@ -16,91 +15,6 @@ from endstone_endweave.codec.types.primitives import (
     Type,
 )
 from endstone_endweave.codec.writer import PacketWriter
-
-# ---------------------------------------------------------------------------
-# Simple pair types
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class Priority:
-    """A camera aim-assist priority entry (name + weight).
-
-    Attributes:
-        name: Priority identifier string.
-        weight: Priority weight.
-    """
-
-    name: str
-    weight: int
-
-
-class _PriorityType(Type[Priority]):
-    """STRING + INT_LE pair."""
-
-    def read(self, reader: PacketReader) -> Priority:
-        return Priority(name=STRING.read(reader), weight=INT_LE.read(reader))
-
-    def write(self, writer: PacketWriter, value: Priority) -> None:
-        STRING.write(writer, value.name)
-        INT_LE.write(writer, value.weight)
-
-
-@dataclass
-class ItemSetting:
-    """A camera aim-assist item setting (item + category).
-
-    Attributes:
-        item: Item identifier string.
-        category: Category identifier string.
-    """
-
-    item: str
-    category: str
-
-
-class _ItemSettingType(Type[ItemSetting]):
-    """STRING + STRING pair."""
-
-    def read(self, reader: PacketReader) -> ItemSetting:
-        return ItemSetting(item=STRING.read(reader), category=STRING.read(reader))
-
-    def write(self, writer: PacketWriter, value: ItemSetting) -> None:
-        STRING.write(writer, value.item)
-        STRING.write(writer, value.category)
-
-
-# ---------------------------------------------------------------------------
-# Block property (name + NBT definition)
-# ---------------------------------------------------------------------------
-
-
-@dataclass
-class BlockProperty:
-    """A block property entry (name + CompoundTag definition).
-
-    Attributes:
-        name: Block name string.
-        definition: Block property NBT data.
-    """
-
-    name: str
-    definition: CompoundTag | None
-
-
-class _BlockPropertyType(Type[BlockProperty]):
-    """STRING + NAMED_COMPOUND_TAG pair."""
-
-    def read(self, reader: PacketReader) -> BlockProperty:
-        return BlockProperty(
-            name=STRING.read(reader),
-            definition=NAMED_COMPOUND_TAG.read(reader),
-        )
-
-    def write(self, writer: PacketWriter, value: BlockProperty) -> None:
-        STRING.write(writer, value.name)
-        NAMED_COMPOUND_TAG.write(writer, value.definition)
-
 
 # ---------------------------------------------------------------------------
 # Game rules (conditional union per entry)
@@ -212,9 +126,6 @@ class _ExperimentsV860Type(Type[list[Experiment]]):
 # Singletons
 # ---------------------------------------------------------------------------
 
-PRIORITY = _PriorityType()
-ITEM_SETTING = _ItemSettingType()
-BLOCK_PROPERTY = _BlockPropertyType()
 GAME_RULES = _GameRulesType()
 EXPERIMENTS = _ExperimentsType()
 EXPERIMENTS_V860 = _ExperimentsV860Type()

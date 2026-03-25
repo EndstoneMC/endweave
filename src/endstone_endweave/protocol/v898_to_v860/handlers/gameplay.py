@@ -1,16 +1,13 @@
 """Gameplay packet handlers for v898 server to v860 client translation."""
 
 from endstone_endweave.codec import (
-    BLOCK_PROPERTY,
     BOOL,
     BYTE,
     EXPERIMENTS_V860,
     FLOAT_LE,
     INT64_LE,
     INT_LE,
-    ITEM_SETTING,
     NAMED_COMPOUND_TAG,
-    PRIORITY,
     SHORT_LE,
     STRING,
     UVAR_INT,
@@ -18,7 +15,6 @@ from endstone_endweave.codec import (
     VAR_INT,
     VAR_INT64,
     VEC3,
-    ArrayType,
     OptionalType,
     PacketWrapper,
 )
@@ -149,7 +145,10 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)
     wrapper.passthrough(INT64_LE)
     wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(ArrayType(BLOCK_PROPERTY))
+    block_prop_count = wrapper.passthrough(UVAR_INT)
+    for _ in range(block_prop_count):
+        wrapper.passthrough(STRING)
+        wrapper.passthrough(NAMED_COMPOUND_TAG)
     wrapper.passthrough(STRING)
     wrapper.passthrough(BOOL)
     wrapper.passthrough(STRING)
@@ -173,13 +172,20 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
     for _ in range(category_count):
         wrapper.passthrough(STRING)
 
-        wrapper.passthrough(ArrayType(PRIORITY))
+        count = wrapper.passthrough(UVAR_INT)
+        for _ in range(count):
+            wrapper.passthrough(STRING)
+            wrapper.passthrough(INT_LE)
 
-        wrapper.passthrough(ArrayType(PRIORITY))
+        count = wrapper.passthrough(UVAR_INT)
+        for _ in range(count):
+            wrapper.passthrough(STRING)
+            wrapper.passthrough(INT_LE)
 
         block_tag_priority_count = wrapper.read(UVAR_INT)
         for _ in range(block_tag_priority_count):
-            wrapper.passthrough(PRIORITY)
+            wrapper.passthrough(STRING)
+            wrapper.passthrough(INT_LE)
 
         wrapper.passthrough(OptionalType(INT_LE))
         wrapper.passthrough(OptionalType(INT_LE))
@@ -210,7 +216,10 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
         for _ in range(liquid_count):
             wrapper.passthrough(STRING)
 
-        wrapper.passthrough(ArrayType(ITEM_SETTING))
+        item_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(item_count):
+            wrapper.passthrough(STRING)
+            wrapper.passthrough(STRING)
 
         wrapper.passthrough(OptionalType(STRING))
         wrapper.passthrough(OptionalType(STRING))
