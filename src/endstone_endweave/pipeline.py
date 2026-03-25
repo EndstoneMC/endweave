@@ -74,7 +74,6 @@ class ProtocolPipeline:
                 "PRE ",
                 address,
                 "SERVERBOUND",
-                connection.state.value.upper(),
                 packet_id,
                 connection.client_protocol,
                 len(payload),
@@ -93,7 +92,6 @@ class ProtocolPipeline:
                     .set("Packet ID", packet_label(packet_id))
                     .set("Protocol", protocol.name)
                     .set("Address", address)
-                    .set("State", connection.state.value.upper())
                 )
                 if err.should_be_printed:
                     self._logger.error(f"{err.message}\n{traceback.format_exc()}")
@@ -117,7 +115,6 @@ class ProtocolPipeline:
                 "POST",
                 address,
                 "SERVERBOUND",
-                connection.state.value.upper(),
                 packet_id,
                 connection.client_protocol,
                 len(event.payload),
@@ -144,7 +141,6 @@ class ProtocolPipeline:
                 "PRE ",
                 address,
                 "CLIENTBOUND",
-                connection.state.value.upper(),
                 packet_id,
                 connection.client_protocol,
                 len(payload),
@@ -163,7 +159,6 @@ class ProtocolPipeline:
                     .set("Packet ID", packet_label(packet_id))
                     .set("Protocol", protocol.name)
                     .set("Address", address)
-                    .set("State", connection.state.value.upper())
                 )
                 if err.should_be_printed:
                     self._logger.error(f"{err.message}\n{traceback.format_exc()}")
@@ -187,7 +182,6 @@ class ProtocolPipeline:
                 "POST",
                 address,
                 "CLIENTBOUND",
-                connection.state.value.upper(),
                 packet_id,
                 connection.client_protocol,
                 len(event.payload),

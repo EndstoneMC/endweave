@@ -5,7 +5,6 @@ See Also:
 """
 
 from endstone_endweave.codec import INT_BE, PacketWrapper
-from endstone_endweave.connection import ConnectionState
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
 
@@ -19,7 +18,6 @@ def detect_client_protocol(wrapper: PacketWrapper) -> None:
     connection = wrapper.user
     client_proto = wrapper.read(INT_BE)
     connection.client_protocol = client_proto
-    connection.state = ConnectionState.LOGIN
     wrapper.write(INT_BE, connection.server_protocol)
     connection.logger.debug(
         f"User connected with protocol: {client_proto} and serverProtocol: {connection.server_protocol}"
