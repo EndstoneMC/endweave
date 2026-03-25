@@ -128,18 +128,6 @@ class ProtocolManager:
 
         return None
 
-    def get_max_client_version(self, server_protocol: int) -> int | None:
-        """Return the highest client protocol reachable from server_protocol.
-
-        Args:
-            server_protocol: Server-side protocol number to search from.
-
-        Returns:
-            The highest reachable client protocol number, or None if none found.
-        """
-        reachable = [c for _, c in self._protocols if self.get_path(server_protocol, c) is not None]
-        return max(reachable) if reachable else None
-
     def get_supported_versions(self, server_protocol: int) -> list[int]:
         """Return all supported protocol versions for a server protocol.
 
