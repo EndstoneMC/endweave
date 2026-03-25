@@ -14,6 +14,7 @@ from endstone_endweave.codec import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    OptionalType,
     PacketWrapper,
 )
 
@@ -40,11 +41,6 @@ def _passthrough_priority(wrapper: PacketWrapper) -> None:
 def _passthrough_item_setting(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(STRING)
     wrapper.passthrough(STRING)
-
-
-def _passthrough_optional_string(wrapper: PacketWrapper) -> None:
-    if wrapper.passthrough(BOOL):
-        wrapper.passthrough(STRING)
 
 
 def rewrite_start_game(wrapper: PacketWrapper) -> None:
@@ -129,9 +125,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)
     wrapper.passthrough(STRING)
     wrapper.passthrough(STRING)
-    has_force_experimental_gameplay = wrapper.passthrough(BOOL)
-    if has_force_experimental_gameplay:
-        wrapper.passthrough(BOOL)
+    wrapper.passthrough(OptionalType(BOOL))
     wrapper.passthrough(BYTE)
     wrapper.passthrough(BOOL)
 
@@ -191,11 +185,8 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
 
         wrapper.write(UVAR_INT, 0)
 
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(INT_LE)
-
-        if wrapper.passthrough(BOOL):
-            wrapper.passthrough(INT_LE)
+        wrapper.passthrough(OptionalType(INT_LE))
+        wrapper.passthrough(OptionalType(INT_LE))
 
     preset_count = wrapper.passthrough(UVAR_INT)
     for _ in range(preset_count):
@@ -223,7 +214,7 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
         for _ in range(item_setting_count):
             _passthrough_item_setting(wrapper)
 
-        _passthrough_optional_string(wrapper)
-        _passthrough_optional_string(wrapper)
+        wrapper.passthrough(OptionalType(STRING))
+        wrapper.passthrough(OptionalType(STRING))
 
     wrapper.passthrough(BYTE)

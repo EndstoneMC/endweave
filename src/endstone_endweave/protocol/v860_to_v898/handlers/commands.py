@@ -344,7 +344,7 @@ def rewrite_command_output(wrapper: PacketWrapper) -> None:
 
     output_type = wrapper.read(BYTE)
     wrapper.write(STRING, _COMMAND_OUTPUT_LABELS[output_type])
-    wrapper.write(INT_LE, wrapper.read(UVAR_INT))
+    wrapper.map(UVAR_INT, INT_LE)
 
     message_count = wrapper.read(UVAR_INT)
     wrapper.write(UVAR_INT, message_count)
