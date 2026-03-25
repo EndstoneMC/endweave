@@ -139,3 +139,21 @@ class ProtocolManager:
         """
         reachable = [c for _, c in self._protocols if self.get_path(server_protocol, c) is not None]
         return max(reachable) if reachable else None
+
+    def get_supported_versions(self, server_protocol: int) -> list[int]:
+        """Return all supported protocol versions for a server protocol.
+
+        Includes the server's own protocol and any client protocols that can
+        reach it through the registered protocol graph.
+
+        Args:
+            server_protocol: Server-side protocol number to search from.
+
+        Returns:
+            Sorted protocol numbers supported by this server.
+        """
+        supported = {server_protocol}
+        for _, client_protocol in self._protocols:
+            if self.get_path(server_protocol, client_protocol) is not None:
+                supported.add(client_protocol)
+        return sorted(supported)

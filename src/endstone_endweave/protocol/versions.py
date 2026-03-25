@@ -25,10 +25,13 @@ class ProtocolVersion:
 
 
 # Registry — add new versions here
+R21_U12_120 = ProtocolVersion(859, "1.21.120", "r21_u12", frozenset({"1.21.120"}))
+R21_U12_124 = ProtocolVersion(860, "1.21.124", "r21_u12", frozenset({"1.21.124"}))
+R21_U13 = ProtocolVersion(898, "1.21.130", "r21_u13", frozenset({"1.21.130", "1.21.131", "1.21.132"}))
 R26_U0 = ProtocolVersion(924, "1.26.0", "r26_u0", frozenset({"1.26.0", "1.26.1", "1.26.2", "1.26.3"}))
 R26_U1 = ProtocolVersion(944, "1.26.10", "r26_u1", frozenset({"1.26.10"}))
 
-VERSIONS: dict[int, ProtocolVersion] = {v.protocol: v for v in [R26_U0, R26_U1]}
+VERSIONS: dict[int, ProtocolVersion] = {v.protocol: v for v in [R21_U12_120, R21_U12_124, R21_U13, R26_U0, R26_U1]}
 
 # Reverse lookup: MC version string -> ProtocolVersion
 _VERSION_BY_NAME: dict[str, ProtocolVersion] = {name: v for v in VERSIONS.values() for name in v.included_versions}

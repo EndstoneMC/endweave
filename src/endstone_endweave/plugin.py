@@ -20,8 +20,20 @@ from endstone_endweave.pipeline import ProtocolPipeline
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.base import create_base_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
+from endstone_endweave.protocol.v898_to_v860 import (
+    create_protocol as create_v898_to_v860,
+)
+from endstone_endweave.protocol.v860_to_v898 import (
+    create_protocol as create_v860_to_v898,
+)
 from endstone_endweave.protocol.v924_to_v944 import (
     create_protocol as create_v924_to_v944,
+)
+from endstone_endweave.protocol.v924_to_v898 import (
+    create_protocol as create_v924_to_v898,
+)
+from endstone_endweave.protocol.v944_to_v924 import (
+    create_protocol as create_v944_to_v924,
 )
 from endstone_endweave.protocol.versions import VERSIONS, get_version_by_name
 
@@ -76,19 +88,21 @@ class EndweavePlugin(Plugin):
         self._manager.register_base(create_base_protocol(server_protocol))
 
         # Register version-specific protocols
+        self._register_protocol(create_v898_to_v860())
+        self._register_protocol(create_v898_to_v860(859))
+        self._register_protocol(create_v860_to_v898())
+        self._register_protocol(create_v860_to_v898(859))
+        self._register_protocol(create_v924_to_v898())
         self._register_protocol(create_v924_to_v944())
+        self._register_protocol(create_v944_to_v924())
         # Future: self._register_protocol(create_v944_to_v960())
 
-        # Determine highest client version we support
-        self._max_client_version = self._manager.get_max_client_version(server_protocol)
+        self._supported_versions = self._manager.get_supported_versions(server_protocol)
+        self._advertised_protocol = max(self._supported_versions) if self._supported_versions else server_protocol
 
-        if self._max_client_version:
-            server_ver = VERSIONS.get(server_protocol)
-            max_ver = VERSIONS.get(self._max_client_version)
-            if server_ver and max_ver:
-                self.logger.info(
-                    f"Supported client versions: {server_ver.minecraft_version}-{max_ver.minecraft_version}"
-                )
+        supported_names = [VERSIONS[protocol].minecraft_version for protocol in self._supported_versions if protocol in VERSIONS]
+        if supported_names:
+            self.logger.info(f"Supported client versions: {', '.join(supported_names)}")
 
         self._pipeline = ProtocolPipeline(self._manager, self._connections, self.logger, debug)
         self.register_events(self)
@@ -143,10 +157,9 @@ class EndweavePlugin(Plugin):
 
     @event_handler
     def on_server_list_ping(self, event: ServerListPingEvent) -> None:
-        if self._max_client_version:
-            ver = VERSIONS.get(self._max_client_version)
-            if ver:
-                event.minecraft_version_network = ver.minecraft_version
+        ver = VERSIONS.get(self._advertised_protocol)
+        if ver:
+            event.minecraft_version_network = ver.minecraft_version
 
     @event_handler
     def on_player_quit(self, event: PlayerQuitEvent) -> None:

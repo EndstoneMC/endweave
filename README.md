@@ -9,9 +9,13 @@ rewriting packets at the network layer. Inspired by [ViaVersion](https://github.
 
 ## Supported Versions
 
-| Server Version        | Supported Clients |
-|-----------------------|-------------------|
-| 1.26.0 (protocol 924) | 1.26.0 - 1.26.10  |
+| Minecraft Version   | Protocol |
+|---------------------|----------|
+| 1.21.120            | 859      |
+| 1.21.124            | 860      |
+| 1.21.130 - 1.21.132 | 898      |
+| 1.26.0 - 1.26.3     | 924      |
+| 1.26.10             | 944      |
 
 ## Quick Start
 
@@ -20,6 +24,8 @@ rewriting packets at the network layer. Inspired by [ViaVersion](https://github.
 3. Restart the server
 
 Players on newer clients will connect transparently. No additional configuration needed.
+
+Current translation chain coverage is `859/860 <-> 898 <-> 924 <-> 944`.
 
 ## How It Works
 

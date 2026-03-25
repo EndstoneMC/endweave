@@ -107,11 +107,9 @@ class ProtocolPipeline:
                 len(payload),
             )
 
-        # Fresh wrapper from base protocol output for version-specific chain
-        wrapper = PacketWrapper(payload, user=connection)
-
         # Serverbound: apply chain in order (client -> server direction)
         for protocol in chain:
+            wrapper = PacketWrapper(payload, user=connection)
             try:
                 protocol.transform(Direction.SERVERBOUND, packet_id, wrapper)
             except Exception as exc:
@@ -134,10 +132,10 @@ class ProtocolPipeline:
                 )
                 event.cancel()
                 return
+            payload = wrapper.to_bytes()
 
-        new_payload = wrapper.to_bytes()
-        if new_payload != payload:
-            event.payload = new_payload
+        if payload != event.payload:
+            event.payload = payload
 
         # POST transform logging (ViaVersion: logPostPacketTransform)
         if self._debug.log_post_packet_transform:
@@ -182,10 +180,9 @@ class ProtocolPipeline:
                 len(payload),
             )
 
-        wrapper = PacketWrapper(payload, user=connection)
-
         # Clientbound: apply chain in reverse order (server -> client direction)
         for protocol in reversed(chain):
+            wrapper = PacketWrapper(payload, user=connection)
             try:
                 protocol.transform(Direction.CLIENTBOUND, packet_id, wrapper)
             except Exception as exc:
@@ -208,9 +205,9 @@ class ProtocolPipeline:
                 )
                 event.cancel()
                 return
+            payload = wrapper.to_bytes()
 
         # Finalize version chain output, then run base protocols with fresh wrapper
-        payload = wrapper.to_bytes()
         wrapper = PacketWrapper(payload, user=connection)
 
         for base in self._manager.base_protocols:

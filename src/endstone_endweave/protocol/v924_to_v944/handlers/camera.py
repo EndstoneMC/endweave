@@ -1,9 +1,4 @@
-"""Packet handlers for camera-related changes (v924 -> v944).
-
-CameraSplinePacket (338): v944 appends SplineIdentifier + LoadFromJson per spline entry.
-CameraInstructionPacket (300): v944 appends SplineIdentifier + LoadFromJson to the spline
-sub-message.
-"""
+"""Packet handlers for camera-related changes (v924 -> v944)."""
 
 from endstone_endweave.codec import (
     BOOL,
@@ -17,6 +12,45 @@ from endstone_endweave.codec import (
     VEC3,
     PacketWrapper,
 )
+
+_CAMERA_EASES = (
+    "linear",
+    "spring",
+    "in_sine",
+    "out_sine",
+    "in_out_sine",
+    "in_quad",
+    "out_quad",
+    "in_out_quad",
+    "in_cubic",
+    "out_cubic",
+    "in_out_cubic",
+    "in_quart",
+    "out_quart",
+    "in_out_quart",
+    "in_quint",
+    "out_quint",
+    "in_out_quint",
+    "in_expo",
+    "out_expo",
+    "in_out_expo",
+    "in_circ",
+    "out_circ",
+    "in_out_circ",
+    "in_back",
+    "out_back",
+    "in_out_back",
+    "in_elastic",
+    "out_elastic",
+    "in_out_elastic",
+    "in_bounce",
+    "out_bounce",
+    "in_out_bounce",
+)
+
+
+def _write_camera_ease(wrapper: PacketWrapper, value: int) -> None:
+    wrapper.write(STRING, _CAMERA_EASES[value])
 
 
 def _passthrough_spline_instruction(wrapper: PacketWrapper) -> None:
@@ -32,13 +66,15 @@ def _passthrough_spline_instruction(wrapper: PacketWrapper) -> None:
     for _ in range(pk_count):
         wrapper.passthrough(FLOAT_LE)  # Key frame value
         wrapper.passthrough(FLOAT_LE)  # Key frame time
-        wrapper.passthrough(INT_LE)  # Key frame easing func
+        _write_camera_ease(wrapper, wrapper.read(BYTE))  # Key frame easing func
     # rotationOption
     rk_count = wrapper.passthrough(UVAR_INT)
     for _ in range(rk_count):
         wrapper.passthrough(VEC3)  # Key frame value
         wrapper.passthrough(FLOAT_LE)  # Key frame time
-        wrapper.passthrough(INT_LE)  # Key frame easing func
+        _write_camera_ease(wrapper, wrapper.read(BYTE))  # Key frame easing func
+    wrapper.passthrough(STRING)  # splineIdentifier
+    wrapper.passthrough(BOOL)  # loadFromJson
 
 
 # ---------------------------------------------------------------------------
@@ -47,23 +83,25 @@ def _passthrough_spline_instruction(wrapper: PacketWrapper) -> None:
 
 
 def rewrite_camera_spline(wrapper: PacketWrapper) -> None:
-    """CameraSpline (338): append SplineIdentifier + LoadFromJson per spline, added in v944.
-
-    v944 adds two fields at the end of each CameraSplineDefinition entry:
-    - SplineIdentifier (string)
-    - LoadFromJson (bool)
-
-    See Also:
-        org.cloudburstmc.protocol.bedrock.codec.v944.serializer.CameraSplineSerializer_v944
-
-    Args:
-        wrapper: Packet wrapper for CameraSpline.
-    """
+    """CameraSpline (338): append SplineIdentifier + LoadFromJson per spline."""
     spline_count = wrapper.passthrough(UVAR_INT)  # Camera Data Splines
     for _ in range(spline_count):
         wrapper.passthrough(STRING)  # CameraSplineDefinition.name
-        _passthrough_spline_instruction(wrapper)
-        # v944 additions per CameraSplineDefinition
+        wrapper.passthrough(FLOAT_LE)  # totalTime
+        wrapper.passthrough(STRING)  # type
+        curve_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(curve_count):
+            wrapper.passthrough(VEC3)
+        pk_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(pk_count):
+            wrapper.passthrough(FLOAT_LE)
+            wrapper.passthrough(FLOAT_LE)
+            wrapper.passthrough(STRING)
+        rk_count = wrapper.passthrough(UVAR_INT)
+        for _ in range(rk_count):
+            wrapper.passthrough(VEC3)
+            wrapper.passthrough(FLOAT_LE)
+            wrapper.passthrough(STRING)
         wrapper.write(STRING, "")  # splineIdentifier
         wrapper.write(BOOL, False)  # loadFromJson
 
@@ -74,15 +112,7 @@ def rewrite_camera_spline(wrapper: PacketWrapper) -> None:
 
 
 def rewrite_camera_instruction(wrapper: PacketWrapper) -> None:
-    """CameraInstruction (300): append SplineIdentifier + LoadFromJson to spline sub-message.
-
-    v944 adds two fields at the end of the optional spline instruction:
-    - SplineIdentifier (string)
-    - LoadFromJson (bool)
-
-    Args:
-        wrapper: Packet wrapper for CameraInstruction.
-    """
+    """CameraInstruction (300): rewrite eased fields into the v944 form."""
     # optional Set (CameraInstruction::SetInstruction)
     if wrapper.passthrough(BOOL):
         wrapper.passthrough(INT_LE)  # preset
@@ -142,14 +172,12 @@ def rewrite_camera_instruction(wrapper: PacketWrapper) -> None:
     if wrapper.passthrough(BOOL):
         wrapper.passthrough(FLOAT_LE)  # Field of View
         wrapper.passthrough(FLOAT_LE)  # FOV Ease Time
-        wrapper.passthrough(BYTE)  # FOV Ease Type
+        _write_camera_ease(wrapper, wrapper.read(BYTE))  # FOV Ease Type
         wrapper.passthrough(BOOL)  # Field of View Clear
 
-    # optional Spline (CameraInstruction::SplineInstruction) -- append v944 fields
+    # optional Spline (CameraInstruction::SplineInstruction)
     if wrapper.passthrough(BOOL):
         _passthrough_spline_instruction(wrapper)
-        wrapper.write(STRING, "")  # splineIdentifier (v944)
-        wrapper.write(BOOL, False)  # loadFromJson (v944)
 
     # optional AttachToEntity (CameraInstruction::AttachToEntityInstruction)
     if wrapper.passthrough(BOOL):

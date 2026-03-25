@@ -23,6 +23,8 @@ from endstone_endweave.codec import (
     PacketWrapper,
     Type,
 )
+from endstone_endweave.codec.reader import PacketReader
+from endstone_endweave.codec.writer import PacketWriter
 
 
 def net_to_block(wrapper: PacketWrapper) -> None:
@@ -124,9 +126,37 @@ def _passthrough_actor_data_value(wrapper: PacketWrapper, type_id: int) -> None:
         wrapper.passthrough(FLOAT_LE)
 
 
+def _copy_actor_data_value(reader: PacketReader, writer: PacketWriter | None, type_id: int) -> None:
+    if type_id in _ACTOR_DATA_TYPES:
+        value = _ACTOR_DATA_TYPES[type_id].read(reader)
+        if writer is not None:
+            _ACTOR_DATA_TYPES[type_id].write(writer, value)
+    elif type_id == 6:  # BlockPos (3x varint)
+        x = VAR_INT.read(reader)
+        y = VAR_INT.read(reader)
+        z = VAR_INT.read(reader)
+        if writer is not None:
+            VAR_INT.write(writer, x)
+            VAR_INT.write(writer, y)
+            VAR_INT.write(writer, z)
+    elif type_id == 7:  # Int64
+        value = VAR_INT64.read(reader)
+        if writer is not None:
+            VAR_INT64.write(writer, value)
+    elif type_id == 8:  # Vec3 (3x float)
+        x = FLOAT_LE.read(reader)
+        y = FLOAT_LE.read(reader)
+        z = FLOAT_LE.read(reader)
+        if writer is not None:
+            FLOAT_LE.write(writer, x)
+            FLOAT_LE.write(writer, y)
+            FLOAT_LE.write(writer, z)
+
+
 def passthrough_actor_data(
     wrapper: PacketWrapper,
     int_remappers: Mapping[int, Callable[[int], int]] | None = None,
+    dropped_keys: set[int] | None = None,
 ) -> None:
     """Passthrough ActorData entries, optionally remapping Int (type 2) values.
 
@@ -135,16 +165,30 @@ def passthrough_actor_data(
         int_remappers: Optional mapping of ActorData key -> remap function
             for Int-typed values. The function receives the original int
             and returns the remapped int.
+        dropped_keys: Optional set of ActorData keys to consume without
+            writing back to the output.
     """
-    count = wrapper.passthrough(UVAR_INT)
+    count = wrapper.read(UVAR_INT)
+    out = PacketWriter()
+    written_count = 0
     for _ in range(count):
-        key = wrapper.passthrough(UVAR_INT)
-        type_id = wrapper.passthrough(UVAR_INT)
+        key = wrapper.read(UVAR_INT)
+        type_id = wrapper.read(UVAR_INT)
+        drop = dropped_keys is not None and key in dropped_keys
+
+        if not drop:
+            out.write_uvarint(key)
+            out.write_uvarint(type_id)
+            written_count += 1
 
         if int_remappers and key in int_remappers and type_id in (2, 7):
             # Type 2 = Int (varint32), Type 7 = Int64 (varint64)
             field = VAR_INT if type_id == 2 else VAR_INT64
-            value = wrapper.read(field)
-            wrapper.write(field, int_remappers[key](value))
+            value = field.read(wrapper.reader)
+            if not drop:
+                field.write(out, int_remappers[key](value))
         else:
-            _passthrough_actor_data_value(wrapper, type_id)
+            _copy_actor_data_value(wrapper.reader, None if drop else out, type_id)
+
+    wrapper.write(UVAR_INT, written_count)
+    wrapper.writer.write_bytes(out.to_bytes())
