@@ -25,24 +25,6 @@ from endstone_endweave.codec import (
 )
 
 
-def net_to_block(wrapper: PacketWrapper) -> None:
-    """Read NetworkBlockPos (v924) and write BlockPos (v944).
-
-    Args:
-        wrapper: Packet wrapper positioned at a NetworkBlockPos field.
-    """
-    wrapper.write(BLOCK_POS, wrapper.read(NETWORK_BLOCK_POS))
-
-
-def block_to_net(wrapper: PacketWrapper) -> None:
-    """Read BlockPos (v944) and write NetworkBlockPos (v924).
-
-    Args:
-        wrapper: Packet wrapper positioned at a BlockPos field.
-    """
-    wrapper.write(NETWORK_BLOCK_POS, wrapper.read(BLOCK_POS))
-
-
 def passthrough_inventory_action(wrapper: PacketWrapper) -> None:
     """Passthrough a single InventoryAction entry.
 
@@ -73,8 +55,8 @@ def passthrough_structure_settings(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # Should ignore entities?
     wrapper.passthrough(BOOL)  # Should ignore blocks?
     wrapper.passthrough(BOOL)  # Should Allow Non Ticking Player and Ticking Area Chunks
-    block_to_net(wrapper)  # Structure Size
-    block_to_net(wrapper)  # Structure Offset
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Structure Size
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Structure Offset
     wrapper.passthrough(VAR_INT64)  # Last Edit Player
     wrapper.passthrough(BYTE)  # Rotation
     wrapper.passthrough(BYTE)  # Mirror

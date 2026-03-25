@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- Add `map(old_type, new_type)` to PacketWrapper for cross-type field conversion
+- Replace `net_to_block`/`block_to_net` helpers with direct `wrapper.map()` calls
+
 ## [0.2.4] - 2026-03-25
 
 ### Fixed

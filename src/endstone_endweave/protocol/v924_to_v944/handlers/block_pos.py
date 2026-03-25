@@ -11,18 +11,13 @@ from endstone_endweave.codec import (
     FLOAT_LE,
     INT_LE,
     ITEM_INSTANCE,
+    NETWORK_BLOCK_POS,
     STRING,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
     PacketWrapper,
-)
-from endstone_endweave.protocol.rewriter import (
-    block_to_net as _block_to_net,
-)
-from endstone_endweave.protocol.rewriter import (
-    net_to_block as _net_to_block,
 )
 from endstone_endweave.protocol.rewriter import (
     passthrough_inventory_action as _passthrough_inventory_action,
@@ -51,7 +46,7 @@ def rewrite_first_net_block_to_block(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper positioned at the first field.
     """
-    _net_to_block(wrapper)
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)
 
 
 def rewrite_tile_event(wrapper: PacketWrapper) -> None:
@@ -62,7 +57,7 @@ def rewrite_tile_event(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for TileEvent.
     """
-    _net_to_block(wrapper)  # Block Position
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position
     event_type = wrapper.passthrough(VAR_INT)  # Event Type
     event_data = wrapper.read(VAR_INT)  # Event Value
     if event_type == _NOTE_BLOCK_EVENT and event_data >= _TRUMPET_INSERTION_POINT:
@@ -77,9 +72,9 @@ def rewrite_set_spawn_position(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for SetSpawnPosition.
     """
     wrapper.passthrough(VAR_INT)  # Spawn Position Type
-    _net_to_block(wrapper)  # Block Position
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position
     wrapper.passthrough(VAR_INT)  # Dimension type
-    _net_to_block(wrapper)  # Spawn Block Pos
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Spawn Block Pos
 
 
 def rewrite_add_volume_entity(wrapper: PacketWrapper) -> None:
@@ -89,8 +84,8 @@ def rewrite_add_volume_entity(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for AddVolumeEntity.
     """
     wrapper.passthrough(UVAR_INT)  # Entity Network Id
-    _net_to_block(wrapper)  # Min Bounds
-    _net_to_block(wrapper)  # Max Bounds
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Min Bounds
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Max Bounds
 
 
 def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
@@ -99,12 +94,12 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for UpdateSubChunkBlocks.
     """
-    _net_to_block(wrapper)  # Sub Chunk Block Position
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Sub Chunk Block Position
 
     # Blocks Changed - Standards
     blocks_count = wrapper.passthrough(UVAR_INT)
     for _ in range(blocks_count):
-        _net_to_block(wrapper)  # Pos
+        wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Pos
         wrapper.passthrough(UVAR_INT)  # Runtime Id
         wrapper.passthrough(UVAR_INT)  # Update Flags
         wrapper.passthrough(UVAR_INT64)  # Sync Message - Entity Unique ID
@@ -113,7 +108,7 @@ def rewrite_update_sub_chunk_blocks(wrapper: PacketWrapper) -> None:
     # Blocks Changed - Extras
     extra_count = wrapper.passthrough(UVAR_INT)
     for _ in range(extra_count):
-        _net_to_block(wrapper)  # Pos
+        wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Pos
         wrapper.passthrough(UVAR_INT)  # Runtime Id
         wrapper.passthrough(UVAR_INT)  # Update Flags
         wrapper.passthrough(UVAR_INT64)  # Sync Message - Entity Unique ID
@@ -127,7 +122,7 @@ def rewrite_play_sound(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for PlaySound.
     """
     wrapper.passthrough(STRING)  # Name
-    _net_to_block(wrapper)  # Position
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Position
 
 
 def rewrite_map_data(wrapper: PacketWrapper) -> None:
@@ -166,7 +161,7 @@ def rewrite_map_data(wrapper: PacketWrapper) -> None:
             if obj_type == 0:  # Entity
                 wrapper.passthrough(VAR_INT64)  # MapItemTrackedActor::UniqueId
             elif obj_type == 1:  # Block
-                _net_to_block(wrapper)  # Block Position
+                wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position
 
 
 def rewrite_update_client_input_locks(wrapper: PacketWrapper) -> None:
@@ -216,7 +211,7 @@ def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
     # UseItemTransactionData
     wrapper.passthrough(UVAR_INT)  # ActionType
     wrapper.passthrough(UVAR_INT)  # TriggerType
-    _block_to_net(wrapper)  # BlockPosition
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # BlockPosition
     wrapper.passthrough(VAR_INT)  # BlockFace
     wrapper.passthrough(VAR_INT)  # HotBarSlot
     wrapper.passthrough(ITEM_INSTANCE)  # HeldItem
@@ -239,8 +234,8 @@ def rewrite_player_action(wrapper: PacketWrapper) -> None:
     """
     wrapper.passthrough(UVAR_INT64)  # Player Runtime ID
     wrapper.passthrough(VAR_INT)  # Action
-    _block_to_net(wrapper)  # Block Position
-    _block_to_net(wrapper)  # Result Pos
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Result Pos
 
 
 def rewrite_container_open(wrapper: PacketWrapper) -> None:
@@ -251,7 +246,7 @@ def rewrite_container_open(wrapper: PacketWrapper) -> None:
     """
     wrapper.passthrough(BYTE)  # Container Id
     wrapper.passthrough(BYTE)  # Container Type
-    _net_to_block(wrapper)  # Position
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Position
 
 
 def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
@@ -260,7 +255,7 @@ def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for StructureBlockUpdate.
     """
-    _block_to_net(wrapper)  # Block Position
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position
     # StructureEditorData
     wrapper.passthrough(STRING)  # Name
     wrapper.passthrough(STRING)  # DataField
@@ -279,7 +274,7 @@ def rewrite_command_block_update(wrapper: PacketWrapper) -> None:
     """
     is_block = wrapper.passthrough(BOOL)  # Is Block?
     if is_block:
-        _block_to_net(wrapper)  # Block Position
+        wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position
 
 
 def rewrite_structure_template_data_request(wrapper: PacketWrapper) -> None:
@@ -289,7 +284,7 @@ def rewrite_structure_template_data_request(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for StructureTemplateDataRequest.
     """
     wrapper.passthrough(STRING)  # Structure Name
-    _block_to_net(wrapper)  # Structure Position
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Structure Position
     _passthrough_structure_settings(wrapper)
 
 
@@ -300,4 +295,4 @@ def rewrite_anvil_damage(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for AnvilDamage.
     """
     wrapper.passthrough(BYTE)  # Damage Amount
-    _block_to_net(wrapper)  # Block Position
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position

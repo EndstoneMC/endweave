@@ -97,6 +97,18 @@ class TestPacketWrapperBasics:
         result = wrapper.to_bytes()
         assert result == payload
 
+    def test_map_converts_type(self):
+        """map() reads with old type and writes with new type."""
+        w = PacketWriter()
+        w.write_varint(42)
+        w.write_byte(0xFF)
+        wrapper = PacketWrapper(w.to_bytes())
+        val = wrapper.map(VAR_INT, INT_LE)
+        assert val == 42
+        result = wrapper.to_bytes()
+        assert result[:4] == struct.pack("<i", 42)
+        assert result[4] == 0xFF
+
     def test_has_remaining(self):
         wrapper = PacketWrapper(b"\x01\x02")
         assert wrapper.has_remaining
