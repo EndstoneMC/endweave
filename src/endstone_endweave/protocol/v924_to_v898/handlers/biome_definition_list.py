@@ -2,13 +2,13 @@
 
 from endstone_endweave.codec import (
     BOOL,
+    BYTE,
     FLOAT_LE,
     INT_LE,
     SHORT_LE,
     STRING,
-    BYTE,
-    UVAR_INT,
     USHORT_LE,
+    UVAR_INT,
     VAR_INT,
     PacketWrapper,
 )

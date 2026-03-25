@@ -32,7 +32,7 @@ def rewrite_text_clientbound(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for Text.
     """
-    needs_translation = wrapper.passthrough(BOOL)
+    wrapper.passthrough(BOOL)  # Needs Translation
     kind = wrapper.read(BYTE)
     wrapper.write(BYTE, kind)
 
@@ -77,7 +77,7 @@ def rewrite_text_serverbound(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for Text.
     """
-    needs_translation = wrapper.passthrough(BOOL)
+    wrapper.passthrough(BOOL)  # Needs Translation
     kind = wrapper.read(BYTE)
     wrapper.write(BYTE, kind)
 

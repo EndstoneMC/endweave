@@ -10,10 +10,10 @@ from endstone_endweave.codec import (
     SHORT_LE,
     STRING,
     UINT_LE,
-    VAR_INT,
-    VAR_INT64,
     UVAR_INT,
     UVAR_INT64,
+    VAR_INT,
+    VAR_INT64,
     PacketWrapper,
 )
 

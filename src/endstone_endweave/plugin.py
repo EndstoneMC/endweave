@@ -20,20 +20,20 @@ from endstone_endweave.pipeline import ProtocolPipeline
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.base import create_base_protocol
 from endstone_endweave.protocol.manager import ProtocolManager
-from endstone_endweave.protocol.v898_to_v860 import (
-    create_protocol as create_v898_to_v860,
-)
 from endstone_endweave.protocol.v860_to_v898 import (
     create_protocol as create_v860_to_v898,
 )
-from endstone_endweave.protocol.v924_to_v944 import (
-    create_protocol as create_v924_to_v944,
+from endstone_endweave.protocol.v898_to_v860 import (
+    create_protocol as create_v898_to_v860,
 )
 from endstone_endweave.protocol.v898_to_v924 import (
     create_protocol as create_v898_to_v924,
 )
 from endstone_endweave.protocol.v924_to_v898 import (
     create_protocol as create_v924_to_v898,
+)
+from endstone_endweave.protocol.v924_to_v944 import (
+    create_protocol as create_v924_to_v944,
 )
 from endstone_endweave.protocol.v944_to_v924 import (
     create_protocol as create_v944_to_v924,
@@ -104,7 +104,11 @@ class EndweavePlugin(Plugin):
         self._supported_versions = self._manager.get_supported_versions(server_protocol)
         self._advertised_protocol = max(self._supported_versions) if self._supported_versions else server_protocol
 
-        supported_names = [VERSIONS[protocol].minecraft_version for protocol in self._supported_versions if protocol in VERSIONS]
+        supported_names = [
+            VERSIONS[protocol].minecraft_version
+            for protocol in self._supported_versions
+            if protocol in VERSIONS
+        ]
         if supported_names:
             self.logger.info(f"Supported client versions: {', '.join(supported_names)}")
 

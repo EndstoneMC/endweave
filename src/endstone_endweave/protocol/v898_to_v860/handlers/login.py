@@ -11,7 +11,8 @@ def rewrite_request_network_settings(wrapper: PacketWrapper) -> None:
     """
     connection = wrapper.user
     client_protocol = wrapper.read(INT_BE)
-    wrapper.write(INT_BE, connection.server_protocol if client_protocol != connection.server_protocol else client_protocol)
+    target = connection.server_protocol if client_protocol != connection.server_protocol else client_protocol
+    wrapper.write(INT_BE, target)
 
 
 def rewrite_login(wrapper: PacketWrapper) -> None:
@@ -22,4 +23,5 @@ def rewrite_login(wrapper: PacketWrapper) -> None:
     """
     connection = wrapper.user
     client_protocol = wrapper.read(INT_BE)
-    wrapper.write(INT_BE, connection.server_protocol if client_protocol != connection.server_protocol else client_protocol)
+    target = connection.server_protocol if client_protocol != connection.server_protocol else client_protocol
+    wrapper.write(INT_BE, target)
