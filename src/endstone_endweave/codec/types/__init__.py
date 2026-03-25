@@ -5,6 +5,7 @@ from endstone_endweave.codec.types.actor_data import (
     ActorDataEntry,
 )
 from endstone_endweave.codec.types.camera import (
+    SPLINE_INSTRUCTION_V898,
     SPLINE_INSTRUCTION_V924,
     SPLINE_INSTRUCTION_V944,
     KeyFrame,
@@ -108,6 +109,7 @@ __all__ = [
     "REMAINING_BYTES",
     "RotationKeyFrame",
     "SHORT_LE",
+    "SPLINE_INSTRUCTION_V898",
     "SPLINE_INSTRUCTION_V924",
     "SPLINE_INSTRUCTION_V944",
     "STRING",

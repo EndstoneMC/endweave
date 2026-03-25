@@ -5,6 +5,12 @@ from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.v924_to_v898.handlers.biome_definition_list import (
     rewrite_biome_definition_list,
 )
+from endstone_endweave.protocol.v924_to_v898.handlers.book_edit import (
+    rewrite_book_edit,
+)
+from endstone_endweave.protocol.v924_to_v898.handlers.camera import (
+    rewrite_camera_instruction,
+)
 from endstone_endweave.protocol.v924_to_v898.handlers.data_store import (
     rewrite_clientbound_data_store,
     rewrite_serverbound_data_store,
@@ -36,6 +42,7 @@ def create_protocol() -> Protocol:
 
     protocol.register_serverbound(PacketId.TEXT, rewrite_text_serverbound)
     protocol.register_serverbound(PacketId.SERVERBOUND_DATA_STORE, rewrite_serverbound_data_store)
+    protocol.register_serverbound(PacketId.BOOK_EDIT, rewrite_book_edit)
 
     protocol.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     protocol.register_clientbound(PacketId.TEXT, rewrite_text_clientbound)
@@ -48,6 +55,7 @@ def create_protocol() -> Protocol:
     protocol.register_clientbound(PacketId.ADD_ITEM_ACTOR, rewrite_add_item_actor)
     protocol.register_clientbound(PacketId.SET_ACTOR_DATA, rewrite_set_actor_data)
     protocol.register_clientbound(PacketId.GRAPHICS_PARAMETER_OVERRIDE, rewrite_graphics_parameter_override)
+    protocol.register_clientbound(PacketId.CAMERA_INSTRUCTION, rewrite_camera_instruction)
 
     protocol.cancel_clientbound(
         PacketId.CLIENTBOUND_DATA_DRIVEN_UI_SHOW_SCREEN,
@@ -57,7 +65,6 @@ def create_protocol() -> Protocol:
         PacketId.VOXEL_SHAPES,
         PacketId.CAMERA_SPLINE,
         PacketId.CAMERA_AIM_ASSIST_ACTOR_PRIORITY,
-        PacketId.CAMERA_INSTRUCTION,
         PacketId.SERVER_SCRIPT_DEBUG_DRAWER,
     )
 

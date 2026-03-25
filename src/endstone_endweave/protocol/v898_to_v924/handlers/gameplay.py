@@ -14,6 +14,7 @@ from endstone_endweave.codec import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    VEC3,
     OptionalType,
     PacketWrapper,
 )
@@ -218,3 +219,22 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(OptionalType(STRING))
 
     wrapper.passthrough(BYTE)
+
+
+def rewrite_graphics_parameter_override(wrapper: PacketWrapper) -> None:
+    """Insert the v924 Float Value and Vec3 Value optional fields.
+
+    Args:
+        wrapper: Packet wrapper for GraphicsParameterOverride.
+    """
+    value_count = wrapper.passthrough(UVAR_INT)
+    for _ in range(value_count):
+        wrapper.passthrough(FLOAT_LE)
+        wrapper.passthrough(VEC3)
+
+    wrapper.write(BOOL, False)  # Float Value (not present)
+    wrapper.write(BOOL, False)  # Vec3 Value (not present)
+
+    wrapper.passthrough(STRING)
+    wrapper.passthrough(BYTE)
+    wrapper.passthrough(BOOL)
