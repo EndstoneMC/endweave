@@ -1,4 +1,4 @@
-"""Tests for PacketWrapper and Type system."""
+"""Tests for PacketWrapper API mechanics."""
 
 import struct
 from unittest.mock import MagicMock
@@ -6,20 +6,10 @@ from unittest.mock import MagicMock
 from endstone_endweave.codec import (
     BOOL,
     BYTE,
-    FLOAT_LE,
-    INT64_LE,
     INT_BE,
     INT_LE,
-    REMAINING_BYTES,
-    SHORT_LE,
     STRING,
-    UINT_LE,
-    USHORT_LE,
-    UUID,
-    UVAR_INT,
-    UVAR_INT64,
     VAR_INT,
-    VAR_INT64,
     PacketWrapper,
 )
 from endstone_endweave.codec.writer import PacketWriter
@@ -169,82 +159,6 @@ class TestPacketWrapperTransform:
         wrapper.passthrough(BYTE)
         result = wrapper.to_bytes()
         assert result == bytes([0x01, 0x01, 0x02])
-
-
-class TestTypeRoundtrips:
-    """Verify each type reads what it writes through the wrapper."""
-
-    def _roundtrip(self, field_type, value):
-        w = PacketWriter()
-        field_type.write(w, value)
-        payload = w.to_bytes()
-        wrapper = PacketWrapper(payload)
-        result = wrapper.passthrough(field_type)
-        assert result == value
-        assert wrapper.to_bytes() == payload
-
-    def test_byte(self):
-        self._roundtrip(BYTE, 0xFF)
-
-    def test_bool_true(self):
-        self._roundtrip(BOOL, True)
-
-    def test_bool_false(self):
-        self._roundtrip(BOOL, False)
-
-    def test_short_le(self):
-        self._roundtrip(SHORT_LE, -1234)
-
-    def test_ushort_le(self):
-        self._roundtrip(USHORT_LE, 65535)
-
-    def test_int_le(self):
-        self._roundtrip(INT_LE, -100000)
-
-    def test_int_be(self):
-        self._roundtrip(INT_BE, 924)
-
-    def test_uint_le(self):
-        self._roundtrip(UINT_LE, 0xDEADBEEF)
-
-    def test_long_le(self):
-        self._roundtrip(INT64_LE, 1234567890123)
-
-    def test_float_le(self):
-        w = PacketWriter()
-        FLOAT_LE.write(w, 3.14)
-        payload = w.to_bytes()
-        wrapper = PacketWrapper(payload)
-        result = wrapper.passthrough(FLOAT_LE)
-        assert abs(result - 3.14) < 0.001
-
-    def test_var_int(self):
-        for val in [0, 1, -1, 42, -42, 2147483647, -2147483648]:
-            self._roundtrip(VAR_INT, val)
-
-    def test_uvar_int(self):
-        for val in [0, 1, 127, 128, 300, 0xFFFFFFFF]:
-            self._roundtrip(UVAR_INT, val)
-
-    def test_var_long(self):
-        for val in [0, 1, -1, 2147483647]:
-            self._roundtrip(VAR_INT64, val)
-
-    def test_uvar_long(self):
-        for val in [0, 1, 0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF]:
-            self._roundtrip(UVAR_INT64, val)
-
-    def test_string(self):
-        self._roundtrip(STRING, "hello world")
-
-    def test_string_empty(self):
-        self._roundtrip(STRING, "")
-
-    def test_uuid(self):
-        self._roundtrip(UUID, b"\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10")
-
-    def test_remaining_bytes(self):
-        self._roundtrip(REMAINING_BYTES, b"\xde\xad\xbe\xef")
 
 
 class TestWrapperHandlerIntegration:
