@@ -8,27 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - Protocol translation for v898 (MC 1.21.130), v860 (MC 1.21.124), and v859 (MC 1.21.120)
-- Reverse v944 to v924 translation (bidirectional support)
-- Explicit v859/v860 protocol modules for the identity translation step
-- `get_supported_versions()` on ProtocolManager for listing all reachable client protocols
-- Warning log when a supported protocol has no entry in the VERSIONS registry
+- Bidirectional translation (older clients can also join newer servers that have the plugin)
 
-### Changed
-- Add `map(old_type, new_type)` to PacketWrapper for cross-type field conversion
-- Replace `net_to_block`/`block_to_net` helpers with direct `wrapper.map()` calls
-- Extract compound Type objects for SplineInstruction, InventoryAction, StructureSettings, and ActorData
-- Add generic `OptionalType` and `ArrayType` wrappers following ViaVersion's pattern
-- Register `OPTIONAL_BOOL`, `OPTIONAL_VEC2`, `OPTIONAL_VEC3` singletons in central type registry
-- Use VEC3/VEC2 types instead of inline FLOAT_LE calls in handlers
-- Replace inline optional/array patterns with type wrappers in camera and block_pos handlers
-- Rename version constants to ViaVersion style (e.g. `v1_26_0` instead of `R26_U0`)
-- Derive `release_tag` from minecraft_version instead of storing it explicitly
-- Pipeline creates a fresh wrapper per protocol step to support multi-step chains
-- Startup log lists all supported client versions individually instead of as a range
-
-### Removed
-- `protocol/rewriter.py` (all helpers migrated to compound Type objects)
-- Unused `get_version()` and `get_max_client_version()`
+### Fixed
+- Signs could not be edited or dyed by 1.26.10 clients on 1.26.0 servers
 
 ## [0.2.4] - 2026-03-25
 

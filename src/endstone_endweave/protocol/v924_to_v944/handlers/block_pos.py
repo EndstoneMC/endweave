@@ -177,6 +177,17 @@ def rewrite_update_client_input_locks(wrapper: PacketWrapper) -> None:
 # ---------------------------------------------------------------------------
 
 
+def rewrite_first_block_to_net_block(wrapper: PacketWrapper) -> None:
+    """Rewrite first-field BlockPos -> NetworkBlockPos.
+
+    Used by: BlockActorData (56).
+
+    Args:
+        wrapper: Packet wrapper positioned at the first field.
+    """
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)
+
+
 def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
     """Rewrite InventoryTransaction: convert BlockPos -> NetworkBlockPos in UseItem data.
 

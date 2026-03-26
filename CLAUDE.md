@@ -73,6 +73,7 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 
 - Never add a Co-Authored-By line for Claude in commit messages
 - Maintain a `CHANGELOG.md` following https://keepachangelog.com/en/1.0.0/
+- CHANGELOG audience is server admins and non-technical users; write plain-language entries describing user-visible behavior, not internal implementation details (no class names, no API names, no refactoring notes)
 - No double dashes in user-facing prose (README, CHANGELOG)
 
 ## Code Style

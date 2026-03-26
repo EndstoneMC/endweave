@@ -12,6 +12,7 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_anvil_damage,
     rewrite_command_block_update,
     rewrite_container_open,
+    rewrite_first_block_to_net_block,
     rewrite_first_net_block_to_block,
     rewrite_play_sound,
     rewrite_player_action,
@@ -418,6 +419,16 @@ class TestClientboundHandlers:
 
 
 class TestServerboundHandlers:
+    def test_block_actor_data(self):
+        w = PacketWriter()
+        _write_block_pos(w, 7, 72, -3)  # Block Position (v944 BlockPos)
+        w.write_bytes(b"\x0a\x00\x00")  # NBT payload (sign text)
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_first_block_to_net_block(wrapper)
+        r = PacketReader(wrapper.to_bytes())
+        assert _read_net_block_pos(r) == (7, 72, -3)
+        assert r.read_remaining() == b"\x0a\x00\x00"
+
     def test_player_action(self):
         w = PacketWriter()
         w.write_uvarint64(1)  # entityRuntimeID
