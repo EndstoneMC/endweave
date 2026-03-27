@@ -362,6 +362,14 @@ def diff_packets(
         added = sorted(added_set - promoted)
         removed = sorted(removed_set - promoted)
 
+        # Filter out added/removed fields that are descendants of a
+        # type_changes path -- they're just internal fields of the type
+        # that already changed and add no information.
+        tc_prefixes = [p + "." for p in type_changes]
+        if tc_prefixes:
+            added = [f for f in added if not any(f.startswith(p) for p in tc_prefixes)]
+            removed = [f for f in removed if not any(f.startswith(p) for p in tc_prefixes)]
+
         if added or removed or type_changes:
             entry = PacketChanges(
                 packet_id=old_def.packet_id,
