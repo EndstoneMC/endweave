@@ -394,6 +394,24 @@ def diff_packets(
             f for f in (old_field_names - new_field_names) if not is_node_id_noise(f)
         }
 
+        # Skip mPayload wrapper noise: between some versions, Mojang wrapped
+        # all packet fields in an "mPayload" container. When the only removed
+        # fields are mPayload or mPayload.*, this is a schema change, not a
+        # real protocol change.
+        if removed_set and all(
+            f == "mPayload" or f.startswith("mPayload.") for f in removed_set
+        ):
+            # Check if there are real type_changes beyond mPayload
+            real_tc = False
+            for field_name in old_field_names & new_field_names:
+                if field_name.startswith("mPayload"):
+                    continue
+                if old_fields[field_name]["type"] != new_fields[field_name]["type"]:
+                    real_tc = True
+                    break
+            if not real_tc:
+                continue
+
         type_changes: dict[str, TypeChange] = {}
         for field_name in sorted(old_field_names & new_field_names):
             old_type = old_fields[field_name]["type"]
