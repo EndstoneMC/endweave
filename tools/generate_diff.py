@@ -264,6 +264,27 @@ def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
     return result
 
 
+def _filter_descendants(paths: list[str], extra_prefixes: list[str]) -> list[str]:
+    """Remove paths that are children of other paths in the same list or of extra prefixes.
+
+    Args:
+        paths: Sorted list of dotted field paths.
+        extra_prefixes: Additional prefixes to filter against (e.g. type_changes paths).
+
+    Returns:
+        Filtered list with only top-level entries.
+    """
+    result = []
+    for path in paths:
+        prefixes = [p + "." for p in result]
+        if any(path.startswith(p) for p in prefixes):
+            continue
+        if any(path.startswith(p) for p in extra_prefixes):
+            continue
+        result.append(path)
+    return result
+
+
 def diff_packets(
     old_packets: list[PacketDefinition],
     new_packets: list[PacketDefinition],
@@ -362,13 +383,12 @@ def diff_packets(
         added = sorted(added_set - promoted)
         removed = sorted(removed_set - promoted)
 
-        # Filter out added/removed fields that are descendants of a
-        # type_changes path -- they're just internal fields of the type
-        # that already changed and add no information.
+        # Filter out fields that are descendants of a type_changes path
+        # or descendants of another field in the same list (leaf type
+        # children like "loadFromJson.bool" under "loadFromJson").
         tc_prefixes = [p + "." for p in type_changes]
-        if tc_prefixes:
-            added = [f for f in added if not any(f.startswith(p) for p in tc_prefixes)]
-            removed = [f for f in removed if not any(f.startswith(p) for p in tc_prefixes)]
+        added = _filter_descendants(added, tc_prefixes)
+        removed = _filter_descendants(removed, tc_prefixes)
 
         if added or removed or type_changes:
             entry = PacketChanges(
