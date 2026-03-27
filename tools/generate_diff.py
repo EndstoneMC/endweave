@@ -94,7 +94,8 @@ def diff_packets(
     removed_pkt_names = [n for n in removed_names if old_by_name[n].packet_id is not None]
     removed_type_names = [n for n in removed_names if old_by_name[n].packet_id is None]
 
-    changed: dict[str, PacketChanges] = {}
+    changed_packets: dict[str, PacketChanges] = {}
+    changed_types: dict[str, PacketChanges] = {}
 
     for name in sorted(old_names & new_names):
         old_def = old_by_name[name]
@@ -126,13 +127,17 @@ def diff_packets(
                 type_changes[field_name] = TypeChange(old=old_type, new=new_type)
 
         if added or removed or type_changes:
-            changed[name] = PacketChanges(
+            entry = PacketChanges(
                 packet_id=old_def.packet_id,
                 direction=old_def.direction,
                 added_fields=added,
                 removed_fields=removed,
                 type_changes=type_changes,
             )
+            if old_def.packet_id is not None:
+                changed_packets[name] = entry
+            else:
+                changed_types[name] = entry
 
     return ProtocolDiff(
         old_protocol=old_protocol,
@@ -141,7 +146,8 @@ def diff_packets(
         new_types=new_type_names,
         removed_packets=removed_pkt_names,
         removed_types=removed_type_names,
-        changed_packets=changed,
+        changed_packets=changed_packets,
+        changed_types=changed_types,
     )
 
 
@@ -216,8 +222,8 @@ def main() -> None:
         print("Error: need at least two known versions to diff.")
         sys.exit(1)
 
-    old_path = DATA_DIR / f"v{old_proto}_packets.json"
-    new_path = DATA_DIR / f"v{new_proto}_packets.json"
+    old_path = DATA_DIR / f"v{old_proto}.json"
+    new_path = DATA_DIR / f"v{new_proto}.json"
 
     if not old_path.exists() or not new_path.exists():
         print("Error: Run parse_protocol_docs.py first to generate packet JSON files.")
@@ -235,9 +241,10 @@ def main() -> None:
     print(f"  New types: {len(diff.new_types)}")
     print(f"  Removed packets: {len(diff.removed_packets)}")
     print(f"  Removed types: {len(diff.removed_types)}")
-    print(f"  Changed: {len(diff.changed_packets)}")
+    print(f"  Changed packets: {len(diff.changed_packets)}")
+    print(f"  Changed types: {len(diff.changed_types)}")
 
-    out_path = DATA_DIR / f"v{old_proto}_v{new_proto}_diff.json"
+    out_path = DATA_DIR / f"v{old_proto}_to_v{new_proto}.json"
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(diff.model_dump(exclude_defaults=True), f, indent=2)
     print(f"  Written to {out_path}")

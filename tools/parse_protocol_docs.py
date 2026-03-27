@@ -603,7 +603,7 @@ def main() -> None:
         all_configs[tag] = {
             "dot_dir": f"protocol_docs/{tag}/dot",
             "json_dir": f"protocol_docs/{tag}/json",
-            "output": f"v{ver.protocol}_packets.json",
+            "output": f"v{ver.protocol}.json",
         }
 
     if args.versions:

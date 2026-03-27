@@ -81,7 +81,8 @@ class ProtocolDiff(BaseModel):
         new_types: Names of sub-types added in the new version (no packet_id).
         removed_packets: Names of packets removed in the new version.
         removed_types: Names of sub-types removed in the new version.
-        changed_packets: Per-packet diffs keyed by packet/type name.
+        changed_packets: Per-packet diffs keyed by packet name (have packet_id).
+        changed_types: Per-type diffs keyed by type name (no packet_id).
     """
 
     old_protocol: int
@@ -91,6 +92,7 @@ class ProtocolDiff(BaseModel):
     removed_packets: list[str] = []
     removed_types: list[str] = []
     changed_packets: dict[str, PacketChanges] = {}
+    changed_types: dict[str, PacketChanges] = {}
 
 
 def infer_direction(name: str) -> str | None:
