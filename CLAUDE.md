@@ -35,9 +35,9 @@ Currently translates between protocol 924 (MC 1.26.0) and 944 (MC 1.26.10).
 
 ## Development
 
-- `uv run tools/fetch_protocol_docs.py [tags...]` -- fetch protocol DOT + JSON files from BedrockProtocol repo
-- `uv run tools/parse_protocol_docs.py [tags...]` -- parse DOT + JSON -> structured JSON
-- `uv run tools/generate_diff.py [old new]` -- diff two version JSONs
+- `uv run tools/fetch_protocol_docs.py [924 944...]` -- fetch protocol DOT + JSON files from BedrockProtocol repo
+- `uv run tools/parse_protocol_docs.py [924 944...]` -- parse DOT + JSON -> structured JSON
+- `uv run tools/generate_diff.py [924 944]` -- diff two version JSONs
 - `uv run pytest tests/` -- run unit tests
 - `uv run ruff check src/ tests/` -- lint
 - `uv run mypy src/endstone_endweave/ --strict` -- type check

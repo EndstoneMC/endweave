@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Parse protocol documentation files (DOT + JSON) into structured JSON.
 
-Reads .dot files from protocol_docs/<version>/dot/ and .json files from
-protocol_docs/<version>/json/, then outputs merged structured JSON to
-data/<version>_packets.json.
+Reads .dot files from protocol_docs/v<protocol>/dot/ and .json files from
+protocol_docs/v<protocol>/json/, then outputs merged structured JSON to
+data/v<protocol>.json.
 
 DOT format:
 - Root node = packet/type root, comment has metadata
@@ -592,37 +592,41 @@ def main() -> None:
     parser.add_argument(
         "versions",
         nargs="*",
-        help="Release tags to parse (e.g. r26_u0 r26_u1). Defaults to all known versions.",
+        help="Protocol numbers to parse (e.g. 924 944). Defaults to all known versions.",
     )
     args = parser.parse_args()
 
     # Build config from versions registry
-    all_configs: dict[str, dict[str, str]] = {}
+    all_configs: dict[int, dict[str, str]] = {}
     for ver in VERSIONS.values():
-        tag = ver.release_tag
-        all_configs[tag] = {
-            "dot_dir": f"protocol_docs/{tag}/dot",
-            "json_dir": f"protocol_docs/{tag}/json",
+        all_configs[ver.protocol] = {
+            "dot_dir": f"protocol_docs/v{ver.protocol}/dot",
+            "json_dir": f"protocol_docs/v{ver.protocol}/json",
             "output": f"v{ver.protocol}.json",
         }
 
     if args.versions:
-        selected: dict[str, dict[str, str]] = {}
-        for tag in args.versions:
-            if tag not in all_configs:
-                print(f"Error: unknown version tag '{tag}'. Known: {', '.join(all_configs)}")
+        selected: dict[int, dict[str, str]] = {}
+        for arg in args.versions:
+            try:
+                proto = int(arg)
+            except ValueError:
+                print(f"Error: '{arg}' is not a valid protocol number. Known: {', '.join(str(k) for k in all_configs)}")
                 sys.exit(1)
-            selected[tag] = all_configs[tag]
+            if proto not in all_configs:
+                print(f"Error: unknown protocol {proto}. Known: {', '.join(str(k) for k in all_configs)}")
+                sys.exit(1)
+            selected[proto] = all_configs[proto]
     else:
         selected = all_configs
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    for version_name, cfg in selected.items():
+    for protocol, cfg in selected.items():
         dot_dir = PROJECT_ROOT / cfg["dot_dir"]
         json_dir = PROJECT_ROOT / cfg["json_dir"]
 
-        print(f"Parsing {version_name}...")
+        print(f"Parsing v{protocol}...")
 
         # Parse DOT files (all types + packets)
         dot_packets = parse_dot_version(dot_dir)

@@ -249,16 +249,16 @@ def diff_changelogs(
     return diff_enums, filtered_changelog
 
 
-def _find_changelog(tag: str) -> Path | None:
-    """Find the changelog file for a protocol version tag.
+def _find_changelog(protocol: int) -> Path | None:
+    """Find the changelog file for a protocol version.
 
     Args:
-        tag: Release tag (e.g. "r26_u0").
+        protocol: Protocol version number (e.g. 924).
 
     Returns:
         Path to the changelog file, or None if not found.
     """
-    docs_dir = PROTOCOL_DOCS_DIR / tag
+    docs_dir = PROTOCOL_DOCS_DIR / f"v{protocol}"
     if not docs_dir.exists():
         return None
     changelogs = list(docs_dir.glob("changelog*.md"))
@@ -663,10 +663,8 @@ def main() -> None:
     diff = diff_packets(old_packets, new_packets, old_proto, new_proto)
 
     # Parse and diff changelogs
-    old_ver = VERSIONS[old_proto]
-    new_ver = VERSIONS[new_proto]
-    old_changelog_path = _find_changelog(old_ver.release_tag)
-    new_changelog_path = _find_changelog(new_ver.release_tag)
+    old_changelog_path = _find_changelog(old_proto)
+    new_changelog_path = _find_changelog(new_proto)
 
     if old_changelog_path and new_changelog_path:
         enum_changes, changelog = diff_changelogs(

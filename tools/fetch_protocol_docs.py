@@ -4,8 +4,8 @@
 Downloads DOT and JSON files for protocol versions into protocol_docs/.
 
 Usage:
-    python tools/fetch_protocol_docs.py              # fetch all known versions
-    python tools/fetch_protocol_docs.py r26_u0 r26_u1  # fetch specific versions
+    uv run tools/fetch_protocol_docs.py              # fetch all known versions
+    uv run tools/fetch_protocol_docs.py 924 944      # fetch specific versions
 """
 
 import argparse
@@ -23,17 +23,17 @@ REPO_URL = "https://github.com/Mojang/bedrock-protocol-docs.git"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "protocol_docs"
 
 
-def fetch_version(name: str, branch: str) -> None:
+def fetch_version(protocol: int, branch: str) -> None:
     """Fetch protocol docs for a single version from the BedrockProtocol repo.
 
     Shallow-clones the given branch into a temp directory, then copies the
-    dot/, json/, and changelog files into protocol_docs/<name>/.
+    dot/, json/, and changelog files into protocol_docs/v<protocol>/.
 
     Args:
-        name: Release tag used as the output subdirectory name (e.g. "r26_u0").
+        protocol: Protocol version number (e.g. 924).
         branch: Git branch to clone (e.g. "r/26_u0").
     """
-    dest = OUTPUT_DIR / name
+    dest = OUTPUT_DIR / f"v{protocol}"
     if dest.exists():
         print(f"  {dest} already exists, skipping")
         return
@@ -77,27 +77,36 @@ def main() -> None:
     parser.add_argument(
         "versions",
         nargs="*",
-        help="Release tags to fetch (e.g. r26_u0 r26_u1). Defaults to all known versions.",
+        help="Protocol numbers to fetch (e.g. 924 944). Defaults to all known versions.",
     )
     args = parser.parse_args()
 
-    # Build tag -> branch mapping from versions registry
-    all_versions = {v.release_tag: f"r/{v.release_tag.replace('r', '', 1)}" for v in VERSIONS.values()}
+    # Build protocol -> branch mapping from versions registry
+    all_versions: dict[int, str] = {}
+    for v in VERSIONS.values():
+        tag = v.release_tag
+        all_versions[v.protocol] = f"r/{tag.replace('r', '', 1)}"
 
     if args.versions:
-        selected = {}
-        for tag in args.versions:
-            if tag not in all_versions:
-                print(f"Error: unknown version tag '{tag}'. Known: {', '.join(all_versions)}")
+        selected: dict[int, str] = {}
+        for arg in args.versions:
+            try:
+                proto = int(arg)
+            except ValueError:
+                known = ", ".join(str(k) for k in all_versions)
+                print(f"Error: '{arg}' is not a valid protocol number. Known: {known}")
                 sys.exit(1)
-            selected[tag] = all_versions[tag]
+            if proto not in all_versions:
+                print(f"Error: unknown protocol {proto}. Known: {', '.join(str(k) for k in all_versions)}")
+                sys.exit(1)
+            selected[proto] = all_versions[proto]
     else:
         selected = all_versions
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    for name, branch in selected.items():
-        print(f"Fetching {name} ({branch})...")
-        fetch_version(name, branch)
+    for protocol, branch in selected.items():
+        print(f"Fetching v{protocol} ({branch})...")
+        fetch_version(protocol, branch)
     print("Done.")
 
 
