@@ -40,6 +40,30 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from endstone_endweave.protocol.versions import VERSIONS  # noqa: E402
 
 # ---------------------------------------------------------------------------
+# Manual packet-to-subtype mappings
+# ---------------------------------------------------------------------------
+# The DOT/JSON schemas sometimes use different type names for structures
+# that are semantically the same. These mappings connect packets to their
+# embedded sub-types when the schema can't express the relationship.
+#
+# Format: "PacketName" -> {"field.path": "SubTypeName"}
+#
+# When a sub-type listed here appears in changed_types, the packet will
+# be added to changed_packets with a type_changes reference.
+PACKET_SUBTYPE_OVERRIDES: dict[str, dict[str, str]] = {
+    # InventoryTransactionPacket embeds PackedItemUseLegacyInventoryTransaction
+    # for UseItem transactions, but DOT uses "InventoryTransaction" type instead
+    "InventoryTransactionPacket": {
+        "Transaction.ItemUse": "PackedItemUseLegacyInventoryTransaction",
+    },
+    # CameraSplinePacket uses CameraSplineDefinition in JSON/DOT, but the
+    # spline instruction fields are modeled as CameraInstruction::SplineInstruction
+    "CameraSplinePacket": {
+        "Splines.SplineInstruction": "CameraInstruction::SplineInstruction",
+    },
+}
+
+# ---------------------------------------------------------------------------
 # Changelog parsing
 # ---------------------------------------------------------------------------
 
@@ -517,6 +541,28 @@ def diff_packets(
             else:
                 still_new.append(pkt_name)
         new_pkt_names = still_new
+
+    # Apply manual packet-to-subtype overrides for relationships that
+    # DOT/JSON schemas don't capture.
+    all_pkt_defs = {
+        p.name: p for p in list(old_packets) + list(new_packets) if p.packet_id is not None
+    }
+    for pkt_name, sub_map in PACKET_SUBTYPE_OVERRIDES.items():
+        if pkt_name in changed_packets:
+            continue
+        pkt_def = all_pkt_defs.get(pkt_name)
+        if pkt_def is None:
+            continue
+        tc: dict[str, TypeChange] = {}
+        for path, sub_name in sub_map.items():
+            if sub_name in changed_types:
+                tc[path] = TypeChange(old=sub_name, new=sub_name)
+        if tc:
+            changed_packets[pkt_name] = PacketChanges(
+                packet_id=pkt_def.packet_id,
+                direction=pkt_def.direction,
+                type_changes=tc,
+            )
 
     return ProtocolDiff(
         old_protocol=old_protocol,
