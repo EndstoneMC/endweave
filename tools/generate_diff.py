@@ -403,6 +403,38 @@ def diff_packets(
             else:
                 changed_types[name] = entry
 
+    # Deduplicate: when a changed_types entry's added/removed fields appear
+    # as suffixed paths in other entries (parent types or packets that embed
+    # the sub-type), remove the redundant fields from the parent.
+    subtype_suffixes: list[str] = []
+    for changes in changed_types.values():
+        for f in changes.added_fields:
+            subtype_suffixes.append("." + f)
+        for f in changes.removed_fields:
+            subtype_suffixes.append("." + f)
+
+    if subtype_suffixes:
+        for entries in (changed_packets, changed_types):
+            for changes in entries.values():
+                changes.added_fields = [
+                    f for f in changes.added_fields
+                    if not any(f.endswith(s) for s in subtype_suffixes)
+                ]
+                changes.removed_fields = [
+                    f for f in changes.removed_fields
+                    if not any(f.endswith(s) for s in subtype_suffixes)
+                ]
+
+        # Remove entries that became empty after deduplication
+        changed_packets = {
+            k: v for k, v in changed_packets.items()
+            if v.added_fields or v.removed_fields or v.type_changes
+        }
+        changed_types = {
+            k: v for k, v in changed_types.items()
+            if v.added_fields or v.removed_fields or v.type_changes
+        }
+
     return ProtocolDiff(
         old_protocol=old_protocol,
         new_protocol=new_protocol,
