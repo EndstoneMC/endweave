@@ -425,11 +425,9 @@ def diff_packets(
                     if not any(f.endswith(s) for s in subtype_suffixes)
                 ]
 
-        # Remove entries that became empty after deduplication
-        changed_packets = {
-            k: v for k, v in changed_packets.items()
-            if v.added_fields or v.removed_fields or v.type_changes
-        }
+        # Remove changed_types entries that became empty after dedup.
+        # Keep all changed_packets entries (even if empty) so LLMs know
+        # which packets need handlers.
         changed_types = {
             k: v for k, v in changed_types.items()
             if v.added_fields or v.removed_fields or v.type_changes
