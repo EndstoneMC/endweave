@@ -25,6 +25,7 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = ["pytest", "mypy", "ruff"]
+tools = ["pydot", "pydantic>=2"]
 
 [project.urls]
 Repository = "https://github.com/EndstoneMC/endweave"
