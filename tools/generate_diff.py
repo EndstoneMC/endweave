@@ -24,6 +24,7 @@ from models import (
     ChangelogEntry,
     EnumChange,
     EnumEntry,
+    Field,
     PacketChanges,
     PacketDefinition,
     ProtocolDiff,
@@ -264,6 +265,29 @@ def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
     return result
 
 
+def _find_type_refs(
+    fields: list[Field], type_names: set[str], prefix: str = "",
+) -> dict[str, str]:
+    """Find fields whose type matches a known changed type name.
+
+    Args:
+        fields: Field tree to search.
+        type_names: Set of changed type names to look for.
+        prefix: Dotted path prefix for recursion.
+
+    Returns:
+        Dict mapping dotted field path to the matched type name.
+    """
+    refs: dict[str, str] = {}
+    for field in fields:
+        path = f"{prefix}.{field.name}" if prefix else field.name
+        if field.type in type_names:
+            refs[path] = field.type
+        if field.children:
+            refs.update(_find_type_refs(field.children, type_names, path))
+    return refs
+
+
 def _filter_descendants(paths: list[str], extra_prefixes: list[str]) -> list[str]:
     """Remove paths that are children of other paths in the same list or of extra prefixes.
 
@@ -450,6 +474,50 @@ def diff_packets(
             if v.added_fields or v.removed_fields or v.type_changes
         }
 
+    # Scan all packet definitions for fields that embed a changed sub-type.
+    # Packets that embed changed types need handlers even if they have no
+    # direct field changes themselves.
+    changed_type_names = set(changed_types.keys())
+    if changed_type_names:
+        all_packets = {p.name: p for p in list(old_packets) + list(new_packets) if p.packet_id is not None}
+        for pkt_name, pkt_def in all_packets.items():
+            if pkt_name in changed_packets:
+                continue
+            refs = _find_type_refs(pkt_def.fields, changed_type_names)
+            if refs:
+                tc: dict[str, TypeChange] = {}
+                for path, type_name in refs.items():
+                    tc[path] = TypeChange(old=type_name, new=type_name)
+                changed_packets[pkt_name] = PacketChanges(
+                    packet_id=pkt_def.packet_id,
+                    direction=pkt_def.direction,
+                    type_changes=tc,
+                )
+
+        # Also check new_packets: if a "new" packet embeds a changed type,
+        # it's not truly new -- it needs a translation handler instead.
+        still_new = []
+        for pkt_name in new_pkt_names:
+            if pkt_name in new_by_name:
+                refs = _find_type_refs(new_by_name[pkt_name].fields, changed_type_names)
+                if refs and pkt_name not in changed_packets:
+                    pkt_def = new_by_name[pkt_name]
+                    tc = {}
+                    for path, type_name in refs.items():
+                        tc[path] = TypeChange(old=type_name, new=type_name)
+                    changed_packets[pkt_name] = PacketChanges(
+                        packet_id=pkt_def.packet_id,
+                        direction=pkt_def.direction,
+                        type_changes=tc,
+                    )
+                elif refs:
+                    pass  # already in changed_packets
+                else:
+                    still_new.append(pkt_name)
+            else:
+                still_new.append(pkt_name)
+        new_pkt_names = still_new
+
     return ProtocolDiff(
         old_protocol=old_protocol,
         new_protocol=new_protocol,
@@ -573,10 +641,28 @@ def main() -> None:
     else:
         print("  No changelogs found")
 
+    # Extract renamed packets from MinecraftPacketIds enum changes.
+    # Entries like "OldName -> NewName (ID)" indicate renames, not removals.
+    _RENAME_RE = re.compile(r"^(.+?)\s*->\s*(.+?)\s*\(\d+\)$")
+    pkt_id_changes = diff.enum_changes.get("MinecraftPacketIds")
+    if pkt_id_changes:
+        for entry in pkt_id_changes.changed:
+            m = _RENAME_RE.match(entry)
+            if m:
+                old_name = m.group(1).strip() + "Packet"
+                new_name = m.group(2).strip() + "Packet"
+                # Move from removed/new to renamed
+                if old_name in diff.removed_packets:
+                    diff.removed_packets.remove(old_name)
+                if new_name in diff.new_packets:
+                    diff.new_packets.remove(new_name)
+                diff.renamed_packets[old_name] = new_name
+
     print(f"  New packets: {len(diff.new_packets)}")
     print(f"  New types: {len(diff.new_types)}")
     print(f"  Removed packets: {len(diff.removed_packets)}")
     print(f"  Removed types: {len(diff.removed_types)}")
+    print(f"  Renamed packets: {len(diff.renamed_packets)}")
     print(f"  Changed packets: {len(diff.changed_packets)}")
     print(f"  Changed types: {len(diff.changed_types)}")
 

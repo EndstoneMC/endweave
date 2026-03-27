@@ -123,6 +123,7 @@ class ProtocolDiff(BaseModel):
         new_types: Names of sub-types added in the new version (no packet_id).
         removed_packets: Names of packets removed in the new version.
         removed_types: Names of sub-types removed in the new version.
+        renamed_packets: Maps old packet name to new packet name for renames.
         changed_packets: Per-packet diffs keyed by packet name (have packet_id).
         changed_types: Per-type diffs keyed by type name (no packet_id).
         enum_changes: Enum modifications between versions, keyed by enum name.
@@ -135,6 +136,7 @@ class ProtocolDiff(BaseModel):
     new_types: list[str] = []
     removed_packets: list[str] = []
     removed_types: list[str] = []
+    renamed_packets: dict[str, str] = {}
     changed_packets: dict[str, PacketChanges] = {}
     changed_types: dict[str, PacketChanges] = {}
     enum_changes: dict[str, EnumChange] = {}
