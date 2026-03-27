@@ -318,12 +318,12 @@ def diff_packets(
         new_field_names = set(new_fields.keys())
 
         # Filter out DOT node ID noise
-        added = sorted(
+        added_set = {
             f for f in (new_field_names - old_field_names) if not is_node_id_noise(f)
-        )
-        removed = sorted(
+        }
+        removed_set = {
             f for f in (old_field_names - new_field_names) if not is_node_id_noise(f)
-        )
+        }
 
         type_changes: dict[str, TypeChange] = {}
         for field_name in sorted(old_field_names & new_field_names):
@@ -331,6 +331,36 @@ def diff_packets(
             new_type = new_fields[field_name]["type"]
             if old_type != new_type:
                 type_changes[field_name] = TypeChange(old=old_type, new=new_type)
+
+        # Promote add+remove pairs with shared parent to type_changes.
+        # When a DOT field's leaf child changes name (e.g. "unsigned varint"
+        # -> "varint"), flatten_fields produces different paths. Detect these
+        # by matching parent paths and treat as type changes instead.
+        added_by_parent: dict[str, list[str]] = {}
+        for path in added_set:
+            parent = path.rsplit(".", 1)[0] if "." in path else ""
+            added_by_parent.setdefault(parent, []).append(path)
+        removed_by_parent: dict[str, list[str]] = {}
+        for path in removed_set:
+            parent = path.rsplit(".", 1)[0] if "." in path else ""
+            removed_by_parent.setdefault(parent, []).append(path)
+
+        promoted: set[str] = set()
+        for parent in set(added_by_parent) & set(removed_by_parent):
+            a_paths = added_by_parent[parent]
+            r_paths = removed_by_parent[parent]
+            # Only promote when there's exactly one added and one removed
+            # under the same parent -- a clear leaf type swap
+            if len(a_paths) == 1 and len(r_paths) == 1:
+                a_leaf = a_paths[0].rsplit(".", 1)[-1]
+                r_leaf = r_paths[0].rsplit(".", 1)[-1]
+                if parent and parent not in type_changes:
+                    type_changes[parent] = TypeChange(old=r_leaf, new=a_leaf)
+                promoted.add(a_paths[0])
+                promoted.add(r_paths[0])
+
+        added = sorted(added_set - promoted)
+        removed = sorted(removed_set - promoted)
 
         if added or removed or type_changes:
             entry = PacketChanges(
