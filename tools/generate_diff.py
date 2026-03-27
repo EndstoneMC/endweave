@@ -405,25 +405,42 @@ def diff_packets(
 
     # Deduplicate: when a changed_types entry's added/removed fields appear
     # as suffixed paths in other entries (parent types or packets that embed
-    # the sub-type), remove the redundant fields from the parent.
-    subtype_suffixes: list[str] = []
-    for changes in changed_types.values():
+    # the sub-type), remove the redundant fields from the parent and record
+    # a changed_sub_types reference so handlers know where to look.
+    subtype_suffix_to_name: dict[str, str] = {}
+    for type_name, changes in changed_types.items():
         for f in changes.added_fields:
-            subtype_suffixes.append("." + f)
+            subtype_suffix_to_name["." + f] = type_name
         for f in changes.removed_fields:
-            subtype_suffixes.append("." + f)
+            subtype_suffix_to_name["." + f] = type_name
 
-    if subtype_suffixes:
+    if subtype_suffix_to_name:
         for entries in (changed_packets, changed_types):
             for changes in entries.values():
+                # Find which sub-types are referenced and at what path prefix
+                sub_type_refs: dict[str, str] = {}
+                for field in changes.added_fields + changes.removed_fields:
+                    for suffix, st_name in subtype_suffix_to_name.items():
+                        if field.endswith(suffix):
+                            prefix = field[: -len(suffix)]
+                            if prefix:
+                                sub_type_refs[prefix] = st_name
+
                 changes.added_fields = [
                     f for f in changes.added_fields
-                    if not any(f.endswith(s) for s in subtype_suffixes)
+                    if not any(f.endswith(s) for s in subtype_suffix_to_name)
                 ]
                 changes.removed_fields = [
                     f for f in changes.removed_fields
-                    if not any(f.endswith(s) for s in subtype_suffixes)
+                    if not any(f.endswith(s) for s in subtype_suffix_to_name)
                 ]
+
+                # Merge sub-type references into type_changes
+                for path, st_name in sub_type_refs.items():
+                    if path not in changes.type_changes:
+                        changes.type_changes[path] = TypeChange(
+                            old=st_name, new=st_name
+                        )
 
         # Remove changed_types entries that became empty after dedup.
         # Keep all changed_packets entries (even if empty) so LLMs know

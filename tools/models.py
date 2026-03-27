@@ -59,6 +59,8 @@ class PacketChanges(BaseModel):
         added_fields: Dotted field paths only in the new version.
         removed_fields: Dotted field paths only in the old version.
         type_changes: Fields whose type changed, keyed by dotted path.
+            When old and new are the same, the type's internal structure
+            changed -- see the matching changed_types entry for details.
     """
 
     packet_id: int | None = None
