@@ -200,6 +200,19 @@ def diff_changelogs(
         new_removed = [r for r in new_change.removed if r not in old_removed]
         new_changed = [c for c in new_change.changed if c not in old_changed]
 
+        # Detect renames: same ID, different name between old-only and new-only
+        old_added_by_id: dict[int, str] = {
+            e.id: e.name for e in old_change.added
+            if e.id is not None and e.name not in {e2.name for e2 in new_change.added}
+        }
+        renamed_new_names: set[str] = set()
+        for entry in new_added[:]:
+            if entry.id is not None and entry.id in old_added_by_id:
+                old_name = old_added_by_id[entry.id]
+                new_changed.append(f"{old_name} -> {entry.name} ({entry.id})")
+                renamed_new_names.add(entry.name)
+        new_added = [e for e in new_added if e.name not in renamed_new_names]
+
         if new_added or new_displaced or new_removed or new_changed:
             diff_enums[name] = EnumChange(
                 added=new_added,
