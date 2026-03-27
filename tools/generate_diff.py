@@ -16,10 +16,14 @@ Usage:
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
 from models import (
+    ChangelogEntry,
+    EnumChange,
+    EnumEntry,
     PacketChanges,
     PacketDefinition,
     ProtocolDiff,
@@ -29,9 +33,198 @@ from models import (
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+PROTOCOL_DOCS_DIR = PROJECT_ROOT / "protocol_docs"
 
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 from endstone_endweave.protocol.versions import VERSIONS  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Changelog parsing
+# ---------------------------------------------------------------------------
+
+_ADDED_RE = re.compile(r"Added\s+(.+?)\s+\(([^)]+)\)")
+_DISPLACED_RE = re.compile(r"Displaced\s+(.+)")
+_REMOVED_RE = re.compile(r"Removed\s+(.+)")
+_CHANGED_RE = re.compile(r"Changed\s+(\S+)\s+from\s+.+\s+to\s+.+")
+_RAW_ENTRY_RE = re.compile(r"^(\d+):\s+(.+)$")
+
+
+def _clean_line(line: str) -> str:
+    """Clean HTML entities and markdown escapes from a changelog line."""
+    line = line.replace("&#x20;", " ")
+    line = line.replace("\\_", "_")
+    return line.strip()
+
+
+def _parse_id(raw: str) -> int | None:
+    """Try to parse a numeric ID from a changelog Added entry.
+
+    Handles plain integers and hex expressions like "0x00010000 | Mob".
+    Returns None for non-numeric or composite flag expressions.
+    """
+    raw = raw.strip()
+    try:
+        return int(raw)
+    except ValueError:
+        pass
+    # Try hex-only value (no | composition)
+    if "|" not in raw:
+        try:
+            return int(raw, 16)
+        except ValueError:
+            pass
+    return None
+
+
+def parse_changelog(
+    path: Path,
+) -> tuple[dict[str, EnumChange], list[ChangelogEntry]]:
+    """Parse a protocol changelog markdown file.
+
+    Args:
+        path: Path to the changelog markdown file.
+
+    Returns:
+        Tuple of (enum_changes dict, raw changelog entries list).
+    """
+    if not path.exists():
+        return {}, []
+
+    text = path.read_text(encoding="utf-8", errors="replace")
+    lines = text.splitlines()
+
+    enums: dict[str, EnumChange] = {}
+    changelog: list[ChangelogEntry] = []
+    current_enum: str | None = None
+    in_raw_section = False
+
+    for raw_line in lines:
+        line = _clean_line(raw_line)
+        if not line:
+            continue
+
+        # Detect section headers
+        if line.startswith("\\##") or line.startswith("##"):
+            header = line.lstrip("\\#").strip()
+            in_raw_section = "Raw Protocol Version Changelog" in header
+            current_enum = None
+            continue
+
+        if in_raw_section:
+            m = _RAW_ENTRY_RE.match(line)
+            if m:
+                changelog.append(ChangelogEntry(
+                    protocol=int(m.group(1)),
+                    description=m.group(2).strip(),
+                ))
+            continue
+
+        # Enum section: line ending with ":" that's not indented
+        if line.endswith(":") and not line.startswith(" "):
+            current_enum = line[:-1].strip()
+            if current_enum not in enums:
+                enums[current_enum] = EnumChange()
+            continue
+
+        if current_enum is None:
+            continue
+
+        enum = enums[current_enum]
+
+        m = _ADDED_RE.search(line)
+        if m:
+            enum.added.append(EnumEntry(
+                name=m.group(1).strip(),
+                id=_parse_id(m.group(2)),
+            ))
+            continue
+
+        m = _DISPLACED_RE.search(line)
+        if m:
+            enum.displaced.append(m.group(1).strip())
+            continue
+
+        m = _REMOVED_RE.search(line)
+        if m:
+            enum.removed.append(m.group(1).strip())
+            continue
+
+        m = _CHANGED_RE.search(line)
+        if m:
+            enum.changed.append(m.group(1).strip())
+            continue
+
+    return enums, changelog
+
+
+def diff_changelogs(
+    old_path: Path,
+    new_path: Path,
+    old_protocol: int,
+) -> tuple[dict[str, EnumChange], list[ChangelogEntry]]:
+    """Diff two changelogs to extract only changes new in the target version.
+
+    Args:
+        old_path: Path to the older version's changelog.
+        new_path: Path to the newer version's changelog.
+        old_protocol: Protocol number of the older version (for filtering
+            raw changelog entries).
+
+    Returns:
+        Tuple of (new enum changes, new raw changelog entries).
+    """
+    old_enums, _ = parse_changelog(old_path)
+    new_enums, new_changelog = parse_changelog(new_path)
+
+    # Filter raw changelog to only entries after old_protocol
+    filtered_changelog = [
+        e for e in new_changelog if e.protocol > old_protocol
+    ]
+
+    # Diff enum sections: include entries in new but not in old
+    diff_enums: dict[str, EnumChange] = {}
+    for name, new_change in new_enums.items():
+        if name not in old_enums:
+            # Entire enum section is new
+            diff_enums[name] = new_change
+            continue
+
+        old_change = old_enums[name]
+        old_added_names = {e.name for e in old_change.added}
+        old_displaced = set(old_change.displaced)
+        old_removed = set(old_change.removed)
+        old_changed = set(old_change.changed)
+
+        new_added = [e for e in new_change.added if e.name not in old_added_names]
+        new_displaced = [d for d in new_change.displaced if d not in old_displaced]
+        new_removed = [r for r in new_change.removed if r not in old_removed]
+        new_changed = [c for c in new_change.changed if c not in old_changed]
+
+        if new_added or new_displaced or new_removed or new_changed:
+            diff_enums[name] = EnumChange(
+                added=new_added,
+                displaced=new_displaced,
+                removed=new_removed,
+                changed=new_changed,
+            )
+
+    return diff_enums, filtered_changelog
+
+
+def _find_changelog(tag: str) -> Path | None:
+    """Find the changelog file for a protocol version tag.
+
+    Args:
+        tag: Release tag (e.g. "r26_u0").
+
+    Returns:
+        Path to the changelog file, or None if not found.
+    """
+    docs_dir = PROTOCOL_DOCS_DIR / tag
+    if not docs_dir.exists():
+        return None
+    changelogs = list(docs_dir.glob("changelog*.md"))
+    return changelogs[0] if changelogs else None
 
 
 def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
@@ -236,6 +429,31 @@ def main() -> None:
 
     print(f"Comparing {len(old_packets)} old vs {len(new_packets)} new definitions...")
     diff = diff_packets(old_packets, new_packets, old_proto, new_proto)
+
+    # Parse and diff changelogs
+    old_ver = VERSIONS[old_proto]
+    new_ver = VERSIONS[new_proto]
+    old_changelog_path = _find_changelog(old_ver.release_tag)
+    new_changelog_path = _find_changelog(new_ver.release_tag)
+
+    if old_changelog_path and new_changelog_path:
+        enum_changes, changelog = diff_changelogs(
+            old_changelog_path, new_changelog_path, old_proto
+        )
+        diff.enum_changes = dict(sorted(enum_changes.items()))
+        diff.changelog = sorted(changelog, key=lambda e: e.protocol)
+        print(f"  Enum changes: {len(diff.enum_changes)} enums")
+        print(f"  Changelog entries: {len(diff.changelog)}")
+    elif new_changelog_path:
+        # No old changelog, use all entries from new
+        enum_changes, changelog = parse_changelog(new_changelog_path)
+        filtered = [e for e in changelog if e.protocol > old_proto]
+        diff.enum_changes = dict(sorted(enum_changes.items()))
+        diff.changelog = sorted(filtered, key=lambda e: e.protocol)
+        print(f"  Enum changes: {len(diff.enum_changes)} enums")
+        print(f"  Changelog entries: {len(diff.changelog)}")
+    else:
+        print("  No changelogs found")
 
     print(f"  New packets: {len(diff.new_packets)}")
     print(f"  New types: {len(diff.new_types)}")

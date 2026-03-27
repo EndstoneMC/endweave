@@ -68,6 +68,46 @@ class PacketChanges(BaseModel):
     type_changes: dict[str, TypeChange] = {}
 
 
+class EnumEntry(BaseModel):
+    """A single enum value added in a protocol version.
+
+    Attributes:
+        name: Enum value name (e.g. "Trumpet", "PauseGrowth").
+        id: Numeric value if known, None otherwise.
+    """
+
+    name: str
+    id: int | None = None
+
+
+class EnumChange(BaseModel):
+    """Changes to a single enum between protocol versions.
+
+    Attributes:
+        added: New enum values with their IDs.
+        displaced: Existing values that shifted due to insertions above them.
+        removed: Values removed entirely.
+        changed: Values whose definition changed (e.g. flag composition).
+    """
+
+    added: list[EnumEntry] = []
+    displaced: list[str] = []
+    removed: list[str] = []
+    changed: list[str] = []
+
+
+class ChangelogEntry(BaseModel):
+    """A single raw changelog entry from the protocol docs.
+
+    Attributes:
+        protocol: Protocol version number for this change.
+        description: Human-readable description of what changed.
+    """
+
+    protocol: int
+    description: str
+
+
 _NODE_ID_RE = re.compile(r"^node_\d+$")
 
 
@@ -83,6 +123,8 @@ class ProtocolDiff(BaseModel):
         removed_types: Names of sub-types removed in the new version.
         changed_packets: Per-packet diffs keyed by packet name (have packet_id).
         changed_types: Per-type diffs keyed by type name (no packet_id).
+        enum_changes: Enum modifications between versions, keyed by enum name.
+        changelog: Raw per-protocol-step changelog entries.
     """
 
     old_protocol: int
@@ -93,6 +135,8 @@ class ProtocolDiff(BaseModel):
     removed_types: list[str] = []
     changed_packets: dict[str, PacketChanges] = {}
     changed_types: dict[str, PacketChanges] = {}
+    enum_changes: dict[str, EnumChange] = {}
+    changelog: list[ChangelogEntry] = []
 
 
 def infer_direction(name: str) -> str | None:
