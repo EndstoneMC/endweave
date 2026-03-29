@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """Generate a diff between two protocol version JSON files.
 
-Compares packet JSON files field-by-field to identify:
-- New packets and types (separated by whether they have a packet_id)
-- Removed packets and types
-- Field additions/removals per packet (filtered for DOT node ID noise)
-- Type changes
-- Packet metadata (packet_id, direction)
+Automatically fetches and parses protocol docs if needed.
 
 Usage:
-    uv run tools/generate_diff.py                  # diff lowest vs highest known
-    uv run tools/generate_diff.py r26_u0 r26_u1    # diff specific versions by tag
-    uv run tools/generate_diff.py 924 944           # diff by protocol number
+    uv run tools/diff.py                  # diff lowest vs highest known
+    uv run tools/diff.py r26_u0 r26_u1    # diff specific versions by tag
+    uv run tools/diff.py 924 944           # diff by protocol number
 """
 
 import argparse
@@ -20,6 +15,7 @@ import re
 import sys
 from pathlib import Path
 
+from fetch import fetch_if_missing
 from models import (
     ChangelogEntry,
     EnumChange,
@@ -31,6 +27,7 @@ from models import (
     TypeChange,
     is_node_id_noise,
 )
+from parse import ensure_parsed
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -72,6 +69,7 @@ _DISPLACED_RE = re.compile(r"Displaced\s+(.+)")
 _REMOVED_RE = re.compile(r"Removed\s+(.+)")
 _CHANGED_RE = re.compile(r"Changed\s+(\S+)\s+from\s+.+\s+to\s+.+")
 _RAW_ENTRY_RE = re.compile(r"^(\d+):\s+(.+)$")
+_RENAME_RE = re.compile(r"^(.+?)\s*->\s*(.+?)\s*\(\d+\)$")
 
 
 def _clean_line(line: str) -> str:
@@ -665,14 +663,13 @@ def main() -> None:
         print("Error: need at least two known versions to diff.")
         sys.exit(1)
 
+    # Auto-fetch and parse if needed
+    for proto in (old_proto, new_proto):
+        fetch_if_missing(proto)
+        ensure_parsed(proto)
+
     old_path = DATA_DIR / f"v{old_proto}.json"
     new_path = DATA_DIR / f"v{new_proto}.json"
-
-    if not old_path.exists() or not new_path.exists():
-        print("Error: Run parse_protocol_docs.py first to generate packet JSON files.")
-        print(f"  Expected: {old_path}")
-        print(f"  Expected: {new_path}")
-        sys.exit(1)
 
     old_packets = _load_packets(old_path)
     new_packets = _load_packets(new_path)
@@ -705,7 +702,6 @@ def main() -> None:
 
     # Extract renamed packets from MinecraftPacketIds enum changes.
     # Entries like "OldName -> NewName (ID)" indicate renames, not removals.
-    _RENAME_RE = re.compile(r"^(.+?)\s*->\s*(.+?)\s*\(\d+\)$")
     pkt_id_changes = diff.enum_changes.get("MinecraftPacketIds")
     if pkt_id_changes:
         for entry in pkt_id_changes.changed:

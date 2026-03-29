@@ -1,29 +1,12 @@
 #!/usr/bin/env python3
 """Parse protocol documentation files (DOT + JSON) into structured JSON.
 
-Reads .dot files from protocol_docs/v<protocol>/dot/ and .json files from
-protocol_docs/v<protocol>/json/, then outputs merged structured JSON to
+Reads from protocol_docs/v<protocol>/{dot,json}/ and outputs to
 data/v<protocol>.json.
 
-DOT format:
-- Root node = packet/type root, comment has metadata
-- Child nodes = fields, label = name, comment has typeName + attributes
-- attributes: 512 = leaf/primitive, 256 = named reference, 8 = list,
-  16 = list element, 2 = dependency, 4 = conditional branch
-- Edges define parent->child containment
-
-JSON format:
-- JSON Schema with x-underlying-type, x-serialization-options, x-ordinal-index
-- $ref -> definitions for nested types
-- $metaProperties["[cereal:packet]"] = packet ID
-
-Two-pass DOT parsing resolves cross-file type references:
-1. Build a type registry from ALL DOT files (including sub-types)
-2. Inline sub-type fields into packets that reference them
-
 Usage:
-    uv run tools/parse_protocol_docs.py              # parse all known versions
-    uv run tools/parse_protocol_docs.py r26_u0 r26_u1  # parse specific versions
+    uv run tools/parse.py              # parse all known versions
+    uv run tools/parse.py 924 944      # parse specific versions
 """
 
 import argparse
@@ -236,7 +219,7 @@ def parse_dot_file(filepath: Path) -> PacketDefinition | None:
     )
 
 
-def parse_dot_version(dot_dir: Path) -> list[PacketDefinition]:
+def parse_dot_dir(dot_dir: Path) -> list[PacketDefinition]:
     """Parse all DOT files in a directory.
 
     Args:
@@ -262,7 +245,7 @@ def parse_dot_version(dot_dir: Path) -> list[PacketDefinition]:
 # ---------------------------------------------------------------------------
 
 
-def _resolve_types_in_field(
+def _resolve_field(
     field: Field,
     type_registry: dict[str, list[Field]],
     visited: set[str],
@@ -301,7 +284,7 @@ def _resolve_types_in_field(
             resolved_children = []
             for rf in resolved_fields:
                 resolved_children.append(
-                    _resolve_types_in_field(rf, type_registry, visited | {child.name})
+                    _resolve_field(rf, type_registry, visited | {child.name})
                 )
             new_children.append(Field(
                 name=child.name,
@@ -311,7 +294,7 @@ def _resolve_types_in_field(
             ))
         else:
             # Recurse into children
-            new_children.append(_resolve_types_in_field(child, type_registry, visited))
+            new_children.append(_resolve_field(child, type_registry, visited))
 
     return Field(
         name=field.name,
@@ -338,7 +321,7 @@ def resolve_types(
     for defn in definitions:
         new_fields = []
         for field in defn.fields:
-            new_fields.append(_resolve_types_in_field(field, type_registry, set()))
+            new_fields.append(_resolve_field(field, type_registry, set()))
         resolved.append(defn.model_copy(update={"fields": new_fields}))
     return resolved
 
@@ -403,7 +386,7 @@ def _resolve_type(prop: dict) -> str:
     return schema_type
 
 
-def _build_fields_from_properties(
+def _props_to_fields(
     properties: dict,
     definitions: dict,
 ) -> list[Field]:
@@ -459,7 +442,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
 
         if items_ref:
             element_title = items_ref.get("title", "element")
-            element_children = _build_fields_from_properties(
+            element_children = _props_to_fields(
                 items_ref.get("properties", {}), definitions
             )
             element_field = Field(
@@ -480,7 +463,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
 
     if ref_def:
         ref_title = ref_def.get("title", name)
-        child_fields = _build_fields_from_properties(
+        child_fields = _props_to_fields(
             ref_def.get("properties", {}), definitions
         )
         if child_fields:
@@ -519,7 +502,7 @@ def parse_json_file(filepath: Path) -> PacketDefinition | None:
 
     definitions = data.get("definitions", {})
     properties = data.get("properties", {})
-    fields = _build_fields_from_properties(properties, definitions)
+    fields = _props_to_fields(properties, definitions)
     description = data.get("description", "")
 
     return PacketDefinition(
@@ -531,7 +514,7 @@ def parse_json_file(filepath: Path) -> PacketDefinition | None:
     )
 
 
-def parse_json_version(json_dir: Path) -> list[PacketDefinition]:
+def parse_json_dir(json_dir: Path) -> list[PacketDefinition]:
     """Parse all JSON Schema packet files in a directory.
 
     Args:
@@ -584,6 +567,45 @@ def merge_packets(
     return sorted(by_name.values(), key=lambda p: p.name)
 
 
+PROTOCOL_DOCS_DIR = PROJECT_ROOT / "protocol_docs"
+
+
+def parse_version(protocol: int) -> None:
+    """Parse protocol docs for a single version into data/v{N}.json."""
+    dot_dir = PROTOCOL_DOCS_DIR / f"v{protocol}" / "dot"
+    json_dir = PROTOCOL_DOCS_DIR / f"v{protocol}" / "json"
+
+    print(f"Parsing v{protocol}...")
+
+    dot_packets = parse_dot_dir(dot_dir)
+    print(f"  DOT: {len(dot_packets)} definitions")
+
+    type_registry = build_type_registry(dot_packets)
+    dot_packets = resolve_types(dot_packets, type_registry)
+    print(f"  DOT: resolved sub-type references ({len(type_registry)} types in registry)")
+
+    json_packets = parse_json_dir(json_dir)
+    print(f"  JSON: {len(json_packets)} packets")
+
+    merged = merge_packets(dot_packets, json_packets)
+    print(f"  Merged: {len(merged)} definitions")
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = OUTPUT_DIR / f"v{protocol}.json"
+    output = [defn.model_dump(exclude_defaults=True) for defn in merged]
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2)
+    print(f"  Written to {out_path}")
+
+
+def ensure_parsed(protocol: int) -> None:
+    """Parse protocol docs if the output JSON does not already exist."""
+    out_path = OUTPUT_DIR / f"v{protocol}.json"
+    if out_path.exists():
+        return
+    parse_version(protocol)
+
+
 def main() -> None:
     """Entry point: parse protocol docs for selected versions."""
     parser = argparse.ArgumentParser(
@@ -596,62 +618,25 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    # Build config from versions registry
-    all_configs: dict[int, dict[str, str]] = {}
-    for ver in VERSIONS.values():
-        all_configs[ver.protocol] = {
-            "dot_dir": f"protocol_docs/v{ver.protocol}/dot",
-            "json_dir": f"protocol_docs/v{ver.protocol}/json",
-            "output": f"v{ver.protocol}.json",
-        }
+    all_protos = [v.protocol for v in VERSIONS.values()]
 
     if args.versions:
-        selected: dict[int, dict[str, str]] = {}
+        selected = []
         for arg in args.versions:
             try:
                 proto = int(arg)
             except ValueError:
-                print(f"Error: '{arg}' is not a valid protocol number. Known: {', '.join(str(k) for k in all_configs)}")
+                print(f"Error: '{arg}' is not a valid protocol number. Known: {', '.join(str(k) for k in all_protos)}")
                 sys.exit(1)
-            if proto not in all_configs:
-                print(f"Error: unknown protocol {proto}. Known: {', '.join(str(k) for k in all_configs)}")
+            if proto not in all_protos:
+                print(f"Error: unknown protocol {proto}. Known: {', '.join(str(k) for k in all_protos)}")
                 sys.exit(1)
-            selected[proto] = all_configs[proto]
+            selected.append(proto)
     else:
-        selected = all_configs
+        selected = all_protos
 
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    for protocol, cfg in selected.items():
-        dot_dir = PROJECT_ROOT / cfg["dot_dir"]
-        json_dir = PROJECT_ROOT / cfg["json_dir"]
-
-        print(f"Parsing v{protocol}...")
-
-        # Parse DOT files (all types + packets)
-        dot_packets = parse_dot_version(dot_dir)
-        print(f"  DOT: {len(dot_packets)} definitions")
-
-        # Build type registry from DOT and resolve cross-references
-        type_registry = build_type_registry(dot_packets)
-        dot_packets = resolve_types(dot_packets, type_registry)
-        print(f"  DOT: resolved sub-type references ({len(type_registry)} types in registry)")
-
-        # Parse JSON files (packets only, with full type info)
-        json_packets = parse_json_version(json_dir)
-        print(f"  JSON: {len(json_packets)} packets")
-
-        # Merge (JSON overwrites DOT where both exist)
-        merged = merge_packets(dot_packets, json_packets)
-        print(f"  Merged: {len(merged)} definitions")
-
-        # Serialize with Pydantic
-        out_path = OUTPUT_DIR / cfg["output"]
-        output = [defn.model_dump(exclude_defaults=True) for defn in merged]
-        with open(out_path, "w", encoding="utf-8") as f:
-            json.dump(output, f, indent=2)
-        print(f"  Written to {out_path}")
-
+    for protocol in selected:
+        parse_version(protocol)
     print("Done.")
 
 

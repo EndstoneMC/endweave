@@ -1,6 +1,6 @@
 """Pydantic models for the protocol docs tooling pipeline.
 
-Shared data structures used by parse_protocol_docs.py and generate_diff.py.
+Shared data structures used by parse.py and diff.py.
 """
 
 import re

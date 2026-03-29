@@ -4,8 +4,8 @@
 Downloads DOT and JSON files for protocol versions into protocol_docs/.
 
 Usage:
-    uv run tools/fetch_protocol_docs.py              # fetch all known versions
-    uv run tools/fetch_protocol_docs.py 924 944      # fetch specific versions
+    uv run tools/fetch.py              # fetch all known versions
+    uv run tools/fetch.py 924 944      # fetch specific versions
 """
 
 import argparse
@@ -69,6 +69,21 @@ def fetch_version(protocol: int, branch: str) -> None:
         for changelog in tmp_path.glob("changelog*"):
             shutil.copy2(changelog, dest / changelog.name)
             print(f"  Copied {changelog.name}")
+
+
+def fetch_if_missing(protocol: int) -> None:
+    """Fetch protocol docs if not already downloaded."""
+    dest = OUTPUT_DIR / f"v{protocol}"
+    if dest.exists():
+        return
+    ver = VERSIONS.get(protocol)
+    if ver is None:
+        raise ValueError(f"Unknown protocol {protocol}")
+    tag = ver.release_tag
+    branch = f"r/{tag.replace('r', '', 1)}"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"Fetching v{protocol} ({branch})...")
+    fetch_version(protocol, branch)
 
 
 def main() -> None:
