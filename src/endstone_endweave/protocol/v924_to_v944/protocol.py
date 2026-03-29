@@ -11,7 +11,8 @@ from endstone_endweave.protocol.v924_to_v944.handlers.block_pos import (
     rewrite_first_block_to_net_block,
     rewrite_first_net_block_to_block,
     rewrite_inventory_transaction,
-    rewrite_lectern_update,
+    rewrite_lectern_update_clientbound,
+    rewrite_lectern_update_serverbound,
     rewrite_map_data,
     rewrite_play_sound,
     rewrite_player_action,
@@ -75,7 +76,8 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.SET_SPAWN_POSITION, rewrite_set_spawn_position)
     p.register_clientbound(PacketId.BLOCK_ACTOR_DATA, rewrite_first_net_block_to_block)
     p.register_clientbound(PacketId.UPDATE_BLOCK_SYNCED, rewrite_first_net_block_to_block)
-    p.register_clientbound(PacketId.LECTERN_UPDATE, rewrite_lectern_update)
+    p.register_clientbound(PacketId.LECTERN_UPDATE, rewrite_lectern_update_clientbound)
+    p.register_serverbound(PacketId.LECTERN_UPDATE, rewrite_lectern_update_serverbound)
     p.register_clientbound(PacketId.ADD_VOLUME_ENTITY, rewrite_add_volume_entity)
     p.register_clientbound(PacketId.UPDATE_SUB_CHUNK_BLOCKS, rewrite_update_sub_chunk_blocks)
     p.register_clientbound(PacketId.OPEN_SIGN, rewrite_first_net_block_to_block)

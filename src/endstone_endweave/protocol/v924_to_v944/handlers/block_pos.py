@@ -51,8 +51,8 @@ def rewrite_first_net_block_to_block(wrapper: PacketWrapper) -> None:
     wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)
 
 
-def rewrite_lectern_update(wrapper: PacketWrapper) -> None:
-    """LecternUpdate (125): position is 3rd field, after page fields.
+def rewrite_lectern_update_clientbound(wrapper: PacketWrapper) -> None:
+    """LecternUpdate (125) clientbound: NetworkBlockPos -> BlockPos.
 
     Args:
         wrapper: Packet wrapper for LecternUpdate.
@@ -60,6 +60,17 @@ def rewrite_lectern_update(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BYTE)  # New page to show
     wrapper.passthrough(BYTE)  # Total Pages
     wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Position of Lectern to update
+
+
+def rewrite_lectern_update_serverbound(wrapper: PacketWrapper) -> None:
+    """LecternUpdate (125) serverbound: BlockPos -> NetworkBlockPos.
+
+    Args:
+        wrapper: Packet wrapper for LecternUpdate.
+    """
+    wrapper.passthrough(BYTE)  # New page to show
+    wrapper.passthrough(BYTE)  # Total Pages
+    wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Position of Lectern to update
 
 
 def rewrite_tile_event(wrapper: PacketWrapper) -> None:

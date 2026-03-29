@@ -119,8 +119,10 @@ class EndweavePlugin(Plugin):
             for protocol in self._supported_versions
             if protocol in VERSIONS
         ]
-        if supported_names:
-            self.logger.info(f"Supported client versions: {', '.join(supported_names)}")
+        if len(supported_names) >= 2:
+            self.logger.info(f"Supported client versions: {supported_names[0]} - {supported_names[-1]}")
+        elif supported_names:
+            self.logger.info(f"Supported client versions: {supported_names[0]}")
 
         self._pipeline = ProtocolPipeline(self._manager, self._connections, self.logger, debug)
         self.register_events(self)
