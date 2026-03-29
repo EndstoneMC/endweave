@@ -31,8 +31,8 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
 
         block_tag_priority_count = wrapper.read(UVAR_INT)
         for _ in range(block_tag_priority_count):
-            wrapper.passthrough(STRING)
-            wrapper.passthrough(INT_LE)
+            wrapper.read(STRING)
+            wrapper.read(INT_LE)
 
         wrapper.passthrough(OptionalType(INT_LE))
         wrapper.passthrough(OptionalType(INT_LE))

@@ -8,7 +8,7 @@ from endstone_endweave.codec import (
     PacketWrapper,
 )
 
-_INTERACT_UPDATE = InteractAction.INTERACT_UPDATE
+_HAS_POSITION = (InteractAction.INTERACT_UPDATE, InteractAction.STOP_RIDING)
 
 
 def rewrite_interact(wrapper: PacketWrapper) -> None:
@@ -20,7 +20,7 @@ def rewrite_interact(wrapper: PacketWrapper) -> None:
     action = wrapper.passthrough(BYTE)  # Action
     wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
 
-    if action == _INTERACT_UPDATE:
+    if action in _HAS_POSITION:
         wrapper.write(BOOL, True)
     else:
         wrapper.write(BOOL, False)

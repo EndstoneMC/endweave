@@ -9,7 +9,7 @@ from endstone_endweave.codec import (
     PacketWrapper,
 )
 
-_INTERACT_UPDATE = InteractAction.INTERACT_UPDATE
+_HAS_POSITION = (InteractAction.INTERACT_UPDATE, InteractAction.STOP_RIDING)
 
 
 def rewrite_interact(wrapper: PacketWrapper) -> None:
@@ -22,7 +22,7 @@ def rewrite_interact(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
 
     has_mouse_position = wrapper.read(BOOL)
-    if action == _INTERACT_UPDATE:
+    if action in _HAS_POSITION:
         if has_mouse_position:
             wrapper.passthrough(VEC3)  # Position
         else:

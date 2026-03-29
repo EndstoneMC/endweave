@@ -43,12 +43,23 @@ def rewrite_first_net_block_to_block(wrapper: PacketWrapper) -> None:
     """Rewrite first-field NetworkBlockPos -> BlockPos.
 
     Used by: UpdateBlock (21), BlockActorData (56),
-    UpdateBlockSynced (110), LecternUpdate (125), OpenSign (303).
+    UpdateBlockSynced (110), OpenSign (303).
 
     Args:
         wrapper: Packet wrapper positioned at the first field.
     """
     wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)
+
+
+def rewrite_lectern_update(wrapper: PacketWrapper) -> None:
+    """LecternUpdate (125): position is 3rd field, after page fields.
+
+    Args:
+        wrapper: Packet wrapper for LecternUpdate.
+    """
+    wrapper.passthrough(BYTE)  # New page to show
+    wrapper.passthrough(BYTE)  # Total Pages
+    wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Position of Lectern to update
 
 
 def rewrite_tile_event(wrapper: PacketWrapper) -> None:
