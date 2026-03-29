@@ -5,6 +5,7 @@ from endstone_endweave.codec import (
     BYTE,
     EXPERIMENTS_V860,
     FLOAT_LE,
+    GAME_RULES,
     INT64_LE,
     INT_LE,
     NAMED_COMPOUND_TAG,
@@ -14,7 +15,6 @@ from endstone_endweave.codec import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
-    GameRuleType,
     OptionalType,
     PacketWrapper,
 )
@@ -65,19 +65,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)
     wrapper.passthrough(BOOL)
 
-    game_rule_count = wrapper.passthrough(UVAR_INT)
-    for _ in range(game_rule_count):
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(BOOL)  # Editable
-        game_rule_type = wrapper.passthrough(UVAR_INT)
-        if game_rule_type == GameRuleType.BOOL:
-            wrapper.passthrough(BOOL)
-        elif game_rule_type == GameRuleType.INT:
-            wrapper.passthrough(VAR_INT)
-        elif game_rule_type == GameRuleType.FLOAT:
-            wrapper.passthrough(FLOAT_LE)
-        else:
-            raise ValueError(f"Unknown game rule type: {game_rule_type}")
+    wrapper.passthrough(GAME_RULES)
 
     wrapper.passthrough(EXPERIMENTS_V860)
     wrapper.passthrough(BOOL)
@@ -126,9 +114,10 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)
     wrapper.passthrough(STRING)
     wrapper.passthrough(NAMED_COMPOUND_TAG)
-    wrapper.passthrough(INT64_LE)
-    wrapper.passthrough(INT64_LE)
-    wrapper.passthrough(INT64_LE)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.write(BOOL, False)
+    wrapper.read(INT64_LE)  # Server Block Type Registry Checksum
+    wrapper.write(INT64_LE, 0)  # zero checksum to skip validation
+    wrapper.passthrough(INT64_LE)  # World Template ID (MSB)
+    wrapper.passthrough(INT64_LE)  # World Template ID (LSB)
+    wrapper.passthrough(BOOL)  # Server Enabled ClientSide Generation
+    wrapper.passthrough(BOOL)  # BlockNetworkIds Are Hashes
+    wrapper.write(BOOL, False)  # TickDeathSystemsEnabled
