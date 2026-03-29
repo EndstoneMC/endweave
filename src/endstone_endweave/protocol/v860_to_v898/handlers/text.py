@@ -5,31 +5,36 @@ from endstone_endweave.codec import (
     BYTE,
     STRING,
     UVAR_INT,
+    OptionalType,
     PacketWrapper,
+    TextPacketBodyType,
+    TextPacketType,
+    enum_to_label,
 )
 
-_TEXT_KIND_MESSAGE_ONLY = 0
-_TEXT_KIND_AUTHOR_AND_MESSAGE = 1
-_TEXT_KIND_MESSAGE_AND_PARAMS = 2
+_MESSAGE_ONLY_TYPES = (
+    TextPacketType.RAW, TextPacketType.TIP, TextPacketType.SYSTEM_MESSAGE,
+    TextPacketType.TEXT_OBJECT_WHISPER, TextPacketType.TEXT_OBJECT_ANNOUNCEMENT,
+    TextPacketType.TEXT_OBJECT,
+)
+_AUTHOR_AND_MESSAGE_TYPES = (
+    TextPacketType.CHAT, TextPacketType.WHISPER, TextPacketType.ANNOUNCEMENT,
+)
+_MESSAGE_AND_PARAMS_TYPES = (
+    TextPacketType.TRANSLATE, TextPacketType.POPUP, TextPacketType.JUKEBOX_POPUP,
+)
 
-_TEXT_MESSAGE_ONLY = {
-    0: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    5: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    6: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    9: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    10: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    11: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-}
-_TEXT_AUTHOR_AND_MESSAGE = {
-    1: ("chat", "whisper", "announcement"),
-    7: ("chat", "whisper", "announcement"),
-    8: ("chat", "whisper", "announcement"),
-}
-_TEXT_MESSAGE_AND_PARAMS = {
-    2: ("translate", "popup", "jukeboxPopup"),
-    3: ("translate", "popup", "jukeboxPopup"),
-    4: ("translate", "popup", "jukeboxPopup"),
-}
+_labels = enum_to_label(TextPacketType)
+
+
+def _build_label_group(types: tuple[TextPacketType, ...]) -> dict[int, tuple[str, ...]]:
+    labels = tuple(_labels[t] for t in types)
+    return {t: labels for t in types}
+
+
+_TEXT_MESSAGE_ONLY = _build_label_group(_MESSAGE_ONLY_TYPES)
+_TEXT_AUTHOR_AND_MESSAGE = _build_label_group(_AUTHOR_AND_MESSAGE_TYPES)
+_TEXT_MESSAGE_AND_PARAMS = _build_label_group(_MESSAGE_AND_PARAMS_TYPES)
 
 
 def rewrite_text_clientbound(wrapper: PacketWrapper) -> None:
@@ -43,20 +48,20 @@ def rewrite_text_clientbound(wrapper: PacketWrapper) -> None:
 
     wrapper.write(BOOL, needs_translation)
     if text_type in _TEXT_MESSAGE_ONLY:
-        wrapper.write(BYTE, _TEXT_KIND_MESSAGE_ONLY)
+        wrapper.write(BYTE, TextPacketBodyType.MESSAGE_ONLY)
         for label in _TEXT_MESSAGE_ONLY[text_type]:
             wrapper.write(STRING, label)
         wrapper.write(BYTE, text_type)
         wrapper.passthrough(STRING)
     elif text_type in _TEXT_AUTHOR_AND_MESSAGE:
-        wrapper.write(BYTE, _TEXT_KIND_AUTHOR_AND_MESSAGE)
+        wrapper.write(BYTE, TextPacketBodyType.AUTHOR_AND_MESSAGE)
         for label in _TEXT_AUTHOR_AND_MESSAGE[text_type]:
             wrapper.write(STRING, label)
         wrapper.write(BYTE, text_type)
         wrapper.passthrough(STRING)
         wrapper.passthrough(STRING)
     elif text_type in _TEXT_MESSAGE_AND_PARAMS:
-        wrapper.write(BYTE, _TEXT_KIND_MESSAGE_AND_PARAMS)
+        wrapper.write(BYTE, TextPacketBodyType.MESSAGE_AND_PARAMS)
         for label in _TEXT_MESSAGE_AND_PARAMS[text_type]:
             wrapper.write(STRING, label)
         wrapper.write(BYTE, text_type)
@@ -70,9 +75,7 @@ def rewrite_text_clientbound(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(STRING)
     wrapper.passthrough(STRING)
     filtered_message = wrapper.read(STRING)
-    wrapper.write(BOOL, filtered_message != "")
-    if filtered_message != "":
-        wrapper.write(STRING, filtered_message)
+    wrapper.write(OptionalType(STRING), filtered_message or None)
 
 
 def rewrite_text_serverbound(wrapper: PacketWrapper) -> None:
@@ -84,14 +87,14 @@ def rewrite_text_serverbound(wrapper: PacketWrapper) -> None:
     needs_translation = wrapper.read(BOOL)
     kind = wrapper.read(BYTE)
 
-    if kind == _TEXT_KIND_MESSAGE_ONLY:
+    if kind == TextPacketBodyType.MESSAGE_ONLY:
         for _ in range(6):
             wrapper.read(STRING)
         text_type = wrapper.read(BYTE)
         wrapper.write(BYTE, text_type)
         wrapper.write(BOOL, needs_translation)
         wrapper.passthrough(STRING)
-    elif kind == _TEXT_KIND_AUTHOR_AND_MESSAGE:
+    elif kind == TextPacketBodyType.AUTHOR_AND_MESSAGE:
         for _ in range(3):
             wrapper.read(STRING)
         text_type = wrapper.read(BYTE)
@@ -99,7 +102,7 @@ def rewrite_text_serverbound(wrapper: PacketWrapper) -> None:
         wrapper.write(BOOL, needs_translation)
         wrapper.passthrough(STRING)
         wrapper.passthrough(STRING)
-    elif kind == _TEXT_KIND_MESSAGE_AND_PARAMS:
+    elif kind == TextPacketBodyType.MESSAGE_AND_PARAMS:
         for _ in range(3):
             wrapper.read(STRING)
         text_type = wrapper.read(BYTE)
@@ -114,7 +117,4 @@ def rewrite_text_serverbound(wrapper: PacketWrapper) -> None:
 
     wrapper.passthrough(STRING)
     wrapper.passthrough(STRING)
-    filtered_message = ""
-    if wrapper.read(BOOL):
-        filtered_message = wrapper.read(STRING)
-    wrapper.write(STRING, filtered_message)
+    wrapper.write(STRING, wrapper.read(OptionalType(STRING)) or "")

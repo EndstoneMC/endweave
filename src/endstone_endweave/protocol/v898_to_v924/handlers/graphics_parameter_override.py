@@ -1,10 +1,10 @@
 """Handler for GraphicsParameterOverridePacket -- v898 server to v924 client."""
 
 from endstone_endweave.codec import (
-    BOOL,
     FLOAT_LE,
     UVAR_INT,
     VEC3,
+    OptionalType,
     PacketWrapper,
 )
 
@@ -20,5 +20,5 @@ def rewrite_graphics_parameter_override(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(FLOAT_LE)  # Float Value
         wrapper.passthrough(VEC3)  # Vec3 Value
 
-    wrapper.write(BOOL, False)  # Float Value (not present)
-    wrapper.write(BOOL, False)  # Vec3 Value (not present)
+    wrapper.write(OptionalType(FLOAT_LE), None)  # Float Value (not present)
+    wrapper.write(OptionalType(VEC3), None)  # Vec3 Value (not present)

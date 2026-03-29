@@ -381,21 +381,30 @@ def _resolve_type(prop: dict) -> str:
 def _props_to_fields(
     properties: dict,
     definitions: dict,
+    required: list[str] | None = None,
 ) -> list[Field]:
     """Convert JSON Schema properties into Field list.
 
     Args:
         properties: Dict of JSON Schema property names to their schemas.
         definitions: Top-level definitions dict for resolving $ref pointers.
+        required: List of required property names. Fields not in this list
+            are marked as optional.
 
     Returns:
         List of Fields sorted by x-ordinal-index.
     """
+    required_set = set(required) if required else None
     sorted_props = sorted(
         properties.items(),
         key=lambda kv: kv[1].get("x-ordinal-index", 999),
     )
-    return [_build_json_field(name, prop, definitions) for name, prop in sorted_props]
+    fields = [_build_json_field(name, prop, definitions) for name, prop in sorted_props]
+    if required_set is not None:
+        for field in fields:
+            if field.name not in required_set:
+                field.optional = True
+    return fields
 
 
 def _resolve_ref(prop: dict, definitions: dict) -> dict | None:
@@ -435,7 +444,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
         if items_ref:
             element_title = items_ref.get("title", "element")
             element_children = _props_to_fields(
-                items_ref.get("properties", {}), definitions
+                items_ref.get("properties", {}), definitions, items_ref.get("required")
             )
             element_field = Field(
                 name=element_title,
@@ -456,7 +465,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
     if ref_def:
         ref_title = ref_def.get("title", name)
         child_fields = _props_to_fields(
-            ref_def.get("properties", {}), definitions
+            ref_def.get("properties", {}), definitions, ref_def.get("required")
         )
         if child_fields:
             return Field(name=name, type=ref_title, attributes=0, fields=child_fields)
@@ -491,7 +500,8 @@ def parse_json_file(filepath: Path) -> PacketDefinition | None:
 
     definitions = data.get("definitions", {})
     properties = data.get("properties", {})
-    fields = _props_to_fields(properties, definitions)
+    required = data.get("required")
+    fields = _props_to_fields(properties, definitions, required)
     description = data.get("description", "")
 
     return PacketDefinition(
@@ -551,6 +561,8 @@ def _to_output(field: Field) -> dict:
 
     if field.type:
         result["type"] = field.type
+    if field.optional:
+        result["optional"] = True
     if field.fields:
         result["fields"] = [_to_output(c) for c in field.fields]
     return result

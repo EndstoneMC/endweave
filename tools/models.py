@@ -24,6 +24,7 @@ class Field(BaseModel):
     type: str = ""
     fields: list["Field"] = []
     list: bool = False
+    optional: bool = False
     attributes: int = PydanticField(default=0, exclude=True)
 
 

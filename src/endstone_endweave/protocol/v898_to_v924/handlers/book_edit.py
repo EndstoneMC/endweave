@@ -1,12 +1,6 @@
 """BookEdit packet handler for v898 server <- v924 client (serverbound)."""
 
-from endstone_endweave.codec import BYTE, VAR_INT, PacketWrapper
-
-_ACTION_REPLACE_PAGE = 0
-_ACTION_ADD_PAGE = 1
-_ACTION_DELETE_PAGE = 2
-_ACTION_SWAP_PAGES = 3
-_ACTION_FINALIZE = 4
+from endstone_endweave.codec import BYTE, VAR_INT, BookEditActionType, PacketWrapper
 
 
 def rewrite_book_edit(wrapper: PacketWrapper) -> None:
@@ -25,14 +19,14 @@ def rewrite_book_edit(wrapper: PacketWrapper) -> None:
     wrapper.write(BYTE, action)  # Action
     wrapper.write(BYTE, book_slot)  # Book Slot
 
-    if action in (_ACTION_REPLACE_PAGE, _ACTION_ADD_PAGE):
+    if action in (BookEditActionType.REPLACE_PAGE, BookEditActionType.ADD_PAGE):
         wrapper.write(BYTE, wrapper.read(VAR_INT))  # Page Index
-    elif action == _ACTION_DELETE_PAGE:
+    elif action == BookEditActionType.DELETE_PAGE:
         wrapper.write(BYTE, wrapper.read(VAR_INT))  # Page Index
-    elif action == _ACTION_SWAP_PAGES:
+    elif action == BookEditActionType.SWAP_PAGES:
         wrapper.write(BYTE, wrapper.read(VAR_INT))  # Page Index A
         wrapper.write(BYTE, wrapper.read(VAR_INT))  # Page Index B
-    elif action == _ACTION_FINALIZE:
+    elif action == BookEditActionType.FINALIZE:
         pass
     else:
         raise ValueError(f"Unknown BookEdit action: {action}")

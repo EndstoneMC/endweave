@@ -7,6 +7,18 @@ symbolic names instead of magic literals.
 
 import enum
 
+_E = enum.IntEnum
+
+
+def enum_to_label(e: type[_E]) -> dict[int, str]:
+    """Build value -> lowercase label lookup for a v898 string-serialized enum."""
+    return {m.value: m.name.replace("_", "").lower() for m in e}
+
+
+def label_to_enum(e: type[_E]) -> dict[str, int]:
+    """Build lowercase label -> value lookup for a v898 string-serialized enum."""
+    return {m.name.replace("_", "").lower(): m.value for m in e}
+
 
 class AnimateAction(enum.IntEnum):
     """AnimatePacketPayload::Action."""
@@ -16,6 +28,16 @@ class AnimateAction(enum.IntEnum):
     WAKE_UP = 3
     CRITICAL_HIT = 4
     MAGIC_CRITICAL_HIT = 5
+
+
+class BookEditActionType(enum.IntEnum):
+    """BookEditPacketPayload::Operation variant index."""
+
+    REPLACE_PAGE = 0
+    ADD_PAGE = 1
+    DELETE_PAGE = 2
+    SWAP_PAGES = 3
+    FINALIZE = 4
 
 
 class ClientboundMapItemDataType(enum.IntEnum):
@@ -46,6 +68,17 @@ class CommandOriginType(enum.IntEnum):
     GAME_DIRECTOR_ENTITY_SERVER = 13
     SCRIPTING = 14
     EXECUTE_CONTEXT = 15
+
+
+class CommandPermissionLevel(enum.IntEnum):
+    """CommandPermissionLevel."""
+
+    ANY = 0
+    GAME_DIRECTORS = 1
+    ADMIN = 2
+    HOST = 3
+    OWNER = 4
+    INTERNAL = 5
 
 
 class CommandOutputType(enum.IntEnum):
@@ -120,6 +153,31 @@ class InteractAction(enum.IntEnum):
     INTERACT_UPDATE = 4
     NPC_OPEN = 5
     OPEN_INVENTORY = 6
+
+
+class TextPacketBodyType(enum.IntEnum):
+    """TextPacketPayload::mBody variant index."""
+
+    MESSAGE_ONLY = 0
+    AUTHOR_AND_MESSAGE = 1
+    MESSAGE_AND_PARAMS = 2
+
+
+class TextPacketType(enum.IntEnum):
+    """TextPacketType."""
+
+    RAW = 0
+    CHAT = 1
+    TRANSLATE = 2
+    POPUP = 3
+    JUKEBOX_POPUP = 4
+    TIP = 5
+    SYSTEM_MESSAGE = 6
+    WHISPER = 7
+    ANNOUNCEMENT = 8
+    TEXT_OBJECT_WHISPER = 9
+    TEXT_OBJECT = 10
+    TEXT_OBJECT_ANNOUNCEMENT = 11
 
 
 class MapItemTrackedActorType(enum.IntEnum):
