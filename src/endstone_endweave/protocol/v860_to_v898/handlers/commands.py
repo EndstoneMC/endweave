@@ -360,10 +360,7 @@ def rewrite_command_output(wrapper: PacketWrapper) -> None:
         for parameter in parameters:
             wrapper.write(STRING, parameter)
 
-    has_data = output_type == 4
-    wrapper.write(BOOL, has_data)
-    if has_data:
-        wrapper.passthrough(STRING)
+    wrapper.write(BOOL, output_type == 4)
 
 
 def rewrite_text_clientbound(wrapper: PacketWrapper) -> None:

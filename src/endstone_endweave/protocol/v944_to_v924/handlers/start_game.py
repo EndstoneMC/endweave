@@ -131,8 +131,3 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
         wrapper.read(BOOL)  # has presence information
         wrapper.write(BOOL, False)  # has gathering (v924 form)
 
-    # Server Telemetry Data (Social::Events::ServerTelemetryData)
-    wrapper.passthrough(STRING)  # Server Telemetry Data[0]
-    wrapper.passthrough(STRING)  # Server Telemetry Data[1]
-    wrapper.passthrough(STRING)  # Server Telemetry Data[2]
-    wrapper.passthrough(STRING)  # Server Telemetry Data[3]

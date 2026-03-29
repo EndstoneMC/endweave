@@ -43,11 +43,6 @@ def rewrite_resource_pack_stack(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(STRING)
         wrapper.passthrough(STRING)
 
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(EXPERIMENTS_V860)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-
 
 def rewrite_start_game(wrapper: PacketWrapper) -> None:
     """Drop TickDeathSystemsEnabled from StartGame.
@@ -162,7 +157,6 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)
     wrapper.passthrough(BOOL)
     wrapper.read(BOOL)
-    wrapper.passthrough(BOOL)
 
 
 def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
@@ -216,8 +210,6 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
 
         wrapper.passthrough(OptionalType(STRING))
         wrapper.passthrough(OptionalType(STRING))
-
-    wrapper.passthrough(BYTE)
 
 
 def rewrite_animate_clientbound(wrapper: PacketWrapper) -> None:
@@ -310,4 +302,3 @@ def rewrite_actor_event(wrapper: PacketWrapper) -> None:
     event_id = wrapper.read(BYTE)
     remapped = event_id + 1 if event_id >= _ENTITY_EVENT_INSERT_AT else event_id
     wrapper.write(BYTE, remapped)
-    wrapper.passthrough(VAR_INT)

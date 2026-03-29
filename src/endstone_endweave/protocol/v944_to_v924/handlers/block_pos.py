@@ -255,7 +255,6 @@ def rewrite_structure_block_update(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # ShowBoundingBox
     wrapper.passthrough(VAR_INT)  # StructureBlockType
     wrapper.map(STRUCTURE_SETTINGS_V924, STRUCTURE_SETTINGS_V944)
-    wrapper.passthrough(VAR_INT)  # RedstoneSaveMode
 
 
 def rewrite_command_block_update(wrapper: PacketWrapper) -> None:

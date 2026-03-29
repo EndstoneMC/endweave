@@ -18,7 +18,6 @@ from endstone_endweave.codec import (
     SPLINE_INSTRUCTION_V944,
     STRING,
     UVAR_INT,
-    OptionalType,
     PacketWrapper,
 )
 
@@ -108,6 +107,3 @@ def rewrite_camera_instruction(wrapper: PacketWrapper) -> None:
     # optional Spline (CameraInstruction::SplineInstruction)
     if wrapper.passthrough(BOOL):
         wrapper.map(SPLINE_INSTRUCTION_V924, SPLINE_INSTRUCTION_V944)
-
-    wrapper.passthrough(OptionalType(INT64_LE))  # AttachToEntity
-    wrapper.passthrough(OPTIONAL_BOOL)  # DetachFromEntity

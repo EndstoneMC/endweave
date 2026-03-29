@@ -235,8 +235,6 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(OptionalType(STRING))
         wrapper.passthrough(OptionalType(STRING))
 
-    wrapper.passthrough(BYTE)
-
 
 def rewrite_graphics_parameter_override(wrapper: PacketWrapper) -> None:
     """Strip the v924 float/vector override payloads.
@@ -254,7 +252,3 @@ def rewrite_graphics_parameter_override(wrapper: PacketWrapper) -> None:
 
     if wrapper.read(BOOL):
         wrapper.read(VEC3)
-
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(BYTE)
-    wrapper.passthrough(BOOL)

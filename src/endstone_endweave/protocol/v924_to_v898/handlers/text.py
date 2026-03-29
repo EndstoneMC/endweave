@@ -1,6 +1,6 @@
 """Text packet handlers for v924 to v898."""
 
-from endstone_endweave.codec import BOOL, BYTE, STRING, UVAR_INT, PacketWrapper
+from endstone_endweave.codec import BOOL, BYTE, STRING, PacketWrapper
 
 _TEXT_KIND_MESSAGE_ONLY = 0
 _TEXT_KIND_AUTHOR_AND_MESSAGE = 1
@@ -41,34 +41,18 @@ def rewrite_text_clientbound(wrapper: PacketWrapper) -> None:
         for label in _TEXT_MESSAGE_ONLY[text_type]:
             wrapper.write(STRING, label)
         wrapper.write(BYTE, text_type)
-        wrapper.passthrough(STRING)
     elif kind == _TEXT_KIND_AUTHOR_AND_MESSAGE:
         text_type = wrapper.read(BYTE)
         for label in _TEXT_AUTHOR_AND_MESSAGE[text_type]:
             wrapper.write(STRING, label)
         wrapper.write(BYTE, text_type)
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(STRING)
     elif kind == _TEXT_KIND_MESSAGE_AND_PARAMS:
         text_type = wrapper.read(BYTE)
         for label in _TEXT_MESSAGE_AND_PARAMS[text_type]:
             wrapper.write(STRING, label)
         wrapper.write(BYTE, text_type)
-        wrapper.passthrough(STRING)
-        parameter_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(parameter_count):
-            wrapper.passthrough(STRING)
     else:
         raise ValueError(f"Unknown text kind: {kind}")
-
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    has_filtered_message = wrapper.read(BOOL)
-    if has_filtered_message:
-        wrapper.write(BOOL, True)
-        wrapper.passthrough(STRING)
-    else:
-        wrapper.write(BOOL, False)
 
 
 def rewrite_text_serverbound(wrapper: PacketWrapper) -> None:
@@ -85,26 +69,13 @@ def rewrite_text_serverbound(wrapper: PacketWrapper) -> None:
         for _ in range(6):
             wrapper.read(STRING)
         wrapper.passthrough(BYTE)
-        wrapper.passthrough(STRING)
     elif kind == _TEXT_KIND_AUTHOR_AND_MESSAGE:
         for _ in range(3):
             wrapper.read(STRING)
         wrapper.passthrough(BYTE)
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(STRING)
     elif kind == _TEXT_KIND_MESSAGE_AND_PARAMS:
         for _ in range(3):
             wrapper.read(STRING)
         wrapper.passthrough(BYTE)
-        wrapper.passthrough(STRING)
-        parameter_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(parameter_count):
-            wrapper.passthrough(STRING)
     else:
         raise ValueError(f"Unknown text kind: {kind}")
-
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    has_filtered_message = wrapper.passthrough(BOOL)
-    if has_filtered_message:
-        wrapper.passthrough(STRING)

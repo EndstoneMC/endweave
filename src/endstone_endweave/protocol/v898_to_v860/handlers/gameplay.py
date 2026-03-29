@@ -14,7 +14,6 @@ from endstone_endweave.codec import (
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
-    VEC3,
     OptionalType,
     PacketWrapper,
 )
@@ -41,11 +40,6 @@ def rewrite_resource_pack_stack(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(STRING)
         wrapper.passthrough(STRING)
         wrapper.passthrough(STRING)
-
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(EXPERIMENTS_V860)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
 
 
 def rewrite_start_game(wrapper: PacketWrapper) -> None:
@@ -160,7 +154,6 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)
     wrapper.passthrough(BOOL)
     wrapper.write(BOOL, False)
-    wrapper.passthrough(BOOL)
 
 
 def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
@@ -225,8 +218,6 @@ def rewrite_camera_aim_assist_presets(wrapper: PacketWrapper) -> None:
         wrapper.passthrough(OptionalType(STRING))
         wrapper.passthrough(OptionalType(STRING))
 
-    wrapper.passthrough(BYTE)
-
 
 def rewrite_interact(wrapper: PacketWrapper) -> None:
     """Convert the v860 mousePosition into the v898 optional form.
@@ -239,7 +230,6 @@ def rewrite_interact(wrapper: PacketWrapper) -> None:
 
     if action == _MOUSEOVER:
         wrapper.write(BOOL, True)
-        wrapper.passthrough(VEC3)
     else:
         wrapper.write(BOOL, False)
 
@@ -288,7 +278,6 @@ def rewrite_actor_event(wrapper: PacketWrapper) -> None:
         return
     remapped = event_id - 1 if event_id > _ENTITY_EVENT_INSERT_AT else event_id
     wrapper.write(BYTE, remapped)
-    wrapper.passthrough(VAR_INT)
 
 
 __all__ = [

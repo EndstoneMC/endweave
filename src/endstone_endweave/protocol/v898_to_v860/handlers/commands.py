@@ -297,8 +297,7 @@ def rewrite_command_output(wrapper: PacketWrapper) -> None:
         for parameter in parameters:
             wrapper.write(STRING, parameter)
 
-    if wrapper.read(BOOL):
-        wrapper.passthrough(STRING)
+    wrapper.read(BOOL)
 
 
 __all__ = [
