@@ -70,6 +70,20 @@ def _strip_quotes(s: str | None) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _lowest_numeric(ids: set[str]) -> str | None:
+    """Pick the ID with the lowest numeric value from a set of node IDs."""
+    numeric = []
+    for nid in ids:
+        try:
+            numeric.append((int(nid), nid))
+        except ValueError:
+            pass
+    if numeric:
+        numeric.sort()
+        return numeric[0][1]
+    return None
+
+
 def _parse_dot_graph(graph: pydot.Dot) -> tuple[str, dict[str, dict[str, str | int]], dict[str, list[str]]]:
     """Extract nodes and edges from a pydot graph.
 
@@ -110,33 +124,11 @@ def _parse_dot_graph(graph: pydot.Dot) -> tuple[str, dict[str, dict[str, str | i
     # Find root: node with outgoing edges but no incoming edges
     root_candidates = sources - destinations
     if not root_candidates:
-        # Fallback: use the node with the lowest numeric ID
-        numeric_ids = []
-        for nid in nodes_by_id:
-            try:
-                numeric_ids.append((int(nid), nid))
-            except ValueError:
-                pass
-        if numeric_ids:
-            numeric_ids.sort()
-            root_id = numeric_ids[0][1]
-        else:
-            root_id = next(iter(nodes_by_id), "")
+        root_id = _lowest_numeric(set(nodes_by_id)) or next(iter(nodes_by_id), "")
     elif len(root_candidates) == 1:
         root_id = root_candidates.pop()
     else:
-        # Multiple roots: pick the lowest numeric ID among them
-        numeric_roots = []
-        for r in root_candidates:
-            try:
-                numeric_roots.append((int(r), r))
-            except ValueError:
-                pass
-        if numeric_roots:
-            numeric_roots.sort()
-            root_id = numeric_roots[0][1]
-        else:
-            root_id = sorted(root_candidates)[0]
+        root_id = _lowest_numeric(root_candidates) or sorted(root_candidates)[0]
 
     return root_id, nodes_by_id, children_by_id
 
@@ -469,9 +461,6 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
         if child_fields:
             return Field(name=name, type=ref_title, attributes=0, children=child_fields)
         return Field(name=name, type=ref_title, attributes=512)
-
-    if prop.get("enum") is not None:
-        return Field(name=name, type=_resolve_type(prop), attributes=512)
 
     return Field(name=name, type=_resolve_type(prop), attributes=512)
 

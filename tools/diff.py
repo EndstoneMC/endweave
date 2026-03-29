@@ -248,19 +248,17 @@ def diff_changelogs(
 
 
 def _find_changelog(protocol: int) -> Path | None:
-    """Find the changelog file for a protocol version.
-
-    Args:
-        protocol: Protocol version number (e.g. 924).
-
-    Returns:
-        Path to the changelog file, or None if not found.
-    """
+    """Find the changelog file for a protocol version."""
     docs_dir = PROTOCOL_DOCS_DIR / f"v{protocol}"
     if not docs_dir.exists():
         return None
     changelogs = list(docs_dir.glob("changelog*.md"))
     return changelogs[0] if changelogs else None
+
+
+# ---------------------------------------------------------------------------
+# Packet diffing
+# ---------------------------------------------------------------------------
 
 
 def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
@@ -331,6 +329,195 @@ def _filter_descendants(paths: list[str], extra_prefixes: list[str]) -> list[str
     return result
 
 
+def _group_by_parent(paths: set[str]) -> dict[str, list[str]]:
+    """Group dotted field paths by their parent path."""
+    groups: dict[str, list[str]] = {}
+    for path in paths:
+        parent = path.rsplit(".", 1)[0] if "." in path else ""
+        groups.setdefault(parent, []).append(path)
+    return groups
+
+
+def _promote_leaf_renames(
+    added: set[str],
+    removed: set[str],
+    type_changes: dict[str, TypeChange],
+) -> set[str]:
+    """Detect add+remove pairs under the same parent and promote to type changes.
+
+    When a DOT field's leaf child changes name, flatten_fields produces
+    different paths. Matching single-child add/remove pairs under the same
+    parent catches these and records them as type changes instead.
+
+    Args:
+        added: Set of added field paths.
+        removed: Set of removed field paths.
+        type_changes: Existing type changes dict (mutated: promotions added).
+
+    Returns:
+        Set of paths that were promoted (to exclude from added/removed).
+    """
+    added_by_parent = _group_by_parent(added)
+    removed_by_parent = _group_by_parent(removed)
+
+    promoted: set[str] = set()
+    for parent in set(added_by_parent) & set(removed_by_parent):
+        a_paths = added_by_parent[parent]
+        r_paths = removed_by_parent[parent]
+        # Only promote when there's exactly one added and one removed
+        # under the same parent -- a clear leaf type swap
+        if len(a_paths) == 1 and len(r_paths) == 1:
+            a_leaf = a_paths[0].rsplit(".", 1)[-1]
+            r_leaf = r_paths[0].rsplit(".", 1)[-1]
+            if parent and parent not in type_changes:
+                type_changes[parent] = TypeChange(old=r_leaf, new=a_leaf)
+            promoted.add(a_paths[0])
+            promoted.add(r_paths[0])
+    return promoted
+
+
+def _diff_definition(
+    old_def: PacketDefinition,
+    new_def: PacketDefinition,
+) -> PacketChanges | None:
+    """Compute field-level diff between two versions of the same definition.
+
+    Args:
+        old_def: Definition from the older protocol version.
+        new_def: Definition from the newer protocol version.
+
+    Returns:
+        PacketChanges if there are differences, None otherwise.
+    """
+    old_fields = flatten_fields(
+        [f.model_dump(exclude_defaults=True) for f in old_def.fields]
+    )
+    new_fields = flatten_fields(
+        [f.model_dump(exclude_defaults=True) for f in new_def.fields]
+    )
+
+    old_paths = set(old_fields)
+    new_paths = set(new_fields)
+
+    # Filter out DOT node ID noise
+    added_set = {f for f in (new_paths - old_paths) if not is_node_id_noise(f)}
+    removed_set = {f for f in (old_paths - new_paths) if not is_node_id_noise(f)}
+
+    # Skip mPayload wrapper noise: between some versions, Mojang wrapped
+    # all packet fields in an "mPayload" container. When the only removed
+    # fields are mPayload or mPayload.*, this is a schema change, not a
+    # real protocol change.
+    if removed_set and all(
+        f == "mPayload" or f.startswith("mPayload.") for f in removed_set
+    ):
+        has_real_changes = any(
+            old_fields[f]["type"] != new_fields[f]["type"]
+            for f in old_paths & new_paths
+            if not f.startswith("mPayload")
+        )
+        if not has_real_changes:
+            return None
+
+    # Find type changes on shared fields
+    type_changes: dict[str, TypeChange] = {}
+    for field_name in sorted(old_paths & new_paths):
+        old_type = old_fields[field_name]["type"]
+        new_type = new_fields[field_name]["type"]
+        if old_type != new_type:
+            type_changes[field_name] = TypeChange(old=old_type, new=new_type)
+
+    # Promote add+remove leaf pairs to type changes
+    promoted = _promote_leaf_renames(added_set, removed_set, type_changes)
+    added = sorted(added_set - promoted)
+    removed = sorted(removed_set - promoted)
+
+    # Filter out descendants of type_changes paths or other entries
+    tc_prefixes = [p + "." for p in type_changes]
+    added = _filter_descendants(added, tc_prefixes)
+    removed = _filter_descendants(removed, tc_prefixes)
+
+    if not added and not removed and not type_changes:
+        return None
+
+    return PacketChanges(
+        packet_id=old_def.packet_id,
+        direction=old_def.direction,
+        added_fields=added,
+        removed_fields=removed,
+        type_changes=type_changes,
+    )
+
+
+def _dedup_subtypes(
+    changed_packets: dict[str, PacketChanges],
+    changed_types: dict[str, PacketChanges],
+) -> None:
+    """Remove redundant subtype fields from parent entries.
+
+    When a changed_types entry's added/removed fields appear as suffixed
+    paths in other entries, remove the redundant fields and add a
+    type_changes reference instead.  Empty changed_types entries are pruned.
+
+    Mutates both dicts in place.
+    """
+    subtype_suffix_to_name: dict[str, str] = {}
+    for type_name, changes in changed_types.items():
+        for f in changes.added_fields:
+            subtype_suffix_to_name["." + f] = type_name
+        for f in changes.removed_fields:
+            subtype_suffix_to_name["." + f] = type_name
+
+    if not subtype_suffix_to_name:
+        return
+
+    for entries in (changed_packets, changed_types):
+        for changes in entries.values():
+            # Find which sub-types are referenced and at what path prefix
+            sub_type_refs: dict[str, str] = {}
+            for field in changes.added_fields + changes.removed_fields:
+                for suffix, st_name in subtype_suffix_to_name.items():
+                    if field.endswith(suffix):
+                        prefix = field[: -len(suffix)]
+                        if prefix:
+                            sub_type_refs[prefix] = st_name
+
+            changes.added_fields = [
+                f for f in changes.added_fields
+                if not any(f.endswith(s) for s in subtype_suffix_to_name)
+            ]
+            changes.removed_fields = [
+                f for f in changes.removed_fields
+                if not any(f.endswith(s) for s in subtype_suffix_to_name)
+            ]
+
+            # Merge sub-type references into type_changes
+            for path, st_name in sub_type_refs.items():
+                if path not in changes.type_changes:
+                    changes.type_changes[path] = TypeChange(
+                        old=st_name, new=st_name
+                    )
+
+    # Remove changed_types entries that became empty after dedup.
+    # Keep all changed_packets entries (even if empty) so LLMs know
+    # which packets need handlers.
+    for k in [k for k, v in changed_types.items()
+              if not v.added_fields and not v.removed_fields and not v.type_changes]:
+        del changed_types[k]
+
+
+def _changes_from_type_refs(
+    pkt_def: PacketDefinition,
+    refs: dict[str, str],
+) -> PacketChanges:
+    """Create a PacketChanges entry from type reference matches."""
+    tc = {path: TypeChange(old=name, new=name) for path, name in refs.items()}
+    return PacketChanges(
+        packet_id=pkt_def.packet_id,
+        direction=pkt_def.direction,
+        type_changes=tc,
+    )
+
+
 def diff_packets(
     old_packets: list[PacketDefinition],
     new_packets: list[PacketDefinition],
@@ -355,8 +542,8 @@ def diff_packets(
     old_by_name = {p.name: p for p in old_packets}
     new_by_name = {p.name: p for p in new_packets}
 
-    old_names = set(old_by_name.keys())
-    new_names = set(new_by_name.keys())
+    old_names = set(old_by_name)
+    new_names = set(new_by_name)
 
     added_names = sorted(new_names - old_names)
     removed_names = sorted(old_names - new_names)
@@ -367,218 +554,70 @@ def diff_packets(
     removed_pkt_names = [n for n in removed_names if old_by_name[n].packet_id is not None]
     removed_type_names = [n for n in removed_names if old_by_name[n].packet_id is None]
 
+    # Per-definition field diffs
     changed_packets: dict[str, PacketChanges] = {}
     changed_types: dict[str, PacketChanges] = {}
 
     for name in sorted(old_names & new_names):
-        old_def = old_by_name[name]
-        new_def = new_by_name[name]
+        entry = _diff_definition(old_by_name[name], new_by_name[name])
+        if entry is None:
+            continue
+        if old_by_name[name].packet_id is not None:
+            changed_packets[name] = entry
+        else:
+            changed_types[name] = entry
 
-        old_fields = flatten_fields(
-            [f.model_dump(exclude_defaults=True) for f in old_def.fields]
-        )
-        new_fields = flatten_fields(
-            [f.model_dump(exclude_defaults=True) for f in new_def.fields]
-        )
-
-        old_field_names = set(old_fields.keys())
-        new_field_names = set(new_fields.keys())
-
-        # Filter out DOT node ID noise
-        added_set = {
-            f for f in (new_field_names - old_field_names) if not is_node_id_noise(f)
-        }
-        removed_set = {
-            f for f in (old_field_names - new_field_names) if not is_node_id_noise(f)
-        }
-
-        # Skip mPayload wrapper noise: between some versions, Mojang wrapped
-        # all packet fields in an "mPayload" container. When the only removed
-        # fields are mPayload or mPayload.*, this is a schema change, not a
-        # real protocol change.
-        if removed_set and all(
-            f == "mPayload" or f.startswith("mPayload.") for f in removed_set
-        ):
-            # Check if there are real type_changes beyond mPayload
-            real_tc = False
-            for field_name in old_field_names & new_field_names:
-                if field_name.startswith("mPayload"):
-                    continue
-                if old_fields[field_name]["type"] != new_fields[field_name]["type"]:
-                    real_tc = True
-                    break
-            if not real_tc:
-                continue
-
-        type_changes: dict[str, TypeChange] = {}
-        for field_name in sorted(old_field_names & new_field_names):
-            old_type = old_fields[field_name]["type"]
-            new_type = new_fields[field_name]["type"]
-            if old_type != new_type:
-                type_changes[field_name] = TypeChange(old=old_type, new=new_type)
-
-        # Promote add+remove pairs with shared parent to type_changes.
-        # When a DOT field's leaf child changes name (e.g. "unsigned varint"
-        # -> "varint"), flatten_fields produces different paths. Detect these
-        # by matching parent paths and treat as type changes instead.
-        added_by_parent: dict[str, list[str]] = {}
-        for path in added_set:
-            parent = path.rsplit(".", 1)[0] if "." in path else ""
-            added_by_parent.setdefault(parent, []).append(path)
-        removed_by_parent: dict[str, list[str]] = {}
-        for path in removed_set:
-            parent = path.rsplit(".", 1)[0] if "." in path else ""
-            removed_by_parent.setdefault(parent, []).append(path)
-
-        promoted: set[str] = set()
-        for parent in set(added_by_parent) & set(removed_by_parent):
-            a_paths = added_by_parent[parent]
-            r_paths = removed_by_parent[parent]
-            # Only promote when there's exactly one added and one removed
-            # under the same parent -- a clear leaf type swap
-            if len(a_paths) == 1 and len(r_paths) == 1:
-                a_leaf = a_paths[0].rsplit(".", 1)[-1]
-                r_leaf = r_paths[0].rsplit(".", 1)[-1]
-                if parent and parent not in type_changes:
-                    type_changes[parent] = TypeChange(old=r_leaf, new=a_leaf)
-                promoted.add(a_paths[0])
-                promoted.add(r_paths[0])
-
-        added = sorted(added_set - promoted)
-        removed = sorted(removed_set - promoted)
-
-        # Filter out fields that are descendants of a type_changes path
-        # or descendants of another field in the same list (leaf type
-        # children like "loadFromJson.bool" under "loadFromJson").
-        tc_prefixes = [p + "." for p in type_changes]
-        added = _filter_descendants(added, tc_prefixes)
-        removed = _filter_descendants(removed, tc_prefixes)
-
-        if added or removed or type_changes:
-            entry = PacketChanges(
-                packet_id=old_def.packet_id,
-                direction=old_def.direction,
-                added_fields=added,
-                removed_fields=removed,
-                type_changes=type_changes,
-            )
-            if old_def.packet_id is not None:
-                changed_packets[name] = entry
-            else:
-                changed_types[name] = entry
-
-    # Deduplicate: when a changed_types entry's added/removed fields appear
-    # as suffixed paths in other entries (parent types or packets that embed
-    # the sub-type), remove the redundant fields from the parent and record
-    # a changed_sub_types reference so handlers know where to look.
-    subtype_suffix_to_name: dict[str, str] = {}
-    for type_name, changes in changed_types.items():
-        for f in changes.added_fields:
-            subtype_suffix_to_name["." + f] = type_name
-        for f in changes.removed_fields:
-            subtype_suffix_to_name["." + f] = type_name
-
-    if subtype_suffix_to_name:
-        for entries in (changed_packets, changed_types):
-            for changes in entries.values():
-                # Find which sub-types are referenced and at what path prefix
-                sub_type_refs: dict[str, str] = {}
-                for field in changes.added_fields + changes.removed_fields:
-                    for suffix, st_name in subtype_suffix_to_name.items():
-                        if field.endswith(suffix):
-                            prefix = field[: -len(suffix)]
-                            if prefix:
-                                sub_type_refs[prefix] = st_name
-
-                changes.added_fields = [
-                    f for f in changes.added_fields
-                    if not any(f.endswith(s) for s in subtype_suffix_to_name)
-                ]
-                changes.removed_fields = [
-                    f for f in changes.removed_fields
-                    if not any(f.endswith(s) for s in subtype_suffix_to_name)
-                ]
-
-                # Merge sub-type references into type_changes
-                for path, st_name in sub_type_refs.items():
-                    if path not in changes.type_changes:
-                        changes.type_changes[path] = TypeChange(
-                            old=st_name, new=st_name
-                        )
-
-        # Remove changed_types entries that became empty after dedup.
-        # Keep all changed_packets entries (even if empty) so LLMs know
-        # which packets need handlers.
-        changed_types = {
-            k: v for k, v in changed_types.items()
-            if v.added_fields or v.removed_fields or v.type_changes
-        }
+    # Remove redundant subtype fields from parent entries
+    _dedup_subtypes(changed_packets, changed_types)
 
     # Scan all packet definitions for fields that embed a changed sub-type.
     # Packets that embed changed types need handlers even if they have no
     # direct field changes themselves.
-    changed_type_names = set(changed_types.keys())
+    changed_type_names = set(changed_types)
     if changed_type_names:
-        all_packets = {p.name: p for p in list(old_packets) + list(new_packets) if p.packet_id is not None}
-        for pkt_name, pkt_def in all_packets.items():
+        all_pkt_defs = {
+            p.name: p
+            for p in list(old_packets) + list(new_packets)
+            if p.packet_id is not None
+        }
+
+        for pkt_name, pkt_def in all_pkt_defs.items():
             if pkt_name in changed_packets:
                 continue
             refs = _find_type_refs(pkt_def.fields, changed_type_names)
             if refs:
-                tc: dict[str, TypeChange] = {}
-                for path, type_name in refs.items():
-                    tc[path] = TypeChange(old=type_name, new=type_name)
-                changed_packets[pkt_name] = PacketChanges(
-                    packet_id=pkt_def.packet_id,
-                    direction=pkt_def.direction,
-                    type_changes=tc,
-                )
+                changed_packets[pkt_name] = _changes_from_type_refs(pkt_def, refs)
 
-        # Also check new_packets: if a "new" packet embeds a changed type,
-        # it's not truly new -- it needs a translation handler instead.
+        # "New" packets that embed changed types are actually translations,
+        # not truly new -- reclassify them as changed_packets.
         still_new = []
         for pkt_name in new_pkt_names:
-            if pkt_name in new_by_name:
-                refs = _find_type_refs(new_by_name[pkt_name].fields, changed_type_names)
-                if refs and pkt_name not in changed_packets:
-                    pkt_def = new_by_name[pkt_name]
-                    tc = {}
-                    for path, type_name in refs.items():
-                        tc[path] = TypeChange(old=type_name, new=type_name)
-                    changed_packets[pkt_name] = PacketChanges(
-                        packet_id=pkt_def.packet_id,
-                        direction=pkt_def.direction,
-                        type_changes=tc,
-                    )
-                elif refs:
-                    pass  # already in changed_packets
-                else:
-                    still_new.append(pkt_name)
-            else:
+            pkt_def = new_by_name.get(pkt_name)
+            if pkt_def is None:
+                still_new.append(pkt_name)
+                continue
+            refs = _find_type_refs(pkt_def.fields, changed_type_names)
+            if refs and pkt_name not in changed_packets:
+                changed_packets[pkt_name] = _changes_from_type_refs(pkt_def, refs)
+            elif not refs:
                 still_new.append(pkt_name)
         new_pkt_names = still_new
 
-    # Apply manual packet-to-subtype overrides for relationships that
-    # DOT/JSON schemas don't capture.
-    all_pkt_defs = {
-        p.name: p for p in list(old_packets) + list(new_packets) if p.packet_id is not None
-    }
-    for pkt_name, sub_map in PACKET_SUBTYPE_OVERRIDES.items():
-        if pkt_name in changed_packets:
-            continue
-        pkt_def = all_pkt_defs.get(pkt_name)
-        if pkt_def is None:
-            continue
-        tc: dict[str, TypeChange] = {}
-        for path, sub_name in sub_map.items():
-            if sub_name in changed_types:
-                tc[path] = TypeChange(old=sub_name, new=sub_name)
-        if tc:
-            changed_packets[pkt_name] = PacketChanges(
-                packet_id=pkt_def.packet_id,
-                direction=pkt_def.direction,
-                type_changes=tc,
-            )
+        # Apply manual packet-to-subtype overrides for relationships that
+        # DOT/JSON schemas don't capture.
+        for pkt_name, sub_map in PACKET_SUBTYPE_OVERRIDES.items():
+            if pkt_name in changed_packets:
+                continue
+            pkt_def = all_pkt_defs.get(pkt_name)
+            if pkt_def is None:
+                continue
+            refs = {
+                path: sub_name
+                for path, sub_name in sub_map.items()
+                if sub_name in changed_types
+            }
+            if refs:
+                changed_packets[pkt_name] = _changes_from_type_refs(pkt_def, refs)
 
     return ProtocolDiff(
         old_protocol=old_protocol,
@@ -590,6 +629,11 @@ def diff_packets(
         changed_packets=changed_packets,
         changed_types=changed_types,
     )
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
 
 
 def _resolve_protocol(arg: str) -> int | None:
@@ -614,17 +658,56 @@ def _resolve_protocol(arg: str) -> int | None:
 
 
 def _load_packets(path: Path) -> list[PacketDefinition]:
-    """Load packet definitions from a JSON file.
-
-    Args:
-        path: Path to the JSON file.
-
-    Returns:
-        List of PacketDefinition models.
-    """
+    """Load packet definitions from a JSON file."""
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     return [PacketDefinition.model_validate(entry) for entry in data]
+
+
+def _process_changelogs(
+    diff: ProtocolDiff, old_proto: int, new_proto: int,
+) -> None:
+    """Parse changelogs and merge enum/changelog data into the diff."""
+    old_changelog = _find_changelog(old_proto)
+    new_changelog = _find_changelog(new_proto)
+
+    if not new_changelog:
+        print("  No changelogs found")
+        return
+
+    if old_changelog:
+        enum_changes, changelog = diff_changelogs(
+            old_changelog, new_changelog, old_proto
+        )
+    else:
+        enum_changes, changelog = parse_changelog(new_changelog)
+        changelog = [e for e in changelog if e.protocol > old_proto]
+
+    diff.enum_changes = dict(sorted(enum_changes.items()))
+    diff.changelog = sorted(changelog, key=lambda e: e.protocol)
+    print(f"  Enum changes: {len(diff.enum_changes)} enums")
+    print(f"  Changelog entries: {len(diff.changelog)}")
+
+
+def _extract_renames(diff: ProtocolDiff) -> None:
+    """Move renamed packets from new/removed lists to renamed_packets.
+
+    Detects renames from MinecraftPacketIds enum "Changed" entries
+    with the pattern "OldName -> NewName (ID)".
+    """
+    pkt_id_changes = diff.enum_changes.get("MinecraftPacketIds")
+    if not pkt_id_changes:
+        return
+    for entry in pkt_id_changes.changed:
+        m = _RENAME_RE.match(entry)
+        if m:
+            old_name = m.group(1).strip() + "Packet"
+            new_name = m.group(2).strip() + "Packet"
+            if old_name in diff.removed_packets:
+                diff.removed_packets.remove(old_name)
+            if new_name in diff.new_packets:
+                diff.new_packets.remove(new_name)
+            diff.renamed_packets[old_name] = new_name
 
 
 def main() -> None:
@@ -668,53 +751,14 @@ def main() -> None:
         fetch_if_missing(proto)
         ensure_parsed(proto)
 
-    old_path = DATA_DIR / f"v{old_proto}.json"
-    new_path = DATA_DIR / f"v{new_proto}.json"
-
-    old_packets = _load_packets(old_path)
-    new_packets = _load_packets(new_path)
+    old_packets = _load_packets(DATA_DIR / f"v{old_proto}.json")
+    new_packets = _load_packets(DATA_DIR / f"v{new_proto}.json")
 
     print(f"Comparing {len(old_packets)} old vs {len(new_packets)} new definitions...")
     diff = diff_packets(old_packets, new_packets, old_proto, new_proto)
 
-    # Parse and diff changelogs
-    old_changelog_path = _find_changelog(old_proto)
-    new_changelog_path = _find_changelog(new_proto)
-
-    if old_changelog_path and new_changelog_path:
-        enum_changes, changelog = diff_changelogs(
-            old_changelog_path, new_changelog_path, old_proto
-        )
-        diff.enum_changes = dict(sorted(enum_changes.items()))
-        diff.changelog = sorted(changelog, key=lambda e: e.protocol)
-        print(f"  Enum changes: {len(diff.enum_changes)} enums")
-        print(f"  Changelog entries: {len(diff.changelog)}")
-    elif new_changelog_path:
-        # No old changelog, use all entries from new
-        enum_changes, changelog = parse_changelog(new_changelog_path)
-        filtered = [e for e in changelog if e.protocol > old_proto]
-        diff.enum_changes = dict(sorted(enum_changes.items()))
-        diff.changelog = sorted(filtered, key=lambda e: e.protocol)
-        print(f"  Enum changes: {len(diff.enum_changes)} enums")
-        print(f"  Changelog entries: {len(diff.changelog)}")
-    else:
-        print("  No changelogs found")
-
-    # Extract renamed packets from MinecraftPacketIds enum changes.
-    # Entries like "OldName -> NewName (ID)" indicate renames, not removals.
-    pkt_id_changes = diff.enum_changes.get("MinecraftPacketIds")
-    if pkt_id_changes:
-        for entry in pkt_id_changes.changed:
-            m = _RENAME_RE.match(entry)
-            if m:
-                old_name = m.group(1).strip() + "Packet"
-                new_name = m.group(2).strip() + "Packet"
-                # Move from removed/new to renamed
-                if old_name in diff.removed_packets:
-                    diff.removed_packets.remove(old_name)
-                if new_name in diff.new_packets:
-                    diff.new_packets.remove(new_name)
-                diff.renamed_packets[old_name] = new_name
+    _process_changelogs(diff, old_proto, new_proto)
+    _extract_renames(diff)
 
     print(f"  New packets: {len(diff.new_packets)}")
     print(f"  New types: {len(diff.new_types)}")
