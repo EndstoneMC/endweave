@@ -160,7 +160,7 @@ def _build_field_tree(
         name=name,
         type=type_name,
         attributes=attributes,
-        children=child_fields,
+        fields=child_fields,
     )
 
 
@@ -256,18 +256,18 @@ def _resolve_field(
     Returns:
         New Field with resolved children.
     """
-    if not field.children:
+    if not field.fields:
         return field
 
     new_children = []
-    for child in field.children:
+    for child in field.fields:
         # Check if this child is an opaque reference that can be resolved
         # Pattern: parent has attributes & 256 (reference), child is leaf (512)
         # and child's name matches a known type
         if (
             (field.attributes & 256)
             and (child.attributes & 512)
-            and not child.children
+            and not child.fields
             and child.name in type_registry
             and child.name not in visited
         ):
@@ -282,7 +282,7 @@ def _resolve_field(
                 name=child.name,
                 type=child.type,
                 attributes=child.attributes & ~512,  # No longer a leaf
-                children=resolved_children,
+                fields=resolved_children,
             ))
         else:
             # Recurse into children
@@ -292,7 +292,7 @@ def _resolve_field(
         name=field.name,
         type=field.type,
         attributes=field.attributes,
-        children=new_children,
+        fields=new_children,
     )
 
 
@@ -441,7 +441,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
                 name=element_title,
                 type=element_title,
                 attributes=16 if element_children else (16 | 512),
-                children=element_children,
+                fields=element_children,
             )
         else:
             elem_type = _resolve_type(items)
@@ -451,7 +451,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
                 attributes=16 | 512,
             )
 
-        return Field(name=name, type="", attributes=8, children=[element_field])
+        return Field(name=name, type="", attributes=8, fields=[element_field])
 
     if ref_def:
         ref_title = ref_def.get("title", name)
@@ -459,7 +459,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
             ref_def.get("properties", {}), definitions
         )
         if child_fields:
-            return Field(name=name, type=ref_title, attributes=0, children=child_fields)
+            return Field(name=name, type=ref_title, attributes=0, fields=child_fields)
         return Field(name=name, type=ref_title, attributes=512)
 
     return Field(name=name, type=_resolve_type(prop), attributes=512)
@@ -525,6 +525,38 @@ def parse_json_dir(json_dir: Path) -> list[PacketDefinition]:
 
 
 # ---------------------------------------------------------------------------
+# Output conversion
+# ---------------------------------------------------------------------------
+
+
+def _to_output(field: Field) -> dict:
+    """Convert an internal Field tree to the clean output format.
+
+    Flattens list element nesting: a list field's single element child
+    is folded into the parent, with element type becoming the list's type
+    and element children becoming the list's fields.
+    """
+    result: dict = {"name": field.name}
+
+    if field.attributes & 8:  # List container
+        result["list"] = True
+        if field.fields:
+            element = field.fields[0]
+            if element.attributes & 16:  # Element child
+                if element.type:
+                    result["type"] = element.type
+                if element.fields:
+                    result["fields"] = [_to_output(c) for c in element.fields]
+        return result
+
+    if field.type:
+        result["type"] = field.type
+    if field.fields:
+        result["fields"] = [_to_output(c) for c in field.fields]
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Merge and main
 # ---------------------------------------------------------------------------
 
@@ -581,7 +613,18 @@ def parse_version(protocol: int) -> None:
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUTPUT_DIR / f"v{protocol}.json"
-    output = [defn.model_dump(exclude_defaults=True) for defn in merged]
+    output = []
+    for defn in merged:
+        entry: dict = {"name": defn.name}
+        if defn.packet_id is not None:
+            entry["packet_id"] = defn.packet_id
+        if defn.direction:
+            entry["direction"] = defn.direction
+        if defn.description:
+            entry["description"] = defn.description
+        if defn.fields:
+            entry["fields"] = [_to_output(f) for f in defn.fields]
+        output.append(entry)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2)
     print(f"  Written to {out_path}")

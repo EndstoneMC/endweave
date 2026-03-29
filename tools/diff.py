@@ -21,10 +21,12 @@ from models import (
     EnumChange,
     EnumEntry,
     Field,
+    FieldChange,
     PacketChanges,
     PacketDefinition,
     ProtocolDiff,
     TypeChange,
+    infer_direction,
     is_node_id_noise,
 )
 from parse import ensure_parsed
@@ -265,23 +267,19 @@ def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
     """Flatten a field tree into a dict keyed by dotted path.
 
     Args:
-        fields: List of field dicts, each with "name", "type", and optional
-            "children".
+        fields: List of field dicts from the clean output format.
         prefix: Dotted path prefix for recursion (empty at the top level).
 
     Returns:
-        Dict mapping dotted field paths to their type and attributes info.
+        Dict mapping dotted field paths to their type info.
     """
     result = {}
     for field in fields:
         name = field["name"]
         path = f"{prefix}.{name}" if prefix else name
-        result[path] = {
-            "type": field.get("type", ""),
-            "attributes": field.get("attributes", 0),
-        }
-        if "children" in field:
-            result.update(flatten_fields(field["children"], path))
+        result[path] = {"type": field.get("type", "")}
+        if "fields" in field:
+            result.update(flatten_fields(field["fields"], path))
     return result
 
 
@@ -303,8 +301,8 @@ def _find_type_refs(
         path = f"{prefix}.{field.name}" if prefix else field.name
         if field.type in type_names:
             refs[path] = field.type
-        if field.children:
-            refs.update(_find_type_refs(field.children, type_names, path))
+        if field.fields:
+            refs.update(_find_type_refs(field.fields, type_names, path))
     return refs
 
 
@@ -379,22 +377,22 @@ def _promote_leaf_renames(
 def _diff_definition(
     old_def: PacketDefinition,
     new_def: PacketDefinition,
+    old_output: list[dict],
+    new_output: list[dict],
 ) -> PacketChanges | None:
     """Compute field-level diff between two versions of the same definition.
 
     Args:
         old_def: Definition from the older protocol version.
         new_def: Definition from the newer protocol version.
+        old_output: Clean output-format field dicts for old version.
+        new_output: Clean output-format field dicts for new version.
 
     Returns:
         PacketChanges if there are differences, None otherwise.
     """
-    old_fields = flatten_fields(
-        [f.model_dump(exclude_defaults=True) for f in old_def.fields]
-    )
-    new_fields = flatten_fields(
-        [f.model_dump(exclude_defaults=True) for f in new_def.fields]
-    )
+    old_fields = flatten_fields(old_output)
+    new_fields = flatten_fields(new_output)
 
     old_paths = set(old_fields)
     new_paths = set(new_fields)
@@ -426,6 +424,15 @@ def _diff_definition(
         if old_type != new_type:
             type_changes[field_name] = TypeChange(old=old_type, new=new_type)
 
+    # Filter out type_changes that are descendants of other type_changes
+    if type_changes:
+        tc_paths = sorted(type_changes)
+        filtered_tc: dict[str, TypeChange] = {}
+        for path in tc_paths:
+            if not any(path.startswith(p + ".") for p in filtered_tc):
+                filtered_tc[path] = type_changes[path]
+        type_changes = filtered_tc
+
     # Promote add+remove leaf pairs to type changes
     promoted = _promote_leaf_renames(added_set, removed_set, type_changes)
     added = sorted(added_set - promoted)
@@ -439,11 +446,19 @@ def _diff_definition(
     if not added and not removed and not type_changes:
         return None
 
+    # Build FieldChange lists with types
+    added_changes = [
+        FieldChange(name=f, type=new_fields[f]["type"]) for f in added
+    ]
+    removed_changes = [
+        FieldChange(name=f, type=old_fields[f]["type"]) for f in removed
+    ]
+
     return PacketChanges(
         packet_id=old_def.packet_id,
-        direction=old_def.direction,
-        added_fields=added,
-        removed_fields=removed,
+        direction=old_def.direction or infer_direction(old_def.name),
+        added_fields=added_changes,
+        removed_fields=removed_changes,
         type_changes=type_changes,
     )
 
@@ -462,10 +477,10 @@ def _dedup_subtypes(
     """
     subtype_suffix_to_name: dict[str, str] = {}
     for type_name, changes in changed_types.items():
-        for f in changes.added_fields:
-            subtype_suffix_to_name["." + f] = type_name
-        for f in changes.removed_fields:
-            subtype_suffix_to_name["." + f] = type_name
+        for fc in changes.added_fields:
+            subtype_suffix_to_name["." + fc.name] = type_name
+        for fc in changes.removed_fields:
+            subtype_suffix_to_name["." + fc.name] = type_name
 
     if not subtype_suffix_to_name:
         return
@@ -474,20 +489,20 @@ def _dedup_subtypes(
         for changes in entries.values():
             # Find which sub-types are referenced and at what path prefix
             sub_type_refs: dict[str, str] = {}
-            for field in changes.added_fields + changes.removed_fields:
+            for fc in changes.added_fields + changes.removed_fields:
                 for suffix, st_name in subtype_suffix_to_name.items():
-                    if field.endswith(suffix):
-                        prefix = field[: -len(suffix)]
+                    if fc.name.endswith(suffix):
+                        prefix = fc.name[: -len(suffix)]
                         if prefix:
                             sub_type_refs[prefix] = st_name
 
             changes.added_fields = [
-                f for f in changes.added_fields
-                if not any(f.endswith(s) for s in subtype_suffix_to_name)
+                fc for fc in changes.added_fields
+                if not any(fc.name.endswith(s) for s in subtype_suffix_to_name)
             ]
             changes.removed_fields = [
-                f for f in changes.removed_fields
-                if not any(f.endswith(s) for s in subtype_suffix_to_name)
+                fc for fc in changes.removed_fields
+                if not any(fc.name.endswith(s) for s in subtype_suffix_to_name)
             ]
 
             # Merge sub-type references into type_changes
@@ -513,9 +528,31 @@ def _changes_from_type_refs(
     tc = {path: TypeChange(old=name, new=name) for path, name in refs.items()}
     return PacketChanges(
         packet_id=pkt_def.packet_id,
-        direction=pkt_def.direction,
+        direction=pkt_def.direction or infer_direction(pkt_def.name),
         type_changes=tc,
     )
+
+
+def _inline_type_details(
+    changed_packets: dict[str, PacketChanges],
+    changed_types: dict[str, PacketChanges],
+) -> None:
+    """Inline changed_types details into same-name type_changes.
+
+    When a type_change has old == new (internal structure changed), look up
+    the matching changed_types entry and copy its added/removed field names
+    into the TypeChange so the diff is self-contained.
+    """
+    for entries in (changed_packets, changed_types):
+        for changes in entries.values():
+            for tc in changes.type_changes.values():
+                if tc.old != tc.new:
+                    continue
+                ct_entry = changed_types.get(tc.old)
+                if ct_entry is None:
+                    continue
+                tc.added = [fc.name for fc in ct_entry.added_fields]
+                tc.removed = [fc.name for fc in ct_entry.removed_fields]
 
 
 def diff_packets(
@@ -523,6 +560,8 @@ def diff_packets(
     new_packets: list[PacketDefinition],
     old_protocol: int,
     new_protocol: int,
+    old_output_by_name: dict[str, list[dict]],
+    new_output_by_name: dict[str, list[dict]],
 ) -> ProtocolDiff:
     """Diff two lists of packet definitions.
 
@@ -535,6 +574,8 @@ def diff_packets(
         new_packets: Definitions from the newer protocol version.
         old_protocol: Protocol number of the older version.
         new_protocol: Protocol number of the newer version.
+        old_output_by_name: Clean output-format field dicts keyed by definition name.
+        new_output_by_name: Clean output-format field dicts keyed by definition name.
 
     Returns:
         ProtocolDiff summarizing all differences.
@@ -559,7 +600,11 @@ def diff_packets(
     changed_types: dict[str, PacketChanges] = {}
 
     for name in sorted(old_names & new_names):
-        entry = _diff_definition(old_by_name[name], new_by_name[name])
+        old_out = old_output_by_name.get(name, [])
+        new_out = new_output_by_name.get(name, [])
+        entry = _diff_definition(
+            old_by_name[name], new_by_name[name], old_out, new_out,
+        )
         if entry is None:
             continue
         if old_by_name[name].packet_id is not None:
@@ -619,6 +664,9 @@ def diff_packets(
             if refs:
                 changed_packets[pkt_name] = _changes_from_type_refs(pkt_def, refs)
 
+    # Inline changed_types details into same-name type_changes
+    _inline_type_details(changed_packets, changed_types)
+
     return ProtocolDiff(
         old_protocol=old_protocol,
         new_protocol=new_protocol,
@@ -657,11 +705,20 @@ def _resolve_protocol(arg: str) -> int | None:
     return None
 
 
-def _load_packets(path: Path) -> list[PacketDefinition]:
-    """Load packet definitions from a JSON file."""
+def _load_packets(path: Path) -> tuple[list[PacketDefinition], dict[str, list[dict]]]:
+    """Load packet definitions and their clean output fields from a JSON file.
+
+    Returns:
+        Tuple of (definitions list, output_by_name dict mapping name to fields).
+    """
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
-    return [PacketDefinition.model_validate(entry) for entry in data]
+    definitions = []
+    output_by_name: dict[str, list[dict]] = {}
+    for entry in data:
+        definitions.append(PacketDefinition.model_validate(entry))
+        output_by_name[entry["name"]] = entry.get("fields", [])
+    return definitions, output_by_name
 
 
 def _process_changelogs(
@@ -751,11 +808,13 @@ def main() -> None:
         fetch_if_missing(proto)
         ensure_parsed(proto)
 
-    old_packets = _load_packets(DATA_DIR / f"v{old_proto}.json")
-    new_packets = _load_packets(DATA_DIR / f"v{new_proto}.json")
+    old_packets, old_output = _load_packets(DATA_DIR / f"v{old_proto}.json")
+    new_packets, new_output = _load_packets(DATA_DIR / f"v{new_proto}.json")
 
     print(f"Comparing {len(old_packets)} old vs {len(new_packets)} new definitions...")
-    diff = diff_packets(old_packets, new_packets, old_proto, new_proto)
+    diff = diff_packets(
+        old_packets, new_packets, old_proto, new_proto, old_output, new_output,
+    )
 
     _process_changelogs(diff, old_proto, new_proto)
     _extract_renames(diff)

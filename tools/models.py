@@ -6,6 +6,7 @@ Shared data structures used by parse.py and diff.py.
 import re
 
 from pydantic import BaseModel
+from pydantic import Field as PydanticField
 
 
 class Field(BaseModel):
@@ -14,15 +15,16 @@ class Field(BaseModel):
     Attributes:
         name: Field name (e.g. "Block Position", "X").
         type: Type name (e.g. "NetworkBlockPosition", "varint32").
-        attributes: Bitmask from DOT format (512=leaf, 256=reference,
-            8=list, 16=element, 2=dependency, 4=conditional).
-        children: Nested child fields.
+        list: True if this field is a list/array with a count prefix.
+        fields: Nested sub-fields in serialization order.
+        attributes: Internal DOT bitmask, excluded from serialized output.
     """
 
     name: str
     type: str = ""
-    attributes: int = 0
-    children: list["Field"] = []
+    fields: list["Field"] = []
+    list: bool = False
+    attributes: int = PydanticField(default=0, exclude=True)
 
 
 class PacketDefinition(BaseModel):
@@ -43,11 +45,24 @@ class PacketDefinition(BaseModel):
     fields: list[Field] = []
 
 
+class FieldChange(BaseModel):
+    """A field that was added or removed between protocol versions."""
+
+    name: str
+    type: str = ""
+
+
 class TypeChange(BaseModel):
-    """A field type that changed between protocol versions."""
+    """A field type that changed between protocol versions.
+
+    When old == new, the type's internal structure changed.
+    The added/removed lists describe what changed inside.
+    """
 
     old: str
     new: str
+    added: list[str] = []
+    removed: list[str] = []
 
 
 class PacketChanges(BaseModel):
@@ -56,17 +71,15 @@ class PacketChanges(BaseModel):
     Attributes:
         packet_id: Numeric packet ID (from old version), None for sub-types.
         direction: Packet direction, None if unknown.
-        added_fields: Dotted field paths only in the new version.
-        removed_fields: Dotted field paths only in the old version.
+        added_fields: Fields only in the new version (with types).
+        removed_fields: Fields only in the old version (with types).
         type_changes: Fields whose type changed, keyed by dotted path.
-            When old and new are the same, the type's internal structure
-            changed -- see the matching changed_types entry for details.
     """
 
     packet_id: int | None = None
     direction: str | None = None
-    added_fields: list[str] = []
-    removed_fields: list[str] = []
+    added_fields: list[FieldChange] = []
+    removed_fields: list[FieldChange] = []
     type_changes: dict[str, TypeChange] = {}
 
 
