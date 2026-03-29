@@ -65,6 +65,10 @@ The chaining system automatically handles multi-step gaps (e.g. v960 client -> v
 
 ## Reference
 
+- **BDS headers are the single source of truth** for packet formats, enum values, and struct layouts; if the headers path is not known, ask the user for it
+- Never use CloudburstMC as a reference; it contains many incorrect enum values, wrong field orders, and fabricated constants (e.g. AnimatePacket RowLeft/RowRight) that do not exist in BDS
+- All protocol constants must be `IntEnum` classes in `codec/types/enums.py` matching the BDS C++ `enum class` names and values
+- Use `enum_to_label()` / `label_to_enum()` helpers for v898's string-serialized enums (a v898-specific quirk, not a general pattern)
 - Always refer to `vendor/ViaVersion/` code as a reference when working on protocol translation logic
 - If the `vendor/ViaVersion/` folder does not exist, clone it from https://github.com/ViaVersion/ViaVersion
 - Use `See Also:` docstring sections with fully qualified Java paths when referencing ViaVersion classes
