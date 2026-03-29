@@ -22,10 +22,13 @@ from endstone_endweave.codec import (
     VAR_INT64,
     VEC3,
     ArrayType,
+    ClientboundMapItemDataType,
+    ComplexInventoryTransactionType,
+    MapItemTrackedActorType,
     PacketWrapper,
 )
 
-# NoteBlockInstrument remapping constants (TileEvent)
+# NoteBlockInstrument remapping (TileEvent)
 _NOTE_BLOCK_EVENT = 0
 _TRUMPET_INSERTION_POINT = 16
 _TRUMPET_ID_SHIFT = 4
@@ -139,24 +142,24 @@ def rewrite_map_data(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(BOOL)  # Is Locked Map?
     wrapper.passthrough(BLOCK_POS)  # Map Origin
 
-    TYPE_TEXTURE_UPDATE = 0x02
-    TYPE_DECORATION_UPDATE = 0x04
-    TYPE_CREATION = 0x08
-
-    if types & TYPE_CREATION:
+    if types & ClientboundMapItemDataType.CREATION:
         wrapper.passthrough(ArrayType(VAR_INT64))  # Map ID List
 
-    if types & (TYPE_CREATION | TYPE_DECORATION_UPDATE | TYPE_TEXTURE_UPDATE):
+    if types & (
+        ClientboundMapItemDataType.CREATION
+        | ClientboundMapItemDataType.DECORATION_UPDATE
+        | ClientboundMapItemDataType.TEXTURE_UPDATE
+    ):
         wrapper.passthrough(BYTE)  # Scale
 
-    if types & TYPE_DECORATION_UPDATE:
+    if types & ClientboundMapItemDataType.DECORATION_UPDATE:
         # Actor IDs
         obj_count = wrapper.passthrough(UVAR_INT)
         for _ in range(obj_count):
             obj_type = wrapper.passthrough(INT_LE)  # Type
-            if obj_type == 0:  # Entity
+            if obj_type == MapItemTrackedActorType.ENTITY:
                 wrapper.passthrough(VAR_INT64)  # MapItemTrackedActor::UniqueId
-            elif obj_type == 1:  # Block
+            elif obj_type == MapItemTrackedActorType.BLOCK_ENTITY:
                 wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position
 
 
@@ -212,7 +215,7 @@ def rewrite_inventory_transaction(wrapper: PacketWrapper) -> None:
     for _ in range(action_count):
         wrapper.passthrough(INVENTORY_ACTION)
 
-    if transaction_type != 2:  # Not UseItem
+    if transaction_type != ComplexInventoryTransactionType.ITEM_USE_TRANSACTION:
         return  # passthrough remaining bytes unchanged
 
     # UseItemTransactionData

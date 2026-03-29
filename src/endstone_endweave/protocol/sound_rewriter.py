@@ -23,6 +23,7 @@ from endstone_endweave.codec import (
     VAR_INT64,
     VEC2,
     VEC3,
+    DataItemType,
     PacketWrapper,
 )
 from endstone_endweave.protocol import Protocol
@@ -58,7 +59,7 @@ class SoundRewriter:
         if self._dropped_keys:
             entries = [e for e in entries if e.key not in self._dropped_keys]
         for entry in entries:
-            if entry.key in self._int_remappers and entry.type_id in (2, 7):
+            if entry.key in self._int_remappers and entry.type_id in (DataItemType.INT, DataItemType.INT64):
                 entry.value = self._int_remappers[entry.key](entry.value)
         wrapper.write(ACTOR_DATA_LIST, entries)
 

@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from endstone_endweave.codec.reader import PacketReader
+from endstone_endweave.codec.types.enums import InventorySourceType
 from endstone_endweave.codec.types.item import ITEM_INSTANCE, ItemInstance
 from endstone_endweave.codec.types.primitives import UVAR_INT, VAR_INT, Type
 from endstone_endweave.codec.writer import PacketWriter
@@ -36,9 +37,9 @@ class _InventoryActionType(Type["InventoryAction"]):
         source_type = UVAR_INT.read(reader)  # SourceType
         window_id: int | None = None
         source_flags: int | None = None
-        if source_type in (0, 99999):  # ContainerInventory, NonImplementedFeatureTODO
+        if source_type in (InventorySourceType.CONTAINER_INVENTORY, InventorySourceType.NON_IMPLEMENTED_FEATURE_TODO):
             window_id = VAR_INT.read(reader)  # WindowID
-        elif source_type == 2:  # WorldInteraction
+        elif source_type == InventorySourceType.WORLD_INTERACTION:
             source_flags = UVAR_INT.read(reader)  # SourceFlags
         slot = UVAR_INT.read(reader)  # InventorySlot
         old_item = ITEM_INSTANCE.read(reader)  # OldItem
@@ -47,10 +48,12 @@ class _InventoryActionType(Type["InventoryAction"]):
 
     def write(self, writer: PacketWriter, value: InventoryAction) -> None:
         UVAR_INT.write(writer, value.source_type)  # SourceType
-        if value.source_type in (0, 99999):  # ContainerInventory, NonImplementedFeatureTODO
+        if value.source_type in (
+            InventorySourceType.CONTAINER_INVENTORY, InventorySourceType.NON_IMPLEMENTED_FEATURE_TODO
+        ):
             assert value.window_id is not None
             VAR_INT.write(writer, value.window_id)  # WindowID
-        elif value.source_type == 2:  # WorldInteraction
+        elif value.source_type == InventorySourceType.WORLD_INTERACTION:
             assert value.source_flags is not None
             UVAR_INT.write(writer, value.source_flags)  # SourceFlags
         UVAR_INT.write(writer, value.slot)  # InventorySlot

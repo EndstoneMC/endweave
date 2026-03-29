@@ -39,7 +39,7 @@ SERVER_PROTOCOL = 944
 CLIENT_PROTOCOL = 924
 
 # v944 inserted PauseGrowth(597) + ResetGrowth(598), Undefined moved to 599
-_HEARTBEAT = 126
+_HEARTBEAT_SOUND_EVENT = 126
 _V944_GROWTH_EVENT = 597
 _V944_UNDEFINED = 599
 _SOUND_SHIFT = 2
@@ -79,7 +79,7 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
     sound = SoundRewriter(
         sound_remap=_remap_sound,
-        actor_data_int_remappers={_HEARTBEAT: _remap_sound},
+        actor_data_int_remappers={_HEARTBEAT_SOUND_EVENT: _remap_sound},
     )
     sound.register(p)
 

@@ -3,23 +3,25 @@
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.sound_rewriter import SoundRewriter
+from endstone_endweave.protocol.v860_to_v898.handlers.actor_event import rewrite_actor_event
+from endstone_endweave.protocol.v860_to_v898.handlers.animate import (
+    rewrite_animate_clientbound,
+    rewrite_animate_serverbound,
+)
+from endstone_endweave.protocol.v860_to_v898.handlers.camera_aim_assist import rewrite_camera_aim_assist_presets
 from endstone_endweave.protocol.v860_to_v898.handlers.commands import (
     rewrite_available_commands,
     rewrite_command_output,
     rewrite_command_request,
+)
+from endstone_endweave.protocol.v860_to_v898.handlers.event import rewrite_event
+from endstone_endweave.protocol.v860_to_v898.handlers.interact import rewrite_interact
+from endstone_endweave.protocol.v860_to_v898.handlers.mob_effect import rewrite_mob_effect
+from endstone_endweave.protocol.v860_to_v898.handlers.resource_pack_stack import rewrite_resource_pack_stack
+from endstone_endweave.protocol.v860_to_v898.handlers.start_game import rewrite_start_game
+from endstone_endweave.protocol.v860_to_v898.handlers.text import (
     rewrite_text_clientbound,
     rewrite_text_serverbound,
-)
-from endstone_endweave.protocol.v860_to_v898.handlers.gameplay import (
-    rewrite_actor_event,
-    rewrite_animate_clientbound,
-    rewrite_animate_serverbound,
-    rewrite_camera_aim_assist_presets,
-    rewrite_event,
-    rewrite_interact,
-    rewrite_mob_effect,
-    rewrite_resource_pack_stack,
-    rewrite_start_game,
 )
 
 SERVER_PROTOCOL = 860

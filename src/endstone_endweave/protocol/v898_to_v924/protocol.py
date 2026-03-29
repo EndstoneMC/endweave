@@ -8,13 +8,17 @@ from endstone_endweave.protocol.v898_to_v924.handlers.book_edit import (
 from endstone_endweave.protocol.v898_to_v924.handlers.camera import (
     rewrite_camera_instruction,
 )
+from endstone_endweave.protocol.v898_to_v924.handlers.camera_aim_assist import (
+    rewrite_camera_aim_assist_presets,
+)
 from endstone_endweave.protocol.v898_to_v924.handlers.data_store import (
     rewrite_clientbound_data_store,
     rewrite_serverbound_data_store,
 )
-from endstone_endweave.protocol.v898_to_v924.handlers.gameplay import (
-    rewrite_camera_aim_assist_presets,
+from endstone_endweave.protocol.v898_to_v924.handlers.graphics_parameter_override import (
     rewrite_graphics_parameter_override,
+)
+from endstone_endweave.protocol.v898_to_v924.handlers.start_game import (
     rewrite_start_game,
 )
 from endstone_endweave.protocol.v924_to_v898.handlers.text import (

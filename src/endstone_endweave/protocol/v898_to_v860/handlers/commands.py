@@ -1,4 +1,4 @@
-"""Command and text packet handlers for v898 to v860."""
+"""Command packet handlers for v898 to v860."""
 
 from endstone_endweave.codec import (
     BOOL,
@@ -11,6 +11,7 @@ from endstone_endweave.codec import (
     UVAR_INT,
     VAR_INT,
     VAR_INT64,
+    CommandOriginType,
     PacketWrapper,
 )
 from endstone_endweave.protocol.v860_to_v898.handlers.commands import (
@@ -22,8 +23,6 @@ from endstone_endweave.protocol.v860_to_v898.handlers.commands import (
     _Overload,
     _Parameter,
     _SubCommand,
-    rewrite_text_clientbound,
-    rewrite_text_serverbound,
 )
 
 
@@ -205,7 +204,7 @@ def _read_command_origin_old(wrapper: PacketWrapper) -> tuple[int, bytes, str, i
     uuid = wrapper.read(UUID)
     request_id = wrapper.read(STRING)
     player_id = -1
-    if origin in (4, 5):
+    if origin in (CommandOriginType.TEST, CommandOriginType.AUTOMATION_PLAYER):
         player_id = wrapper.read(VAR_INT64)
     return origin, uuid, request_id, player_id
 
@@ -304,6 +303,4 @@ __all__ = [
     "rewrite_available_commands",
     "rewrite_command_output",
     "rewrite_command_request",
-    "rewrite_text_clientbound",
-    "rewrite_text_serverbound",
 ]

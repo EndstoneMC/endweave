@@ -16,9 +16,9 @@ def detect_client_protocol(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for the incoming RequestNetworkSettings packet.
     """
     connection = wrapper.user
-    client_proto = wrapper.read(INT_BE)
+    client_proto = wrapper.read(INT_BE)  # ClientNetworkVersion
     connection.client_protocol = client_proto
-    wrapper.write(INT_BE, connection.server_protocol)
+    wrapper.write(INT_BE, connection.server_protocol)  # ClientNetworkVersion
     connection.logger.debug(
         f"User connected with protocol: {client_proto} and serverProtocol: {connection.server_protocol}"
     )
@@ -31,8 +31,8 @@ def _rewrite_login(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for the incoming Login packet.
     """
     connection = wrapper.user
-    wrapper.read(INT_BE)
-    wrapper.write(INT_BE, connection.server_protocol)
+    wrapper.read(INT_BE)  # Client Network Version
+    wrapper.write(INT_BE, connection.server_protocol)  # Client Network Version
 
 
 def create_base_protocol(server_protocol: int) -> Protocol:

@@ -1,4 +1,4 @@
-"""Command and text packet handlers for v860 to v898."""
+"""Command packet handlers for v860 to v898."""
 
 from dataclasses import dataclass
 
@@ -13,31 +13,11 @@ from endstone_endweave.codec import (
     UVAR_INT,
     VAR_INT,
     VAR_INT64,
+    CommandOriginType,
+    CommandOutputType,
+    CurrentCmdVersion,
     PacketWrapper,
 )
-
-_TEXT_KIND_MESSAGE_ONLY = 0
-_TEXT_KIND_AUTHOR_AND_MESSAGE = 1
-_TEXT_KIND_MESSAGE_AND_PARAMS = 2
-
-_TEXT_MESSAGE_ONLY = {
-    0: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    5: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    6: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    9: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    10: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-    11: ("raw", "tip", "systemMessage", "textObjectWhisper", "textObjectAnnouncement", "textObject"),
-}
-_TEXT_AUTHOR_AND_MESSAGE = {
-    1: ("chat", "whisper", "announcement"),
-    7: ("chat", "whisper", "announcement"),
-    8: ("chat", "whisper", "announcement"),
-}
-_TEXT_MESSAGE_AND_PARAMS = {
-    2: ("translate", "popup", "jukeboxPopup"),
-    3: ("translate", "popup", "jukeboxPopup"),
-    4: ("translate", "popup", "jukeboxPopup"),
-}
 
 _COMMAND_PERMISSION_LABELS = ["any", "gamedirectors", "admin", "host", "owner", "internal"]
 _COMMAND_OUTPUT_LABELS = ["none", "lastoutput", "silent", "alloutput", "dataset"]
@@ -268,7 +248,7 @@ def _read_command_origin_old(wrapper: PacketWrapper) -> tuple[int, bytes, str, i
     uuid = wrapper.read(UUID)
     request_id = wrapper.read(STRING)
     player_id = -1
-    if origin in (4, 5):
+    if origin in (CommandOriginType.TEST, CommandOriginType.AUTOMATION_PLAYER):
         player_id = wrapper.read(VAR_INT64)
     return origin, uuid, request_id, player_id
 
@@ -325,12 +305,12 @@ def rewrite_command_request(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for CommandRequest.
     """
-    wrapper.passthrough(STRING)
-    uuid, request_id, _ = _read_command_origin_new(wrapper)
-    _write_command_origin_old(wrapper, uuid, request_id)
-    wrapper.passthrough(BOOL)
-    wrapper.read(STRING)
-    wrapper.write(VAR_INT, 48)
+    wrapper.passthrough(STRING)  # Command
+    uuid, request_id, _ = _read_command_origin_new(wrapper)  # Origin
+    _write_command_origin_old(wrapper, uuid, request_id)  # Command Origin
+    wrapper.passthrough(BOOL)  # Is Internal Source?
+    wrapper.read(STRING)  # Version
+    wrapper.write(VAR_INT, CurrentCmdVersion.CLONE_EXTRA_BLOCK_FILTER_FIX)  # Version
 
 
 def rewrite_command_output(wrapper: PacketWrapper) -> None:
@@ -339,113 +319,25 @@ def rewrite_command_output(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for CommandOutput.
     """
-    _, uuid, request_id, player_id = _read_command_origin_old(wrapper)
-    _write_command_origin_new(wrapper, uuid, request_id, player_id)
+    _, uuid, request_id, player_id = _read_command_origin_old(wrapper)  # Origin Data
+    _write_command_origin_new(wrapper, uuid, request_id, player_id)  # Origin Data
 
-    output_type = wrapper.read(BYTE)
-    wrapper.write(STRING, _COMMAND_OUTPUT_LABELS[output_type])
-    wrapper.map(UVAR_INT, INT_LE)
+    output_type = wrapper.read(BYTE)  # Output Type
+    wrapper.write(STRING, _COMMAND_OUTPUT_LABELS[output_type])  # Output Type
+    wrapper.map(UVAR_INT, INT_LE)  # Success Count
 
-    message_count = wrapper.read(UVAR_INT)
-    wrapper.write(UVAR_INT, message_count)
+    message_count = wrapper.read(UVAR_INT)  # Output Messages
+    wrapper.write(UVAR_INT, message_count)  # Output Messages
     for _ in range(message_count):
-        internal = wrapper.read(BOOL)
-        message_id = wrapper.read(STRING)
-        parameter_count = wrapper.read(UVAR_INT)
+        internal = wrapper.read(BOOL)  # Successful?
+        message_id = wrapper.read(STRING)  # Message ID
+        parameter_count = wrapper.read(UVAR_INT)  # Parameters
         parameters = [wrapper.read(STRING) for _ in range(parameter_count)]
 
-        wrapper.write(STRING, message_id)
-        wrapper.write(BOOL, internal)
-        wrapper.write(UVAR_INT, len(parameters))
+        wrapper.write(STRING, message_id)  # Message ID
+        wrapper.write(BOOL, internal)  # Successful?
+        wrapper.write(UVAR_INT, len(parameters))  # Parameters
         for parameter in parameters:
             wrapper.write(STRING, parameter)
 
-    wrapper.write(BOOL, output_type == 4)
-
-
-def rewrite_text_clientbound(wrapper: PacketWrapper) -> None:
-    """Rewrite Text from the v860 wire format to the v898 format.
-
-    Args:
-        wrapper: Packet wrapper for Text.
-    """
-    text_type = wrapper.read(BYTE)
-    needs_translation = wrapper.read(BOOL)
-
-    wrapper.write(BOOL, needs_translation)
-    if text_type in _TEXT_MESSAGE_ONLY:
-        wrapper.write(BYTE, _TEXT_KIND_MESSAGE_ONLY)
-        for label in _TEXT_MESSAGE_ONLY[text_type]:
-            wrapper.write(STRING, label)
-        wrapper.write(BYTE, text_type)
-        wrapper.passthrough(STRING)
-    elif text_type in _TEXT_AUTHOR_AND_MESSAGE:
-        wrapper.write(BYTE, _TEXT_KIND_AUTHOR_AND_MESSAGE)
-        for label in _TEXT_AUTHOR_AND_MESSAGE[text_type]:
-            wrapper.write(STRING, label)
-        wrapper.write(BYTE, text_type)
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(STRING)
-    elif text_type in _TEXT_MESSAGE_AND_PARAMS:
-        wrapper.write(BYTE, _TEXT_KIND_MESSAGE_AND_PARAMS)
-        for label in _TEXT_MESSAGE_AND_PARAMS[text_type]:
-            wrapper.write(STRING, label)
-        wrapper.write(BYTE, text_type)
-        wrapper.passthrough(STRING)
-        parameter_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(parameter_count):
-            wrapper.passthrough(STRING)
-    else:
-        raise ValueError(f"Unknown text type: {text_type}")
-
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    filtered_message = wrapper.read(STRING)
-    wrapper.write(BOOL, filtered_message != "")
-    if filtered_message != "":
-        wrapper.write(STRING, filtered_message)
-
-
-def rewrite_text_serverbound(wrapper: PacketWrapper) -> None:
-    """Rewrite Text from the v898 wire format to the v860 format.
-
-    Args:
-        wrapper: Packet wrapper for Text.
-    """
-    needs_translation = wrapper.read(BOOL)
-    kind = wrapper.read(BYTE)
-
-    if kind == _TEXT_KIND_MESSAGE_ONLY:
-        for _ in range(6):
-            wrapper.read(STRING)
-        text_type = wrapper.read(BYTE)
-        wrapper.write(BYTE, text_type)
-        wrapper.write(BOOL, needs_translation)
-        wrapper.passthrough(STRING)
-    elif kind == _TEXT_KIND_AUTHOR_AND_MESSAGE:
-        for _ in range(3):
-            wrapper.read(STRING)
-        text_type = wrapper.read(BYTE)
-        wrapper.write(BYTE, text_type)
-        wrapper.write(BOOL, needs_translation)
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(STRING)
-    elif kind == _TEXT_KIND_MESSAGE_AND_PARAMS:
-        for _ in range(3):
-            wrapper.read(STRING)
-        text_type = wrapper.read(BYTE)
-        wrapper.write(BYTE, text_type)
-        wrapper.write(BOOL, needs_translation)
-        wrapper.passthrough(STRING)
-        parameter_count = wrapper.passthrough(UVAR_INT)
-        for _ in range(parameter_count):
-            wrapper.passthrough(STRING)
-    else:
-        raise ValueError(f"Unknown text kind: {kind}")
-
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    filtered_message = ""
-    if wrapper.read(BOOL):
-        filtered_message = wrapper.read(STRING)
-    wrapper.write(STRING, filtered_message)
+    wrapper.write(BOOL, output_type == CommandOutputType.DATA_SET)  # Data Set
