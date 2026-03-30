@@ -72,6 +72,18 @@ class Protocol:
             connection: The player connection entering this protocol's chain.
         """
 
+    def has_handler_or_cancel(self, direction: Direction, packet_id: int) -> bool:
+        """Check if this protocol needs to process a packet.
+
+        Args:
+            direction: Packet direction.
+            packet_id: Bedrock packet ID.
+
+        Returns:
+            True if a handler or cancel is registered for this packet.
+        """
+        return packet_id in self._handlers[direction] or packet_id in self._cancel[direction]
+
     def transform(self, direction: Direction, packet_id: int, wrapper: PacketWrapper) -> None:
         """Run the handler for this packet in the given direction, if any.
 

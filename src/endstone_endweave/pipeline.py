@@ -82,6 +82,8 @@ class ProtocolPipeline:
         # Serverbound: [base, chain...] in order.
         # Each protocol gets a fresh wrapper from the previous protocol's output.
         for protocol in pipeline:
+            if not protocol.has_handler_or_cancel(Direction.SERVERBOUND, packet_id):
+                continue
             wrapper = PacketWrapper(payload, user=connection)
             try:
                 protocol.transform(Direction.SERVERBOUND, packet_id, wrapper)
@@ -148,7 +150,9 @@ class ProtocolPipeline:
 
         # Clientbound: [base, ...reversed chain] (ViaVersion: reversedProtocolList).
         # Each protocol gets a fresh wrapper from the previous protocol's output.
-        for protocol in self._clientbound_order(connection):
+        for protocol in (connection.clientbound_pipeline or []):
+            if not protocol.has_handler_or_cancel(Direction.CLIENTBOUND, packet_id):
+                continue
             wrapper = PacketWrapper(payload, user=connection)
             try:
                 protocol.transform(Direction.CLIENTBOUND, packet_id, wrapper)
@@ -233,24 +237,8 @@ class ProtocolPipeline:
 
         pipeline = base + chain
         connection.protocol_pipeline = pipeline
+
+        # Pre-compute clientbound order: base first, then chain reversed.
+        # Mirrors ViaVersion's refreshReversedList().
+        connection.clientbound_pipeline = base + list(reversed(chain))
         return pipeline
-
-    @staticmethod
-    def _clientbound_order(connection: "UserConnection") -> list[Protocol]:
-        """Return the clientbound iteration order: base first, then chain reversed.
-
-        Mirrors ViaVersion's ``refreshReversedList()``: base protocols in
-        regular order, followed by non-base protocols in reverse order.
-
-        See Also:
-            com.viaversion.viaversion.protocol.ProtocolPipelineImpl#refreshReversedList
-        """
-        pipeline = connection.protocol_pipeline
-        if pipeline is None:
-            return []
-
-        # Find where base protocols end and version chain begins.
-        # Base protocols have name="base" (convention from create_base_protocol).
-        base = [p for p in pipeline if p.is_base]
-        chain = [p for p in pipeline if not p.is_base]
-        return base + list(reversed(chain))

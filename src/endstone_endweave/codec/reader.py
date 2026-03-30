@@ -2,6 +2,15 @@
 
 import struct
 
+_SHORT_LE = struct.Struct("<h")
+_USHORT_LE = struct.Struct("<H")
+_INT_LE = struct.Struct("<i")
+_UINT_LE = struct.Struct("<I")
+_INT_BE = struct.Struct(">i")
+_INT64_LE = struct.Struct("<q")
+_FLOAT_LE = struct.Struct("<f")
+_DOUBLE_LE = struct.Struct("<d")
+
 
 class PacketReader:
     """Reads binary data from a Bedrock packet payload.
@@ -77,56 +86,60 @@ class PacketReader:
 
     def read_short_le(self) -> int:
         """Read a signed 16-bit little-endian integer."""
-        val: int = struct.unpack_from("<h", self._data, self._pos)[0]
+        val: int = _SHORT_LE.unpack_from(self._data, self._pos)[0]
         self._pos += 2
         return val
 
     def read_ushort_le(self) -> int:
         """Read an unsigned 16-bit little-endian integer."""
-        val: int = struct.unpack_from("<H", self._data, self._pos)[0]
+        val: int = _USHORT_LE.unpack_from(self._data, self._pos)[0]
         self._pos += 2
         return val
 
     def read_int_le(self) -> int:
         """Read a signed 32-bit little-endian integer."""
-        val: int = struct.unpack_from("<i", self._data, self._pos)[0]
+        val: int = _INT_LE.unpack_from(self._data, self._pos)[0]
         self._pos += 4
         return val
 
     def read_int_be(self) -> int:
         """Read a signed 32-bit big-endian integer."""
-        val: int = struct.unpack_from(">i", self._data, self._pos)[0]
+        val: int = _INT_BE.unpack_from(self._data, self._pos)[0]
         self._pos += 4
         return val
 
     def read_uint_le(self) -> int:
         """Read an unsigned 32-bit little-endian integer."""
-        val: int = struct.unpack_from("<I", self._data, self._pos)[0]
+        val: int = _UINT_LE.unpack_from(self._data, self._pos)[0]
         self._pos += 4
         return val
 
     def read_int64_le(self) -> int:
         """Read a signed 64-bit little-endian integer."""
-        val: int = struct.unpack_from("<q", self._data, self._pos)[0]
+        val: int = _INT64_LE.unpack_from(self._data, self._pos)[0]
         self._pos += 8
         return val
 
     def read_float_le(self) -> float:
         """Read a 32-bit little-endian IEEE 754 float."""
-        val: float = struct.unpack_from("<f", self._data, self._pos)[0]
+        val: float = _FLOAT_LE.unpack_from(self._data, self._pos)[0]
         self._pos += 4
         return val
 
     def read_double_le(self) -> float:
         """Read a 64-bit little-endian IEEE 754 float."""
-        val: float = struct.unpack_from("<d", self._data, self._pos)[0]
+        val: float = _DOUBLE_LE.unpack_from(self._data, self._pos)[0]
         self._pos += 8
         return val
 
     def read_uvarint(self) -> int:
         """Read an unsigned variable-length integer (LEB128)."""
-        result = 0
-        shift = 0
+        b = self._data[self._pos]
+        self._pos += 1
+        if b < 0x80:
+            return b
+        result = b & 0x7F
+        shift = 7
         while True:
             b = self._data[self._pos]
             self._pos += 1
@@ -145,8 +158,12 @@ class PacketReader:
 
     def read_uvarint64(self) -> int:
         """Read an unsigned variable-length long (LEB128, up to 64 bits)."""
-        result = 0
-        shift = 0
+        b = self._data[self._pos]
+        self._pos += 1
+        if b < 0x80:
+            return b
+        result = b & 0x7F
+        shift = 7
         while True:
             b = self._data[self._pos]
             self._pos += 1

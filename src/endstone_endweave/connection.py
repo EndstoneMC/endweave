@@ -36,6 +36,7 @@ class UserConnection:
     server_protocol: int = 0  # Set by ConnectionManager
     warned_no_chain: bool = False
     protocol_pipeline: "list[Protocol] | None" = None  # [base, ...chain] cached after resolution
+    clientbound_pipeline: "list[Protocol] | None" = None  # [base, ...reversed chain] for clientbound
     _storage: dict[type, object] = field(default_factory=dict, repr=False)
 
     @property
