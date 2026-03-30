@@ -2,6 +2,7 @@
 
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.protocol.v898_to_v924.handlers.biome_definition_list import rewrite_biome_definition_list
 from endstone_endweave.protocol.v898_to_v924.handlers.book_edit import (
     rewrite_book_edit,
 )
@@ -29,7 +30,6 @@ from endstone_endweave.protocol.v924_to_v898.handlers.text import (
 SERVER_PROTOCOL = 898
 CLIENT_PROTOCOL = 924
 
-
 def create_protocol() -> Protocol:
     """Create a protocol for v898 server <- v924 client."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
@@ -44,5 +44,6 @@ def create_protocol() -> Protocol:
     protocol.register_clientbound(PacketId.CAMERA_AIM_ASSIST_PRESETS, rewrite_camera_aim_assist_presets)
     protocol.register_clientbound(PacketId.GRAPHICS_PARAMETER_OVERRIDE, rewrite_graphics_parameter_override)
     protocol.register_clientbound(PacketId.CAMERA_INSTRUCTION, rewrite_camera_instruction)
-
+    protocol.register_clientbound(PacketId.BIOME_DEFINITION_LIST, rewrite_biome_definition_list)
+    
     return protocol
