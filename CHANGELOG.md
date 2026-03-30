@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Server protocol detection failing when the server runs a Minecraft version not explicitly known to the plugin (e.g. a hotfix release like 1.26.11)
+
 ## [0.3.0] - 2026-03-30
 
 ### Added

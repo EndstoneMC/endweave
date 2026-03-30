@@ -187,21 +187,6 @@ class TestProtocolPipeline:
         event2.cancel.assert_called_once()
 
 
-class TestNormalizeMcVersion:
-    def test_short_form(self):
-        from endstone_endweave.plugin import EndweavePlugin
-
-        assert EndweavePlugin._normalize_mc_version("26.0") == "1.26.0"
-        assert EndweavePlugin._normalize_mc_version("26.10") == "1.26.10"
-        assert EndweavePlugin._normalize_mc_version("26.3") == "1.26.3"
-
-    def test_full_form_unchanged(self):
-        from endstone_endweave.plugin import EndweavePlugin
-
-        assert EndweavePlugin._normalize_mc_version("1.26.0") == "1.26.0"
-        assert EndweavePlugin._normalize_mc_version("1.26.10") == "1.26.10"
-
-
 class TestGetVersionByName:
     def test_patch_version_maps_to_base(self):
         from endstone_endweave.protocol.versions import get_version_by_name, v1_26_0
