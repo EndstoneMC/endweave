@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Lectern page turning not working across version boundaries
 - Dismounting rides sometimes causing a disconnect
 - Signs could not be edited or dyed by 1.26.10 clients on 1.26.0 servers
+- Block actor interactions (e.g. editing command blocks) failing for 1.26.0 clients on 1.26.10 servers
 
 ### Changed
 - Startup log now shows supported client version range instead of listing each version

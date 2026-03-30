@@ -9,6 +9,7 @@ from endstone_endweave.protocol.v944_to_v924.handlers.block_pos import (
     rewrite_command_block_update,
     rewrite_container_open,
     rewrite_first_block_to_net,
+    rewrite_first_net_to_block,
     rewrite_inventory_transaction,
     rewrite_lectern_update_clientbound,
     rewrite_lectern_update_serverbound,
@@ -100,6 +101,7 @@ def create_protocol() -> Protocol:
         PacketId.STRUCTURE_TEMPLATE_DATA_EXPORT_REQUEST,
         rewrite_structure_template_data_request,
     )
+    p.register_serverbound(PacketId.BLOCK_ACTOR_DATA, rewrite_first_net_to_block)
     p.register_serverbound(PacketId.ANVIL_DAMAGE, rewrite_anvil_damage)
 
     return p
