@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-30
+
 ### Added
 - Protocol translation for v898 (MC 1.21.130), v860 (MC 1.21.124), and v859 (MC 1.21.120)
 - Bidirectional translation (older clients can also join newer servers that have the plugin)
