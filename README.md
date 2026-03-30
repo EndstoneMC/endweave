@@ -4,8 +4,8 @@
 
 [![Build](https://github.com/EndstoneMC/endweave/actions/workflows/build.yml/badge.svg)](https://github.com/EndstoneMC/endweave/actions/workflows/build.yml)
 
-An [Endstone](https://github.com/EndstoneMC/endstone) plugin that lets newer Bedrock clients connect to older servers by
-rewriting packets at the network layer. Inspired by [ViaVersion](https://github.com/ViaVersion/ViaVersion).
+An [Endstone](https://github.com/EndstoneMC/endstone) plugin that lets Bedrock clients connect to servers with
+different protocol versions by rewriting packets at the network layer. Inspired by [ViaVersion](https://github.com/ViaVersion/ViaVersion).
 
 ## Supported Versions
 
@@ -27,11 +27,10 @@ Players on newer clients will connect transparently. No additional configuration
 
 ## How It Works
 
-When Minecraft updates, players who update can't join servers still on the old version. Instead of waiting for an
-Endstone update (and keeping your community offline), Endweave lets newer clients connect right away by translating
-protocol differences in real time. Only fields that actually changed get rewritten, and players already on the server's
-version go through zero extra processing. If a client is multiple versions ahead, translators are chained together
-automatically.
+Endweave handles protocol differences between Minecraft versions, allowing players to join servers on different protocol
+versions. Whether a client is newer or older than the server, packets are translated in real time. Only fields that
+actually changed get rewritten, and players already on the server's version go through zero extra processing. When a
+client is multiple versions away from the server, translators are automatically chained together to bridge the gap.
 
 ## Contributing
 
