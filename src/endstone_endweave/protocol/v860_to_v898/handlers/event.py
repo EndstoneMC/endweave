@@ -16,8 +16,7 @@ def rewrite_event(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for Event.
     """
     wrapper.passthrough(VAR_INT64)  # Target Actor ID
-    event_type = wrapper.read(VAR_INT)  # Event Type
-    wrapper.write(VAR_INT, event_type)  # Event Type
-    wrapper.write(BOOL, False)  # Use Player ID
-    wrapper.write(UVAR_INT, event_type)  # Event Data
+    event_type = wrapper.passthrough(VAR_INT)  # Event Type
+    wrapper.passthrough(BOOL)  # Use Player ID
+    wrapper.write(UVAR_INT, event_type)  # Event Data (new in v898)
     wrapper.passthrough_all()
