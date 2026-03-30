@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Dismounting rides sometimes causing a disconnect
 - Signs could not be edited or dyed by 1.26.10 clients on 1.26.0 servers
 - Block actor interactions (e.g. editing command blocks) failing for 1.26.0 clients on 1.26.10 servers
+- Script debug shapes not rendering for cross-version clients
+- Client diagnostics packet causing errors when connecting across 1.21.130/1.26.0 boundary
 
 ### Changed
 - Startup log now shows supported client version range instead of listing each version

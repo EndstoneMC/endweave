@@ -19,6 +19,12 @@ from endstone_endweave.protocol.v924_to_v898.handlers.data_store import (
     rewrite_clientbound_data_store,
     rewrite_serverbound_data_store,
 )
+from endstone_endweave.protocol.v924_to_v898.handlers.debug_drawer import (
+    rewrite_debug_drawer,
+)
+from endstone_endweave.protocol.v924_to_v898.handlers.diagnostics import (
+    rewrite_diagnostics,
+)
 from endstone_endweave.protocol.v924_to_v898.handlers.graphics_parameter_override import (
     rewrite_graphics_parameter_override,
 )
@@ -53,6 +59,7 @@ def create_protocol() -> Protocol:
     protocol.register_serverbound(PacketId.TEXT, rewrite_text_serverbound)
     protocol.register_serverbound(PacketId.SERVERBOUND_DATA_STORE, rewrite_serverbound_data_store)
     protocol.register_serverbound(PacketId.BOOK_EDIT, rewrite_book_edit)
+    protocol.register_serverbound(PacketId.SERVERBOUND_DIAGNOSTICS, rewrite_diagnostics)
 
     protocol.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     protocol.register_clientbound(PacketId.TEXT, rewrite_text_clientbound)
@@ -68,6 +75,8 @@ def create_protocol() -> Protocol:
     protocol.register_clientbound(PacketId.GRAPHICS_PARAMETER_OVERRIDE, rewrite_graphics_parameter_override)
     protocol.register_clientbound(PacketId.CAMERA_INSTRUCTION, rewrite_camera_instruction)
 
+    protocol.register_clientbound(PacketId.SERVER_SCRIPT_DEBUG_DRAWER, rewrite_debug_drawer)
+
     protocol.cancel_clientbound(
         PacketId.CLIENTBOUND_DATA_DRIVEN_UI_SHOW_SCREEN,
         PacketId.CLIENTBOUND_DATA_DRIVEN_UI_CLOSE_ALL_SCREENS,
@@ -76,7 +85,6 @@ def create_protocol() -> Protocol:
         PacketId.VOXEL_SHAPES,
         PacketId.CAMERA_SPLINE,
         PacketId.CAMERA_AIM_ASSIST_ACTOR_PRIORITY,
-        PacketId.SERVER_SCRIPT_DEBUG_DRAWER,
     )
 
     return protocol
