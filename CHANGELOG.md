@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bidirectional translation (older clients can also join newer servers that have the plugin)
 
 ### Fixed
+- v859/v860 clients disconnecting on join due to wrong game rule encoding and missing block registry checksum bypass
+- Animate packet breaking v860 clients due to action field using different wire encoding (varint vs byte)
 - Lectern page turning not working when crossing v924/v944 versions
 - VoxelShapes packet stripping bytes from the wrong position
 - Interact packet losing position data on StopRiding action

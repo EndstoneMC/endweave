@@ -4,8 +4,10 @@ from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v860_to_v898.handlers.animate import (
-    rewrite_animate_clientbound,
-    rewrite_animate_serverbound,
+    rewrite_animate_clientbound as _animate_v860_to_v898,
+)
+from endstone_endweave.protocol.v860_to_v898.handlers.animate import (
+    rewrite_animate_serverbound as _animate_v898_to_v860,
 )
 from endstone_endweave.protocol.v898_to_v860.handlers.actor_event import rewrite_actor_event
 from endstone_endweave.protocol.v898_to_v860.handlers.camera_aim_assist import (
@@ -24,8 +26,10 @@ from endstone_endweave.protocol.v898_to_v860.handlers.resource_pack_stack import
 )
 from endstone_endweave.protocol.v898_to_v860.handlers.start_game import rewrite_start_game
 from endstone_endweave.protocol.v898_to_v860.handlers.text import (
-    rewrite_text_clientbound,
-    rewrite_text_serverbound,
+    rewrite_text_clientbound as _text_v860_to_v898,
+)
+from endstone_endweave.protocol.v898_to_v860.handlers.text import (
+    rewrite_text_serverbound as _text_v898_to_v860,
 )
 
 SERVER_PROTOCOL = 898
@@ -51,10 +55,10 @@ def create_protocol() -> Protocol:
     """Create a protocol for v898 server <- v860 client translation."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
-    protocol.register_serverbound(PacketId.ANIMATE, rewrite_animate_clientbound)
+    protocol.register_serverbound(PacketId.ANIMATE, _animate_v860_to_v898)
     protocol.register_serverbound(PacketId.INTERACT, rewrite_interact)
     protocol.register_serverbound(PacketId.COMMAND_REQUEST, rewrite_command_request)
-    protocol.register_serverbound(PacketId.TEXT, rewrite_text_clientbound)
+    protocol.register_serverbound(PacketId.TEXT, _text_v860_to_v898)
 
     sound = SoundRewriter(
         sound_remap=_remap_sound,
@@ -62,10 +66,10 @@ def create_protocol() -> Protocol:
     )
     sound.register(protocol)
     protocol.register_clientbound(PacketId.ACTOR_EVENT, rewrite_actor_event)
-    protocol.register_clientbound(PacketId.ANIMATE, rewrite_animate_serverbound)
+    protocol.register_clientbound(PacketId.ANIMATE, _animate_v898_to_v860)
     protocol.register_clientbound(PacketId.MOB_EFFECT, rewrite_mob_effect)
     protocol.register_clientbound(PacketId.RESOURCE_PACK_STACK, rewrite_resource_pack_stack)
-    protocol.register_clientbound(PacketId.TEXT, rewrite_text_serverbound)
+    protocol.register_clientbound(PacketId.TEXT, _text_v898_to_v860)
     protocol.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     protocol.register_clientbound(PacketId.LEGACY_TELEMETRY_EVENT, rewrite_event)
     protocol.register_clientbound(PacketId.AVAILABLE_COMMANDS, rewrite_available_commands)
