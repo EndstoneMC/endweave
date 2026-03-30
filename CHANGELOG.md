@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - 1.21.120/1.21.124 clients disconnecting immediately when joining 1.26.0 servers
 - Animation glitches for 1.21.120/1.21.124 clients on newer servers
 - Lectern page turning not working across version boundaries
+- Running commands (e.g. /list) disconnecting 1.21.x clients on 1.26.0 servers
 - Dismounting rides sometimes causing a disconnect
 - Signs could not be edited or dyed by 1.26.10 clients on 1.26.0 servers
 - Block actor interactions (e.g. editing command blocks) failing for 1.26.0 clients on 1.26.10 servers
