@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-03-31
+
 ### Fixed
 - Sound effects not playing correctly for 1.21.124 clients on newer servers
 - Sound remapping missing for 1.21.130 clients connecting to 1.26.0 servers
