@@ -2,21 +2,17 @@
 
 from endstone_endweave.codec import (
     BOOL,
-    BYTE,
-    EXPERIMENTS,
-    FLOAT_LE,
     INT64_LE,
-    INT_LE,
+    LEVEL_SETTINGS_V924,
     NAMED_COMPOUND_TAG,
-    SHORT_LE,
     STRING,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
+    VEC2,
+    VEC3,
     CompoundTag,
-    GameRuleType,
-    OptionalType,
     PacketWrapper,
 )
 
@@ -30,83 +26,12 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(VAR_INT64)  # Entity ID
     wrapper.passthrough(UVAR_INT64)  # Runtime ID
     wrapper.passthrough(VAR_INT)  # Game Type
-    wrapper.passthrough(FLOAT_LE)  # Position X
-    wrapper.passthrough(FLOAT_LE)  # Position Y
-    wrapper.passthrough(FLOAT_LE)  # Position Z
-    wrapper.passthrough(FLOAT_LE)  # Rotation X
-    wrapper.passthrough(FLOAT_LE)  # Rotation Y
+    wrapper.passthrough(VEC3)  # Position
+    wrapper.passthrough(VEC2)  # Rotation
 
-    wrapper.passthrough(INT64_LE)  # Settings.Seed
-    wrapper.passthrough(SHORT_LE)  # Settings.SpawnSettings.BiomeType
-    wrapper.passthrough(STRING)  # Settings.SpawnSettings.UserDefinedBiomeName
-    wrapper.passthrough(VAR_INT)  # Settings.SpawnSettings.Dimension
-    wrapper.passthrough(VAR_INT)  # Settings.Generator
-    wrapper.passthrough(VAR_INT)  # Settings.GameType
-    wrapper.passthrough(BOOL)  # Settings.IsHardcore
-    wrapper.passthrough(VAR_INT)  # Settings.GameDifficulty
-    wrapper.passthrough(VAR_INT)  # Settings.DefaultSpawn X
-    wrapper.passthrough(VAR_INT)  # Settings.DefaultSpawn Y
-    wrapper.passthrough(VAR_INT)  # Settings.DefaultSpawn Z
+    wrapper.passthrough(LEVEL_SETTINGS_V924)
 
-    wrapper.passthrough(BOOL)  # Achievements Disabled
-    wrapper.passthrough(VAR_INT)  # Editor World Type
-    wrapper.passthrough(BOOL)  # Created In Editor
-    wrapper.passthrough(BOOL)  # Exported From Editor
-    wrapper.passthrough(VAR_INT)  # Day Cycle Stop Time
-    wrapper.passthrough(VAR_INT)  # Education Edition Offer
-    wrapper.passthrough(BOOL)  # Education features enabled
-    wrapper.passthrough(STRING)  # Education product id
-    wrapper.passthrough(FLOAT_LE)  # Rain Level
-    wrapper.passthrough(FLOAT_LE)  # Lightning Level
-    wrapper.passthrough(BOOL)  # Has confirmed Platform Locked Content
-    wrapper.passthrough(BOOL)  # Multiplayer intended
-    wrapper.passthrough(BOOL)  # LAN broadcasting intended
-    wrapper.passthrough(VAR_INT)  # Xbox Live Broadcast Setting
-    wrapper.passthrough(VAR_INT)  # Platform Broadcast Setting
-    wrapper.passthrough(BOOL)  # Commands Enabled
-    wrapper.passthrough(BOOL)  # Texture Packs Required
-
-    game_rule_count = wrapper.passthrough(UVAR_INT)  # GameRules
-    for _ in range(game_rule_count):
-        wrapper.passthrough(STRING)
-        wrapper.passthrough(BOOL)
-        game_rule_type = wrapper.passthrough(UVAR_INT)
-        if game_rule_type == GameRuleType.BOOL:
-            wrapper.passthrough(BOOL)
-        elif game_rule_type == GameRuleType.INT:
-            wrapper.passthrough(VAR_INT)
-        elif game_rule_type == GameRuleType.FLOAT:
-            wrapper.passthrough(FLOAT_LE)
-        else:
-            raise ValueError(f"Unknown game rule type: {game_rule_type}")
-
-    wrapper.passthrough(EXPERIMENTS)  # Experiments
-    wrapper.passthrough(BOOL)  # ever_toggled
-
-    wrapper.passthrough(BOOL)  # Has Bonus Chest
-    wrapper.passthrough(BOOL)  # Start with Map
-    wrapper.passthrough(VAR_INT)  # Player Permissions
-    wrapper.passthrough(INT_LE)  # Server Chunk Tick Range
-    wrapper.passthrough(BOOL)  # Has locked behavior pack?
-    wrapper.passthrough(BOOL)  # Has locked resource pack?
-    wrapper.passthrough(BOOL)  # Is from locked template?
-    wrapper.passthrough(BOOL)  # Use Msa Gamertags Only?
-    wrapper.passthrough(BOOL)  # If this world was created from a template.
-    wrapper.passthrough(BOOL)  # If this world is a template with locked settings.
-    wrapper.passthrough(BOOL)  # Only spawn v1 villagers
-    wrapper.passthrough(BOOL)  # PersonaDisabled?
-    wrapper.passthrough(BOOL)  # CustomSkinsDisabled?
-    wrapper.passthrough(BOOL)  # Emote Chat Muted
-    wrapper.passthrough(STRING)  # BaseGameVersion
-    wrapper.passthrough(INT_LE)  # Limited World Width
-    wrapper.passthrough(INT_LE)  # Limited World Depth
-    wrapper.passthrough(BOOL)  # Nether type
-    wrapper.passthrough(STRING)  # EduSharedUriResource.ButtonName
-    wrapper.passthrough(STRING)  # EduSharedUriResource.LinkUri
-    wrapper.passthrough(OptionalType(BOOL))  # Override force experimental gameplay
-    wrapper.passthrough(BYTE)  # ChatRestriction Level
-    wrapper.passthrough(BOOL)  # DisablePlayerInteractions
-
+    # -- Read post-settings fields (v924 order: Level ID first, telemetry after checksum) --
     level_id = wrapper.read(STRING)  # Level ID
     level_name = wrapper.read(STRING)  # Level Name
     premium_world_template_id = wrapper.read(STRING)  # Template Content Identity
@@ -141,6 +66,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     world_id = wrapper.read(STRING)  # Server Telemetry Data
     owner_id = wrapper.read(STRING)  # Server Telemetry Data
 
+    # -- Write in v898 order: telemetry first, then Level ID, then checksum fields --
     wrapper.write(STRING, server_id)  # Server Telemetry Data
     wrapper.write(STRING, world_id)  # Server Telemetry Data
     wrapper.write(STRING, scenario_id)  # Server Telemetry Data

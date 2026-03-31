@@ -2,20 +2,16 @@
 
 from endstone_endweave.codec import (
     BOOL,
-    BYTE,
-    EXPERIMENTS_V860,
-    FLOAT_LE,
-    GAME_RULES,
     INT64_LE,
-    INT_LE,
+    LEVEL_SETTINGS_V860,
     NAMED_COMPOUND_TAG,
-    SHORT_LE,
     STRING,
     UVAR_INT,
     UVAR_INT64,
     VAR_INT,
     VAR_INT64,
-    OptionalType,
+    VEC2,
+    VEC3,
     PacketWrapper,
 )
 
@@ -26,98 +22,41 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for StartGame.
     """
-    wrapper.passthrough(VAR_INT64)
-    wrapper.passthrough(UVAR_INT64)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
+    wrapper.passthrough(VAR_INT64)  # Entity ID
+    wrapper.passthrough(UVAR_INT64)  # Runtime ID
+    wrapper.passthrough(VAR_INT)  # Game Type
+    wrapper.passthrough(VEC3)  # Position
+    wrapper.passthrough(VEC2)  # Rotation
 
-    wrapper.passthrough(INT64_LE)
-    wrapper.passthrough(SHORT_LE)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(VAR_INT)
+    wrapper.passthrough(LEVEL_SETTINGS_V860)
 
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(FLOAT_LE)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
+    # -- v860 server telemetry (before Level ID) --
+    wrapper.passthrough(STRING)  # Server Telemetry: Server ID
+    wrapper.passthrough(STRING)  # Server Telemetry: World ID
+    wrapper.passthrough(STRING)  # Server Telemetry: Scenario ID
+    wrapper.passthrough(STRING)  # Server Telemetry: Owner ID
 
-    wrapper.passthrough(GAME_RULES)
-
-    wrapper.passthrough(EXPERIMENTS_V860)
-    wrapper.passthrough(BOOL)
-
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(INT_LE)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(INT_LE)
-    wrapper.passthrough(INT_LE)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(OptionalType(BOOL))
-    wrapper.passthrough(BYTE)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(VAR_INT)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(INT64_LE)
-    wrapper.passthrough(VAR_INT)
-    block_prop_count = wrapper.passthrough(UVAR_INT)
+    # -- Post-LevelSettings fields --
+    wrapper.passthrough(STRING)  # Level ID
+    wrapper.passthrough(STRING)  # Level Name
+    wrapper.passthrough(STRING)  # Template Content Identity
+    wrapper.passthrough(BOOL)  # Is Trial?
+    wrapper.passthrough(VAR_INT)  # Movement Settings.RewindHistorySize
+    wrapper.passthrough(BOOL)  # Movement Settings.ServerAuthBlockBreaking
+    wrapper.passthrough(INT64_LE)  # Level Current Time
+    wrapper.passthrough(VAR_INT)  # Enchantment Seed
+    block_prop_count = wrapper.passthrough(UVAR_INT)  # Block Properties
     for _ in range(block_prop_count):
         wrapper.passthrough(STRING)
         wrapper.passthrough(NAMED_COMPOUND_TAG)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(STRING)
-    wrapper.passthrough(NAMED_COMPOUND_TAG)
+    wrapper.passthrough(STRING)  # Multiplayer Correlation Id
+    wrapper.passthrough(BOOL)  # Enable Item Stack Net Manager
+    wrapper.passthrough(STRING)  # Server version
+    wrapper.passthrough(NAMED_COMPOUND_TAG)  # Player Property Data
     wrapper.read(INT64_LE)  # Server Block Type Registry Checksum
     wrapper.write(INT64_LE, 0)  # zero checksum to skip validation
-    wrapper.passthrough(INT64_LE)
-    wrapper.passthrough(INT64_LE)
-    wrapper.passthrough(BOOL)
-    wrapper.passthrough(BOOL)
-    wrapper.read(BOOL)
+    wrapper.passthrough(INT64_LE)  # World Template ID (MSB)
+    wrapper.passthrough(INT64_LE)  # World Template ID (LSB)
+    wrapper.passthrough(BOOL)  # Server Enabled ClientSide Generation
+    wrapper.passthrough(BOOL)  # BlockNetworkIds Are Hashes
+    wrapper.read(BOOL)  # TickDeathSystemsEnabled (dropped in v898)

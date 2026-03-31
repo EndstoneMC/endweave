@@ -6,14 +6,10 @@ v944 also restructured the server join info block near the end of the packet.
 
 from endstone_endweave.codec import (
     BOOL,
-    BYTE,
-    EXPERIMENTS,
-    FLOAT_LE,
-    GAME_RULES,
     INT64_LE,
-    INT_LE,
+    LEVEL_SETTINGS_V924,
+    LEVEL_SETTINGS_V944,
     NAMED_COMPOUND_TAG,
-    SHORT_LE,
     STRING,
     UVAR_INT,
     UVAR_INT64,
@@ -36,65 +32,8 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.passthrough(VAR_INT)  # Game Type
     wrapper.passthrough(VEC3)  # Position
     wrapper.passthrough(VEC2)  # Rotation
-    wrapper.passthrough(INT64_LE)  # Settings.Seed
-    wrapper.passthrough(SHORT_LE)  # Settings.SpawnSettings.BiomeType
-    wrapper.passthrough(STRING)  # Settings.SpawnSettings.UserDefinedBiomeName
-    wrapper.passthrough(VAR_INT)  # Settings.SpawnSettings.Dimension
-    wrapper.passthrough(VAR_INT)  # Settings.Generator
-    wrapper.passthrough(VAR_INT)  # Settings.GameType
-    wrapper.passthrough(BOOL)  # Settings.IsHardcore
-    wrapper.passthrough(VAR_INT)  # Settings.GameDifficulty
 
-    # Settings.DefaultSpawn -- Y encoding changed
-    wrapper.passthrough(VAR_INT)  # X (same)
-    y = wrapper.read(VAR_INT)  # Y: varint in v944
-    wrapper.write(UVAR_INT, y)  # Y: uvarint in v924
-    wrapper.passthrough(VAR_INT)  # Z (same)
-
-    # -- Remaining LevelSettings (identical in v924/v944) --
-    wrapper.passthrough(BOOL)  # Achievements Disabled
-    wrapper.passthrough(VAR_INT)  # Editor World Type
-    wrapper.passthrough(BOOL)  # Created In Editor
-    wrapper.passthrough(BOOL)  # Exported From Editor
-    wrapper.passthrough(VAR_INT)  # Day Cycle Stop Time
-    wrapper.passthrough(VAR_INT)  # Education Edition Offer
-    wrapper.passthrough(BOOL)  # Education features enabled
-    wrapper.passthrough(STRING)  # Education product id
-    wrapper.passthrough(FLOAT_LE)  # Rain Level
-    wrapper.passthrough(FLOAT_LE)  # Lightning Level
-    wrapper.passthrough(BOOL)  # Has confirmed Platform Locked Content
-    wrapper.passthrough(BOOL)  # Multiplayer intended
-    wrapper.passthrough(BOOL)  # LAN broadcasting intended
-    wrapper.passthrough(VAR_INT)  # Xbox Live Broadcast Setting
-    wrapper.passthrough(VAR_INT)  # Platform Broadcast Setting
-    wrapper.passthrough(BOOL)  # Commands Enabled
-    wrapper.passthrough(BOOL)  # Texture Packs Required
-    wrapper.passthrough(GAME_RULES)  # GameRules
-    wrapper.passthrough(EXPERIMENTS)  # Experiments
-    wrapper.passthrough(BOOL)  # ever_toggled
-    wrapper.passthrough(BOOL)  # Has Bonus Chest
-    wrapper.passthrough(BOOL)  # Start with Map
-    wrapper.passthrough(VAR_INT)  # Player Permissions
-    wrapper.passthrough(INT_LE)  # Server Chunk Tick Range
-    wrapper.passthrough(BOOL)  # Has locked behavior pack?
-    wrapper.passthrough(BOOL)  # Has locked resource pack?
-    wrapper.passthrough(BOOL)  # Is from locked template?
-    wrapper.passthrough(BOOL)  # Use Msa Gamertags Only?
-    wrapper.passthrough(BOOL)  # If this world was created from a template.
-    wrapper.passthrough(BOOL)  # If this world is a template with locked settings.
-    wrapper.passthrough(BOOL)  # Only spawn v1 villagers
-    wrapper.passthrough(BOOL)  # PersonaDisabled?
-    wrapper.passthrough(BOOL)  # CustomSkinsDisabled?
-    wrapper.passthrough(BOOL)  # Emote Chat Muted
-    wrapper.passthrough(STRING)  # BaseGameVersion
-    wrapper.passthrough(INT_LE)  # Limited World Width
-    wrapper.passthrough(INT_LE)  # Limited World Depth
-    wrapper.passthrough(BOOL)  # Nether type
-    wrapper.passthrough(STRING)  # EduSharedUriResource.ButtonName
-    wrapper.passthrough(STRING)  # EduSharedUriResource.LinkUri
-    wrapper.passthrough(BOOL)  # Override force experimental gameplay
-    wrapper.passthrough(BYTE)  # ChatRestriction Level
-    wrapper.passthrough(BOOL)  # DisablePlayerInteractions
+    wrapper.map(LEVEL_SETTINGS_V944, LEVEL_SETTINGS_V924)
 
     # -- Post-LevelSettings fields (identical in v924/v944) --
     wrapper.passthrough(STRING)  # Level ID

@@ -73,6 +73,12 @@ from endstone_endweave.codec.types.gameplay import (
 )
 from endstone_endweave.codec.types.inventory import INVENTORY_ACTION, InventoryAction
 from endstone_endweave.codec.types.item import ITEM_INSTANCE, ItemInstance
+from endstone_endweave.codec.types.level_settings import (
+    LEVEL_SETTINGS_V860,
+    LEVEL_SETTINGS_V924,
+    LEVEL_SETTINGS_V944,
+    LevelSettings,
+)
 from endstone_endweave.codec.types.nbt import (
     COMPOUND_TAG,
     NAMED_COMPOUND_TAG,
@@ -195,6 +201,10 @@ __all__ = [
     "InventorySourceType",
     "ItemInstance",
     "KeyFrame",
+    "LEVEL_SETTINGS_V860",
+    "LEVEL_SETTINGS_V924",
+    "LEVEL_SETTINGS_V944",
+    "LevelSettings",
     "LevelSoundEvent",
     "ListTag",
     "LongArrayTag",
