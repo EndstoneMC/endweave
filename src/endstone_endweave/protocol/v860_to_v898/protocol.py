@@ -40,17 +40,21 @@ def create_protocol() -> Protocol:
     """Create a protocol for v860 server <- v898 client translation."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
+    # Serverbound rewriters
     protocol.cancel_serverbound(PacketId.SERVERBOUND_DATA_STORE)
     protocol.register_serverbound(PacketId.ANIMATE, rewrite_animate_serverbound)
     protocol.register_serverbound(PacketId.INTERACT, rewrite_interact)
     protocol.register_serverbound(PacketId.COMMAND_REQUEST, rewrite_command_request)
     protocol.register_serverbound(PacketId.TEXT, rewrite_text_serverbound)
 
+    # Clientbound rewriters -- LevelSoundEvent remapping
     sound = SoundRewriter(
         sound_remap=_remap_sound,
         actor_data_int_remappers={ActorDataIDs.HEARTBEAT_SOUND_EVENT: _remap_sound},
     )
     sound.register(protocol)
+
+    # Clientbound rewriters -- v860/v898 format differences
     protocol.register_clientbound(PacketId.ACTOR_EVENT, rewrite_actor_event)
     protocol.register_clientbound(PacketId.ANIMATE, rewrite_animate_clientbound)
     protocol.register_clientbound(PacketId.MOB_EFFECT, rewrite_mob_effect)

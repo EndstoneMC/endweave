@@ -39,7 +39,10 @@ line-length = 120
 exclude = ["src/endstone_endweave/_version.py"]
 
 [tool.ruff.lint]
-select = ["I", "E", "F"]
+select = ["I", "E", "F", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.mypy]
 strict = true

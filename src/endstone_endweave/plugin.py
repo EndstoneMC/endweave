@@ -69,15 +69,17 @@ class EndweavePlugin(Plugin):
         self._manager.register_base(create_base_protocol(server_protocol))
 
         # Register version-specific protocols
-        self._register_protocol(create_v859_to_v860())
-        self._register_protocol(create_v860_to_v859())
-        self._register_protocol(create_v860_to_v898())
-        self._register_protocol(create_v898_to_v860())
-        self._register_protocol(create_v898_to_v924())
-        self._register_protocol(create_v924_to_v898())
-        self._register_protocol(create_v924_to_v944())
-        self._register_protocol(create_v944_to_v924())
-        # Future: self._register_protocol(create_v944_to_v960())
+        for factory in (
+            create_v859_to_v860,
+            create_v860_to_v859,
+            create_v860_to_v898,
+            create_v898_to_v860,
+            create_v898_to_v924,
+            create_v924_to_v898,
+            create_v924_to_v944,
+            create_v944_to_v924,
+        ):
+            self._register_protocol(factory())
 
         self._supported_versions = self._manager.get_supported_versions(server_protocol)
         self._advertised_protocol = max(self._supported_versions) if self._supported_versions else server_protocol

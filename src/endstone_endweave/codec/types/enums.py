@@ -7,8 +7,6 @@ symbolic names instead of magic literals.
 
 import enum
 
-_E = enum.IntEnum
-
 
 class ActorDataIDs(enum.IntEnum):
     """ActorDataIDs."""
@@ -156,12 +154,12 @@ class ActorDataIDs(enum.IntEnum):
     COUNT = 139
 
 
-def enum_to_label(e: type[_E]) -> dict[int, str]:
+def enum_to_label(e: type[enum.IntEnum]) -> dict[int, str]:
     """Build value -> lowercase label lookup for a v898 string-serialized enum."""
     return {m.value: m.name.replace("_", "").lower() for m in e}
 
 
-def label_to_enum(e: type[_E]) -> dict[str, int]:
+def label_to_enum(e: type[enum.IntEnum]) -> dict[str, int]:
     """Build lowercase label -> value lookup for a v898 string-serialized enum."""
     return {m.name.replace("_", "").lower(): m.value for m in e}
 
