@@ -587,10 +587,7 @@ class _BiomeOverworldGenRulesDataType(Type["BiomeOverworldGenRulesData"]):
             weights4=self._read_weights(reader),
             transformations1=self._read_transformations(reader),
             transformations2=self._read_transformations(reader),
-            weighted_temperatures=[
-                _WEIGHTED_TEMPERATURE.read(reader)
-                for _ in range(UVAR_INT.read(reader))
-            ],
+            weighted_temperatures=[_WEIGHTED_TEMPERATURE.read(reader) for _ in range(UVAR_INT.read(reader))],
         )
 
     def write(self, writer: PacketWriter, value: BiomeOverworldGenRulesData) -> None:
@@ -821,13 +818,9 @@ class _BiomeDefinitionChunkGenDataV898Type(Type["BiomeDefinitionChunkGenData"]):
         # optional multinoise gen rules
         multinoise_gen_rules = _MULTINOISE_GEN_RULES.read(reader) if BOOL.read(reader) else None
         # optional legacy world gen rules
-        legacy_world_gen_rules = (
-            _LEGACY_WORLD_GEN_RULES.read(reader) if BOOL.read(reader) else None
-        )
+        legacy_world_gen_rules = _LEGACY_WORLD_GEN_RULES.read(reader) if BOOL.read(reader) else None
         # optional biome replacement data
-        biome_replacement_data = (
-            _BIOME_REPLACEMENT_DATA.read(reader) if BOOL.read(reader) else None
-        )
+        biome_replacement_data = _BIOME_REPLACEMENT_DATA.read(reader) if BOOL.read(reader) else None
         return BiomeDefinitionChunkGenData(
             climate=climate,
             consolidated_features=consolidated_features,

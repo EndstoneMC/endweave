@@ -247,6 +247,7 @@ COMMAND_SUBCOMMAND_V898 = _CommandSubcommandV898Type()
 # v898 uses STRING permission label + INT_LE subcommand indices
 # ---------------------------------------------------------------------------
 
+
 class _CommandDefinitionV860Type(Type["CommandDefinition"]):
     def read(self, reader: PacketReader) -> CommandDefinition:
         name = STRING.read(reader)
@@ -259,8 +260,13 @@ class _CommandDefinitionV860Type(Type["CommandDefinition"]):
         overload_count = UVAR_INT.read(reader)
         overloads = [COMMAND_OVERLOAD.read(reader) for _ in range(overload_count)]
         return CommandDefinition(
-            name=name, description=description, flags=flags, permission=permission,
-            alias_index=alias_index, subcommand_indices=subcommand_indices, overloads=overloads,
+            name=name,
+            description=description,
+            flags=flags,
+            permission=permission,
+            alias_index=alias_index,
+            subcommand_indices=subcommand_indices,
+            overloads=overloads,
         )
 
     def write(self, writer: PacketWriter, value: CommandDefinition) -> None:
@@ -295,8 +301,13 @@ class _CommandDefinitionV898Type(Type["CommandDefinition"]):
         overload_count = UVAR_INT.read(reader)
         overloads = [COMMAND_OVERLOAD.read(reader) for _ in range(overload_count)]
         return CommandDefinition(
-            name=name, description=description, flags=flags, permission=permission,
-            alias_index=alias_index, subcommand_indices=subcommand_indices, overloads=overloads,
+            name=name,
+            description=description,
+            flags=flags,
+            permission=permission,
+            alias_index=alias_index,
+            subcommand_indices=subcommand_indices,
+            overloads=overloads,
         )
 
     def write(self, writer: PacketWriter, value: CommandDefinition) -> None:
@@ -397,7 +408,9 @@ class _CommandOriginV898Type(Type["CommandOrigin"]):
         origin_type = self._by_label.get(origin_label, 0)
         return CommandOrigin(
             origin_type=origin_type,
-            uuid=uuid, request_id=request_id, player_id=player_id,
+            uuid=uuid,
+            request_id=request_id,
+            player_id=player_id,
         )
 
     def write(self, writer: PacketWriter, value: CommandOrigin) -> None:

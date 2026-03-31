@@ -49,7 +49,8 @@ class _InventoryActionType(Type["InventoryAction"]):
     def write(self, writer: PacketWriter, value: InventoryAction) -> None:
         UVAR_INT.write(writer, value.source_type)  # SourceType
         if value.source_type in (
-            InventorySourceType.CONTAINER_INVENTORY, InventorySourceType.NON_IMPLEMENTED_FEATURE_TODO
+            InventorySourceType.CONTAINER_INVENTORY,
+            InventorySourceType.NON_IMPLEMENTED_FEATURE_TODO,
         ):
             assert value.window_id is not None
             VAR_INT.write(writer, value.window_id)  # WindowID

@@ -1,5 +1,6 @@
 """Protocol factory for v924 (r26_u0) server <- v944 (r26_u1) client."""
 
+from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.sound_rewriter import SoundRewriter
@@ -41,16 +42,11 @@ from endstone_endweave.protocol.v924_to_v944.handlers.voxel_shapes import (
 SERVER_PROTOCOL = 924
 CLIENT_PROTOCOL = 944
 
-# v924 Undefined = 597, v944 inserted PauseGrowth(597) + ResetGrowth(598)
-_HEARTBEAT_SOUND_EVENT = 126
-_V924_UNDEFINED = 597
-_SOUND_SHIFT = 2
-
 
 def _remap_sound(v: int) -> int:
     """Remap LevelSoundEvent from v924 -> v944 (shift >= Undefined by +2)."""
-    if v >= _V924_UNDEFINED:
-        return v + _SOUND_SHIFT
+    if v >= LevelSoundEvent.UNDEFINED_V924:
+        return v + (LevelSoundEvent.UNDEFINED_V944 - LevelSoundEvent.UNDEFINED_V924)
     return v
 
 
@@ -102,7 +98,7 @@ def create_protocol() -> Protocol:
     # Clientbound rewriters -- LevelSoundEvent remapping
     sound = SoundRewriter(
         sound_remap=_remap_sound,
-        actor_data_int_remappers={_HEARTBEAT_SOUND_EVENT: _remap_sound},
+        actor_data_int_remappers={ActorDataIDs.HEARTBEAT_SOUND_EVENT: _remap_sound},
     )
     sound.register(p)
 

@@ -87,9 +87,7 @@ class EndweavePlugin(Plugin):
                 self.logger.warning(f"Supported protocol {protocol} has no entry in VERSIONS registry")
 
         supported_names = [
-            VERSIONS[protocol].minecraft_version
-            for protocol in self._supported_versions
-            if protocol in VERSIONS
+            VERSIONS[protocol].minecraft_version for protocol in self._supported_versions if protocol in VERSIONS
         ]
         if len(supported_names) >= 2:
             self.logger.info(f"Supported client versions: {supported_names[0]} - {supported_names[-1]}")

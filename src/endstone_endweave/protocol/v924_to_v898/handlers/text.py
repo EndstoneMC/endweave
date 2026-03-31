@@ -3,15 +3,22 @@
 from endstone_endweave.codec import BOOL, BYTE, STRING, PacketWrapper, TextPacketBodyType, TextPacketType, enum_to_label
 
 _MESSAGE_ONLY_TYPES = (
-    TextPacketType.RAW, TextPacketType.TIP, TextPacketType.SYSTEM_MESSAGE,
-    TextPacketType.TEXT_OBJECT_WHISPER, TextPacketType.TEXT_OBJECT_ANNOUNCEMENT,
+    TextPacketType.RAW,
+    TextPacketType.TIP,
+    TextPacketType.SYSTEM_MESSAGE,
+    TextPacketType.TEXT_OBJECT_WHISPER,
+    TextPacketType.TEXT_OBJECT_ANNOUNCEMENT,
     TextPacketType.TEXT_OBJECT,
 )
 _AUTHOR_AND_MESSAGE_TYPES = (
-    TextPacketType.CHAT, TextPacketType.WHISPER, TextPacketType.ANNOUNCEMENT,
+    TextPacketType.CHAT,
+    TextPacketType.WHISPER,
+    TextPacketType.ANNOUNCEMENT,
 )
 _MESSAGE_AND_PARAMS_TYPES = (
-    TextPacketType.TRANSLATE, TextPacketType.POPUP, TextPacketType.JUKEBOX_POPUP,
+    TextPacketType.TRANSLATE,
+    TextPacketType.POPUP,
+    TextPacketType.JUKEBOX_POPUP,
 )
 
 _labels = enum_to_label(TextPacketType)

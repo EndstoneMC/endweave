@@ -44,6 +44,7 @@ from endstone_endweave.codec.types.data_store import (
     ChangeValue,
 )
 from endstone_endweave.codec.types.enums import (
+    ActorDataIDs,
     AnimateAction,
     BookEditActionType,
     ClientboundMapItemDataType,
@@ -56,6 +57,7 @@ from endstone_endweave.codec.types.enums import (
     GameRuleType,
     InteractAction,
     InventorySourceType,
+    LevelSoundEvent,
     MapItemTrackedActorType,
     TextPacketBodyType,
     TextPacketType,
@@ -130,6 +132,7 @@ from endstone_endweave.codec.types.structure import (
 __all__ = [
     "ACTOR_DATA_ITEM",
     "ACTOR_DATA_LIST",
+    "ActorDataIDs",
     "ActorDataItem",
     "AnimateAction",
     "ArrayType",
@@ -192,6 +195,7 @@ __all__ = [
     "InventorySourceType",
     "ItemInstance",
     "KeyFrame",
+    "LevelSoundEvent",
     "ListTag",
     "LongArrayTag",
     "LongTag",

@@ -130,4 +130,3 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
         wrapper.read(BOOL)  # has client store entry point information
         wrapper.read(BOOL)  # has presence information
         wrapper.write(BOOL, False)  # has gathering (v924 form)
-

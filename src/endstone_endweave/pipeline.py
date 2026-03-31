@@ -150,7 +150,7 @@ class ProtocolPipeline:
 
         # Clientbound: [base, ...reversed chain] (ViaVersion: reversedProtocolList).
         # Each protocol gets a fresh wrapper from the previous protocol's output.
-        for protocol in (connection.clientbound_pipeline or []):
+        for protocol in connection.clientbound_pipeline or []:
             if not protocol.has_handler_or_cancel(Direction.CLIENTBOUND, packet_id):
                 continue
             wrapper = PacketWrapper(payload, user=connection)

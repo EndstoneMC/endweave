@@ -138,4 +138,3 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
         wrapper.write(BOOL, False)  # has gathering join information
         wrapper.write(BOOL, False)  # has client store entry point information
         wrapper.write(BOOL, False)  # has presence information
-

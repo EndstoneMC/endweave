@@ -1,5 +1,6 @@
 """Protocol factory for v898 (1.21.130) server <- v860 (1.21.124) client."""
 
+from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.sound_rewriter import SoundRewriter
@@ -35,19 +36,13 @@ from endstone_endweave.protocol.v898_to_v860.handlers.text import (
 SERVER_PROTOCOL = 898
 CLIENT_PROTOCOL = 860
 
-# v898 inserted 12 sounds at 566; v860 fallback at 578
-_HEARTBEAT = 127
-_SOUND_INSERT_AT = 566
-_OLD_SOUND_FALLBACK = 578
-_SOUND_SHIFT = 12
-
 
 def _remap_sound(v: int) -> int:
     """Remap LevelSoundEvent from v898 -> v860 (collapse inserted sounds)."""
-    if v >= _OLD_SOUND_FALLBACK:
-        return v - _SOUND_SHIFT
-    if v >= _SOUND_INSERT_AT:
-        return _OLD_SOUND_FALLBACK
+    if v >= LevelSoundEvent.UNDEFINED_V898:
+        return v - (LevelSoundEvent.UNDEFINED_V898 - LevelSoundEvent.UNDEFINED_V860)
+    if v >= LevelSoundEvent.UNDEFINED_V860:
+        return LevelSoundEvent.UNDEFINED_V860
     return v
 
 
@@ -62,7 +57,7 @@ def create_protocol() -> Protocol:
 
     sound = SoundRewriter(
         sound_remap=_remap_sound,
-        actor_data_int_remappers={_HEARTBEAT: _remap_sound},
+        actor_data_int_remappers={ActorDataIDs.HEARTBEAT_SOUND_EVENT: _remap_sound},
     )
     sound.register(protocol)
     protocol.register_clientbound(PacketId.ACTOR_EVENT, rewrite_actor_event)

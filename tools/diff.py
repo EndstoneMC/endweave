@@ -138,10 +138,12 @@ def parse_changelog(
         if in_raw_section:
             m = _RAW_ENTRY_RE.match(line)
             if m:
-                changelog.append(ChangelogEntry(
-                    protocol=int(m.group(1)),
-                    description=m.group(2).strip(),
-                ))
+                changelog.append(
+                    ChangelogEntry(
+                        protocol=int(m.group(1)),
+                        description=m.group(2).strip(),
+                    )
+                )
             continue
 
         # Enum section: line ending with ":" that's not indented
@@ -158,10 +160,12 @@ def parse_changelog(
 
         m = _ADDED_RE.search(line)
         if m:
-            enum.added.append(EnumEntry(
-                name=m.group(1).strip(),
-                id=_parse_id(m.group(2)),
-            ))
+            enum.added.append(
+                EnumEntry(
+                    name=m.group(1).strip(),
+                    id=_parse_id(m.group(2)),
+                )
+            )
             continue
 
         m = _DISPLACED_RE.search(line)
@@ -202,9 +206,7 @@ def diff_changelogs(
     new_enums, new_changelog = parse_changelog(new_path)
 
     # Filter raw changelog to only entries after old_protocol
-    filtered_changelog = [
-        e for e in new_changelog if e.protocol > old_protocol
-    ]
+    filtered_changelog = [e for e in new_changelog if e.protocol > old_protocol]
 
     # Diff enum sections: include entries in new but not in old
     diff_enums: dict[str, EnumChange] = {}
@@ -227,7 +229,8 @@ def diff_changelogs(
 
         # Detect renames: same ID, different name between old-only and new-only
         old_added_by_id: dict[int, str] = {
-            e.id: e.name for e in old_change.added
+            e.id: e.name
+            for e in old_change.added
             if e.id is not None and e.name not in {e2.name for e2 in new_change.added}
         }
         renamed_new_names: set[str] = set()
@@ -284,7 +287,9 @@ def flatten_fields(fields: list[dict], prefix: str = "") -> dict[str, dict]:
 
 
 def _find_type_refs(
-    fields: list[Field], type_names: set[str], prefix: str = "",
+    fields: list[Field],
+    type_names: set[str],
+    prefix: str = "",
 ) -> dict[str, str]:
     """Find fields whose type matches a known changed type name.
 
@@ -405,9 +410,7 @@ def _diff_definition(
     # all packet fields in an "mPayload" container. When the only removed
     # fields are mPayload or mPayload.*, this is a schema change, not a
     # real protocol change.
-    if removed_set and all(
-        f == "mPayload" or f.startswith("mPayload.") for f in removed_set
-    ):
+    if removed_set and all(f == "mPayload" or f.startswith("mPayload.") for f in removed_set):
         has_real_changes = any(
             old_fields[f]["type"] != new_fields[f]["type"]
             for f in old_paths & new_paths
@@ -447,12 +450,8 @@ def _diff_definition(
         return None
 
     # Build FieldChange lists with types
-    added_changes = [
-        FieldChange(name=f, type=new_fields[f]["type"]) for f in added
-    ]
-    removed_changes = [
-        FieldChange(name=f, type=old_fields[f]["type"]) for f in removed
-    ]
+    added_changes = [FieldChange(name=f, type=new_fields[f]["type"]) for f in added]
+    removed_changes = [FieldChange(name=f, type=old_fields[f]["type"]) for f in removed]
 
     return PacketChanges(
         packet_id=old_def.packet_id,
@@ -497,26 +496,23 @@ def _dedup_subtypes(
                             sub_type_refs[prefix] = st_name
 
             changes.added_fields = [
-                fc for fc in changes.added_fields
-                if not any(fc.name.endswith(s) for s in subtype_suffix_to_name)
+                fc for fc in changes.added_fields if not any(fc.name.endswith(s) for s in subtype_suffix_to_name)
             ]
             changes.removed_fields = [
-                fc for fc in changes.removed_fields
-                if not any(fc.name.endswith(s) for s in subtype_suffix_to_name)
+                fc for fc in changes.removed_fields if not any(fc.name.endswith(s) for s in subtype_suffix_to_name)
             ]
 
             # Merge sub-type references into type_changes
             for path, st_name in sub_type_refs.items():
                 if path not in changes.type_changes:
-                    changes.type_changes[path] = TypeChange(
-                        old=st_name, new=st_name
-                    )
+                    changes.type_changes[path] = TypeChange(old=st_name, new=st_name)
 
     # Remove changed_types entries that became empty after dedup.
     # Keep all changed_packets entries (even if empty) so LLMs know
     # which packets need handlers.
-    for k in [k for k, v in changed_types.items()
-              if not v.added_fields and not v.removed_fields and not v.type_changes]:
+    for k in [
+        k for k, v in changed_types.items() if not v.added_fields and not v.removed_fields and not v.type_changes
+    ]:
         del changed_types[k]
 
 
@@ -603,7 +599,10 @@ def diff_packets(
         old_out = old_output_by_name.get(name, [])
         new_out = new_output_by_name.get(name, [])
         entry = _diff_definition(
-            old_by_name[name], new_by_name[name], old_out, new_out,
+            old_by_name[name],
+            new_by_name[name],
+            old_out,
+            new_out,
         )
         if entry is None:
             continue
@@ -620,11 +619,7 @@ def diff_packets(
     # direct field changes themselves.
     changed_type_names = set(changed_types)
     if changed_type_names:
-        all_pkt_defs = {
-            p.name: p
-            for p in list(old_packets) + list(new_packets)
-            if p.packet_id is not None
-        }
+        all_pkt_defs = {p.name: p for p in list(old_packets) + list(new_packets) if p.packet_id is not None}
 
         for pkt_name, pkt_def in all_pkt_defs.items():
             if pkt_name in changed_packets:
@@ -656,11 +651,7 @@ def diff_packets(
             pkt_def = all_pkt_defs.get(pkt_name)
             if pkt_def is None:
                 continue
-            refs = {
-                path: sub_name
-                for path, sub_name in sub_map.items()
-                if sub_name in changed_types
-            }
+            refs = {path: sub_name for path, sub_name in sub_map.items() if sub_name in changed_types}
             if refs:
                 changed_packets[pkt_name] = _changes_from_type_refs(pkt_def, refs)
 
@@ -722,7 +713,9 @@ def _load_packets(path: Path) -> tuple[list[PacketDefinition], dict[str, list[di
 
 
 def _process_changelogs(
-    diff: ProtocolDiff, old_proto: int, new_proto: int,
+    diff: ProtocolDiff,
+    old_proto: int,
+    new_proto: int,
 ) -> None:
     """Parse changelogs and merge enum/changelog data into the diff."""
     old_changelog = _find_changelog(old_proto)
@@ -733,9 +726,7 @@ def _process_changelogs(
         return
 
     if old_changelog:
-        enum_changes, changelog = diff_changelogs(
-            old_changelog, new_changelog, old_proto
-        )
+        enum_changes, changelog = diff_changelogs(old_changelog, new_changelog, old_proto)
     else:
         enum_changes, changelog = parse_changelog(new_changelog)
         changelog = [e for e in changelog if e.protocol > old_proto]
@@ -769,9 +760,7 @@ def _extract_renames(diff: ProtocolDiff) -> None:
 
 def main() -> None:
     """Entry point: diff two protocol versions."""
-    parser = argparse.ArgumentParser(
-        description="Diff two protocol version packet JSONs."
-    )
+    parser = argparse.ArgumentParser(description="Diff two protocol version packet JSONs.")
     parser.add_argument(
         "old",
         nargs="?",
@@ -813,7 +802,12 @@ def main() -> None:
 
     print(f"Comparing {len(old_packets)} old vs {len(new_packets)} new definitions...")
     diff = diff_packets(
-        old_packets, new_packets, old_proto, new_proto, old_output, new_output,
+        old_packets,
+        new_packets,
+        old_proto,
+        new_proto,
+        old_output,
+        new_output,
     )
 
     _process_changelogs(diff, old_proto, new_proto)

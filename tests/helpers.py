@@ -1,6 +1,5 @@
 """Shared test helpers for packet construction and verification."""
 
-
 from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.writer import PacketWriter
 

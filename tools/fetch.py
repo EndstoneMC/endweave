@@ -41,8 +41,15 @@ def fetch_version(protocol: int, branch: str) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         print(f"  Cloning branch {branch}...")
         clone_cmd = [
-            "git", "clone", "--depth", "1", "--branch", branch,
-            "--single-branch", REPO_URL, tmp,
+            "git",
+            "clone",
+            "--depth",
+            "1",
+            "--branch",
+            branch,
+            "--single-branch",
+            REPO_URL,
+            tmp,
         ]
         result = subprocess.run(clone_cmd, capture_output=True, text=True)
         if result.returncode != 0:

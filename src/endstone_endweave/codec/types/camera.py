@@ -128,19 +128,23 @@ class _SplineInstructionV924Type(Type["SplineInstruction"]):
         # progressKeyFrames
         progress: list[KeyFrame] = []
         for _ in range(UVAR_INT.read(reader)):
-            progress.append(KeyFrame(
-                value=FLOAT_LE.read(reader),
-                time=FLOAT_LE.read(reader),
-                easing=INT_LE.read(reader),
-            ))
+            progress.append(
+                KeyFrame(
+                    value=FLOAT_LE.read(reader),
+                    time=FLOAT_LE.read(reader),
+                    easing=INT_LE.read(reader),
+                )
+            )
         # rotationOption
         rotation: list[RotationKeyFrame] = []
         for _ in range(UVAR_INT.read(reader)):
-            rotation.append(RotationKeyFrame(
-                value=VEC3.read(reader),
-                time=FLOAT_LE.read(reader),
-                easing=INT_LE.read(reader),
-            ))
+            rotation.append(
+                RotationKeyFrame(
+                    value=VEC3.read(reader),
+                    time=FLOAT_LE.read(reader),
+                    easing=INT_LE.read(reader),
+                )
+            )
         return SplineInstruction(total_time, type_, curve, progress, rotation)
 
     def write(self, writer: PacketWriter, value: SplineInstruction) -> None:

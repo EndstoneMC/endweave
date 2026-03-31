@@ -275,15 +275,15 @@ def _resolve_field(
             resolved_fields = type_registry[child.name]
             resolved_children = []
             for rf in resolved_fields:
-                resolved_children.append(
-                    _resolve_field(rf, type_registry, visited | {child.name})
+                resolved_children.append(_resolve_field(rf, type_registry, visited | {child.name}))
+            new_children.append(
+                Field(
+                    name=child.name,
+                    type=child.type,
+                    attributes=child.attributes & ~512,  # No longer a leaf
+                    fields=resolved_children,
                 )
-            new_children.append(Field(
-                name=child.name,
-                type=child.type,
-                attributes=child.attributes & ~512,  # No longer a leaf
-                fields=resolved_children,
-            ))
+            )
         else:
             # Recurse into children
             new_children.append(_resolve_field(child, type_registry, visited))
@@ -443,9 +443,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
 
         if items_ref:
             element_title = items_ref.get("title", "element")
-            element_children = _props_to_fields(
-                items_ref.get("properties", {}), definitions, items_ref.get("required")
-            )
+            element_children = _props_to_fields(items_ref.get("properties", {}), definitions, items_ref.get("required"))
             element_field = Field(
                 name=element_title,
                 type=element_title,
@@ -464,9 +462,7 @@ def _build_json_field(name: str, prop: dict, definitions: dict) -> Field:
 
     if ref_def:
         ref_title = ref_def.get("title", name)
-        child_fields = _props_to_fields(
-            ref_def.get("properties", {}), definitions, ref_def.get("required")
-        )
+        child_fields = _props_to_fields(ref_def.get("properties", {}), definitions, ref_def.get("required"))
         if child_fields:
             return Field(name=name, type=ref_title, attributes=0, fields=child_fields)
         return Field(name=name, type=ref_title, attributes=512)
@@ -652,9 +648,7 @@ def ensure_parsed(protocol: int) -> None:
 
 def main() -> None:
     """Entry point: parse protocol docs for selected versions."""
-    parser = argparse.ArgumentParser(
-        description="Parse protocol DOT + JSON docs into structured JSON."
-    )
+    parser = argparse.ArgumentParser(description="Parse protocol DOT + JSON docs into structured JSON.")
     parser.add_argument(
         "versions",
         nargs="*",
