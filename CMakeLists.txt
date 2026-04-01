@@ -38,6 +38,11 @@ add_library(endweave STATIC
     src/protocol/v944_to_v924/protocol.cpp
     src/protocol/v944_to_v924/block_pos.cpp
     src/protocol/v944_to_v924/misc.cpp
+    src/protocol/v860_to_v898/protocol.cpp
+    src/protocol/v898_to_v860/protocol.cpp
+    src/protocol/v898_to_v924/protocol.cpp
+    src/protocol/v924_to_v898/protocol.cpp
+    src/pipeline.cpp
 )
 
 target_include_directories(endweave PUBLIC include)

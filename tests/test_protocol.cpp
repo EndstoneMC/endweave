@@ -11,6 +11,7 @@
 #include "endweave/connection.h"
 #include "endweave/debug.h"
 #include "endweave/exception.h"
+#include "endweave/pipeline.h"
 #include "endweave/protocol/base.h"
 #include "endweave/protocol/direction.h"
 #include "endweave/protocol/manager.h"
@@ -332,6 +333,129 @@ TEST(InformativeException, Message) {
     EXPECT_NE(msg.find("Packet ID: START_GAME(11)"), std::string::npos);
     EXPECT_NE(msg.find("NullPointerException: oops"), std::string::npos);
     EXPECT_NE(msg.find("Endweave"), std::string::npos);
+}
+
+// -- ProtocolPipeline --
+
+TEST(Pipeline, EndToEndTranslation) {
+    // Simulate: v944 client connecting to v924 server
+    auto base = create_base_protocol(924);
+
+    // Create v924->v944 protocol (for translating to v944 client)
+    Protocol v924_to_v944_proto(924, 944, "v924_to_v944");
+    // Register a simple clientbound handler that maps network_block_pos to block_pos
+    v924_to_v944_proto.register_clientbound(
+        static_cast<int>(PacketId::UPDATE_BLOCK),
+        [](PacketWrapper& w) { (void)w.map<network_block_pos, block_pos>(); });
+
+    ProtocolManager mgr;
+    mgr.register_base(base.get());
+    mgr.register_protocol(&v924_to_v944_proto);
+
+    ConnectionManager conns(924);
+    ProtocolPipeline pipeline(mgr, conns);
+
+    // Step 1: Client sends RequestNetworkSettings with protocol 944
+    PacketWriter rns;
+    rns.write_int_be(944);
+    auto rns_buf = rns.to_string();
+    std::string rns_out;
+    bool cancelled = false;
+
+    pipeline.on_packet_receive("addr:1234",
+        static_cast<int>(PacketId::REQUEST_NETWORK_SETTINGS),
+        rns_buf, rns_out, cancelled);
+    EXPECT_FALSE(cancelled);
+
+    // Verify client protocol was detected
+    auto* conn = conns.get("addr:1234");
+    ASSERT_NE(conn, nullptr);
+    EXPECT_EQ(conn->client_protocol(), 944);
+
+    // Step 1b: Send a Login packet to trigger pipeline caching
+    // (pipeline is cached on the NEXT serverbound call after client_protocol is set)
+    PacketWriter login;
+    login.write_int_be(944); // protocol version
+    auto login_buf = login.to_string();
+    std::string login_out;
+    pipeline.on_packet_receive("addr:1234",
+        static_cast<int>(PacketId::LOGIN),
+        login_buf, login_out, cancelled);
+
+    // Step 2: Server sends UpdateBlock with NetworkBlockPos
+    PacketWriter ub;
+    ub.write<network_block_pos>({10, 64, -30});
+    ub.write_bytes("trailing");
+    auto ub_buf = ub.to_string();
+    std::string ub_out;
+    cancelled = false;
+
+    bool modified = pipeline.on_packet_send("addr:1234",
+        static_cast<int>(PacketId::UPDATE_BLOCK),
+        ub_buf, ub_out, cancelled);
+    EXPECT_TRUE(modified);
+    EXPECT_FALSE(cancelled);
+
+    // Verify output has BlockPos format
+    PacketReader verify(ub_out);
+    auto pos = verify.read<block_pos>();
+    ASSERT_TRUE(pos.has_value());
+    EXPECT_EQ(std::get<0>(*pos), 10);
+    EXPECT_EQ(std::get<1>(*pos), 64);
+    EXPECT_EQ(std::get<2>(*pos), -30);
+}
+
+TEST(Pipeline, SameVersionNoTranslation) {
+    auto base = create_base_protocol(924);
+    ProtocolManager mgr;
+    mgr.register_base(base.get());
+
+    ConnectionManager conns(924);
+    ProtocolPipeline pipeline(mgr, conns);
+
+    // Client with same version
+    PacketWriter rns;
+    rns.write_int_be(924);
+    auto rns_buf = rns.to_string();
+    std::string out;
+    bool cancelled = false;
+
+    pipeline.on_packet_receive("addr:1234",
+        static_cast<int>(PacketId::REQUEST_NETWORK_SETTINGS),
+        rns_buf, out, cancelled);
+
+    auto* conn = conns.get("addr:1234");
+    ASSERT_NE(conn, nullptr);
+    EXPECT_FALSE(conn->needs_translation());
+}
+
+TEST(Pipeline, CancelledPacket) {
+    auto base = create_base_protocol(924);
+    Protocol proto(924, 944);
+    proto.cancel_serverbound({42});
+
+    ProtocolManager mgr;
+    mgr.register_base(base.get());
+    mgr.register_protocol(&proto);
+
+    ConnectionManager conns(924);
+    ProtocolPipeline pipeline(mgr, conns);
+
+    // Detect client
+    PacketWriter rns;
+    rns.write_int_be(944);
+    auto rns_buf = rns.to_string();
+    std::string out;
+    bool cancelled = false;
+    pipeline.on_packet_receive("addr:1234",
+        static_cast<int>(PacketId::REQUEST_NETWORK_SETTINGS),
+        rns_buf, out, cancelled);
+
+    // Send cancelled packet
+    std::string out2;
+    bool cancelled2 = false;
+    pipeline.on_packet_receive("addr:1234", 42, "data", out2, cancelled2);
+    EXPECT_TRUE(cancelled2);
 }
 
 TEST(InformativeException, Truncation) {
