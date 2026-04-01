@@ -8,6 +8,7 @@
 /// See Also:
 ///     com.viaversion.viaversion.api.protocol.Protocol
 
+#include <functional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -19,7 +20,7 @@ namespace endweave {
 
 class UserConnection;
 
-using PacketHandler = void(*)(PacketWrapper&);
+using PacketHandler = std::function<void(PacketWrapper&)>;
 
 class Protocol {
 public:

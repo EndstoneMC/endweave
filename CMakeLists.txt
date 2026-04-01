@@ -21,8 +21,11 @@ add_library(endweave STATIC
     src/codec/writer.cpp
     src/codec/wrapper.cpp
     src/codec/types/nbt.cpp
+    src/codec/types/actor_data.cpp
+    src/codec/types/item.cpp
     src/protocol/packet_ids.cpp
     src/protocol/base.cpp
+    src/protocol/sound_rewriter.cpp
 )
 
 target_include_directories(endweave PUBLIC include)

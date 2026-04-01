@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake -B build -DENDWEAVE_BUILD_TESTS=ON -G \"Visual Studio 17 2022\")",
+      "Bash(where.exe cmake:*)",
+      "Read(//c/Program Files/CMake/bin/**)",
+      "Read(//c/Program Files/Microsoft Visual Studio/2022/**)",
+      "Bash('/c/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe' -B build -DENDWEAVE_BUILD_TESTS=ON)",
+      "Bash('/c/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe' --build build --config Release)",
+      "Bash('/c/Program Files/Microsoft Visual Studio/2022/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe' --build build --config Release --target endweave_tests)",
+      "Bash(./build/Release/endweave_tests.exe:*)",
+      "Bash(git show:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(grep \"\\\\.py$\")",
+      "Bash(xargs -I {} git show main:{})",
+      "Read(//tmp/**)",
+      "Bash(xargs grep:*)",
+      "Bash(grep -E \"\\\\.h$\")",
+      "Bash([ -f \"D:/Projects/CPP/bedrock-headers-litelv/android/$f\" ])",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git:*)"
+    ]
+  }
+}
