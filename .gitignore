@@ -1,0 +1,25 @@
+# Build
+build/
+cmake-build-*/
+out/
+
+# IDE
+.idea/
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Python (from main branch)
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vendor
+vendor/
