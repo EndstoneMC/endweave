@@ -23,9 +23,17 @@ add_library(endweave STATIC
     src/codec/types/nbt.cpp
     src/codec/types/actor_data.cpp
     src/codec/types/item.cpp
+    src/codec/types/inventory.cpp
+    src/codec/types/structure.cpp
     src/protocol/packet_ids.cpp
     src/protocol/base.cpp
     src/protocol/sound_rewriter.cpp
+    src/protocol/v924_to_v944/protocol.cpp
+    src/protocol/v924_to_v944/block_pos.cpp
+    src/protocol/v924_to_v944/misc.cpp
+    src/protocol/v944_to_v924/protocol.cpp
+    src/protocol/v944_to_v924/block_pos.cpp
+    src/protocol/v944_to_v924/misc.cpp
 )
 
 target_include_directories(endweave PUBLIC include)
