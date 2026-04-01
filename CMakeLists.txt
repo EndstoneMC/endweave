@@ -21,6 +21,8 @@ add_library(endweave STATIC
     src/codec/writer.cpp
     src/codec/wrapper.cpp
     src/codec/types/nbt.cpp
+    src/protocol/packet_ids.cpp
+    src/protocol/base.cpp
 )
 
 target_include_directories(endweave PUBLIC include)
@@ -41,6 +43,7 @@ if(ENDWEAVE_BUILD_TESTS)
     add_executable(endweave_tests
         tests/test_codec.cpp
         tests/test_nbt.cpp
+        tests/test_protocol.cpp
     )
     target_link_libraries(endweave_tests PRIVATE endweave GTest::gtest_main)
     target_include_directories(endweave_tests PRIVATE include)
