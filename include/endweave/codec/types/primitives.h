@@ -61,6 +61,12 @@ struct vec3 { using value_type = Vec3Value; };
 /// Vec2: two LE floats (X, Y)
 struct vec2 { using value_type = Vec2Value; };
 
+// -- Optional types (bool prefix + value) --
+
+struct optional_bool { using value_type = std::optional<bool>; };
+struct optional_vec2 { using value_type = std::optional<Vec2Value>; };
+struct optional_vec3 { using value_type = std::optional<Vec3Value>; };
+
 // -- Reader specializations --
 
 template <> inline auto PacketReader::read<byte_t>() -> std::expected<std::uint8_t, ReadError> {
@@ -266,6 +272,47 @@ template <> inline void PacketWriter::write<vec3>(const Vec3Value& val) {
 template <> inline void PacketWriter::write<vec2>(const Vec2Value& val) {
     write_float_le(std::get<0>(val));
     write_float_le(std::get<1>(val));
+}
+
+// -- Optional reader/writer specializations --
+
+template <> inline auto PacketReader::read<optional_bool>() -> std::expected<std::optional<bool>, ReadError> {
+    auto has = read_bool();
+    if (!has) return std::unexpected(has.error());
+    if (!*has) return std::optional<bool>{};
+    auto v = read_bool();
+    if (!v) return std::unexpected(v.error());
+    return std::optional<bool>{*v};
+}
+
+template <> inline auto PacketReader::read<optional_vec2>() -> std::expected<std::optional<Vec2Value>, ReadError> {
+    auto has = read_bool();
+    if (!has) return std::unexpected(has.error());
+    if (!*has) return std::optional<Vec2Value>{};
+    auto v = read<vec2>();
+    if (!v) return std::unexpected(v.error());
+    return std::optional<Vec2Value>{*v};
+}
+
+template <> inline auto PacketReader::read<optional_vec3>() -> std::expected<std::optional<Vec3Value>, ReadError> {
+    auto has = read_bool();
+    if (!has) return std::unexpected(has.error());
+    if (!*has) return std::optional<Vec3Value>{};
+    auto v = read<vec3>();
+    if (!v) return std::unexpected(v.error());
+    return std::optional<Vec3Value>{*v};
+}
+
+template <> inline void PacketWriter::write<optional_bool>(const std::optional<bool>& val) {
+    if (val.has_value()) { write_bool(true); write_bool(*val); } else { write_bool(false); }
+}
+
+template <> inline void PacketWriter::write<optional_vec2>(const std::optional<Vec2Value>& val) {
+    if (val.has_value()) { write_bool(true); write<vec2>(*val); } else { write_bool(false); }
+}
+
+template <> inline void PacketWriter::write<optional_vec3>(const std::optional<Vec3Value>& val) {
+    if (val.has_value()) { write_bool(true); write<vec3>(*val); } else { write_bool(false); }
 }
 
 } // namespace endweave

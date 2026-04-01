@@ -28,6 +28,10 @@ add_library(endweave STATIC
     src/protocol/packet_ids.cpp
     src/protocol/base.cpp
     src/protocol/sound_rewriter.cpp
+    src/codec/types/gameplay.cpp
+    src/codec/types/level_settings.cpp
+    src/codec/types/camera.cpp
+    src/codec/types/data_store.cpp
     src/protocol/v924_to_v944/protocol.cpp
     src/protocol/v924_to_v944/block_pos.cpp
     src/protocol/v924_to_v944/misc.cpp
