@@ -333,7 +333,7 @@ wheels = [
 
 [[package]]
 name = "endstone"
-version = "0.11.2"
+version = "0.11.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -357,16 +357,16 @@ dependencies = [
     { name = "typing-extensions" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/af/a60a79cc4f4832e013ba2d4ed9b6e637583f21e9e4bfa159fef2102c4bec/endstone-0.11.2-cp310-cp310-manylinux_2_31_x86_64.whl", hash = "sha256:1922d90f20fce71265a3a33a71b5da82a6e94345a83e95e81075f6c934837bc7", size = 49701237, upload-time = "2026-03-02T21:01:21.914Z" },
-    { url = "https://files.pythonhosted.org/packages/96/f6/f2f6e54b42232454aa176e55aead1dc0c48442849fbb7effe86fb96dbf5b/endstone-0.11.2-cp310-cp310-win_amd64.whl", hash = "sha256:5b7d0fbb5b8b4d0d34c3dcd1cfb61a28dae761f57fc1a2013eea2b13f39c2168", size = 34697148, upload-time = "2026-03-02T21:01:26.069Z" },
-    { url = "https://files.pythonhosted.org/packages/2a/f0/476de1c417b225352ffeb9d30d775bdbaf24b8d1d6e42d8092876569842c/endstone-0.11.2-cp311-cp311-manylinux_2_31_x86_64.whl", hash = "sha256:58a9dd478a924fbe40595c737a90758b48d2e4ecfde9407004e180e696cd09c4", size = 49859483, upload-time = "2026-03-02T21:01:29.327Z" },
-    { url = "https://files.pythonhosted.org/packages/80/e2/47fdab20b76ac3081e2a390aa84e3f88e174482d8aba194498705f080b4e/endstone-0.11.2-cp311-cp311-win_amd64.whl", hash = "sha256:47883000439f8cecbd3b4074f732cf34b728eca9785d296435c98b506c8640ba", size = 34716148, upload-time = "2026-03-02T21:01:33.212Z" },
-    { url = "https://files.pythonhosted.org/packages/e8/ae/df65ad31e5125fdf5ebbbd8abd9158d7a604cfc85cd5f78b64f9eabbd60f/endstone-0.11.2-cp312-cp312-manylinux_2_31_x86_64.whl", hash = "sha256:5ec6d061d5542e60ff32ad2d0c2180e601f38531a45335f77f9bb0ae52ce5909", size = 50192294, upload-time = "2026-03-02T21:01:36.129Z" },
-    { url = "https://files.pythonhosted.org/packages/a8/d3/c0f63cc3d9c1501ab3f2cfad195165c9340505510a961620c1c74cc41d9c/endstone-0.11.2-cp312-cp312-win_amd64.whl", hash = "sha256:ac64954909567f6568408fa26657ac03b5ea6615ffdaddea44982ed8276e38bc", size = 34727219, upload-time = "2026-03-02T21:01:39.317Z" },
-    { url = "https://files.pythonhosted.org/packages/d3/23/2f2bf4852dc39c5a61296d99291437e4c28bbb4449b601f670b4216066cd/endstone-0.11.2-cp313-cp313-manylinux_2_31_x86_64.whl", hash = "sha256:0897be5407570b9209da47091b479ec37df8da2f7c7d9f61daebcb509d14bf7f", size = 50184735, upload-time = "2026-03-02T21:01:42.482Z" },
-    { url = "https://files.pythonhosted.org/packages/cc/fe/c9aa10f0f51cebcabcd074d09b2bd4da35eebf2fa3ebc5c808a8fa5b91eb/endstone-0.11.2-cp313-cp313-win_amd64.whl", hash = "sha256:491620849f0d3407d24cc4e6d628a4dd5f0b5a28b23fb1f30296f0f28c4dd6a2", size = 34903144, upload-time = "2026-03-02T21:01:46.936Z" },
-    { url = "https://files.pythonhosted.org/packages/8e/b2/526d6775a8d097dbef90e6253b3ae07f6609c1e5359258ef9f8f7639bdcc/endstone-0.11.2-cp314-cp314-manylinux_2_31_x86_64.whl", hash = "sha256:5d0408fd01ba9ecdf42c351e8afa762dce6db3fdf685b6712a4c162e7218e5eb", size = 50157489, upload-time = "2026-03-02T21:01:55.948Z" },
-    { url = "https://files.pythonhosted.org/packages/7d/4d/891a84111519d07aec640141e75f16d3e3aff51be89868133dc77cd6a0cb/endstone-0.11.2-cp314-cp314-win_amd64.whl", hash = "sha256:d282a3d154b8e9c74cf8f89feb40905a58761e65ba5c91e54e0e83bb7d9b2362", size = 35269908, upload-time = "2026-03-02T21:01:59.69Z" },
+    { url = "https://files.pythonhosted.org/packages/ad/db/fb8fbd1c498cbc2d3c31f2b6141fd8a4f45fb84374cc48ce98289a9c169c/endstone-0.11.3-cp310-cp310-manylinux_2_31_x86_64.whl", hash = "sha256:89d6c0b3fecf749950731bf2ef2f6e75ae74910dbad66601b1ea0baf158133c2", size = 49849636, upload-time = "2026-04-02T16:22:55.898Z" },
+    { url = "https://files.pythonhosted.org/packages/57/8b/3b58bf75b29b7c487c48d7995f253047028d448c9fc1f081797a7ac87d23/endstone-0.11.3-cp310-cp310-win_amd64.whl", hash = "sha256:0cb3be2256f3b457090dcc657402b91bd6cfb8b0c3e5ddeaea1e4bbc90cc440a", size = 34874071, upload-time = "2026-04-02T16:23:00.748Z" },
+    { url = "https://files.pythonhosted.org/packages/94/e1/9be374f6ec0d03e09b262ba6b1c24a94521160de769502a3df5e79d48bb4/endstone-0.11.3-cp311-cp311-manylinux_2_31_x86_64.whl", hash = "sha256:60db0f466346abfb5857de5b3dc6008b7c4e72fdc3177aa6a5a72fb48f21a96c", size = 50009989, upload-time = "2026-04-02T16:23:05.186Z" },
+    { url = "https://files.pythonhosted.org/packages/81/3a/bf61a21c1a743f8cedb9c2f3c316aaef57457b1cce5978b730bb88cd5847/endstone-0.11.3-cp311-cp311-win_amd64.whl", hash = "sha256:8794c421fd30ec384327bf85215a05e1b3a725f6999863e94827ba7416478bde", size = 34870154, upload-time = "2026-04-02T16:23:10.023Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/30/dd5302801391f4b904234e4f465f1553fffef6a5e94b8cc67a4282683043/endstone-0.11.3-cp312-cp312-manylinux_2_31_x86_64.whl", hash = "sha256:b40190e315477565843d9428527df3fa44242afd60a68ff0800fe6dd85306b15", size = 50341049, upload-time = "2026-04-02T16:23:15.991Z" },
+    { url = "https://files.pythonhosted.org/packages/b7/d3/2c5bfd2da150a8f241172fb333f066cc641dcd11c35701c34421a5774901/endstone-0.11.3-cp312-cp312-win_amd64.whl", hash = "sha256:8eb488449e5769099e933edb469d8e0718d8d735591e17ba00f00cf38076b5c8", size = 34924067, upload-time = "2026-04-02T16:23:21.147Z" },
+    { url = "https://files.pythonhosted.org/packages/34/17/55799fff2549158cb7350ec3ffcb9de48761de1107dd9275d213e0daf4bc/endstone-0.11.3-cp313-cp313-manylinux_2_31_x86_64.whl", hash = "sha256:2af85406a48b072b8a8084d081210d750cb550736ed63da8fbd50eb453c5a05f", size = 50338721, upload-time = "2026-04-02T16:23:27.468Z" },
+    { url = "https://files.pythonhosted.org/packages/4a/45/6b42fe3e107877cf130b1126ee9cd181a9ad58736c5d8de3a8ac1693268a/endstone-0.11.3-cp313-cp313-win_amd64.whl", hash = "sha256:a018bca4e9e001c018dcb022ece17ee42eda715e0e52076bfd65f8d98ce1eafb", size = 35016960, upload-time = "2026-04-02T16:23:32.477Z" },
+    { url = "https://files.pythonhosted.org/packages/3c/ca/87019f52895bdf0053b00c4453c445b6531136d5338fd5829be50361aee2/endstone-0.11.3-cp314-cp314-manylinux_2_31_x86_64.whl", hash = "sha256:0fd1af722da3f913955c1f97849044132dace461f35a645d71d3e3960d320f33", size = 50300552, upload-time = "2026-04-02T16:23:39.002Z" },
+    { url = "https://files.pythonhosted.org/packages/28/19/76880e4a7cd9bfb465d8f809f3382e456013dd176d4a78f6874166577e01/endstone-0.11.3-cp314-cp314-win_amd64.whl", hash = "sha256:7776b31cb7379abce349ebe1467dc5acaef1de9e9e0ae7f9ce4287f76cff2b57", size = 35363771, upload-time = "2026-04-02T16:23:44.153Z" },
 ]
 
 [[package]]
