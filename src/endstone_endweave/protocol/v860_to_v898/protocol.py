@@ -3,8 +3,6 @@
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.mappings.v860_v898 import MAPPINGS
 from endstone_endweave.protocol.packet_ids import PacketId
-from endstone_endweave.protocol.sound_rewriter import SoundRewriter
-from endstone_endweave.protocol.v860_to_v898.handlers.actor_event import rewrite_actor_event
 from endstone_endweave.protocol.v860_to_v898.handlers.animate import (
     rewrite_animate_clientbound,
     rewrite_animate_serverbound,
@@ -24,6 +22,7 @@ from endstone_endweave.protocol.v860_to_v898.handlers.text import (
     rewrite_text_clientbound,
     rewrite_text_serverbound,
 )
+from endstone_endweave.rewriter import ActorEventRewriter, SoundRewriter
 
 SERVER_PROTOCOL = 860
 CLIENT_PROTOCOL = 898
@@ -46,8 +45,11 @@ def create_protocol() -> Protocol:
     )
     sound.register(protocol)
 
+    # Clientbound rewriters -- ActorEvent remapping
+    assert MAPPINGS.actor_event is not None
+    ActorEventRewriter(MAPPINGS.actor_event, upgrade=True).register(protocol)
+
     # Clientbound rewriters -- v860/v898 format differences
-    protocol.register_clientbound(PacketId.ACTOR_EVENT, rewrite_actor_event)
     protocol.register_clientbound(PacketId.ANIMATE, rewrite_animate_clientbound)
     protocol.register_clientbound(PacketId.MOB_EFFECT, rewrite_mob_effect)
     protocol.register_clientbound(PacketId.RESOURCE_PACK_STACK, rewrite_resource_pack_stack)

@@ -3,7 +3,6 @@
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.mappings.v898_v924 import MAPPINGS
 from endstone_endweave.protocol.packet_ids import PacketId
-from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v898_to_v924.handlers.biome_definition_list import rewrite_biome_definition_list
 from endstone_endweave.protocol.v898_to_v924.handlers.book_edit import (
     rewrite_book_edit,
@@ -34,6 +33,7 @@ from endstone_endweave.protocol.v924_to_v898.handlers.text import (
     rewrite_text_clientbound,
     rewrite_text_serverbound,
 )
+from endstone_endweave.rewriter import SoundRewriter
 
 SERVER_PROTOCOL = 898
 CLIENT_PROTOCOL = 924

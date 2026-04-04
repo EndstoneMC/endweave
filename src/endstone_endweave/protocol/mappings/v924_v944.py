@@ -4,7 +4,7 @@ LevelSoundEvent -- 2 new IDs inserted at 597 (UNDEFINED_V924):
     597 PAUSE_GROWTH
     598 RESET_GROWTH
 
-NoteBlockInstrument -- 4 new IDs inserted at 16:
+NoteBlockInstrument -- 4 new IDs inserted at 16 (TRUMPET):
     16 TRUMPET
     17 TRUMPET (variant)
     18 TRUMPET (variant)
@@ -13,11 +13,11 @@ NoteBlockInstrument -- 4 new IDs inserted at 16:
     (Zombie, Skeleton, Creeper, WitherSkeleton, Piglin) shift to 20+.
 """
 
-from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
-from endstone_endweave.protocol.mapping_data import IdShift, MappingData
+from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent, NoteBlockInstrument
+from endstone_endweave.protocol.mapping_data import MappingData, inserted
 
 MAPPINGS = MappingData(
-    sound=IdShift(LevelSoundEvent.UNDEFINED_V924, LevelSoundEvent.UNDEFINED_V944 - LevelSoundEvent.UNDEFINED_V924),
-    note_instrument=IdShift(16, 4),
+    sound=inserted(2, at=LevelSoundEvent.UNDEFINED_V924),
+    note_instrument=inserted(4, at=NoteBlockInstrument.TRUMPET),
     actor_data_sound_key=ActorDataIDs.HEARTBEAT_SOUND_EVENT,
 )

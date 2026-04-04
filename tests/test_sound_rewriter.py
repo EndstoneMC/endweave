@@ -11,7 +11,7 @@ from endstone_endweave.codec.writer import PacketWriter
 from endstone_endweave.protocol.mappings.v860_v898 import MAPPINGS as M_860_898
 from endstone_endweave.protocol.mappings.v898_v924 import MAPPINGS as M_898_924
 from endstone_endweave.protocol.mappings.v924_v944 import MAPPINGS as M_924_944
-from endstone_endweave.protocol.sound_rewriter import SoundRewriter
+from endstone_endweave.rewriter import SoundRewriter
 
 remap_v860_to_v898 = M_860_898.sound.shift_up
 remap_v898_to_v860 = M_860_898.sound.shift_down

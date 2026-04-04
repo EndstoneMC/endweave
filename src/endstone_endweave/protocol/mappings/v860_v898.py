@@ -13,11 +13,11 @@ ActorEvent -- 1 new ID inserted at 80:
     80  KINETIC_DAMAGE_DEALT
 """
 
-from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
-from endstone_endweave.protocol.mapping_data import IdShift, MappingData
+from endstone_endweave.codec.types.enums import ActorDataIDs, ActorEvent, LevelSoundEvent
+from endstone_endweave.protocol.mapping_data import MappingData, inserted
 
 MAPPINGS = MappingData(
-    sound=IdShift(LevelSoundEvent.UNDEFINED_V860, LevelSoundEvent.UNDEFINED_V898 - LevelSoundEvent.UNDEFINED_V860),
-    actor_event=IdShift(80, 1),
+    sound=inserted(12, at=LevelSoundEvent.UNDEFINED_V860),
+    actor_event=inserted(1, at=ActorEvent.KINETIC_DAMAGE_DEALT),
     actor_data_sound_key=ActorDataIDs.HEARTBEAT_SOUND_EVENT,
 )

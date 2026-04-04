@@ -3,7 +3,6 @@
 from endstone_endweave.protocol import Protocol
 from endstone_endweave.protocol.mappings.v924_v944 import MAPPINGS
 from endstone_endweave.protocol.packet_ids import PacketId
-from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v944_to_v924.handlers.block_pos import (
     rewrite_add_volume_entity,
     rewrite_anvil_damage,
@@ -38,6 +37,7 @@ from endstone_endweave.protocol.v944_to_v924.handlers.start_game import (
 from endstone_endweave.protocol.v944_to_v924.handlers.voxel_shapes import (
     rewrite_voxel_shapes,
 )
+from endstone_endweave.rewriter import SoundRewriter
 
 SERVER_PROTOCOL = 944
 CLIENT_PROTOCOL = 924

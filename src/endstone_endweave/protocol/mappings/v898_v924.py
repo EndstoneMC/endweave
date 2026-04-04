@@ -19,10 +19,10 @@ ActorDataIDs -- 3 new keys added (not present in v898):
 """
 
 from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
-from endstone_endweave.protocol.mapping_data import IdShift, MappingData
+from endstone_endweave.protocol.mapping_data import MappingData, inserted
 
 MAPPINGS = MappingData(
-    sound=IdShift(LevelSoundEvent.UNDEFINED_V898, LevelSoundEvent.UNDEFINED_V924 - LevelSoundEvent.UNDEFINED_V898),
+    sound=inserted(19, at=LevelSoundEvent.UNDEFINED_V898),
     actor_data_sound_key=ActorDataIDs.HEARTBEAT_SOUND_EVENT,
     dropped_actor_data_keys=frozenset({
         ActorDataIDs.AIM_ASSIST_PRIORITY_PRESET_ID,

@@ -27,11 +27,11 @@ from endstone_endweave.codec import (
     MapItemTrackedActorType,
     PacketWrapper,
 )
+from endstone_endweave.codec.types.enums import NoteBlockInstrument
+from endstone_endweave.protocol.mappings.v924_v944 import MAPPINGS
 
-# NoteBlockInstrument remapping (TileEvent)
 _NOTE_BLOCK_EVENT = 0
-_TRUMPET_INSERTION_POINT = 16
-_TRUMPET_ID_SHIFT = 4
+_TRUMPET_SHIFT = MAPPINGS.note_instrument.count  # type: ignore[union-attr]
 
 
 # ---------------------------------------------------------------------------
@@ -84,8 +84,8 @@ def rewrite_tile_event(wrapper: PacketWrapper) -> None:
     wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position
     event_type = wrapper.passthrough(VAR_INT)  # Event Type
     event_data = wrapper.read(VAR_INT)  # Event Value
-    if event_type == _NOTE_BLOCK_EVENT and event_data >= _TRUMPET_INSERTION_POINT + _TRUMPET_ID_SHIFT:
-        event_data -= _TRUMPET_ID_SHIFT
+    if event_type == _NOTE_BLOCK_EVENT and event_data >= NoteBlockInstrument.TRUMPET + _TRUMPET_SHIFT:
+        event_data -= _TRUMPET_SHIFT
     wrapper.write(VAR_INT, event_data)
 
 

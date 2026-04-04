@@ -73,6 +73,22 @@ class IdShift:
         return v
 
 
+def inserted(count: int, *, at: int) -> IdShift:
+    """Describe IDs inserted at a position, shifting subsequent IDs.
+
+    Example::
+
+        inserted(12, at=LevelSoundEvent.UNDEFINED_V860)
+
+    reads as "12 new IDs inserted at UNDEFINED_V860".
+
+    Args:
+        count: Number of IDs inserted.
+        at: First ID of the inserted range.
+    """
+    return IdShift(insert_at=at, count=count)
+
+
 @dataclass(frozen=True)
 class MappingData:
     """Declarative ID mapping data for a single version step.
