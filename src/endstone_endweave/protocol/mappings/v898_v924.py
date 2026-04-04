@@ -1,0 +1,32 @@
+"""Mapping data: v898 (MC 1.21.130) <-> v924 (MC 1.26.0).
+
+LevelSoundEvent -- 19 new IDs inserted at 578 (UNDEFINED_V898):
+    578 SADDLE_IN_WATER          588 DIAMOND_SPEAR_ATTACK_MISS
+    579 STONE_SPEAR_ATTACK_HIT   589 NETHERITE_SPEAR_ATTACK_MISS
+    580 IRON_SPEAR_ATTACK_HIT    590 STONE_SPEAR_USE
+    581 COPPER_SPEAR_ATTACK_HIT  591 IRON_SPEAR_USE
+    582 GOLDEN_SPEAR_ATTACK_HIT  592 COPPER_SPEAR_USE
+    583 DIAMOND_SPEAR_ATTACK_HIT 593 GOLDEN_SPEAR_USE
+    584 NETHERITE_SPEAR_ATTACK_HIT 594 DIAMOND_SPEAR_USE
+    585 STONE_SPEAR_ATTACK_MISS  595 NETHERITE_SPEAR_USE
+    586 IRON_SPEAR_ATTACK_MISS   596 (unused)
+    587 COPPER_SPEAR_ATTACK_MISS
+
+ActorDataIDs -- 3 new keys added (not present in v898):
+    136 AIM_ASSIST_PRIORITY_PRESET_ID
+    137 AIM_ASSIST_PRIORITY_CATEGORY_ID
+    138 AIM_ASSIST_PRIORITY_ACTOR_ID
+"""
+
+from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
+from endstone_endweave.protocol.mapping_data import IdShift, MappingData
+
+MAPPINGS = MappingData(
+    sound=IdShift(LevelSoundEvent.UNDEFINED_V898, LevelSoundEvent.UNDEFINED_V924 - LevelSoundEvent.UNDEFINED_V898),
+    actor_data_sound_key=ActorDataIDs.HEARTBEAT_SOUND_EVENT,
+    dropped_actor_data_keys=frozenset({
+        ActorDataIDs.AIM_ASSIST_PRIORITY_PRESET_ID,
+        ActorDataIDs.AIM_ASSIST_PRIORITY_CATEGORY_ID,
+        ActorDataIDs.AIM_ASSIST_PRIORITY_ACTOR_ID,
+    }),
+)

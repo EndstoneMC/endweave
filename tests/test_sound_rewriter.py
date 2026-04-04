@@ -8,13 +8,17 @@ from endstone_endweave.codec import (
 )
 from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.writer import PacketWriter
+from endstone_endweave.protocol.mappings.v860_v898 import MAPPINGS as M_860_898
+from endstone_endweave.protocol.mappings.v898_v924 import MAPPINGS as M_898_924
+from endstone_endweave.protocol.mappings.v924_v944 import MAPPINGS as M_924_944
 from endstone_endweave.protocol.sound_rewriter import SoundRewriter
-from endstone_endweave.protocol.v860_to_v898.protocol import _remap_sound as remap_v860_to_v898
-from endstone_endweave.protocol.v898_to_v860.protocol import _remap_sound as remap_v898_to_v860
-from endstone_endweave.protocol.v898_to_v924.protocol import _remap_sound as remap_v898_to_v924
-from endstone_endweave.protocol.v924_to_v898.protocol import _remap_sound as remap_v924_to_v898
-from endstone_endweave.protocol.v924_to_v944.protocol import _remap_sound as remap_v924_to_v944
-from endstone_endweave.protocol.v944_to_v924.protocol import _remap_sound as remap_v944_to_v924
+
+remap_v860_to_v898 = M_860_898.sound.shift_up
+remap_v898_to_v860 = M_860_898.sound.shift_down
+remap_v898_to_v924 = M_898_924.sound.shift_up
+remap_v924_to_v898 = M_898_924.sound.cap
+remap_v924_to_v944 = M_924_944.sound.shift_up
+remap_v944_to_v924 = M_924_944.sound.shift_down
 
 # ---------------------------------------------------------------------------
 # Tests: _remap_sound (v860 -> v898)

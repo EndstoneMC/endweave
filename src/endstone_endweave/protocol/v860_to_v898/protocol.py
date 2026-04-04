@@ -1,7 +1,7 @@
 """Protocol factory for v860 (1.21.124) server <- v898 (1.21.130) client."""
 
-from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
 from endstone_endweave.protocol import Protocol
+from endstone_endweave.protocol.mappings.v860_v898 import MAPPINGS
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v860_to_v898.handlers.actor_event import rewrite_actor_event
@@ -28,14 +28,6 @@ from endstone_endweave.protocol.v860_to_v898.handlers.text import (
 SERVER_PROTOCOL = 860
 CLIENT_PROTOCOL = 898
 
-
-def _remap_sound(v: int) -> int:
-    """Remap LevelSoundEvent from v860 -> v898 (shift >= 566 by +12)."""
-    if v >= LevelSoundEvent.UNDEFINED_V860:
-        return v + (LevelSoundEvent.UNDEFINED_V898 - LevelSoundEvent.UNDEFINED_V860)
-    return v
-
-
 def create_protocol() -> Protocol:
     """Create a protocol for v860 server <- v898 client translation."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
@@ -49,8 +41,8 @@ def create_protocol() -> Protocol:
 
     # Clientbound rewriters -- LevelSoundEvent remapping
     sound = SoundRewriter(
-        sound_remap=_remap_sound,
-        actor_data_int_remappers={ActorDataIDs.HEARTBEAT_SOUND_EVENT: _remap_sound},
+        sound_remap=MAPPINGS.sound.shift_up,
+        actor_data_int_remappers={MAPPINGS.actor_data_sound_key: MAPPINGS.sound.shift_up},
     )
     sound.register(protocol)
 

@@ -1,7 +1,7 @@
 """Protocol factory for v924 (1.26.0) server <- v898 (1.21.130) client."""
 
-from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
 from endstone_endweave.protocol import Protocol
+from endstone_endweave.protocol.mappings.v898_v924 import MAPPINGS
 from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.protocol.sound_rewriter import SoundRewriter
 from endstone_endweave.protocol.v924_to_v898.handlers.biome_definition_list import (
@@ -40,14 +40,6 @@ from endstone_endweave.protocol.v924_to_v898.handlers.text import (
 SERVER_PROTOCOL = 924
 CLIENT_PROTOCOL = 898
 
-
-def _remap_sound(v: int) -> int:
-    """Remap LevelSoundEvent from v924 -> v898 (cap at Undefined)."""
-    if v >= LevelSoundEvent.UNDEFINED_V898:
-        return LevelSoundEvent.UNDEFINED_V898
-    return v
-
-
 def create_protocol() -> Protocol:
     """Create a protocol for v924 server <- v898 client."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
@@ -67,13 +59,9 @@ def create_protocol() -> Protocol:
 
     # Clientbound rewriters -- LevelSoundEvent remapping
     sound = SoundRewriter(
-        sound_remap=_remap_sound,
-        actor_data_int_remappers={ActorDataIDs.HEARTBEAT_SOUND_EVENT: _remap_sound},
-        dropped_actor_data_keys={
-            ActorDataIDs.AIM_ASSIST_PRIORITY_PRESET_ID,
-            ActorDataIDs.AIM_ASSIST_PRIORITY_CATEGORY_ID,
-            ActorDataIDs.AIM_ASSIST_PRIORITY_ACTOR_ID,
-        },
+        sound_remap=MAPPINGS.sound.cap,
+        actor_data_int_remappers={MAPPINGS.actor_data_sound_key: MAPPINGS.sound.cap},
+        dropped_actor_data_keys=MAPPINGS.dropped_actor_data_keys,
     )
     sound.register(protocol)
 

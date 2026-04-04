@@ -50,7 +50,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     inventories_server_authoritative = wrapper.read(BOOL)  # Enable Item Stack Net Manager
     server_engine = wrapper.read(STRING)  # Server version
     player_property_data = wrapper.read(NAMED_COMPOUND_TAG)  # Player Property Data
-    block_registry_checksum = wrapper.read(INT64_LE)  # Server Block Type Registry Checksum
+    wrapper.read(INT64_LE)  # Server Block Type Registry Checksum
     world_template_id_msb = wrapper.read(INT64_LE)  # World Template ID
     world_template_id_lsb = wrapper.read(INT64_LE)  # World Template ID
     client_side_generation_enabled = wrapper.read(BOOL)  # Server Enabled ClientSide Generation
@@ -88,7 +88,7 @@ def rewrite_start_game(wrapper: PacketWrapper) -> None:
     wrapper.write(BOOL, inventories_server_authoritative)  # Enable Item Stack Net Manager
     wrapper.write(STRING, server_engine)  # Server version
     wrapper.write(NAMED_COMPOUND_TAG, player_property_data)  # Player Property Data
-    wrapper.write(INT64_LE, block_registry_checksum)  # Server Block Type Registry Checksum
+    wrapper.write(INT64_LE, 0)  # zero checksum to skip validation
     wrapper.write(INT64_LE, world_template_id_msb)  # World Template ID
     wrapper.write(INT64_LE, world_template_id_lsb)  # World Template ID
     wrapper.write(BOOL, client_side_generation_enabled)  # Server Enabled ClientSide Generation

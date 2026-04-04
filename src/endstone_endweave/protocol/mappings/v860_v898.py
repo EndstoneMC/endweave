@@ -1,0 +1,23 @@
+"""Mapping data: v860 (MC 1.21.124) <-> v898 (MC 1.21.130).
+
+LevelSoundEvent -- 12 new IDs inserted at 566 (UNDEFINED_V860):
+    566 LUNGE1                  570 SPEAR_ATTACK_MISS
+    567 LUNGE2                  571 WOODEN_SPEAR_ATTACK_HIT
+    568 LUNGE3                  572 WOODEN_SPEAR_ATTACK_MISS
+    569 ATTACK_CRITICAL          573 IMITATE_PARCHED
+    570 SPEAR_ATTACK_HIT         574 IMITATE_CAMEL_HUSK
+                                575 SPEAR_USE
+                                576 WOODEN_SPEAR_USE
+
+ActorEvent -- 1 new ID inserted at 80:
+    80  KINETIC_DAMAGE_DEALT
+"""
+
+from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
+from endstone_endweave.protocol.mapping_data import IdShift, MappingData
+
+MAPPINGS = MappingData(
+    sound=IdShift(LevelSoundEvent.UNDEFINED_V860, LevelSoundEvent.UNDEFINED_V898 - LevelSoundEvent.UNDEFINED_V860),
+    actor_event=IdShift(80, 1),
+    actor_data_sound_key=ActorDataIDs.HEARTBEAT_SOUND_EVENT,
+)
