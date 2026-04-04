@@ -66,6 +66,11 @@ struct vec2 { using value_type = Vec2Value; };
 struct optional_bool { using value_type = std::optional<bool>; };
 struct optional_vec2 { using value_type = std::optional<Vec2Value>; };
 struct optional_vec3 { using value_type = std::optional<Vec3Value>; };
+struct optional_string { using value_type = std::optional<std::string>; };
+struct optional_int_le { using value_type = std::optional<std::int32_t>; };
+struct optional_float_le { using value_type = std::optional<float>; };
+struct optional_byte { using value_type = std::optional<std::uint8_t>; };
+struct optional_uvar_int64 { using value_type = std::optional<std::uint64_t>; };
 
 // -- Reader specializations --
 
@@ -313,6 +318,73 @@ template <> inline void PacketWriter::write<optional_vec2>(const std::optional<V
 
 template <> inline void PacketWriter::write<optional_vec3>(const std::optional<Vec3Value>& val) {
     if (val.has_value()) { write_bool(true); write<vec3>(*val); } else { write_bool(false); }
+}
+
+// -- Additional optional reader/writer specializations --
+
+template <> inline auto PacketReader::read<optional_string>() -> std::expected<std::optional<std::string>, ReadError> {
+    auto has = read_bool();
+    if (!has) return std::unexpected(has.error());
+    if (!*has) return std::optional<std::string>{};
+    auto v = read_string();
+    if (!v) return std::unexpected(v.error());
+    return std::optional<std::string>{std::move(*v)};
+}
+
+template <> inline void PacketWriter::write<optional_string>(const std::optional<std::string>& val) {
+    if (val.has_value()) { write_bool(true); write_string(*val); } else { write_bool(false); }
+}
+
+template <> inline auto PacketReader::read<optional_int_le>() -> std::expected<std::optional<std::int32_t>, ReadError> {
+    auto has = read_bool();
+    if (!has) return std::unexpected(has.error());
+    if (!*has) return std::optional<std::int32_t>{};
+    auto v = read_int_le();
+    if (!v) return std::unexpected(v.error());
+    return std::optional<std::int32_t>{*v};
+}
+
+template <> inline void PacketWriter::write<optional_int_le>(const std::optional<std::int32_t>& val) {
+    if (val.has_value()) { write_bool(true); write_int_le(*val); } else { write_bool(false); }
+}
+
+template <> inline auto PacketReader::read<optional_float_le>() -> std::expected<std::optional<float>, ReadError> {
+    auto has = read_bool();
+    if (!has) return std::unexpected(has.error());
+    if (!*has) return std::optional<float>{};
+    auto v = read_float_le();
+    if (!v) return std::unexpected(v.error());
+    return std::optional<float>{*v};
+}
+
+template <> inline void PacketWriter::write<optional_float_le>(const std::optional<float>& val) {
+    if (val.has_value()) { write_bool(true); write_float_le(*val); } else { write_bool(false); }
+}
+
+template <> inline auto PacketReader::read<optional_byte>() -> std::expected<std::optional<std::uint8_t>, ReadError> {
+    auto has = read_bool();
+    if (!has) return std::unexpected(has.error());
+    if (!*has) return std::optional<std::uint8_t>{};
+    auto v = read_byte();
+    if (!v) return std::unexpected(v.error());
+    return std::optional<std::uint8_t>{*v};
+}
+
+template <> inline void PacketWriter::write<optional_byte>(const std::optional<std::uint8_t>& val) {
+    if (val.has_value()) { write_bool(true); write_byte(*val); } else { write_bool(false); }
+}
+
+template <> inline auto PacketReader::read<optional_uvar_int64>() -> std::expected<std::optional<std::uint64_t>, ReadError> {
+    auto has = read_bool();
+    if (!has) return std::unexpected(has.error());
+    if (!*has) return std::optional<std::uint64_t>{};
+    auto v = read_uvarint64();
+    if (!v) return std::unexpected(v.error());
+    return std::optional<std::uint64_t>{*v};
+}
+
+template <> inline void PacketWriter::write<optional_uvar_int64>(const std::optional<std::uint64_t>& val) {
+    if (val.has_value()) { write_bool(true); write_uvarint64(*val); } else { write_bool(false); }
 }
 
 } // namespace endweave
