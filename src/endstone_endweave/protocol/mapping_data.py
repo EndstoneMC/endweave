@@ -78,19 +78,19 @@ class MappingData:
     """Declarative ID mapping data for a single version step.
 
     Attributes:
-        sound: LevelSoundEvent ID shift (None if unchanged).
-        actor_event: ActorEvent ID shift (None if unchanged).
-        note_instrument: NoteBlockInstrument ID shift (None if unchanged).
+        sound: LevelSoundEvent ID shift.
         actor_data_sound_key: ActorDataID that holds a sound event value
             (remapped with the same function as *sound*).
+        actor_event: ActorEvent ID shift (None if unchanged).
+        note_instrument: NoteBlockInstrument ID shift (None if unchanged).
         dropped_actor_data_keys: ActorData keys to filter out entirely.
 
     See Also:
         com.viaversion.viaversion.api.data.MappingData
     """
 
-    sound: IdShift | None = None
+    sound: IdShift
+    actor_data_sound_key: int
     actor_event: IdShift | None = None
     note_instrument: IdShift | None = None
-    actor_data_sound_key: int | None = None
     dropped_actor_data_keys: frozenset[int] = field(default=frozenset())

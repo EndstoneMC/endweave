@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
-- Block registry checksum not zeroed in some version pairs, causing clients to reject the world
+- Block registry checksum not zeroed in some version pairs, causingco clients to reject the world
 
 ## [0.3.1] - 2026-03-31
 

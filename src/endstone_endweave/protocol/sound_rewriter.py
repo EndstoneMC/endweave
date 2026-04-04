@@ -9,7 +9,7 @@ See Also:
     com.viaversion.viaversion.rewriter.SoundRewriter
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Set
 
 from endstone_endweave.codec import (
     ACTOR_DATA_LIST,
@@ -47,7 +47,7 @@ class SoundRewriter:
         self,
         sound_remap: Callable[[int], int],
         actor_data_int_remappers: dict[int, Callable[[int], int]] | None = None,
-        dropped_actor_data_keys: set[int] | None = None,
+        dropped_actor_data_keys: Set[int] | None = None,
     ) -> None:
         self._sound_remap = sound_remap
         self._int_remappers = actor_data_int_remappers or {}
