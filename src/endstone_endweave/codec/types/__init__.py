@@ -1,15 +1,15 @@
 """Packet field types for read/write/passthrough operations."""
 
-from endstone_endweave.codec.types.actor_data import (
+from .actor_data import (
     ACTOR_DATA_ITEM,
     ACTOR_DATA_LIST,
     ActorDataItem,
 )
-from endstone_endweave.codec.types.biome import (
+from .biome import (
     BIOME_DEFINITION_V898,
     BIOME_DEFINITION_V924,
 )
-from endstone_endweave.codec.types.camera import (
+from .camera import (
     SPLINE_INSTRUCTION_V898,
     SPLINE_INSTRUCTION_V924,
     SPLINE_INSTRUCTION_V944,
@@ -17,7 +17,7 @@ from endstone_endweave.codec.types.camera import (
     RotationKeyFrame,
     SplineInstruction,
 )
-from endstone_endweave.codec.types.commands import (
+from .commands import (
     COMMAND_CONSTRAINT,
     COMMAND_DEFINITION_V860,
     COMMAND_DEFINITION_V898,
@@ -39,11 +39,11 @@ from endstone_endweave.codec.types.commands import (
     SoftEnum,
     make_command_enum_v860,
 )
-from endstone_endweave.codec.types.data_store import (
+from .data_store import (
     CHANGE_VALUE,
     ChangeValue,
 )
-from endstone_endweave.codec.types.enums import (
+from .enums import (
     ActorDataIDs,
     AnimateAction,
     BookEditActionType,
@@ -64,22 +64,22 @@ from endstone_endweave.codec.types.enums import (
     enum_to_label,
     label_to_enum,
 )
-from endstone_endweave.codec.types.gameplay import (
+from .gameplay import (
     EXPERIMENTS,
     EXPERIMENTS_V860,
     GAME_RULES,
     Experiment,
     GameRule,
 )
-from endstone_endweave.codec.types.inventory import INVENTORY_ACTION, InventoryAction
-from endstone_endweave.codec.types.item import ITEM_INSTANCE, ItemInstance
-from endstone_endweave.codec.types.level_settings import (
+from .inventory import INVENTORY_ACTION, InventoryAction
+from .item import ITEM_INSTANCE, ItemInstance
+from .level_settings import (
     LEVEL_SETTINGS_V860,
     LEVEL_SETTINGS_V924,
     LEVEL_SETTINGS_V944,
     LevelSettings,
 )
-from endstone_endweave.codec.types.nbt import (
+from .nbt import (
     COMPOUND_TAG,
     NAMED_COMPOUND_TAG,
     ByteArrayTag,
@@ -100,7 +100,7 @@ from endstone_endweave.codec.types.nbt import (
     read_nbt,
     write_nbt,
 )
-from endstone_endweave.codec.types.primitives import (
+from .primitives import (
     BLOCK_POS,
     BOOL,
     BYTE,
@@ -129,7 +129,7 @@ from endstone_endweave.codec.types.primitives import (
     OptionalType,
     Type,
 )
-from endstone_endweave.codec.types.structure import (
+from .structure import (
     STRUCTURE_SETTINGS_V924,
     STRUCTURE_SETTINGS_V944,
     StructureSettings,

@@ -1,39 +1,39 @@
 """Protocol factory for v898 (1.21.130) server <- v924 (1.26.0) client."""
 
-from endstone_endweave.protocol import Protocol
-from endstone_endweave.protocol.mappings.v898_v924 import MAPPINGS
-from endstone_endweave.protocol.packet_ids import PacketId
-from endstone_endweave.protocol.v898_to_v924.handlers.biome_definition_list import rewrite_biome_definition_list
-from endstone_endweave.protocol.v898_to_v924.handlers.book_edit import (
-    rewrite_book_edit,
-)
-from endstone_endweave.protocol.v898_to_v924.handlers.camera import (
-    rewrite_camera_instruction,
-)
-from endstone_endweave.protocol.v898_to_v924.handlers.camera_aim_assist import (
-    rewrite_camera_aim_assist_presets,
-)
-from endstone_endweave.protocol.v898_to_v924.handlers.data_store import (
-    rewrite_clientbound_data_store,
-    rewrite_serverbound_data_store,
-)
-from endstone_endweave.protocol.v898_to_v924.handlers.debug_drawer import (
-    rewrite_debug_drawer,
-)
-from endstone_endweave.protocol.v898_to_v924.handlers.diagnostics import (
-    rewrite_diagnostics,
-)
-from endstone_endweave.protocol.v898_to_v924.handlers.graphics_parameter_override import (
-    rewrite_graphics_parameter_override,
-)
-from endstone_endweave.protocol.v898_to_v924.handlers.start_game import (
-    rewrite_start_game,
-)
-from endstone_endweave.protocol.v924_to_v898.handlers.text import (
+from ...rewriter import SoundRewriter
+from .. import Protocol
+from ..mappings.v898_v924 import MAPPINGS
+from ..packet_ids import PacketId
+from ..v924_to_v898.handlers.text import (
     rewrite_text_clientbound,
     rewrite_text_serverbound,
 )
-from endstone_endweave.rewriter import SoundRewriter
+from .handlers.biome_definition_list import rewrite_biome_definition_list
+from .handlers.book_edit import (
+    rewrite_book_edit,
+)
+from .handlers.camera import (
+    rewrite_camera_instruction,
+)
+from .handlers.camera_aim_assist import (
+    rewrite_camera_aim_assist_presets,
+)
+from .handlers.data_store import (
+    rewrite_clientbound_data_store,
+    rewrite_serverbound_data_store,
+)
+from .handlers.debug_drawer import (
+    rewrite_debug_drawer,
+)
+from .handlers.diagnostics import (
+    rewrite_diagnostics,
+)
+from .handlers.graphics_parameter_override import (
+    rewrite_graphics_parameter_override,
+)
+from .handlers.start_game import (
+    rewrite_start_game,
+)
 
 SERVER_PROTOCOL = 898
 CLIENT_PROTOCOL = 924

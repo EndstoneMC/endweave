@@ -1,6 +1,6 @@
 """Text packet handlers for v924 to v898."""
 
-from endstone_endweave.codec import BOOL, BYTE, STRING, PacketWrapper, TextPacketBodyType, TextPacketType, enum_to_label
+from ....codec import BOOL, BYTE, STRING, PacketWrapper, TextPacketBodyType, TextPacketType, enum_to_label
 
 _MESSAGE_ONLY_TYPES = (
     TextPacketType.RAW,

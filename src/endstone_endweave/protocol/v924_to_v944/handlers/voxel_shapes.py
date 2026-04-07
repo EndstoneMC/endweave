@@ -1,6 +1,6 @@
 """Handler for VoxelShapesPacket (337) -- v924 server to v944 client."""
 
-from endstone_endweave.codec import USHORT_LE, PacketWrapper
+from ....codec import USHORT_LE, PacketWrapper
 
 
 def rewrite_voxel_shapes(wrapper: PacketWrapper) -> None:

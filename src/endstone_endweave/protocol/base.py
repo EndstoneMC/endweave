@@ -4,9 +4,9 @@ See Also:
     com.viaversion.viaversion.protocols.base.InitialBaseProtocol
 """
 
-from endstone_endweave.codec import INT_BE, PacketWrapper
-from endstone_endweave.protocol import Protocol
-from endstone_endweave.protocol.packet_ids import PacketId
+from ..codec import INT_BE, PacketWrapper
+from . import Protocol
+from .packet_ids import PacketId
 
 
 def detect_client_protocol(wrapper: PacketWrapper) -> None:

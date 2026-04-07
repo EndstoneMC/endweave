@@ -1,36 +1,36 @@
 """Protocol factory for v898 (1.21.130) server <- v860 (1.21.124) client."""
 
-from endstone_endweave.protocol import Protocol
-from endstone_endweave.protocol.mappings.v860_v898 import MAPPINGS
-from endstone_endweave.protocol.packet_ids import PacketId
-from endstone_endweave.protocol.v860_to_v898.handlers.animate import (
+from ...rewriter import ActorEventRewriter, SoundRewriter
+from .. import Protocol
+from ..mappings.v860_v898 import MAPPINGS
+from ..packet_ids import PacketId
+from ..v860_to_v898.handlers.animate import (
     rewrite_animate_clientbound as _animate_v860_to_v898,
 )
-from endstone_endweave.protocol.v860_to_v898.handlers.animate import (
+from ..v860_to_v898.handlers.animate import (
     rewrite_animate_serverbound as _animate_v898_to_v860,
 )
-from endstone_endweave.protocol.v898_to_v860.handlers.camera_aim_assist import (
+from .handlers.camera_aim_assist import (
     rewrite_camera_aim_assist_presets,
 )
-from endstone_endweave.protocol.v898_to_v860.handlers.commands import (
+from .handlers.commands import (
     rewrite_available_commands,
     rewrite_command_output,
     rewrite_command_request,
 )
-from endstone_endweave.protocol.v898_to_v860.handlers.event import rewrite_event
-from endstone_endweave.protocol.v898_to_v860.handlers.interact import rewrite_interact
-from endstone_endweave.protocol.v898_to_v860.handlers.mob_effect import rewrite_mob_effect
-from endstone_endweave.protocol.v898_to_v860.handlers.resource_pack_stack import (
+from .handlers.event import rewrite_event
+from .handlers.interact import rewrite_interact
+from .handlers.mob_effect import rewrite_mob_effect
+from .handlers.resource_pack_stack import (
     rewrite_resource_pack_stack,
 )
-from endstone_endweave.protocol.v898_to_v860.handlers.start_game import rewrite_start_game
-from endstone_endweave.protocol.v898_to_v860.handlers.text import (
+from .handlers.start_game import rewrite_start_game
+from .handlers.text import (
     rewrite_text_clientbound as _text_v860_to_v898,
 )
-from endstone_endweave.protocol.v898_to_v860.handlers.text import (
+from .handlers.text import (
     rewrite_text_serverbound as _text_v898_to_v860,
 )
-from endstone_endweave.rewriter import ActorEventRewriter, SoundRewriter
 
 SERVER_PROTOCOL = 898
 CLIENT_PROTOCOL = 860

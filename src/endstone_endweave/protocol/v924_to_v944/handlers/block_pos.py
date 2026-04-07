@@ -4,7 +4,7 @@ Clientbound handlers read NetworkBlockPos (from v924 server) and write BlockPos 
 Serverbound handlers read BlockPos (from v944 client) and write NetworkBlockPos (for v924 server).
 """
 
-from endstone_endweave.codec import (
+from ....codec import (
     BLOCK_POS,
     BOOL,
     BYTE,
@@ -27,8 +27,8 @@ from endstone_endweave.codec import (
     MapItemTrackedActorType,
     PacketWrapper,
 )
-from endstone_endweave.codec.types.enums import NoteBlockInstrument
-from endstone_endweave.protocol.mappings.v924_v944 import MAPPINGS
+from ....codec.types.enums import NoteBlockInstrument
+from ...mappings.v924_v944 import MAPPINGS
 
 _NOTE_BLOCK_EVENT = 0
 _TRUMPET_SHIFT = MAPPINGS.note_instrument.count  # type: ignore[union-attr]

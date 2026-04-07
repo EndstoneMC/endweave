@@ -9,10 +9,10 @@ See Also:
     com.viaversion.viaversion.rewriter.EntityRewriter
 """
 
-from endstone_endweave.codec import BYTE, UVAR_INT64, PacketWrapper
-from endstone_endweave.protocol import Protocol
-from endstone_endweave.protocol.mapping_data import IdShift
-from endstone_endweave.protocol.packet_ids import PacketId
+from ..codec import BYTE, UVAR_INT64, PacketWrapper
+from ..protocol import Protocol
+from ..protocol.mapping_data import IdShift
+from ..protocol.packet_ids import PacketId
 
 
 class ActorEventRewriter:

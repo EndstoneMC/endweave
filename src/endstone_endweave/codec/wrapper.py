@@ -17,9 +17,9 @@ See Also:
 
 from typing import TYPE_CHECKING, TypeVar
 
-from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types import Type
-from endstone_endweave.codec.writer import PacketWriter
+from .reader import PacketReader
+from .types import Type
+from .writer import PacketWriter
 
 if TYPE_CHECKING:
     from endstone_endweave.connection import UserConnection

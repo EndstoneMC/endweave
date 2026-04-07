@@ -9,7 +9,7 @@ See Also:
 
 from endstone import Logger
 
-from endstone_endweave.protocol.packet_ids import PacketId
+from .protocol.packet_ids import PacketId
 
 
 def packet_label(packet_id: int) -> str:

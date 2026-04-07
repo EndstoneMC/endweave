@@ -4,44 +4,31 @@ from endstone.event import (
     EventPriority,
     PacketReceiveEvent,
     PacketSendEvent,
+    PlayerJoinEvent,
     PlayerQuitEvent,
     ServerListPingEvent,
     event_handler,
 )
 from endstone.plugin import Plugin
 
-from endstone_endweave.connection import ConnectionManager
-from endstone_endweave.debug import DebugHandler
-from endstone_endweave.metrics import EndweaveMetrics
-from endstone_endweave.pipeline import ProtocolPipeline
-from endstone_endweave.protocol import Protocol
-from endstone_endweave.protocol.base import create_base_protocol
-from endstone_endweave.protocol.manager import ProtocolManager
-from endstone_endweave.protocol.v859_to_v860 import (
-    create_protocol as create_v859_to_v860,
-)
-from endstone_endweave.protocol.v860_to_v859 import (
-    create_protocol as create_v860_to_v859,
-)
-from endstone_endweave.protocol.v860_to_v898 import (
-    create_protocol as create_v860_to_v898,
-)
-from endstone_endweave.protocol.v898_to_v860 import (
-    create_protocol as create_v898_to_v860,
-)
-from endstone_endweave.protocol.v898_to_v924 import (
-    create_protocol as create_v898_to_v924,
-)
-from endstone_endweave.protocol.v924_to_v898 import (
-    create_protocol as create_v924_to_v898,
-)
-from endstone_endweave.protocol.v924_to_v944 import (
-    create_protocol as create_v924_to_v944,
-)
-from endstone_endweave.protocol.v944_to_v924 import (
-    create_protocol as create_v944_to_v924,
-)
-from endstone_endweave.protocol.versions import VERSIONS
+from ._version import __version__
+from .connection import ConnectionManager
+from .debug import DebugHandler
+from .metrics import EndweaveMetrics
+from .pipeline import ProtocolPipeline
+from .protocol import Protocol
+from .protocol.base import create_base_protocol
+from .protocol.manager import ProtocolManager
+from .protocol.v859_to_v860 import create_protocol as create_v859_to_v860
+from .protocol.v860_to_v859 import create_protocol as create_v860_to_v859
+from .protocol.v860_to_v898 import create_protocol as create_v860_to_v898
+from .protocol.v898_to_v860 import create_protocol as create_v898_to_v860
+from .protocol.v898_to_v924 import create_protocol as create_v898_to_v924
+from .protocol.v924_to_v898 import create_protocol as create_v924_to_v898
+from .protocol.v924_to_v944 import create_protocol as create_v924_to_v944
+from .protocol.v944_to_v924 import create_protocol as create_v944_to_v924
+from .protocol.versions import VERSIONS
+from .update import UpdateChecker
 
 
 class EndweavePlugin(Plugin):
@@ -53,6 +40,12 @@ class EndweavePlugin(Plugin):
 
     prefix = "Endweave"  # type: ignore[assignment]
     api_version = "0.11"  # type: ignore[assignment]
+    permissions = {  # type: ignore[assignment]
+        "endweave.update": {
+            "description": "Receive update notifications on join",
+            "default": "op",
+        },
+    }
 
     def on_enable(self) -> None:
         self.save_default_config()
@@ -102,6 +95,11 @@ class EndweavePlugin(Plugin):
         # bStats metrics (https://bstats.org/plugin/bukkit/Endweave/30345)
         self._metrics = EndweaveMetrics(self, service_id=30345)
 
+        self._update_checker: UpdateChecker | None = None
+        if self.config.get("check-for-updates", True):
+            self._update_checker = UpdateChecker(self.logger, __version__)
+            self._update_checker.check()
+
     def _register_protocol(self, protocol: Protocol) -> None:
         self._manager.register(protocol)
 
@@ -118,6 +116,11 @@ class EndweavePlugin(Plugin):
         ver = VERSIONS.get(self._advertised_protocol)
         if ver:
             event.minecraft_version_network = ver.minecraft_version
+
+    @event_handler
+    def on_player_join(self, event: PlayerJoinEvent) -> None:
+        if self._update_checker:
+            self._update_checker.notify_if_needed(event.player)
 
     @event_handler
     def on_player_quit(self, event: PlayerQuitEvent) -> None:

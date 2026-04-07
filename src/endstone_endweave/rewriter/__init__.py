@@ -4,7 +4,7 @@ See Also:
     com.viaversion.viaversion.rewriter
 """
 
-from endstone_endweave.rewriter.actor_event import ActorEventRewriter
-from endstone_endweave.rewriter.sound import SoundRewriter
+from .actor_event import ActorEventRewriter
+from .sound import SoundRewriter
 
 __all__ = ["ActorEventRewriter", "SoundRewriter"]

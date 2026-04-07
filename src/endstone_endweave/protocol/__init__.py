@@ -3,8 +3,8 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from endstone_endweave.codec.wrapper import PacketWrapper
-from endstone_endweave.protocol.direction import Direction
+from ..codec.wrapper import PacketWrapper
+from .direction import Direction
 
 if TYPE_CHECKING:
     from endstone_endweave.connection import UserConnection

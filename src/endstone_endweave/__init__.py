@@ -1,3 +1,3 @@
-from endstone_endweave.plugin import EndweavePlugin
+from .plugin import EndweavePlugin
 
 __all__ = ["EndweavePlugin"]

@@ -18,8 +18,8 @@ ActorDataIDs -- 3 new keys added (not present in v898):
     138 AIM_ASSIST_PRIORITY_ACTOR_ID
 """
 
-from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
-from endstone_endweave.protocol.mapping_data import MappingData, inserted
+from ...codec.types.enums import ActorDataIDs, LevelSoundEvent
+from ..mapping_data import MappingData, inserted
 
 MAPPINGS = MappingData(
     sound=inserted(19, at=LevelSoundEvent.UNDEFINED_V898),

@@ -1,6 +1,6 @@
 """Handler for CameraAimAssistPresetsPacket -- v898 server to v924 client."""
 
-from endstone_endweave.codec import (
+from ....codec import (
     INT_LE,
     STRING,
     UVAR_INT,

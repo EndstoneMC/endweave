@@ -1,5 +1,5 @@
-from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types import (
+from .reader import PacketReader
+from .types import (
     ACTOR_DATA_ITEM,
     ACTOR_DATA_LIST,
     BIOME_DEFINITION_V898,
@@ -113,7 +113,7 @@ from endstone_endweave.codec.types import (
     read_nbt,
     write_nbt,
 )
-from endstone_endweave.codec.wrapper import PacketWrapper
+from .wrapper import PacketWrapper
 
 __all__ = [
     "ACTOR_DATA_ITEM",

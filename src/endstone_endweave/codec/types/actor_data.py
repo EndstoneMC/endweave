@@ -7,9 +7,10 @@ See Also:
 from dataclasses import dataclass
 from typing import Any
 
-from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types.nbt import NAMED_COMPOUND_TAG
-from endstone_endweave.codec.types.primitives import (
+from ..reader import PacketReader
+from ..writer import PacketWriter
+from .nbt import NAMED_COMPOUND_TAG
+from .primitives import (
     BLOCK_POS,
     BYTE,
     FLOAT_LE,
@@ -22,7 +23,6 @@ from endstone_endweave.codec.types.primitives import (
     ArrayType,
     Type,
 )
-from endstone_endweave.codec.writer import PacketWriter
 
 # ActorData value type IDs -> codec type
 _VALUE_TYPES: dict[int, Type[Any]] = {

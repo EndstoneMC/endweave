@@ -3,8 +3,9 @@
 from dataclasses import dataclass, field
 from typing import Any
 
-from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types.primitives import (
+from ..reader import PacketReader
+from ..writer import PacketWriter
+from .primitives import (
     BOOL,
     INT64_LE,
     INT_LE,
@@ -12,7 +13,6 @@ from endstone_endweave.codec.types.primitives import (
     UVAR_INT,
     Type,
 )
-from endstone_endweave.codec.writer import PacketWriter
 
 
 @dataclass

@@ -1,6 +1,6 @@
 """CameraAimAssistPresets packet handler for v898 server to v860 client translation."""
 
-from endstone_endweave.codec import (
+from ....codec import (
     INT_LE,
     STRING,
     UVAR_INT,

@@ -1,4 +1,4 @@
-from endstone_endweave.protocol.v898_to_v924.protocol import (
+from .protocol import (
     CLIENT_PROTOCOL,
     SERVER_PROTOCOL,
     create_protocol,

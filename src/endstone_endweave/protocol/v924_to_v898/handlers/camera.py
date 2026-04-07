@@ -3,7 +3,7 @@
 v924 added easing functions to spline keyframes. v898 has no easing field.
 """
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     BYTE,
     FLOAT_LE,

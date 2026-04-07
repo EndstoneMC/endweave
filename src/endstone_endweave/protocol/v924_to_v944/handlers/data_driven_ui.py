@@ -1,6 +1,6 @@
 """Handlers for Data-Driven UI packets (333, 334) -- v924 to v944."""
 
-from endstone_endweave.codec import INT_LE, OptionalType, PacketWrapper
+from ....codec import INT_LE, OptionalType, PacketWrapper
 
 
 def rewrite_show_screen(wrapper: PacketWrapper) -> None:

@@ -4,7 +4,7 @@ v924 appended a Memory Category Values list to the end of the packet.
 Strip the trailing list so the v898 server only sees the 9 floats it expects.
 """
 
-from endstone_endweave.codec import FLOAT_LE, REMAINING_BYTES, PacketWrapper
+from ....codec import FLOAT_LE, REMAINING_BYTES, PacketWrapper
 
 
 def rewrite_diagnostics(wrapper: PacketWrapper) -> None:

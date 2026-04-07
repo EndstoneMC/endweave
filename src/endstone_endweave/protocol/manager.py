@@ -2,7 +2,7 @@
 
 from collections import deque
 
-from endstone_endweave.protocol import Protocol
+from . import Protocol
 
 
 class ProtocolManager:

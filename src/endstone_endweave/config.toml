@@ -1,3 +1,6 @@
+# Check for new versions on startup
+check-for-updates = true
+
 [debug]
 # Enable verbose debug logging for packet translation
 enabled = false

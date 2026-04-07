@@ -1,6 +1,6 @@
 """Handler for TextPacket -- v860 server to v898 client."""
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     BYTE,
     STRING,

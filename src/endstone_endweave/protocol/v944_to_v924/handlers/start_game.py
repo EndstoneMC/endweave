@@ -4,7 +4,7 @@ v944 changed DefaultSpawn Y from varint to uvarint (BlockPos -> UBlockPos).
 v944 also restructured the server join info block near the end of the packet.
 """
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     INT64_LE,
     LEVEL_SETTINGS_V924,

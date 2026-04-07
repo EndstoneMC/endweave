@@ -4,7 +4,7 @@ v924 added easing functions to spline keyframes. Default easing (0 = linear)
 is injected for v898 splines.
 """
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     BYTE,
     FLOAT_LE,

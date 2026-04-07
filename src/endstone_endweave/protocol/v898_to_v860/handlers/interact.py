@@ -1,6 +1,6 @@
 """Interact packet handler for v898 server to v860 client translation."""
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     BYTE,
     UVAR_INT64,

@@ -5,7 +5,7 @@ ShapeDataPayload entry, between Dimension ID and Extra Shape Data.
 Strip the field so the v898 client sees the format it expects.
 """
 
-from endstone_endweave.codec import (
+from ....codec import (
     BYTE,
     FLOAT_LE,
     INT_LE,

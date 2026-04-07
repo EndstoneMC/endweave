@@ -3,8 +3,9 @@
 from dataclasses import dataclass
 from typing import Any
 
-from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types.primitives import (
+from ..reader import PacketReader
+from ..writer import PacketWriter
+from .primitives import (
     BOOL,
     FLOAT_LE,
     INT_LE,
@@ -14,7 +15,6 @@ from endstone_endweave.codec.types.primitives import (
     VAR_INT,
     Type,
 )
-from endstone_endweave.codec.writer import PacketWriter
 
 # ---------------------------------------------------------------------------
 # Game rules (conditional union per entry)

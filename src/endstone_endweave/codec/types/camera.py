@@ -2,8 +2,9 @@
 
 from dataclasses import dataclass, field
 
-from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types.primitives import (
+from ..reader import PacketReader
+from ..writer import PacketWriter
+from .primitives import (
     BOOL,
     BYTE,
     FLOAT_LE,
@@ -13,7 +14,6 @@ from endstone_endweave.codec.types.primitives import (
     VEC3,
     Type,
 )
-from endstone_endweave.codec.writer import PacketWriter
 
 
 @dataclass

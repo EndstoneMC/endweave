@@ -2,15 +2,16 @@
 
 from dataclasses import dataclass
 
-from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types.gameplay import (
+from ..reader import PacketReader
+from ..writer import PacketWriter
+from .gameplay import (
     EXPERIMENTS,
     EXPERIMENTS_V860,
     GAME_RULES,
     Experiment,
     GameRule,
 )
-from endstone_endweave.codec.types.primitives import (
+from .primitives import (
     BOOL,
     BYTE,
     FLOAT_LE,
@@ -23,7 +24,6 @@ from endstone_endweave.codec.types.primitives import (
     OptionalType,
     Type,
 )
-from endstone_endweave.codec.writer import PacketWriter
 
 _OPTIONAL_BOOL = OptionalType(BOOL)
 

@@ -5,7 +5,7 @@ each biome definition from v924 format (with villageType) to v898 format
 (without villageType).
 """
 
-from endstone_endweave.codec import (
+from ....codec import (
     BIOME_DEFINITION_V898,
     BIOME_DEFINITION_V924,
     USHORT_LE,

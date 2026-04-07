@@ -6,7 +6,7 @@ CameraInstructionPacket (300): v944 has SplineIdentifier + LoadFromJson in the s
 sub-message; strip them for v924 clients.
 """
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     BYTE,
     FLOAT_LE,

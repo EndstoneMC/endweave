@@ -5,7 +5,7 @@ CameraInstructionPacket (300): v944 appends SplineIdentifier + LoadFromJson to t
 sub-message.
 """
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     BYTE,
     FLOAT_LE,

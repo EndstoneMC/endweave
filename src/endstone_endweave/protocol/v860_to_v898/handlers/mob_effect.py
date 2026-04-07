@@ -1,6 +1,6 @@
 """Handler for MobEffectPacket -- v860 server to v898 client."""
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     BYTE,
     UVAR_INT64,

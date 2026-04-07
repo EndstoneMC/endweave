@@ -1,6 +1,6 @@
 """Command packet handlers for v898 to v860."""
 
-from endstone_endweave.codec import (
+from ....codec import (
     BOOL,
     BYTE,
     COMMAND_CONSTRAINT,

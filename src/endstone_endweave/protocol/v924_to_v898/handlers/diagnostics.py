@@ -4,7 +4,7 @@ v924 expects a Memory Category Values list after the 9 diagnostic floats.
 Append an empty list so the v924 server gets the field it expects.
 """
 
-from endstone_endweave.codec import FLOAT_LE, UVAR_INT, PacketWrapper
+from ....codec import FLOAT_LE, UVAR_INT, PacketWrapper
 
 
 def rewrite_diagnostics(wrapper: PacketWrapper) -> None:

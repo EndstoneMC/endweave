@@ -1,6 +1,6 @@
 """Protocol factory for v859 (1.21.120) server <- v860 (1.21.124) client."""
 
-from endstone_endweave.protocol import Protocol
+from .. import Protocol
 
 SERVER_PROTOCOL = 859
 CLIENT_PROTOCOL = 860

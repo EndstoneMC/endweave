@@ -15,16 +15,16 @@ from typing import TYPE_CHECKING
 from endstone import Logger
 from endstone.event import PacketReceiveEvent, PacketSendEvent
 
-from endstone_endweave.codec.wrapper import PacketWrapper
-from endstone_endweave.connection import ConnectionManager
+from .codec.wrapper import PacketWrapper
+from .connection import ConnectionManager
 
 if TYPE_CHECKING:
     from endstone_endweave.connection import UserConnection
-from endstone_endweave.debug import DebugHandler, packet_label
-from endstone_endweave.exception import InformativeException
-from endstone_endweave.protocol import Protocol
-from endstone_endweave.protocol.direction import Direction
-from endstone_endweave.protocol.manager import ProtocolManager
+from .debug import DebugHandler, packet_label
+from .exception import InformativeException
+from .protocol import Protocol
+from .protocol.direction import Direction
+from .protocol.manager import ProtocolManager
 
 
 class ProtocolPipeline:

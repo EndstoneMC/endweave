@@ -2,14 +2,15 @@
 
 from dataclasses import dataclass
 
-from endstone_endweave.codec.reader import PacketReader
-from endstone_endweave.codec.types.enums import (
+from ..reader import PacketReader
+from ..writer import PacketWriter
+from .enums import (
     CommandOriginType,
     CommandPermissionLevel,
     enum_to_label,
     label_to_enum,
 )
-from endstone_endweave.codec.types.primitives import (
+from .primitives import (
     BOOL,
     BYTE,
     INT64_LE,
@@ -21,7 +22,6 @@ from endstone_endweave.codec.types.primitives import (
     VAR_INT64,
     Type,
 )
-from endstone_endweave.codec.writer import PacketWriter
 
 # ---------------------------------------------------------------------------
 # Shared dataclasses
