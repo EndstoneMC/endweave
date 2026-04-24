@@ -102,6 +102,36 @@ class TestV924ToV944Protocol:
         protocol.transform(Direction.SERVERBOUND, 343, wrapper)
         assert wrapper.cancelled
 
+    def test_cancels_editor_network_serverbound(self):
+        from endstone_endweave.protocol.v924_to_v944.protocol import create_protocol
+
+        protocol = create_protocol()
+        connection = UserConnection(
+            address="1.2.3.4:1234",
+            logger=MagicMock(),
+            client_protocol=944,
+            server_protocol=924,
+        )
+
+        wrapper = PacketWrapper(b"\x01\x04test\x04data", user=connection)
+        protocol.transform(Direction.SERVERBOUND, 190, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_editor_network_clientbound(self):
+        from endstone_endweave.protocol.v924_to_v944.protocol import create_protocol
+
+        protocol = create_protocol()
+        connection = UserConnection(
+            address="1.2.3.4:1234",
+            logger=MagicMock(),
+            client_protocol=944,
+            server_protocol=924,
+        )
+
+        wrapper = PacketWrapper(b"\x01\x04test\x04data", user=connection)
+        protocol.transform(Direction.CLIENTBOUND, 190, wrapper)
+        assert wrapper.cancelled
+
     def test_passthrough_normal_packets(self):
         from endstone_endweave.protocol.v924_to_v944.protocol import create_protocol
 
@@ -117,6 +147,38 @@ class TestV924ToV944Protocol:
         protocol.transform(Direction.SERVERBOUND, 50, wrapper)
         assert not wrapper.cancelled
         assert wrapper.to_bytes() == b"\x00\x01\x02"
+
+
+class TestV944ToV924Protocol:
+    def test_cancels_editor_network_clientbound(self):
+        from endstone_endweave.protocol.v944_to_v924.protocol import create_protocol
+
+        protocol = create_protocol()
+        connection = UserConnection(
+            address="1.2.3.4:1234",
+            logger=MagicMock(),
+            client_protocol=924,
+            server_protocol=944,
+        )
+
+        wrapper = PacketWrapper(b"\x01\x04test\x04data", user=connection)
+        protocol.transform(Direction.CLIENTBOUND, 190, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_editor_network_serverbound(self):
+        from endstone_endweave.protocol.v944_to_v924.protocol import create_protocol
+
+        protocol = create_protocol()
+        connection = UserConnection(
+            address="1.2.3.4:1234",
+            logger=MagicMock(),
+            client_protocol=924,
+            server_protocol=944,
+        )
+
+        wrapper = PacketWrapper(b"\x01\x04test\x04data", user=connection)
+        protocol.transform(Direction.SERVERBOUND, 190, wrapper)
+        assert wrapper.cancelled
 
 
 # ---------------------------------------------------------------------------

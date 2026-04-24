@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Editor mode packets being sent between mismatched 1.26.0 and 1.26.10+ versions could cause decode errors and disconnects
+
 ## [0.3.2] - 2026-04-04
 
 ### Fixed

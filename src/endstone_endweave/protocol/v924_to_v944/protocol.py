@@ -52,9 +52,15 @@ def create_protocol() -> Protocol:
 
     # Cancel new v944 serverbound packets unknown to v924 (v924 EndId = 340)
     p.cancel_serverbound(
+        PacketId.EDITOR_NETWORK,  # 190 -- wire format changed (CompoundTag -> two strings)
         PacketId.RESOURCE_PACKS_READY_FOR_VALIDATION,  # 340
         PacketId.PARTY_CHANGED,  # 342
         PacketId.SERVERBOUND_DATA_DRIVEN_SCREEN_CLOSED,  # 343
+    )
+
+    # EditorNetwork is bidirectional; cancel clientbound as well
+    p.cancel_clientbound(
+        PacketId.EDITOR_NETWORK,  # 190
     )
 
     # Clientbound rewriters -- BlockPos conversion (NetworkBlockPos -> BlockPos)

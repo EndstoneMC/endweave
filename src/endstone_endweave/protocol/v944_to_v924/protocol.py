@@ -78,9 +78,15 @@ def create_protocol() -> Protocol:
 
     # Cancel packets unknown to v924
     p.cancel_clientbound(
-        PacketId.LOCATOR_BAR,
-        PacketId.SYNC_WORLD_CLOCKS,
-        PacketId.CLIENTBOUND_ATTRIBUTE_LAYER_SYNC,
+        PacketId.EDITOR_NETWORK,  # 190 -- wire format changed (CompoundTag -> two strings)
+        PacketId.LOCATOR_BAR,  # 341
+        PacketId.SYNC_WORLD_CLOCKS,  # 344
+        PacketId.CLIENTBOUND_ATTRIBUTE_LAYER_SYNC,  # 345
+    )
+
+    # EditorNetwork is bidirectional; cancel serverbound as well
+    p.cancel_serverbound(
+        PacketId.EDITOR_NETWORK,  # 190
     )
 
     # Serverbound rewriters -- BlockPos conversion (NetworkBlockPos -> BlockPos)
