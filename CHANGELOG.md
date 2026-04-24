@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Protocol translation for 1.26.20 (clients running 1.26.20 or later can now join 1.26.10 servers, and 1.26.10 clients can join 1.26.20 servers)
+
 ### Fixed
 - Editor mode packets being sent between mismatched 1.26.0 and 1.26.10+ versions could cause decode errors and disconnects
 - Volume entity spawn packets were misread and corrupted when translating between 1.26.0 and 1.26.10+ (could break fog, border, and other volume entity effects spawned by scripts or commands)

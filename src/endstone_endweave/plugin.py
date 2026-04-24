@@ -27,6 +27,8 @@ from .protocol.v898_to_v924 import create_protocol as create_v898_to_v924
 from .protocol.v924_to_v898 import create_protocol as create_v924_to_v898
 from .protocol.v924_to_v944 import create_protocol as create_v924_to_v944
 from .protocol.v944_to_v924 import create_protocol as create_v944_to_v924
+from .protocol.v944_to_v975 import create_protocol as create_v944_to_v975
+from .protocol.v975_to_v944 import create_protocol as create_v975_to_v944
 from .protocol.versions import VERSIONS
 from .update import UpdateChecker
 
@@ -71,6 +73,8 @@ class EndweavePlugin(Plugin):
             create_v924_to_v898,
             create_v924_to_v944,
             create_v944_to_v924,
+            create_v944_to_v975,
+            create_v975_to_v944,
         ):
             self._register_protocol(factory())
 

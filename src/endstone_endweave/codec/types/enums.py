@@ -893,8 +893,12 @@ class LevelSoundEvent(enum.IntEnum):
     # Since v944
     PAUSE_GROWTH = 597
     RESET_GROWTH = 598
-    UNDEFINED = 599
     UNDEFINED_V944 = 599
+    # Since v975
+    PUSHED_BY_PLAYER = 599
+    BOUNCE = 600
+    UNDEFINED = 601
+    UNDEFINED_V975 = 601
 
 
 class ActorEvent(enum.IntEnum):
