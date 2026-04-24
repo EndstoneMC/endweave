@@ -8,7 +8,7 @@ from ....codec import (
     BLOCK_POS,
     BOOL,
     BYTE,
-    FLOAT_LE,
+    COMPOUND_TAG,
     INT_LE,
     INVENTORY_ACTION,
     ITEM_INSTANCE,
@@ -95,7 +95,7 @@ def rewrite_set_spawn_position(wrapper: PacketWrapper) -> None:
     Args:
         wrapper: Packet wrapper for SetSpawnPosition.
     """
-    wrapper.passthrough(VAR_INT)  # Spawn Position Type
+    wrapper.passthrough(UVAR_INT)  # Spawn Position Type
     wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Block Position
     wrapper.passthrough(VAR_INT)  # Dimension type
     wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Spawn Block Pos
@@ -108,6 +108,9 @@ def rewrite_add_volume_entity(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for AddVolumeEntity.
     """
     wrapper.passthrough(UVAR_INT)  # Entity Network Id
+    wrapper.passthrough(COMPOUND_TAG)  # Components
+    wrapper.passthrough(STRING)  # JSON Identifier
+    wrapper.passthrough(STRING)  # Instance Name
     wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Min Bounds
     wrapper.map(BLOCK_POS, NETWORK_BLOCK_POS)  # Max Bounds
 
@@ -192,9 +195,7 @@ def rewrite_update_client_input_locks(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for UpdateClientInputLocks.
     """
     wrapper.passthrough(UVAR_INT)  # Input Lock ComponentData
-    wrapper.write(FLOAT_LE, 0.0)  # Server Pos.X
-    wrapper.write(FLOAT_LE, 0.0)  # Server Pos.Y
-    wrapper.write(FLOAT_LE, 0.0)  # Server Pos.Z
+    wrapper.write(VEC3, (0.0, 0.0, 0.0))  # Server Pos
 
 
 def rewrite_container_open(wrapper: PacketWrapper) -> None:
@@ -272,7 +273,7 @@ def rewrite_player_action(wrapper: PacketWrapper) -> None:
         wrapper: Packet wrapper for PlayerAction.
     """
     wrapper.passthrough(UVAR_INT64)  # Player Runtime ID
-    wrapper.passthrough(VAR_INT)  # Action
+    wrapper.passthrough(UVAR_INT)  # Action
     wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Block Position
     wrapper.map(NETWORK_BLOCK_POS, BLOCK_POS)  # Result Pos
 

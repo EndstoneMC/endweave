@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - Editor mode packets being sent between mismatched 1.26.0 and 1.26.10+ versions could cause decode errors and disconnects
+- Volume entity spawn packets were misread and corrupted when translating between 1.26.0 and 1.26.10+ (could break fog, border, and other volume entity effects spawned by scripts or commands)
 
 ## [0.3.2] - 2026-04-04
 
