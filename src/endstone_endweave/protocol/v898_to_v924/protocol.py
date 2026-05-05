@@ -42,13 +42,11 @@ def create_protocol() -> Protocol:
     """Create a protocol for v898 server <- v924 client."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
-    # Serverbound rewriters
     protocol.register_serverbound(PacketId.TEXT, rewrite_text_clientbound)
     protocol.register_serverbound(PacketId.SERVERBOUND_DATA_STORE, rewrite_serverbound_data_store)
     protocol.register_serverbound(PacketId.BOOK_EDIT, rewrite_book_edit)
     protocol.register_serverbound(PacketId.SERVERBOUND_DIAGNOSTICS, rewrite_diagnostics)
 
-    # Clientbound rewriters -- v898/v924 format differences
     protocol.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     protocol.register_clientbound(PacketId.TEXT, rewrite_text_serverbound)
     protocol.register_clientbound(PacketId.CLIENTBOUND_DATA_STORE, rewrite_clientbound_data_store)
@@ -58,7 +56,6 @@ def create_protocol() -> Protocol:
     protocol.register_clientbound(PacketId.BIOME_DEFINITION_LIST, rewrite_biome_definition_list)
     protocol.register_clientbound(PacketId.SERVER_SCRIPT_DEBUG_DRAWER, rewrite_debug_drawer)
 
-    # Clientbound rewriters -- LevelSoundEvent remapping
     sound = SoundRewriter(
         sound_remap=MAPPINGS.sound.shift_up,
         actor_data_int_remappers={MAPPINGS.actor_data_sound_key: MAPPINGS.sound.shift_up},

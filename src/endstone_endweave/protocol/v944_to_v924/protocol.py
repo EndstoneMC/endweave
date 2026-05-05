@@ -46,7 +46,7 @@ def create_protocol() -> Protocol:
     """Create a protocol for v944 server <- v924 client."""
     p = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
-    # Clientbound rewriters -- BlockPos conversion (BlockPos -> NetworkBlockPos)
+    # BlockPos -> NetworkBlockPos
     p.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     p.register_clientbound(PacketId.UPDATE_BLOCK, rewrite_first_block_to_net)
     p.register_clientbound(PacketId.TILE_EVENT, rewrite_tile_event)
@@ -60,7 +60,6 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.OPEN_SIGN, rewrite_first_block_to_net)
     p.register_clientbound(PacketId.PLAY_SOUND, rewrite_play_sound)
     p.register_clientbound(PacketId.MAP_DATA, rewrite_map_data)
-    # Clientbound rewriters -- other v944 changes
     p.register_clientbound(PacketId.PLAYER_CLIENT_INPUT_PERMISSIONS, rewrite_update_client_input_locks)
     p.register_clientbound(PacketId.VOXEL_SHAPES, rewrite_voxel_shapes)
     p.register_clientbound(PacketId.CLIENTBOUND_DATA_DRIVEN_UI_SHOW_SCREEN, rewrite_show_screen)
@@ -69,14 +68,13 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
     p.register_clientbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
 
-    # Clientbound rewriters -- LevelSoundEvent remapping
     sound = SoundRewriter(
         sound_remap=MAPPINGS.sound.shift_down,
         actor_data_int_remappers={MAPPINGS.actor_data_sound_key: MAPPINGS.sound.shift_down},
     )
     sound.register(p)
 
-    # Cancel packets unknown to v924
+    # Unknown to v924
     p.cancel_clientbound(
         PacketId.EDITOR_NETWORK,  # 190 -- wire format changed (CompoundTag -> two strings)
         PacketId.LOCATOR_BAR,  # 341
@@ -84,12 +82,12 @@ def create_protocol() -> Protocol:
         PacketId.CLIENTBOUND_ATTRIBUTE_LAYER_SYNC,  # 345
     )
 
-    # EditorNetwork is bidirectional; cancel serverbound as well
+    # EditorNetwork is bidirectional
     p.cancel_serverbound(
         PacketId.EDITOR_NETWORK,  # 190
     )
 
-    # Serverbound rewriters -- BlockPos conversion (NetworkBlockPos -> BlockPos)
+    # NetworkBlockPos -> BlockPos
     p.register_serverbound(PacketId.INVENTORY_TRANSACTION, rewrite_inventory_transaction)
     p.register_serverbound(PacketId.PLAYER_ACTION, rewrite_player_action)
     p.register_serverbound(PacketId.COMMAND_BLOCK_UPDATE, rewrite_command_block_update)

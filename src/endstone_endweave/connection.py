@@ -30,13 +30,13 @@ class UserConnection:
         com.viaversion.viaversion.connection.UserConnectionImpl
     """
 
-    address: str  # "host:port" key
+    address: str
     logger: Logger = field(repr=False)
-    client_protocol: int = 0  # Detected from RequestNetworkSettings
-    server_protocol: int = 0  # Set by ConnectionManager
+    client_protocol: int = 0
+    server_protocol: int = 0
     warned_no_chain: bool = False
-    protocol_pipeline: "list[Protocol] | None" = None  # [base, ...chain] cached after resolution
-    clientbound_pipeline: "list[Protocol] | None" = None  # [base, ...reversed chain] for clientbound
+    protocol_pipeline: "list[Protocol] | None" = None
+    clientbound_pipeline: "list[Protocol] | None" = None
     _storage: dict[type, object] = field(default_factory=dict, repr=False)
 
     @property

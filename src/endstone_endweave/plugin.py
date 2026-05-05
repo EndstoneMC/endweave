@@ -60,10 +60,8 @@ class EndweavePlugin(Plugin):
         self._connections = ConnectionManager(server_protocol=server_protocol, logger=self.logger)
         self._manager = ProtocolManager()
 
-        # Register base protocol (version detection + disconnect logging)
         self._manager.register_base(create_base_protocol(server_protocol))
 
-        # Register version-specific protocols
         for factory in (
             create_v859_to_v860,
             create_v860_to_v859,

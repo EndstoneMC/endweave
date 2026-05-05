@@ -50,7 +50,7 @@ def create_protocol() -> Protocol:
     """
     p = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)
 
-    # Cancel new v944 serverbound packets unknown to v924 (v924 EndId = 340)
+    # New v944 serverbound packets unknown to v924 (v924 EndId = 340)
     p.cancel_serverbound(
         PacketId.EDITOR_NETWORK,  # 190 -- wire format changed (CompoundTag -> two strings)
         PacketId.RESOURCE_PACKS_READY_FOR_VALIDATION,  # 340
@@ -58,12 +58,12 @@ def create_protocol() -> Protocol:
         PacketId.SERVERBOUND_DATA_DRIVEN_SCREEN_CLOSED,  # 343
     )
 
-    # EditorNetwork is bidirectional; cancel clientbound as well
+    # EditorNetwork is bidirectional
     p.cancel_clientbound(
         PacketId.EDITOR_NETWORK,  # 190
     )
 
-    # Clientbound rewriters -- BlockPos conversion (NetworkBlockPos -> BlockPos)
+    # NetworkBlockPos -> BlockPos
     p.register_clientbound(PacketId.START_GAME, rewrite_start_game)
     p.register_clientbound(PacketId.UPDATE_BLOCK, rewrite_first_net_block_to_block)
     p.register_clientbound(PacketId.TILE_EVENT, rewrite_tile_event)
@@ -78,7 +78,6 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.PLAY_SOUND, rewrite_play_sound)
     p.register_clientbound(PacketId.MAP_DATA, rewrite_map_data)
 
-    # Clientbound rewriters -- other v944 changes
     p.register_clientbound(PacketId.PLAYER_CLIENT_INPUT_PERMISSIONS, rewrite_update_client_input_locks)
     p.register_clientbound(PacketId.VOXEL_SHAPES, rewrite_voxel_shapes)
     p.register_clientbound(
@@ -93,14 +92,13 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.CAMERA_SPLINE, rewrite_camera_spline)
     p.register_clientbound(PacketId.CONTAINER_OPEN, rewrite_container_open)
 
-    # Clientbound rewriters -- LevelSoundEvent remapping
     sound = SoundRewriter(
         sound_remap=MAPPINGS.sound.shift_up,
         actor_data_int_remappers={MAPPINGS.actor_data_sound_key: MAPPINGS.sound.shift_up},
     )
     sound.register(p)
 
-    # Serverbound rewriters -- BlockPos conversion (BlockPos -> NetworkBlockPos)
+    # BlockPos -> NetworkBlockPos
     p.register_serverbound(PacketId.INVENTORY_TRANSACTION, rewrite_inventory_transaction)
     p.register_serverbound(PacketId.PLAYER_ACTION, rewrite_player_action)
     p.register_serverbound(PacketId.COMMAND_BLOCK_UPDATE, rewrite_command_block_update)

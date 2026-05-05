@@ -68,7 +68,6 @@ class ProtocolPipeline:
         connection = self._connections.get_or_create(address)
         pipeline = self._get_pipeline(connection)
 
-        # PRE transform logging (ViaVersion: logPrePacketTransform)
         if connection.needs_translation and self._debug.log_pre_packet_transform:
             self._debug.log_packet(
                 "PRE ",
@@ -79,8 +78,6 @@ class ProtocolPipeline:
                 len(payload),
             )
 
-        # Serverbound: [base, chain...] in order.
-        # Each protocol gets a fresh wrapper from the previous protocol's output.
         for protocol in pipeline:
             if not protocol.has_handler_or_cancel(Direction.SERVERBOUND, packet_id):
                 continue
@@ -111,7 +108,6 @@ class ProtocolPipeline:
         if payload != event.payload:
             event.payload = payload
 
-        # POST transform logging (ViaVersion: logPostPacketTransform)
         if connection.needs_translation and self._debug.log_post_packet_transform:
             self._debug.log_packet(
                 "POST",
@@ -137,7 +133,6 @@ class ProtocolPipeline:
         packet_id = event.packet_id
         payload = event.payload
 
-        # PRE transform logging
         if connection.needs_translation and self._debug.log_pre_packet_transform:
             self._debug.log_packet(
                 "PRE ",
@@ -149,7 +144,6 @@ class ProtocolPipeline:
             )
 
         # Clientbound: [base, ...reversed chain] (ViaVersion: reversedProtocolList).
-        # Each protocol gets a fresh wrapper from the previous protocol's output.
         for protocol in connection.clientbound_pipeline or []:
             if not protocol.has_handler_or_cancel(Direction.CLIENTBOUND, packet_id):
                 continue
@@ -180,7 +174,6 @@ class ProtocolPipeline:
         if payload != event.payload:
             event.payload = payload
 
-        # POST transform logging
         if connection.needs_translation and self._debug.log_post_packet_transform:
             self._debug.log_packet(
                 "POST",

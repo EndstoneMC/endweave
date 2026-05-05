@@ -81,17 +81,12 @@ class ProtocolManager:
         if cache_key in self._path_cache:
             return self._path_cache[cache_key]
 
-        # Direct lookup
         direct = self._protocols.get(cache_key)
         if direct is not None:
             result = [direct]
             self._path_cache[cache_key] = result
             return result
 
-        # BFS from client_protocol toward server_protocol
-        # Each protocol steps from client_protocol -> server_protocol,
-        # so we search: starting at client_protocol, find edges where
-        # client_protocol matches, and follow to server_protocol.
         path = self._bfs(server_protocol, client_protocol)
         self._path_cache[cache_key] = path
         return path
@@ -107,7 +102,6 @@ class ProtocolManager:
             Ordered list of Protocols forming the shortest chain,
             or None if no path exists.
         """
-        # Build adjacency: for each protocol (s, c), from c we can reach s
         adjacency: dict[int, list[Protocol]] = {}
         for (s, c), protocol in self._protocols.items():
             adjacency.setdefault(c, []).append(protocol)
