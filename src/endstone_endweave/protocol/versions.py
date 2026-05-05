@@ -37,12 +37,8 @@ v1_21_120 = ProtocolVersion(859, "1.21.120", frozenset({"1.21.120"}))
 v1_21_124 = ProtocolVersion(860, "1.21.124", frozenset({"1.21.124"}))
 v1_21_130 = ProtocolVersion(898, "1.21.130", frozenset({"1.21.130", "1.21.131", "1.21.132"}))
 v1_26_0 = ProtocolVersion(924, "1.26.0", frozenset({"1.26.0", "1.26.1", "1.26.2", "1.26.3"}))
-v1_26_10 = ProtocolVersion(944, "1.26.10", frozenset({"1.26.10"}))
-v1_26_20 = ProtocolVersion(
-    975,
-    "1.26.20",
-    frozenset(f"1.26.{p}" for p in range(20, 29)),
-)
+v1_26_10 = ProtocolVersion(944, "1.26.10", frozenset({"1.26.10", "1.26.11", "1.26.12", "1.26.13"}))
+v1_26_20 = ProtocolVersion(975, "1.26.20", frozenset({"1.26.20"}))
 
 VERSIONS: dict[int, ProtocolVersion] = {
     v.protocol: v for v in [v1_21_120, v1_21_124, v1_21_130, v1_26_0, v1_26_10, v1_26_20]

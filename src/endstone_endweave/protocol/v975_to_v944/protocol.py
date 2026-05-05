@@ -6,6 +6,7 @@ from ..mappings.v944_v975 import MAPPINGS
 from ..packet_ids import PacketId
 from .handlers.actor_event import rewrite_actor_event
 from .handlers.diagnostics import rewrite_diagnostics
+from .handlers.item_stack import rewrite_inventory_slot
 from .handlers.level_sound_event import rewrite_level_sound_event
 from .handlers.mob_equipment import rewrite_mob_equipment_clientbound, rewrite_mob_equipment_serverbound
 from .handlers.play_sound import rewrite_play_sound
@@ -34,6 +35,9 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.PLAYER_EQUIPMENT, rewrite_mob_equipment_clientbound)
     p.register_serverbound(PacketId.PLAYER_EQUIPMENT, rewrite_mob_equipment_serverbound)
 
+    # cerealizer<NetworkItemStackDescriptor>::SerializedData -> v944 NetworkItemStackDescriptor
+    p.register_clientbound(PacketId.INVENTORY_SLOT, rewrite_inventory_slot)
+
     # Unknown to v944 or whose payload was restructured
     p.cancel_clientbound(
         PacketId.SERVER_STORE_INFO,  # 346
@@ -42,6 +46,9 @@ def create_protocol() -> Protocol:
         PacketId.SERVER_SCRIPT_DEBUG_DRAWER,  # 328 -- PrimitiveShapeDataPayload restructured
         PacketId.CLIENTBOUND_ATTRIBUTE_LAYER_SYNC,  # 345 -- Weight switch removed
         PacketId.PLAYER_ENCHANT_OPTIONS,  # 146 -- ItemEnchantOption.Cost width changed
+        PacketId.CRAFTING_DATA,  # 52 -- writeNetItem -> writeNetworkItemStackDescriptor (cerealizer)
+        PacketId.CREATIVE_CONTENT,  # 145 -- same
+        PacketId.ITEM_REGISTRY,  # 162 -- ItemData CompoundTag schema change (cause TBD)
     )
 
     p.register_serverbound(PacketId.UPDATE_CLIENT_OPTIONS, rewrite_update_client_options)

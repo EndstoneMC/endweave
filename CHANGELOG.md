@@ -8,10 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - Protocol translation for 1.26.20 (clients running 1.26.20 or later can now join 1.26.10 servers, and 1.26.10 clients can join 1.26.20 servers)
+- Equipment slot translation between 1.26.10 and 1.26.20 so armor swaps, hotbar selection, and offhand changes work across the version boundary
+- Inventory slot updates (hotbar, armor, offhand, container slots) now translate correctly between 1.26.10 and 1.26.20, so 1.26.20 clients can join 1.26.10 servers without being disconnected during login
 
 ### Fixed
 - Editor mode packets being sent between mismatched 1.26.0 and 1.26.10+ versions could cause decode errors and disconnects
 - Volume entity spawn packets were misread and corrupted when translating between 1.26.0 and 1.26.10+ (could break fog, border, and other volume entity effects spawned by scripts or commands)
+- Locator bar waypoints, script debug shapes, environment attribute layers, and anvil enchantment options no longer cause decode errors between 1.26.10 and 1.26.20 clients (these features are dropped across the version boundary instead of crashing the connection)
 
 ## [0.3.2] - 2026-04-04
 

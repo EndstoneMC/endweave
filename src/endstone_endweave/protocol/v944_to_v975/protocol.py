@@ -6,6 +6,7 @@ from ..mappings.v944_v975 import MAPPINGS
 from ..packet_ids import PacketId
 from .handlers.actor_event import rewrite_actor_event
 from .handlers.diagnostics import rewrite_diagnostics
+from .handlers.item_stack import rewrite_inventory_slot
 from .handlers.level_sound_event import rewrite_level_sound_event
 from .handlers.mob_equipment import rewrite_mob_equipment_clientbound, rewrite_mob_equipment_serverbound
 from .handlers.play_sound import rewrite_play_sound
@@ -40,6 +41,9 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.PLAYER_EQUIPMENT, rewrite_mob_equipment_clientbound)
     p.register_serverbound(PacketId.PLAYER_EQUIPMENT, rewrite_mob_equipment_serverbound)
 
+    # NetworkItemStackDescriptor -> cerealizer<NetworkItemStackDescriptor>::SerializedData
+    p.register_clientbound(PacketId.INVENTORY_SLOT, rewrite_inventory_slot)
+
     p.register_serverbound(PacketId.UPDATE_CLIENT_OPTIONS, rewrite_update_client_options)
     p.register_serverbound(PacketId.SERVERBOUND_DIAGNOSTICS, rewrite_diagnostics)
 
@@ -50,6 +54,22 @@ def create_protocol() -> Protocol:
         PacketId.SERVER_SCRIPT_DEBUG_DRAWER,  # 328 -- ShapeDataPayload -> PrimitiveShapeDataPayload
         PacketId.CLIENTBOUND_ATTRIBUTE_LAYER_SYNC,  # 345 -- Weight switch removed
         PacketId.PLAYER_ENCHANT_OPTIONS,  # 146 -- ItemEnchantOption.Cost width changed
+    )
+
+    # Item-stack carriers whose payload changed in v975. v944 BDS used
+    # writeNetItem to serialise items; v975 switched to
+    # writeNetworkItemStackDescriptor through a cerealizer wrapper with
+    # different field widths and no air shortcut. A first attempt at an
+    # InventorySlot rewriter (handlers/item_stack.py) decoded v944 items
+    # correctly but produced output the v975 client refused, suggesting the
+    # outer InventorySlot layout (Container Id / Slot widths, FullContainerName
+    # optionality) or the cerealizer "Net Id Variant: ItemStackNetIdVariant
+    # optional" semantics differ from the protocol-docs spec. Cancelling all
+    # four lets login complete; rewriters require BDS-header verification.
+    p.cancel_clientbound(
+        PacketId.CRAFTING_DATA,  # 52
+        PacketId.CREATIVE_CONTENT,  # 145
+        PacketId.ITEM_REGISTRY,  # 162
     )
 
     # No safe downgrade

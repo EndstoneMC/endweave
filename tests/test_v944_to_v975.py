@@ -28,6 +28,30 @@ class TestV944ToV975Protocol:
         protocol.transform(Direction.SERVERBOUND, 342, wrapper)
         assert wrapper.cancelled
 
+    def test_cancels_locator_bar_clientbound(self):
+        protocol, conn = self._make_protocol()
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        protocol.transform(Direction.CLIENTBOUND, 341, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_debug_drawer_clientbound(self):
+        protocol, conn = self._make_protocol()
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        protocol.transform(Direction.CLIENTBOUND, 328, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_attribute_layer_sync_clientbound(self):
+        protocol, conn = self._make_protocol()
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        protocol.transform(Direction.CLIENTBOUND, 345, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_player_enchant_options_clientbound(self):
+        protocol, conn = self._make_protocol()
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        protocol.transform(Direction.CLIENTBOUND, 146, wrapper)
+        assert wrapper.cancelled
+
 
 # ---------------------------------------------------------------------------
 # v975_to_v944 protocol factory (v975 server <- v944 client)
@@ -58,6 +82,30 @@ class TestV975ToV944Protocol:
         protocol, conn = self._make_protocol()
         wrapper = PacketWrapper(b"\x01\x00", user=conn)
         protocol.transform(Direction.SERVERBOUND, 342, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_locator_bar_clientbound(self):
+        protocol, conn = self._make_protocol()
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        protocol.transform(Direction.CLIENTBOUND, 341, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_debug_drawer_clientbound(self):
+        protocol, conn = self._make_protocol()
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        protocol.transform(Direction.CLIENTBOUND, 328, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_attribute_layer_sync_clientbound(self):
+        protocol, conn = self._make_protocol()
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        protocol.transform(Direction.CLIENTBOUND, 345, wrapper)
+        assert wrapper.cancelled
+
+    def test_cancels_player_enchant_options_clientbound(self):
+        protocol, conn = self._make_protocol()
+        wrapper = PacketWrapper(b"\x00", user=conn)
+        protocol.transform(Direction.CLIENTBOUND, 146, wrapper)
         assert wrapper.cancelled
 
 
@@ -414,3 +462,105 @@ class TestRequestNetworkSettingsV975:
         wrapper = PacketWrapper(payload, user=conn)
         detect_client_protocol(wrapper)
         assert struct.unpack(">i", wrapper.to_bytes()[:4])[0] == 944
+
+
+# ---------------------------------------------------------------------------
+# MobEquipmentPacket (31, PLAYER_EQUIPMENT)
+# ---------------------------------------------------------------------------
+
+
+def _write_empty_item(w: PacketWriter) -> None:
+    """Write an air ItemInstance (network_id == 0 short-circuits the rest)."""
+    w.write_varint(0)
+
+
+class TestMobEquipmentV944ToV975Clientbound:
+    def test_widens_byte_to_uvarint(self):
+        from endstone_endweave.protocol.v944_to_v975.handlers.mob_equipment import (
+            rewrite_mob_equipment_clientbound,
+        )
+
+        w = PacketWriter()
+        w.write_uvarint64(99999)  # Target Runtime ID
+        _write_empty_item(w)
+        w.write_byte(0x05)  # Slot
+        w.write_byte(0x08)  # Selected Slot
+        w.write_byte(0x00)  # Container ID
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_mob_equipment_clientbound(wrapper)
+        r = PacketReader(wrapper.to_bytes())
+        assert r.read_uvarint64() == 99999
+        assert r.read_varint() == 0  # empty item
+        assert r.read_uvarint() == 5
+        assert r.read_uvarint() == 8
+        assert r.read_uvarint() == 0
+        assert not r.has_remaining
+
+
+class TestMobEquipmentV944ToV975Serverbound:
+    def test_narrows_uvarint_to_byte(self):
+        from endstone_endweave.protocol.v944_to_v975.handlers.mob_equipment import (
+            rewrite_mob_equipment_serverbound,
+        )
+
+        w = PacketWriter()
+        w.write_uvarint64(99999)
+        _write_empty_item(w)
+        w.write_uvarint(5)
+        w.write_uvarint(8)
+        w.write_uvarint(0)
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_mob_equipment_serverbound(wrapper)
+        r = PacketReader(wrapper.to_bytes())
+        assert r.read_uvarint64() == 99999
+        assert r.read_varint() == 0
+        assert r.read_byte() == 5
+        assert r.read_byte() == 8
+        assert r.read_byte() == 0
+        assert not r.has_remaining
+
+
+class TestMobEquipmentV975ToV944Clientbound:
+    def test_narrows_uvarint_to_byte(self):
+        from endstone_endweave.protocol.v975_to_v944.handlers.mob_equipment import (
+            rewrite_mob_equipment_clientbound,
+        )
+
+        w = PacketWriter()
+        w.write_uvarint64(99999)
+        _write_empty_item(w)
+        w.write_uvarint(5)
+        w.write_uvarint(8)
+        w.write_uvarint(0)
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_mob_equipment_clientbound(wrapper)
+        r = PacketReader(wrapper.to_bytes())
+        assert r.read_uvarint64() == 99999
+        assert r.read_varint() == 0
+        assert r.read_byte() == 5
+        assert r.read_byte() == 8
+        assert r.read_byte() == 0
+        assert not r.has_remaining
+
+
+class TestMobEquipmentV975ToV944Serverbound:
+    def test_widens_byte_to_uvarint(self):
+        from endstone_endweave.protocol.v975_to_v944.handlers.mob_equipment import (
+            rewrite_mob_equipment_serverbound,
+        )
+
+        w = PacketWriter()
+        w.write_uvarint64(99999)
+        _write_empty_item(w)
+        w.write_byte(0x05)
+        w.write_byte(0x08)
+        w.write_byte(0x00)
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_mob_equipment_serverbound(wrapper)
+        r = PacketReader(wrapper.to_bytes())
+        assert r.read_uvarint64() == 99999
+        assert r.read_varint() == 0
+        assert r.read_uvarint() == 5
+        assert r.read_uvarint() == 8
+        assert r.read_uvarint() == 0
+        assert not r.has_remaining
