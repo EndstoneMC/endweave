@@ -1,24 +1,8 @@
-"""CraftingDataEntry and Recipe variant codecs.
-
-Mirrors BDS ``CraftingDataPacket.h`` / ``CraftingDataEntry::write``: ten
-``CraftingDataEntryType`` discriminators, each with its own per-variant
-payload. Most variants delegate to ``serialize<RecipeT>::write`` on a
-``Recipe``-derived class; ``FurnaceRecipe`` / ``FurnaceAuxRecipe`` carry their
-data directly on the entry instead.
-
-Recipe wire formats are ported from CloudburstMC/Protocol
-(``CraftingDataSerializer_v407`` / ``_v582``) since BDS exposes only the
-function signatures, not the inlined ``serialize<RecipeT>::write`` bodies.
-
-Class hierarchy and member names mirror BDS ``Recipe.h`` and the per-variant
-headers under ``world/item/crafting/``. Members not on the wire
-(``mUnlockingRequirement``, ``mRecipeDataVersion``, ``mRuntimeResults``,
-``UserDataShapelessRecipe::mResults``) are omitted; runtime-only state isn't
-relevant to a wire codec.
-"""
+"""CraftingDataEntry and Recipe variant codecs."""
 
 import enum
 from dataclasses import dataclass, field
+from typing import Any
 
 from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.writer import PacketWriter
@@ -29,8 +13,6 @@ from .primitives import Type
 
 
 class ItemDescriptorKind(enum.IntEnum):
-    """``ItemDescriptor::InternalType`` from BDS ItemDescriptor.h."""
-
     INVALID = 0
     DEFAULT = 1
     MOLANG = 2
@@ -41,20 +23,6 @@ class ItemDescriptorKind(enum.IntEnum):
 
 @dataclass
 class ItemDescriptor:
-    """``ItemDescriptor`` payload tagged by ``kind`` (``InternalType``).
-
-    Only the fields relevant to ``kind`` are read/written; the rest stay at
-    their defaults. Wire layout per CloudburstMC ``BedrockCodecHelper_v554``
-    / ``_v575``::
-
-        DEFAULT       int16 item_id; if item_id != 0: int16 aux_value
-        MOLANG        string tag_expression; uint8 molang_version
-        ITEM_TAG      string item_tag
-        DEFERRED      string full_name; int16 aux_value
-        COMPLEX_ALIAS string full_name
-        INVALID       (no payload)
-    """
-
     kind: ItemDescriptorKind = ItemDescriptorKind.INVALID
     item_id: int = 0
     aux_value: int = 0
@@ -110,7 +78,6 @@ class _ItemDescriptorType(Type[ItemDescriptor]):
         if value.kind is ItemDescriptorKind.COMPLEX_ALIAS:
             writer.write_string(value.full_name)
             return
-        # INVALID has no payload.
 
 
 ITEM_DESCRIPTOR = _ItemDescriptorType()
@@ -118,8 +85,6 @@ ITEM_DESCRIPTOR = _ItemDescriptorType()
 
 @dataclass
 class RecipeIngredient:
-    """``RecipeIngredient`` aka ``ItemDescriptorWithCount``."""
-
     descriptor: ItemDescriptor = field(default_factory=ItemDescriptor)
     count: int = 0
 
@@ -140,23 +105,6 @@ RECIPE_INGREDIENT = _RecipeIngredientType()
 
 @dataclass
 class Recipe:
-    """Mirrors BDS ``Recipe.h`` member layout.
-
-    +---------------------+-----------------------+
-    | BDS member          | Python field          |
-    +=====================+=======================+
-    | mRecipeId           | recipe_id             |
-    | mMyId               | uuid (16-byte)        |
-    | mWidth              | width                 |
-    | mHeight             | height                |
-    | mPriority           | priority              |
-    | mRecipeNetId        | recipe_net_id         |
-    | mMyIngredients      | ingredients           |
-    | mResults            | results               |
-    | mTag (HashedString) | tag (string portion)  |
-    +---------------------+-----------------------+
-    """
-
     recipe_id: str = ""
     uuid: bytes = b"\x00" * 16
     width: int = 0
@@ -170,52 +118,42 @@ class Recipe:
 
 @dataclass
 class ShapelessRecipe(Recipe):
-    """``ShapelessRecipe : Recipe`` -- no new members."""
+    pass
 
 
 @dataclass
 class ShapedRecipe(Recipe):
-    """``ShapedRecipe : Recipe`` -- adds ``mAssumeSymmetry``."""
-
     assume_symmetry: bool = False
 
 
 @dataclass
 class MultiRecipe(Recipe):
-    """``MultiRecipe : Recipe`` -- no new members."""
+    pass
 
 
 @dataclass
 class UserDataShapelessRecipe(ShapelessRecipe):
-    """``UserDataShapelessRecipe : ShapelessRecipe`` -- no wire-serialized members."""
+    pass
 
 
 @dataclass
 class ShapelessChemistryRecipe(ShapelessRecipe):
-    """``ShapelessChemistryRecipe : ShapelessRecipe`` -- no new members."""
+    pass
 
 
 @dataclass
 class ShapedChemistryRecipe(ShapedRecipe):
-    """``ShapedChemistryRecipe : ShapedRecipe`` -- no new members."""
+    pass
 
 
 @dataclass
 class SmithingTransformRecipe(ShapelessRecipe):
-    """``SmithingTransformRecipe : ShapelessRecipe`` -- no wire-serialized members.
-
-    Wire format uses ``ingredients[0..2]`` (template/base/addition) and
-    ``results[0]`` (single result), matching BDS ``mMyIngredients[0..2]`` and
-    ``mResults``.
-    """
+    """Wire format uses ``ingredients[0..2]`` and ``results[0]``."""
 
 
 @dataclass
 class SmithingTrimRecipe(ShapelessRecipe):
-    """``SmithingTrimRecipe : ShapelessRecipe`` -- no wire-serialized members.
-
-    Wire format uses ``ingredients[0..2]`` (template/base/addition).
-    """
+    """Wire format uses ``ingredients[0..2]``; no result on the wire."""
 
 
 def _read_shapeless_body(reader: PacketReader, recipe: Recipe) -> None:
@@ -392,10 +330,8 @@ SHAPED_CHEMISTRY_RECIPE = _ShapedChemistryRecipeType()
 SMITHING_TRANSFORM_RECIPE = _SmithingTransformRecipeType()
 SMITHING_TRIM_RECIPE = _SmithingTrimRecipeType()
 
-# Discriminator -> Recipe-variant codec. FurnaceRecipe / FurnaceAuxRecipe are
-# absent: those entries carry their fields directly on the CraftingDataEntry
-# rather than via a Recipe object.
-RECIPE_CODECS: dict[CraftingDataEntryType, Type[Recipe]] = {
+
+RECIPE_CODECS: dict[CraftingDataEntryType, Type[Any]] = {
     CraftingDataEntryType.SHAPELESS_RECIPE: SHAPELESS_RECIPE,
     CraftingDataEntryType.SHAPED_RECIPE: SHAPED_RECIPE,
     CraftingDataEntryType.MULTI_RECIPE: MULTI_RECIPE,
@@ -418,8 +354,6 @@ class CraftingDataEntry:
 
 
 class _CraftingDataEntryType(Type[CraftingDataEntry]):
-    """CraftingDataEntry codec: type discriminator then per-variant payload."""
-
     def read(self, reader: PacketReader) -> CraftingDataEntry:
         t = CraftingDataEntryType(reader.read_varint())
         if t is CraftingDataEntryType.FURNACE_RECIPE:
@@ -461,18 +395,18 @@ class _CraftingDataEntryType(Type[CraftingDataEntry]):
         writer.write_varint(value.type.value)
         t = value.type
         if t is CraftingDataEntryType.FURNACE_RECIPE:
-            writer.write_varint(value.item_data)  # Item Data
+            writer.write_varint(value.item_data)
             ITEM_INSTANCE.write(writer, value.item_result)
-            writer.write_string(value.tag)  # Recipe Tag
+            writer.write_string(value.tag)
             return
         if t is CraftingDataEntryType.FURNACE_AUX_RECIPE:
-            writer.write_varint(value.item_data)  # Item Data
-            writer.write_varint(value.item_aux)  # Auxiliary Item Data
+            writer.write_varint(value.item_data)
+            writer.write_varint(value.item_aux)
             ITEM_INSTANCE.write(writer, value.item_result)
-            writer.write_string(value.tag)  # Recipe Tag
+            writer.write_string(value.tag)
             return
 
-        assert value.recipe is not None, "CraftingDataEntry.recipe must be set"
+        assert value.recipe is not None
         RECIPE_CODECS[t].write(writer, value.recipe)
 
 
