@@ -250,9 +250,7 @@ def _read_shaped_body(reader: PacketReader, recipe: ShapedRecipe) -> None:
     recipe.recipe_id = reader.read_string()
     recipe.width = reader.read_varint()
     recipe.height = reader.read_varint()
-    recipe.ingredients = [
-        RECIPE_INGREDIENT.read(reader) for _ in range(recipe.width * recipe.height)
-    ]
+    recipe.ingredients = [RECIPE_INGREDIENT.read(reader) for _ in range(recipe.width * recipe.height)]
     n = reader.read_uvarint()
     recipe.results = [ITEM_INSTANCE.read(reader) for _ in range(n)]
     recipe.uuid = reader.read_bytes(16)
@@ -267,9 +265,7 @@ def _write_shaped_body(writer: PacketWriter, value: ShapedRecipe) -> None:
     writer.write_varint(value.height)
     expected = value.width * value.height
     if len(value.ingredients) != expected:
-        raise ValueError(
-            f"ShapedRecipe ingredient count {len(value.ingredients)} != width*height {expected}"
-        )
+        raise ValueError(f"ShapedRecipe ingredient count {len(value.ingredients)} != width*height {expected}")
     for ingredient in value.ingredients:
         RECIPE_INGREDIENT.write(writer, ingredient)
     writer.write_uvarint(len(value.results))
@@ -357,13 +353,9 @@ class _SmithingTransformRecipeType(Type[SmithingTransformRecipe]):
 
     def write(self, writer: PacketWriter, value: SmithingTransformRecipe) -> None:
         if len(value.ingredients) != 3:
-            raise ValueError(
-                f"SmithingTransformRecipe must have 3 ingredients (got {len(value.ingredients)})"
-            )
+            raise ValueError(f"SmithingTransformRecipe must have 3 ingredients (got {len(value.ingredients)})")
         if len(value.results) != 1:
-            raise ValueError(
-                f"SmithingTransformRecipe must have 1 result (got {len(value.results)})"
-            )
+            raise ValueError(f"SmithingTransformRecipe must have 1 result (got {len(value.results)})")
         writer.write_string(value.recipe_id)
         for ingredient in value.ingredients:
             RECIPE_INGREDIENT.write(writer, ingredient)
@@ -383,9 +375,7 @@ class _SmithingTrimRecipeType(Type[SmithingTrimRecipe]):
 
     def write(self, writer: PacketWriter, value: SmithingTrimRecipe) -> None:
         if len(value.ingredients) != 3:
-            raise ValueError(
-                f"SmithingTrimRecipe must have 3 ingredients (got {len(value.ingredients)})"
-            )
+            raise ValueError(f"SmithingTrimRecipe must have 3 ingredients (got {len(value.ingredients)})")
         writer.write_string(value.recipe_id)
         for ingredient in value.ingredients:
             RECIPE_INGREDIENT.write(writer, ingredient)
