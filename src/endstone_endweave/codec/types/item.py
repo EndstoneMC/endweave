@@ -17,7 +17,8 @@ class ItemInstance:
         aux_value: Metadata/damage value for the item.
         has_net_id: Whether the item carries a stack network ID.
         stack_net_id: Stack network ID for inventory transaction tracking.
-        net_id_variant: ItemStackNetIdVariant case (0 = server net id, 1 = request id, 2 = legacy request id). v944 only ever uses 0; preserved for round-trips through v975.
+        net_id_variant: ItemStackNetIdVariant case (0 = server net id, 1 = request id, 2 = legacy request id).
+                        v944 only ever uses 0; preserved for round-trips through v975.
         block_runtime_id: Runtime ID of the block form of this item.
         user_data: Raw extra data blob (NBT, canPlace/canBreak lists, etc.).
     """

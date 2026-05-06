@@ -38,6 +38,7 @@ from .handlers.start_game import (
 SERVER_PROTOCOL = 898
 CLIENT_PROTOCOL = 924
 
+
 def create_protocol() -> Protocol:
     """Create a protocol for v898 server <- v924 client."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)

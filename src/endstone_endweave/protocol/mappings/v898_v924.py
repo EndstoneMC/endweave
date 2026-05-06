@@ -24,9 +24,11 @@ from ..mapping_data import MappingData, inserted
 MAPPINGS = MappingData(
     sound=inserted(19, at=LevelSoundEvent.UNDEFINED_V898),
     actor_data_sound_key=ActorDataIDs.HEARTBEAT_SOUND_EVENT,
-    dropped_actor_data_keys=frozenset({
-        ActorDataIDs.AIM_ASSIST_PRIORITY_PRESET_ID,
-        ActorDataIDs.AIM_ASSIST_PRIORITY_CATEGORY_ID,
-        ActorDataIDs.AIM_ASSIST_PRIORITY_ACTOR_ID,
-    }),
+    dropped_actor_data_keys=frozenset(
+        {
+            ActorDataIDs.AIM_ASSIST_PRIORITY_PRESET_ID,
+            ActorDataIDs.AIM_ASSIST_PRIORITY_CATEGORY_ID,
+            ActorDataIDs.AIM_ASSIST_PRIORITY_ACTOR_ID,
+        }
+    ),
 )

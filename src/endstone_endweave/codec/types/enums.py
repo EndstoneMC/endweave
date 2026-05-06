@@ -255,6 +255,22 @@ class ComplexInventoryTransactionType(enum.IntEnum):
     ITEM_RELEASE_TRANSACTION = 4
 
 
+class CraftingDataEntryType(enum.IntEnum):
+    """CraftingDataEntryType."""
+
+    SHAPELESS_RECIPE = 0
+    SHAPED_RECIPE = 1
+    FURNACE_RECIPE = 2
+    FURNACE_AUX_RECIPE = 3
+    MULTI_RECIPE = 4
+    USER_DATA_SHAPELESS_RECIPE = 5
+    SHAPELESS_CHEMISTRY_RECIPE = 6
+    SHAPED_CHEMISTRY_RECIPE = 7
+    SMITHING_TRANSFORM_RECIPE = 8
+    SMITHING_TRIM_RECIPE = 9
+    COUNT = 10
+
+
 class DataItemType(enum.IntEnum):
     """SynchedActorData DataItemType."""
 

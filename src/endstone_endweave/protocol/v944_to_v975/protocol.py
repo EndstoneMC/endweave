@@ -5,6 +5,7 @@ from .. import Protocol
 from ..mappings.v944_v975 import MAPPINGS
 from ..packet_ids import PacketId
 from .handlers.actor_event import rewrite_actor_event
+from .handlers.crafting_data import rewrite_crafting_data
 from .handlers.item_stack import (
     rewrite_inventory_slot,
     rewrite_mob_equipment_clientbound,
@@ -38,13 +39,10 @@ def create_protocol() -> Protocol:
     p.register_clientbound(PacketId.PLAY_SOUND, rewrite_play_sound)
     p.register_clientbound(PacketId.INVENTORY_SLOT, rewrite_inventory_slot)
     p.register_clientbound(PacketId.PLAYER_EQUIPMENT, rewrite_mob_equipment_clientbound)
+    p.register_clientbound(PacketId.CRAFTING_DATA, rewrite_crafting_data)
 
     p.register_serverbound(PacketId.PLAYER_EQUIPMENT, rewrite_mob_equipment_serverbound)
     p.register_serverbound(PacketId.UPDATE_CLIENT_OPTIONS, rewrite_update_client_options)
-
-    p.cancel_clientbound(
-        PacketId.CRAFTING_DATA,  # 52
-    )
 
     p.cancel_clientbound(
         PacketId.LOCATOR_BAR,  # 341 -- TextureId(int) -> TexturePath(string) + IconSize(Vec2)

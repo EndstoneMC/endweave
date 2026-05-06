@@ -27,6 +27,7 @@ from .handlers.text import (
 SERVER_PROTOCOL = 860
 CLIENT_PROTOCOL = 898
 
+
 def create_protocol() -> Protocol:
     """Create a protocol for v860 server <- v898 client translation."""
     protocol = Protocol(server_protocol=SERVER_PROTOCOL, client_protocol=CLIENT_PROTOCOL)

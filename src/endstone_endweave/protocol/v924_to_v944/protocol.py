@@ -42,6 +42,7 @@ from .handlers.voxel_shapes import (
 SERVER_PROTOCOL = 924
 CLIENT_PROTOCOL = 944
 
+
 def create_protocol() -> Protocol:
     """Create a protocol for v924 server <- v944 client.
 
