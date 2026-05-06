@@ -2,8 +2,9 @@
 
 from dataclasses import dataclass
 
-from ..reader import PacketReader
-from ..writer import PacketWriter
+from endstone_endweave.codec.reader import PacketReader
+from endstone_endweave.codec.writer import PacketWriter
+
 from .primitives import Type
 
 

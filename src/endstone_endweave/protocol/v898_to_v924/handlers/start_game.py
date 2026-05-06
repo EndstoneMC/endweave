@@ -1,6 +1,6 @@
 """Handler for StartGamePacket -- v898 server to v924 client."""
 
-from ....codec import (
+from endstone_endweave.codec import (
     BOOL,
     INT64_LE,
     LEVEL_SETTINGS_V924,

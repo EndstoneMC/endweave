@@ -1,6 +1,6 @@
 """Handler for GraphicsParameterOverridePacket -- v898 server to v924 client."""
 
-from ....codec import (
+from endstone_endweave.codec import (
     FLOAT_LE,
     UVAR_INT,
     VEC3,

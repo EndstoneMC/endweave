@@ -1,6 +1,6 @@
 """ResourcePackStack packet handler for v898 server to v860 client translation."""
 
-from ....codec import (
+from endstone_endweave.codec import (
     BOOL,
     STRING,
     UVAR_INT,

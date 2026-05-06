@@ -11,7 +11,7 @@ See Also:
 
 from collections.abc import Callable, Set
 
-from ..codec import (
+from endstone_endweave.codec import (
     ACTOR_DATA_LIST,
     FLOAT_LE,
     ITEM_INSTANCE,
@@ -26,8 +26,8 @@ from ..codec import (
     DataItemType,
     PacketWrapper,
 )
-from ..protocol import Protocol
-from ..protocol.packet_ids import PacketId
+from endstone_endweave.protocol import Protocol
+from endstone_endweave.protocol.packet_ids import PacketId
 
 
 class SoundRewriter:

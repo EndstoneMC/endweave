@@ -3,8 +3,9 @@
 from dataclasses import dataclass
 from typing import Any
 
-from ..reader import PacketReader
-from ..writer import PacketWriter
+from endstone_endweave.codec.reader import PacketReader
+from endstone_endweave.codec.writer import PacketWriter
+
 from .primitives import (
     BOOL,
     FLOAT_LE,

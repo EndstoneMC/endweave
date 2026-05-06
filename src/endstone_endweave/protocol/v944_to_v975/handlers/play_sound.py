@@ -3,7 +3,7 @@
 v975 appended an optional Server Sound Handle (uint64) at the end.
 """
 
-from ....codec import BOOL, PacketWrapper
+from endstone_endweave.codec import BOOL, PacketWrapper
 
 
 def rewrite_play_sound(wrapper: PacketWrapper) -> None:

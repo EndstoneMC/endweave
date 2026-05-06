@@ -1,4 +1,4 @@
-from ....codec import (
+from endstone_endweave.codec import (
     BOOL,
     BYTE,
     ITEM_INSTANCE,

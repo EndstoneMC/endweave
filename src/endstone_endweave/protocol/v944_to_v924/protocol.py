@@ -1,9 +1,10 @@
 """Protocol factory for v944 (r26_u1) server <- v924 (r26_u0) client."""
 
-from ...rewriter import SoundRewriter
-from .. import Protocol
-from ..mappings.v924_v944 import MAPPINGS
-from ..packet_ids import PacketId
+from endstone_endweave.protocol import Protocol
+from endstone_endweave.protocol.mappings.v924_v944 import MAPPINGS
+from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.rewriter import SoundRewriter
+
 from .handlers.block_pos import (
     rewrite_add_volume_entity,
     rewrite_anvil_damage,

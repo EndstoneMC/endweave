@@ -4,8 +4,8 @@ Remaps the Event ID (shifts new v975 sound IDs up) and appends the optional
 Fire At Position field added in v975.
 """
 
-from ....codec import BOOL, INT64_LE, STRING, UVAR_INT, VAR_INT, VEC3, PacketWrapper
-from ...mappings.v944_v975 import MAPPINGS
+from endstone_endweave.codec import BOOL, INT64_LE, STRING, UVAR_INT, VAR_INT, VEC3, PacketWrapper
+from endstone_endweave.protocol.mappings.v944_v975 import MAPPINGS
 
 
 def rewrite_level_sound_event(wrapper: PacketWrapper) -> None:

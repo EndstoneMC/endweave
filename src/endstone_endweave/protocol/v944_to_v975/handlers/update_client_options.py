@@ -4,7 +4,7 @@ v975 appended an optional Filter Profanity Change (bool) at the end.
 Strip it so the v944 server only sees the fields it expects.
 """
 
-from ....codec import BOOL, BYTE, PacketWrapper
+from endstone_endweave.codec import BOOL, BYTE, PacketWrapper
 
 
 def rewrite_update_client_options(wrapper: PacketWrapper) -> None:

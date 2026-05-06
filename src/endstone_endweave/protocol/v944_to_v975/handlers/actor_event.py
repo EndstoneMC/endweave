@@ -3,7 +3,7 @@
 v975 appended an optional Fire At Position (Vec3) field at the end.
 """
 
-from ....codec import BOOL, PacketWrapper
+from endstone_endweave.codec import BOOL, PacketWrapper
 
 
 def rewrite_actor_event(wrapper: PacketWrapper) -> None:

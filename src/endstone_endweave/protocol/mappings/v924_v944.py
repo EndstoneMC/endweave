@@ -13,8 +13,8 @@ NoteBlockInstrument -- 4 new IDs inserted at 16 (TRUMPET):
     (Zombie, Skeleton, Creeper, WitherSkeleton, Piglin) shift to 20+.
 """
 
-from ...codec.types.enums import ActorDataIDs, LevelSoundEvent, NoteBlockInstrument
-from ..mapping_data import MappingData, inserted
+from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent, NoteBlockInstrument
+from endstone_endweave.protocol.mapping_data import MappingData, inserted
 
 MAPPINGS = MappingData(
     sound=inserted(2, at=LevelSoundEvent.UNDEFINED_V924),

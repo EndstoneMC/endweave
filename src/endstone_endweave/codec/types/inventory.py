@@ -2,8 +2,9 @@
 
 from dataclasses import dataclass
 
-from ..reader import PacketReader
-from ..writer import PacketWriter
+from endstone_endweave.codec.reader import PacketReader
+from endstone_endweave.codec.writer import PacketWriter
+
 from .enums import InventorySourceType
 from .item import ITEM_INSTANCE, ItemInstance
 from .primitives import UVAR_INT, VAR_INT, Type

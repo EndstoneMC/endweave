@@ -10,8 +10,8 @@ See Also:
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar
 
-from ..reader import PacketReader
-from ..writer import PacketWriter
+from endstone_endweave.codec.reader import PacketReader
+from endstone_endweave.codec.writer import PacketWriter
 
 _T = TypeVar("_T")
 

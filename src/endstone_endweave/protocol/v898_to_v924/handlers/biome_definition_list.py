@@ -1,6 +1,6 @@
 """BiomeDefinitionList handler for v898 to v924."""
 
-from ....codec import (
+from endstone_endweave.codec import (
     BIOME_DEFINITION_V898,
     BIOME_DEFINITION_V924,
     USHORT_LE,

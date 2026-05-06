@@ -5,7 +5,7 @@ computes a different block registry checksum than the v944 server. Without
 zeroing the checksum the client silently disconnects after world load.
 """
 
-from ....codec import (
+from endstone_endweave.codec import (
     BOOL,
     INT64_LE,
     LEVEL_SETTINGS_V944,

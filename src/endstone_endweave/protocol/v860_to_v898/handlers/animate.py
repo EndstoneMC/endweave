@@ -4,7 +4,7 @@ v860 uses varint for Action and has a conditional Rowing Time float
 when Action & 0x80. v898 uses uint8 for Action and optional SwingSource.
 """
 
-from ....codec import (
+from endstone_endweave.codec import (
     BYTE,
     FLOAT_LE,
     STRING,

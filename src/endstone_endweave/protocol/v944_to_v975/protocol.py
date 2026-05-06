@@ -1,9 +1,10 @@
 """Protocol factory for v944 (r26_u1) server <- v975 (r26_u2) client."""
 
-from ...rewriter import SoundRewriter
-from .. import Protocol
-from ..mappings.v944_v975 import MAPPINGS
-from ..packet_ids import PacketId
+from endstone_endweave.protocol import Protocol
+from endstone_endweave.protocol.mappings.v944_v975 import MAPPINGS
+from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.rewriter import SoundRewriter
+
 from .handlers.actor_event import rewrite_actor_event
 from .handlers.crafting_data import rewrite_crafting_data
 from .handlers.item_stack import (

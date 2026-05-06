@@ -5,12 +5,12 @@ ShapeDataPayload entry, between Dimension ID and Extra Shape Data.
 Insert the field (as absent) so the v924 client sees the format it expects.
 """
 
-from ....codec import (
+from endstone_endweave.codec import (
     BOOL,
     UVAR_INT,
     PacketWrapper,
 )
-from ...v924_to_v898.handlers.debug_drawer import (
+from endstone_endweave.protocol.v924_to_v898.handlers.debug_drawer import (
     _passthrough_extra_shape_data,
     _passthrough_shape_common,
 )

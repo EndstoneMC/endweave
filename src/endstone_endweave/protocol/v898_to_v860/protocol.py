@@ -1,15 +1,16 @@
 """Protocol factory for v898 (1.21.130) server <- v860 (1.21.124) client."""
 
-from ...rewriter import ActorEventRewriter, SoundRewriter
-from .. import Protocol
-from ..mappings.v860_v898 import MAPPINGS
-from ..packet_ids import PacketId
-from ..v860_to_v898.handlers.animate import (
+from endstone_endweave.protocol import Protocol
+from endstone_endweave.protocol.mappings.v860_v898 import MAPPINGS
+from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.protocol.v860_to_v898.handlers.animate import (
     rewrite_animate_clientbound as _animate_v860_to_v898,
 )
-from ..v860_to_v898.handlers.animate import (
+from endstone_endweave.protocol.v860_to_v898.handlers.animate import (
     rewrite_animate_serverbound as _animate_v898_to_v860,
 )
+from endstone_endweave.rewriter import ActorEventRewriter, SoundRewriter
+
 from .handlers.camera_aim_assist import (
     rewrite_camera_aim_assist_presets,
 )

@@ -3,7 +3,8 @@
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from ..codec.wrapper import PacketWrapper
+from endstone_endweave.codec.wrapper import PacketWrapper
+
 from .direction import Direction
 
 if TYPE_CHECKING:

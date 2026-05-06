@@ -1,9 +1,10 @@
 """Protocol factory for v924 (1.26.0) server <- v898 (1.21.130) client."""
 
-from ...rewriter import SoundRewriter
-from .. import Protocol
-from ..mappings.v898_v924 import MAPPINGS
-from ..packet_ids import PacketId
+from endstone_endweave.protocol import Protocol
+from endstone_endweave.protocol.mappings.v898_v924 import MAPPINGS
+from endstone_endweave.protocol.packet_ids import PacketId
+from endstone_endweave.rewriter import SoundRewriter
+
 from .handlers.biome_definition_list import (
     rewrite_biome_definition_list,
 )

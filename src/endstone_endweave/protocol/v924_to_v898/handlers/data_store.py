@@ -1,6 +1,6 @@
 """Data store packet handlers for v924 to v898."""
 
-from ....codec import BOOL, CHANGE_VALUE, DOUBLE_LE, INT_LE, STRING, UVAR_INT, PacketWrapper
+from endstone_endweave.codec import BOOL, CHANGE_VALUE, DOUBLE_LE, INT_LE, STRING, UVAR_INT, PacketWrapper
 
 
 def rewrite_serverbound_data_store(wrapper: PacketWrapper) -> None:

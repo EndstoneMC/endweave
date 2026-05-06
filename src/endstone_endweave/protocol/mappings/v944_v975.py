@@ -5,8 +5,8 @@ LevelSoundEvent -- 2 new IDs inserted at 599 (UNDEFINED_V944):
     600 BOUNCE
 """
 
-from ...codec.types.enums import ActorDataIDs, LevelSoundEvent
-from ..mapping_data import MappingData, inserted
+from endstone_endweave.codec.types.enums import ActorDataIDs, LevelSoundEvent
+from endstone_endweave.protocol.mapping_data import MappingData, inserted
 
 MAPPINGS = MappingData(
     sound=inserted(2, at=LevelSoundEvent.UNDEFINED_V944),

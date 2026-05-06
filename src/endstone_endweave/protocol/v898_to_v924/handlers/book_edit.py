@@ -1,6 +1,6 @@
 """BookEdit packet handler for v898 server <- v924 client (serverbound)."""
 
-from ....codec import BYTE, VAR_INT, BookEditActionType, PacketWrapper
+from endstone_endweave.codec import BYTE, VAR_INT, BookEditActionType, PacketWrapper
 
 
 def rewrite_book_edit(wrapper: PacketWrapper) -> None:

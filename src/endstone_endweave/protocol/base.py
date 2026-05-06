@@ -4,7 +4,8 @@ See Also:
     com.viaversion.viaversion.protocols.base.InitialBaseProtocol
 """
 
-from ..codec import INT_BE, PacketWrapper
+from endstone_endweave.codec import INT_BE, PacketWrapper
+
 from . import Protocol
 from .packet_ids import PacketId
 
