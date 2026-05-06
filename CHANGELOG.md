@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-06
+
 ### Added
 - Protocol translation for 1.26.20 (clients running 1.26.20 or later can now join 1.26.10 servers)
 - Update checker that polls GitHub releases on startup and notifies operators on join (configurable via `check-for-updates` in `config.toml`)
