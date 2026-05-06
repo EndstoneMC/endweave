@@ -1,25 +1,3 @@
-"""Item-stack rewriters: v944 -> v975 InventorySlotPacket.
-
-v944 layout (verified by hex-dumping a live packet, e.g. 780000000000)::
-
-    uvarint  Container Id
-    uvarint  Slot
-    uint8    FullContainerName.ContainerName    -- always present, no bool prefix
-    uvarint  FullContainerName.DynamicID        -- always present, no bool prefix
-    ItemInstance  Storage Item                  -- always present, air shortcut
-    ItemInstance  Item                          -- always present, air shortcut
-
-v975 layout (per protocol-docs r26_u2)::
-
-    uvarint  Container Id
-    uvarint  Slot
-    bool+FullContainerName?                     -- optional
-        uint8 ContainerName
-        bool+uint32_le DynamicID                -- optional within FCN
-    bool+cerealizer<...>::SerializedData?       -- optional Storage Item
-    cerealizer<...>::SerializedData             -- Item (no air shortcut, all 6 fields)
-"""
-
 from ....codec import (
     BOOL,
     BYTE,
@@ -27,8 +5,35 @@ from ....codec import (
     ITEM_INSTANCE_V975,
     UINT_LE,
     UVAR_INT,
+    UVAR_INT64,
     PacketWrapper,
 )
+
+
+def rewrite_mob_equipment_clientbound(wrapper: PacketWrapper) -> None:
+    """Map v944 byte slot fields to v975 uvarint32 (server to client).
+
+    Args:
+        wrapper: Packet wrapper for MobEquipmentPacket.
+    """
+    wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
+    wrapper.map(ITEM_INSTANCE, ITEM_INSTANCE_V975)  # Item
+    wrapper.map(BYTE, UVAR_INT)  # Slot
+    wrapper.map(BYTE, UVAR_INT)  # Selected Slot
+    wrapper.map(BYTE, UVAR_INT)  # Container ID
+
+
+def rewrite_mob_equipment_serverbound(wrapper: PacketWrapper) -> None:
+    """Map v975 uvarint32 slot fields back to v944 byte (client to server).
+
+    Args:
+        wrapper: Packet wrapper for MobEquipmentPacket.
+    """
+    wrapper.passthrough(UVAR_INT64)  # Target Runtime ID
+    wrapper.map(ITEM_INSTANCE_V975, ITEM_INSTANCE)  # Item
+    wrapper.map(UVAR_INT, BYTE)  # Slot
+    wrapper.map(UVAR_INT, BYTE)  # Selected Slot
+    wrapper.map(UVAR_INT, BYTE)  # Container ID
 
 
 def rewrite_inventory_slot(wrapper: PacketWrapper) -> None:
