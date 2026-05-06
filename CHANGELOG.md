@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-06
+
 ### Fixed
 - CraftingData packet failing to decode on 1.26.10 servers.
 - ClientMovementPredictionSync from 1.26.20 clients carrying three new attribute floats that 1.26.10 servers reject.
