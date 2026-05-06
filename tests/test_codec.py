@@ -746,3 +746,129 @@ class TestPassthroughExperiments:
         wrapper.passthrough(EXPERIMENTS)
         wrapper.passthrough(BOOL)
         assert wrapper.to_bytes() == payload
+
+
+# ---------------------------------------------------------------------------
+# Tests: Crafting recipe wire format (assume_symmetry + RecipeUnlockingRequirement)
+# ---------------------------------------------------------------------------
+
+
+class TestCraftingRecipeWire:
+    """Round-trip recipes whose wire format includes the v685+ fields."""
+
+    @staticmethod
+    def _shapeless_bytes(*, requirement_byte: int, requirement_ingredients: int = 0) -> bytes:
+        w = PacketWriter()
+        w.write_string("recipe:test")
+        w.write_uvarint(0)  # ingredients
+        w.write_uvarint(0)  # results
+        w.write_bytes(b"\x01" * 16)  # uuid
+        w.write_string("crafting_table")
+        w.write_varint(50)  # priority
+        w.write_byte(requirement_byte)
+        if requirement_byte == 0:
+            w.write_uvarint(requirement_ingredients)
+        w.write_uvarint(123)  # net id
+        return w.to_bytes()
+
+    @staticmethod
+    def _shaped_bytes(*, assume_symmetry: bool, requirement_byte: int) -> bytes:
+        w = PacketWriter()
+        w.write_string("recipe:shaped")
+        w.write_varint(2)  # width
+        w.write_varint(2)  # height
+        for _ in range(4):
+            # Each ingredient: kind=DEFAULT, item_id=0 (so no aux), count=1
+            w.write_byte(1)
+            w.write_short_le(0)
+            w.write_varint(1)
+        w.write_uvarint(0)  # results
+        w.write_bytes(b"\x02" * 16)  # uuid
+        w.write_string("crafting_table")
+        w.write_varint(0)  # priority
+        w.write_bool(assume_symmetry)
+        w.write_byte(requirement_byte)
+        if requirement_byte == 0:
+            w.write_uvarint(0)
+        w.write_uvarint(7)  # net id
+        return w.to_bytes()
+
+    def test_shapeless_requirement_none_empty(self):
+        from endstone_endweave.codec import SHAPELESS_RECIPE
+
+        payload = self._shapeless_bytes(requirement_byte=0)
+        wrapper = PacketWrapper(payload)
+        wrapper.passthrough(SHAPELESS_RECIPE)
+        assert wrapper.to_bytes() == payload
+
+    def test_shapeless_requirement_always_unlocked(self):
+        from endstone_endweave.codec import SHAPELESS_RECIPE
+
+        payload = self._shapeless_bytes(requirement_byte=1)
+        wrapper = PacketWrapper(payload)
+        wrapper.passthrough(SHAPELESS_RECIPE)
+        assert wrapper.to_bytes() == payload
+
+    def test_shaped_assume_symmetry_and_requirement(self):
+        from endstone_endweave.codec import SHAPED_RECIPE
+
+        payload = self._shaped_bytes(assume_symmetry=True, requirement_byte=2)
+        wrapper = PacketWrapper(payload)
+        wrapper.passthrough(SHAPED_RECIPE)
+        assert wrapper.to_bytes() == payload
+
+    def test_shaped_chemistry_has_assume_symmetry_and_requirement(self):
+        from endstone_endweave.codec import SHAPED_CHEMISTRY_RECIPE
+
+        w = PacketWriter()
+        w.write_string("recipe:chem")
+        w.write_varint(1)
+        w.write_varint(1)
+        w.write_byte(1)
+        w.write_short_le(0)
+        w.write_varint(1)
+        w.write_uvarint(0)
+        w.write_bytes(b"\x03" * 16)
+        w.write_string("brewing_stand")
+        w.write_varint(0)
+        w.write_bool(False)
+        w.write_byte(0)
+        w.write_uvarint(0)
+        w.write_uvarint(99)
+        payload = w.to_bytes()
+        wrapper = PacketWrapper(payload)
+        wrapper.passthrough(SHAPED_CHEMISTRY_RECIPE)
+        assert wrapper.to_bytes() == payload
+
+    def test_user_data_shapeless_has_requirement(self):
+        from endstone_endweave.codec import USER_DATA_SHAPELESS_RECIPE
+
+        payload = self._shapeless_bytes(requirement_byte=0, requirement_ingredients=0)
+        wrapper = PacketWrapper(payload)
+        wrapper.passthrough(USER_DATA_SHAPELESS_RECIPE)
+        assert wrapper.to_bytes() == payload
+
+    def test_smithing_transform_result_is_network_item_instance_descriptor(self):
+        """Recipe results use NetworkItemInstanceDescriptor (no HasNetID byte)."""
+        from endstone_endweave.codec import SMITHING_TRANSFORM_RECIPE
+
+        w = PacketWriter()
+        w.write_string("recipe:smith")
+        # 3 ingredients (template, base, addition), each kind=DEFAULT, item_id=0, count=1
+        for _ in range(3):
+            w.write_byte(1)
+            w.write_short_le(0)
+            w.write_varint(1)
+        # Result item (NetworkItemInstanceDescriptor: NO has_net_id byte)
+        w.write_varint(649)  # network_id
+        w.write_ushort_le(1)  # count
+        w.write_uvarint(0)  # aux
+        w.write_varint(0)  # block_runtime_id
+        w.write_uvarint(10)  # extra_len
+        w.write_bytes(b"\x00" * 10)  # extra_data
+        w.write_string("smithing_table")  # tag
+        w.write_uvarint(1112)  # net id
+        payload = w.to_bytes()
+        wrapper = PacketWrapper(payload)
+        wrapper.passthrough(SMITHING_TRANSFORM_RECIPE)
+        assert wrapper.to_bytes() == payload

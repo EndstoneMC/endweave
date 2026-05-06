@@ -87,6 +87,53 @@ class _ItemInstanceType(Type["ItemInstance"]):
 ITEM_INSTANCE = _ItemInstanceType()
 
 
+class _NetworkItemInstanceDescriptorType(Type["ItemInstance"]):
+    """Bedrock NetworkItemInstanceDescriptor codec -- recipe-result variant.
+
+    Identical to NetworkItemStackDescriptor but with no ``HasNetID``/``StackNetworkID``
+    fields, since recipe results never carry a stack network id.
+
+    Wire format::
+
+        varint32  NetworkID        (0 = air, terminates early)
+        uint16    Count
+        uvarint32 MetadataValue
+        varint32  BlockRuntimeID
+        uvarint32 extraDataLength
+        bytes     extraData
+    """
+
+    def read(self, reader: PacketReader) -> ItemInstance:
+        network_id = reader.read_varint()
+        if network_id == 0:
+            return ItemInstance(network_id=0)
+        count = reader.read_ushort_le()
+        aux_value = reader.read_uvarint()
+        block_runtime_id = reader.read_varint()
+        extra_len = reader.read_uvarint()
+        user_data = reader.read_bytes(extra_len)
+        return ItemInstance(
+            network_id=network_id,
+            count=count,
+            aux_value=aux_value,
+            block_runtime_id=block_runtime_id,
+            user_data=user_data,
+        )
+
+    def write(self, writer: PacketWriter, value: ItemInstance) -> None:
+        writer.write_varint(value.network_id)
+        if value.network_id == 0:
+            return
+        writer.write_ushort_le(value.count)
+        writer.write_uvarint(value.aux_value)
+        writer.write_varint(value.block_runtime_id)
+        writer.write_uvarint(len(value.user_data))
+        writer.write_bytes(value.user_data)
+
+
+NETWORK_ITEM_INSTANCE_DESCRIPTOR = _NetworkItemInstanceDescriptorType()
+
+
 class _ItemInstanceV975Type(Type["ItemInstance"]):
     """v975 cerealizer<NetworkItemStackDescriptor>::SerializedData codec.
 

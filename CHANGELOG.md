@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- CraftingData packet failing to decode on 1.26.10 servers.
+
 ## [0.4.0] - 2026-05-06
 
 ### Added
@@ -19,7 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.3.2] - 2026-04-04
 
 ### Fixed
-- Block registry checksum not zeroed in some version pairs, causingco clients to reject the world
+- Block registry checksum not zeroed in some version pairs, causing clients to reject the world
 
 ## [0.3.1] - 2026-03-31
 

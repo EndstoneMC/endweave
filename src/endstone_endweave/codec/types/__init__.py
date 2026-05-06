@@ -95,7 +95,7 @@ from .gameplay import (
     GameRule,
 )
 from .inventory import INVENTORY_ACTION, InventoryAction
-from .item import ITEM_INSTANCE, ITEM_INSTANCE_V975, ItemInstance
+from .item import ITEM_INSTANCE, ITEM_INSTANCE_V975, NETWORK_ITEM_INSTANCE_DESCRIPTOR, ItemInstance
 from .level_settings import (
     LEVEL_SETTINGS_V860,
     LEVEL_SETTINGS_V924,
@@ -221,6 +221,7 @@ __all__ = [
     "INVENTORY_ACTION",
     "ITEM_INSTANCE",
     "ITEM_INSTANCE_V975",
+    "NETWORK_ITEM_INSTANCE_DESCRIPTOR",
     "IntArrayTag",
     "IntTag",
     "InteractAction",

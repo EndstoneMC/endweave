@@ -8,7 +8,7 @@ from endstone_endweave.codec.reader import PacketReader
 from endstone_endweave.codec.writer import PacketWriter
 
 from .enums import CraftingDataEntryType
-from .item import ITEM_INSTANCE, ItemInstance
+from .item import NETWORK_ITEM_INSTANCE_DESCRIPTOR, ItemInstance
 from .primitives import Type
 
 
@@ -103,6 +103,39 @@ class _RecipeIngredientType(Type[RecipeIngredient]):
 RECIPE_INGREDIENT = _RecipeIngredientType()
 
 
+class UnlockingContext(enum.IntEnum):
+    NONE = 0
+    ALWAYS_UNLOCKED = 1
+    PLAYER_IN_WATER = 2
+    PLAYER_HAS_MANY_ITEMS = 3
+
+
+@dataclass
+class RecipeUnlockingRequirement:
+    context: UnlockingContext = UnlockingContext.NONE
+    ingredients: list[RecipeIngredient] = field(default_factory=list)
+
+
+class _RecipeUnlockingRequirementType(Type[RecipeUnlockingRequirement]):
+    def read(self, reader: PacketReader) -> RecipeUnlockingRequirement:
+        context = UnlockingContext(reader.read_byte())
+        ingredients: list[RecipeIngredient] = []
+        if context is UnlockingContext.NONE:
+            n = reader.read_uvarint()
+            ingredients = [RECIPE_INGREDIENT.read(reader) for _ in range(n)]
+        return RecipeUnlockingRequirement(context=context, ingredients=ingredients)
+
+    def write(self, writer: PacketWriter, value: RecipeUnlockingRequirement) -> None:
+        writer.write_byte(int(value.context))
+        if value.context is UnlockingContext.NONE:
+            writer.write_uvarint(len(value.ingredients))
+            for ingredient in value.ingredients:
+                RECIPE_INGREDIENT.write(writer, ingredient)
+
+
+RECIPE_UNLOCKING_REQUIREMENT = _RecipeUnlockingRequirementType()
+
+
 @dataclass
 class Recipe:
     recipe_id: str = ""
@@ -114,6 +147,7 @@ class Recipe:
     ingredients: list[RecipeIngredient] = field(default_factory=list)
     results: list[ItemInstance] = field(default_factory=list)
     tag: str = ""
+    requirement: RecipeUnlockingRequirement = field(default_factory=RecipeUnlockingRequirement)
 
 
 @dataclass
@@ -161,10 +195,11 @@ def _read_shapeless_body(reader: PacketReader, recipe: Recipe) -> None:
     n = reader.read_uvarint()
     recipe.ingredients = [RECIPE_INGREDIENT.read(reader) for _ in range(n)]
     n = reader.read_uvarint()
-    recipe.results = [ITEM_INSTANCE.read(reader) for _ in range(n)]
+    recipe.results = [NETWORK_ITEM_INSTANCE_DESCRIPTOR.read(reader) for _ in range(n)]
     recipe.uuid = reader.read_bytes(16)
     recipe.tag = reader.read_string()
     recipe.priority = reader.read_varint()
+    recipe.requirement = RECIPE_UNLOCKING_REQUIREMENT.read(reader)
     recipe.recipe_net_id = reader.read_uvarint()
 
 
@@ -175,12 +210,13 @@ def _write_shapeless_body(writer: PacketWriter, value: Recipe) -> None:
         RECIPE_INGREDIENT.write(writer, ingredient)
     writer.write_uvarint(len(value.results))
     for result in value.results:
-        ITEM_INSTANCE.write(writer, result)
+        NETWORK_ITEM_INSTANCE_DESCRIPTOR.write(writer, result)
     if len(value.uuid) != 16:
         raise ValueError(f"Recipe.uuid must be 16 bytes (got {len(value.uuid)})")
     writer.write_bytes(value.uuid)
     writer.write_string(value.tag)
     writer.write_varint(value.priority)
+    RECIPE_UNLOCKING_REQUIREMENT.write(writer, value.requirement)
     writer.write_uvarint(value.recipe_net_id)
 
 
@@ -190,10 +226,12 @@ def _read_shaped_body(reader: PacketReader, recipe: ShapedRecipe) -> None:
     recipe.height = reader.read_varint()
     recipe.ingredients = [RECIPE_INGREDIENT.read(reader) for _ in range(recipe.width * recipe.height)]
     n = reader.read_uvarint()
-    recipe.results = [ITEM_INSTANCE.read(reader) for _ in range(n)]
+    recipe.results = [NETWORK_ITEM_INSTANCE_DESCRIPTOR.read(reader) for _ in range(n)]
     recipe.uuid = reader.read_bytes(16)
     recipe.tag = reader.read_string()
     recipe.priority = reader.read_varint()
+    recipe.assume_symmetry = reader.read_bool()
+    recipe.requirement = RECIPE_UNLOCKING_REQUIREMENT.read(reader)
     recipe.recipe_net_id = reader.read_uvarint()
 
 
@@ -208,12 +246,14 @@ def _write_shaped_body(writer: PacketWriter, value: ShapedRecipe) -> None:
         RECIPE_INGREDIENT.write(writer, ingredient)
     writer.write_uvarint(len(value.results))
     for result in value.results:
-        ITEM_INSTANCE.write(writer, result)
+        NETWORK_ITEM_INSTANCE_DESCRIPTOR.write(writer, result)
     if len(value.uuid) != 16:
         raise ValueError(f"Recipe.uuid must be 16 bytes (got {len(value.uuid)})")
     writer.write_bytes(value.uuid)
     writer.write_string(value.tag)
     writer.write_varint(value.priority)
+    writer.write_bool(value.assume_symmetry)
+    RECIPE_UNLOCKING_REQUIREMENT.write(writer, value.requirement)
     writer.write_uvarint(value.recipe_net_id)
 
 
@@ -284,7 +324,7 @@ class _SmithingTransformRecipeType(Type[SmithingTransformRecipe]):
         recipe = SmithingTransformRecipe()
         recipe.recipe_id = reader.read_string()
         recipe.ingredients = [RECIPE_INGREDIENT.read(reader) for _ in range(3)]
-        recipe.results = [ITEM_INSTANCE.read(reader)]
+        recipe.results = [NETWORK_ITEM_INSTANCE_DESCRIPTOR.read(reader)]
         recipe.tag = reader.read_string()
         recipe.recipe_net_id = reader.read_uvarint()
         return recipe
@@ -297,7 +337,7 @@ class _SmithingTransformRecipeType(Type[SmithingTransformRecipe]):
         writer.write_string(value.recipe_id)
         for ingredient in value.ingredients:
             RECIPE_INGREDIENT.write(writer, ingredient)
-        ITEM_INSTANCE.write(writer, value.results[0])
+        NETWORK_ITEM_INSTANCE_DESCRIPTOR.write(writer, value.results[0])
         writer.write_string(value.tag)
         writer.write_uvarint(value.recipe_net_id)
 
@@ -358,7 +398,7 @@ class _CraftingDataEntryType(Type[CraftingDataEntry]):
         t = CraftingDataEntryType(reader.read_varint())
         if t is CraftingDataEntryType.FURNACE_RECIPE:
             item_data = reader.read_varint()
-            item_result = ITEM_INSTANCE.read(reader)
+            item_result = NETWORK_ITEM_INSTANCE_DESCRIPTOR.read(reader)
             tag = reader.read_string()
             return CraftingDataEntry(
                 recipe=None,
@@ -371,7 +411,7 @@ class _CraftingDataEntryType(Type[CraftingDataEntry]):
         if t is CraftingDataEntryType.FURNACE_AUX_RECIPE:
             item_data = reader.read_varint()
             item_aux = reader.read_varint()
-            item_result = ITEM_INSTANCE.read(reader)
+            item_result = NETWORK_ITEM_INSTANCE_DESCRIPTOR.read(reader)
             tag = reader.read_string()
             return CraftingDataEntry(
                 recipe=None,
@@ -396,13 +436,13 @@ class _CraftingDataEntryType(Type[CraftingDataEntry]):
         t = value.type
         if t is CraftingDataEntryType.FURNACE_RECIPE:
             writer.write_varint(value.item_data)
-            ITEM_INSTANCE.write(writer, value.item_result)
+            NETWORK_ITEM_INSTANCE_DESCRIPTOR.write(writer, value.item_result)
             writer.write_string(value.tag)
             return
         if t is CraftingDataEntryType.FURNACE_AUX_RECIPE:
             writer.write_varint(value.item_data)
             writer.write_varint(value.item_aux)
-            ITEM_INSTANCE.write(writer, value.item_result)
+            NETWORK_ITEM_INSTANCE_DESCRIPTOR.write(writer, value.item_result)
             writer.write_string(value.tag)
             return
 
