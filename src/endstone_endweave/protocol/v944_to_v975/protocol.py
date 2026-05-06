@@ -6,6 +6,7 @@ from endstone_endweave.protocol.packet_ids import PacketId
 from endstone_endweave.rewriter import SoundRewriter
 
 from .handlers.actor_event import rewrite_actor_event
+from .handlers.client_movement_prediction_sync import rewrite_client_movement_prediction_sync
 from .handlers.crafting_data import rewrite_crafting_data
 from .handlers.item_stack import (
     rewrite_inventory_slot,
@@ -44,6 +45,7 @@ def create_protocol() -> Protocol:
 
     p.register_serverbound(PacketId.PLAYER_EQUIPMENT, rewrite_mob_equipment_serverbound)
     p.register_serverbound(PacketId.UPDATE_CLIENT_OPTIONS, rewrite_update_client_options)
+    p.register_serverbound(PacketId.CLIENT_MOVEMENT_PREDICTION_SYNC, rewrite_client_movement_prediction_sync)
 
     p.cancel_clientbound(
         PacketId.LOCATOR_BAR,  # 341 -- TextureId(int) -> TexturePath(string) + IconSize(Vec2)

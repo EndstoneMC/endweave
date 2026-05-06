@@ -848,6 +848,35 @@ class TestCraftingRecipeWire:
         wrapper.passthrough(USER_DATA_SHAPELESS_RECIPE)
         assert wrapper.to_bytes() == payload
 
+    def test_client_movement_prediction_sync_strips_v975_attributes(self):
+        """v975→v944 strips the 3 trailing float attributes added in 1.26.20."""
+        from endstone_endweave.protocol.v944_to_v975.handlers.client_movement_prediction_sync import (
+            rewrite_client_movement_prediction_sync,
+        )
+
+        # Build a v975 packet body. Bitset: 2-byte LEB (0x83 0x01 = bits 0,1,7).
+        w = PacketWriter()
+        w.write_byte(0x83)
+        w.write_byte(0x01)
+        # 3 bbox floats + 6 base attrs + 3 v975-only attrs = 12 floats
+        for i in range(12):
+            w.write_float_le(float(i + 1))
+        w.write_varint64(-12345)  # ActorUniqueID
+        w.write_bool(True)  # Flying
+
+        wrapper = PacketWrapper(w.to_bytes())
+        rewrite_client_movement_prediction_sync(wrapper)
+
+        # Expected v944 body: same bitset, 9 floats, varint64, bool. The 10th, 11th, 12th floats are dropped.
+        e = PacketWriter()
+        e.write_byte(0x83)
+        e.write_byte(0x01)
+        for i in range(9):
+            e.write_float_le(float(i + 1))
+        e.write_varint64(-12345)
+        e.write_bool(True)
+        assert wrapper.to_bytes() == e.to_bytes()
+
     def test_smithing_transform_result_is_network_item_instance_descriptor(self):
         """Recipe results use NetworkItemInstanceDescriptor (no HasNetID byte)."""
         from endstone_endweave.codec import SMITHING_TRANSFORM_RECIPE
