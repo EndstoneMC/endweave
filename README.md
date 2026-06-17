@@ -17,6 +17,7 @@ different protocol versions by rewriting packets at the network layer. Inspired 
 | 1.26.0 - 1.26.3     | 924      |
 | 1.26.10 - 1.26.13   | 944      |
 | 1.26.20             | 975      |
+| 1.26.30             | 1001     |
 
 ## Quick Start
 

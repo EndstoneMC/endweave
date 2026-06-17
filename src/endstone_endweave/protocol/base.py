@@ -20,11 +20,18 @@ from .packet_ids import PacketId
 def detect_client_protocol(wrapper: PacketWrapper) -> None:
     """Read client protocol from RequestNetworkSettings, store on connection, and rewrite to server protocol.
 
+    Robust: swallow parse errors so a malformed/mismatched RequestNetworkSettings does not
+    terminate the connection during version detection.
+
     Args:
         wrapper: Packet wrapper for the incoming RequestNetworkSettings packet.
     """
     connection = wrapper.user
-    client_proto = wrapper.read(INT_BE)  # ClientNetworkVersion
+    try:
+        client_proto = wrapper.read(INT_BE)  # ClientNetworkVersion
+    except Exception as exc:  # pragma: no cover - defensive runtime handling
+        connection.logger.warning(f"Failed to decode RequestNetworkSettings: {type(exc).__name__}: {exc}")
+        return
     connection.client_protocol = client_proto
     wrapper.write(INT_BE, connection.server_protocol)  # ClientNetworkVersion
     connection.logger.debug(
@@ -35,11 +42,19 @@ def detect_client_protocol(wrapper: PacketWrapper) -> None:
 def _rewrite_login(wrapper: PacketWrapper) -> None:
     """Rewrite the Login packet's protocol version to the server protocol.
 
+    Robust: if the Login packet is malformed or shorter than expected, swallow the
+    parse error so translation doesn't crash the pipeline; a later step will handle
+    the handshake failure cleanly.
+
     Args:
         wrapper: Packet wrapper for the incoming Login packet.
     """
     connection = wrapper.user
-    wrapper.read(INT_BE)  # Client Network Version
+    try:
+        wrapper.read(INT_BE)  # Client Network Version
+    except Exception as exc:  # pragma: no cover - defensive runtime handling
+        connection.logger.warning(f"Failed to decode Login packet protocol field: {type(exc).__name__}: {exc}")
+        return
     wrapper.write(INT_BE, connection.server_protocol)  # Client Network Version
 
 
