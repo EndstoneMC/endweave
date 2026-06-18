@@ -53,6 +53,16 @@ class _Byte(Type[int]):
         writer.write_byte(value)
 
 
+class _Int8(Type[int]):
+    """Signed byte (int8); read sign-extends, write masks to two's complement."""
+
+    def read(self, reader: PacketReader) -> int:
+        return reader.read_signed_byte()
+
+    def write(self, writer: PacketWriter, value: int) -> None:
+        writer.write_signed_byte(value)
+
+
 class _Bool(Type[bool]):
     """Boolean (single byte, nonzero = True)."""
 
@@ -223,6 +233,7 @@ class _RemainingBytes(Type[bytes]):
 
 # Singleton type instances -- use these in handlers
 BYTE = _Byte()
+INT8 = _Int8()
 BOOL = _Bool()
 SHORT_LE = _ShortLE()
 USHORT_LE = _UShortLE()

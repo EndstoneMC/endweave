@@ -60,6 +60,12 @@ class PacketReader:
         self._pos += 1
         return val
 
+    def read_signed_byte(self) -> int:
+        """Read a single signed byte (int8), sign-extended to a Python int."""
+        val = self._data[self._pos]
+        self._pos += 1
+        return val - 256 if val >= 128 else val
+
     def read_bytes(self, n: int) -> bytes:
         """Read exactly n raw bytes.
 

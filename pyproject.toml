@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "endstone-endweave"
-dynamic = ["version"]
+version = "0.4.4.dev4"
 dependencies = ["endstone>=0.11"]
 description = "Protocol translation plugin for Endstone - allows newer clients on older servers"
 readme = "README.md"

@@ -773,7 +773,7 @@ class BiomeDefinitionChunkGenData:
     overworld_gen_rules: BiomeOverworldGenRulesData | None = None
     multinoise_gen_rules: BiomeMultinoiseGenRulesData | None = None
     legacy_world_gen_rules: BiomeLegacyWorldGenRulesData | None = None
-    biome_replacement_data: BiomeReplacementData | None = None
+    biome_replacement_data: list[BiomeReplacementData] | None = None
     village_type: int | None = None
 
 
@@ -820,8 +820,13 @@ class _BiomeDefinitionChunkGenDataV898Type(Type["BiomeDefinitionChunkGenData"]):
         multinoise_gen_rules = _MULTINOISE_GEN_RULES.read(reader) if BOOL.read(reader) else None
         # optional legacy world gen rules
         legacy_world_gen_rules = _LEGACY_WORLD_GEN_RULES.read(reader) if BOOL.read(reader) else None
-        # optional biome replacement data
-        biome_replacement_data = _BIOME_REPLACEMENT_DATA.read(reader) if BOOL.read(reader) else None
+        # optional biome replacement data ARRAY (bool + uvarint count + N entries).
+        # gophertunnel v1.56.2 biome.go: OptionalFunc(ReplacementsData, Slice(...)) -- a
+        # bool-prefixed slice, NOT a single struct.
+        biome_replacement_data: list[BiomeReplacementData] | None = None
+        if BOOL.read(reader):
+            brd_count = UVAR_INT.read(reader)
+            biome_replacement_data = [_BIOME_REPLACEMENT_DATA.read(reader) for _ in range(brd_count)]
         return BiomeDefinitionChunkGenData(
             climate=climate,
             consolidated_features=consolidated_features,
@@ -916,10 +921,12 @@ class _BiomeDefinitionChunkGenDataV898Type(Type["BiomeDefinitionChunkGenData"]):
             _LEGACY_WORLD_GEN_RULES.write(writer, value.legacy_world_gen_rules)
         else:
             BOOL.write(writer, False)
-        # optional biome replacement data
+        # optional biome replacement data ARRAY (bool + uvarint count + N entries)
         if value.biome_replacement_data is not None:
             BOOL.write(writer, True)
-            _BIOME_REPLACEMENT_DATA.write(writer, value.biome_replacement_data)
+            UVAR_INT.write(writer, len(value.biome_replacement_data))
+            for brd in value.biome_replacement_data:
+                _BIOME_REPLACEMENT_DATA.write(writer, brd)
         else:
             BOOL.write(writer, False)
 

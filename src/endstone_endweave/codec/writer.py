@@ -34,6 +34,10 @@ class PacketWriter:
         """Write a single unsigned byte (uint8)."""
         self._buf.append(val & 0xFF)
 
+    def write_signed_byte(self, val: int) -> None:
+        """Write a single signed byte (int8); negatives wrap to two's complement."""
+        self._buf.append(val & 0xFF)
+
     def write_bytes(self, data: bytes) -> None:
         """Write raw bytes directly to the buffer."""
         self._buf.extend(data)
