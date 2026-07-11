@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  build:
+    name: Build + translation tests (Clang ${{ matrix.llvm }}, libc++)
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        llvm: [18]
+    steps:
+      - name: Checkout endweave
+        uses: actions/checkout@v4
+        with:
+          path: endweave
+      # endweave consumes the sibling bedrock-protocol checkout via its default
+      # BEDROCK_PROTOCOL_SOURCE_DIR (../bedrock-protocol).
+      - name: Checkout bedrock-protocol
+        uses: actions/checkout@v4
+        with:
+          repository: EndstoneMC/bedrock-protocol
+          ref: develop
+          path: bedrock-protocol
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Clang ${{ matrix.llvm }} + libc++
+        run: |
+          sudo apt-get update -y -q
+          sudo apt-get install -y -q lsb-release wget software-properties-common gnupg
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${{ matrix.llvm }}
+          sudo apt-get install -y -q libc++-${{ matrix.llvm }}-dev libc++abi-${{ matrix.llvm }}-dev
+      - uses: lukka/get-cmake@latest
+      # ENDWEAVE_BUILD_PLUGIN=OFF skips the heavy Endstone SDK fetch; the
+      # translation library + Catch2 tests build against only bedrock::protocol.
+      - name: Configure
+        working-directory: endweave
+        run: >
+          cmake -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_CXX_COMPILER=clang++-${{ matrix.llvm }}
+          -DCMAKE_CXX_FLAGS=-stdlib=libc++
+          -DENDWEAVE_BUILD_PLUGIN=OFF
+      - name: Build
+        working-directory: endweave
+        run: cmake --build build
+      - name: Test
+        working-directory: endweave
+        run: ctest --test-dir build --output-on-failure
