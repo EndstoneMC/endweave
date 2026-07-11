@@ -39,7 +39,9 @@ std::string bytes(std::initializer_list<int> raw)
 }
 
 // A case-2 (UpdateEnvironmentAttributes) packet carrying one bool attribute --
-// the same body the bedrock-protocol goldens use.
+// the same body the bedrock-protocol goldens use: CloudburstMC/Protocol's wire
+// structure with the `operation` name-code patched to BDS-verbatim UPPERCASE
+// (1.26.20 binary, IDA-confirmed).
 const std::string golden_975 = bytes({
     0x02,                                              // payload type = UpdateEnvironmentAttributes
     0x03, 0x77, 0x65, 0x74,                            // layer name "wet"
@@ -49,7 +51,7 @@ const std::string golden_975 = bytes({
     0x00,                                              // from_attribute absent
     0x00,                                              //   attribute type = bool
     0x01,                                              //   value = true
-    0x08, 0x4f, 0x56, 0x45, 0x52, 0x52, 0x49, 0x44, 0x45,  //   operation "OVERRIDE"
+    0x08, 0x4f, 0x56, 0x45, 0x52, 0x52, 0x49, 0x44, 0x45,  //   operation "OVERRIDE" (CloudburstMC lowercase patched to BDS verbatim)
     0x00,                                              // to_attribute absent
     0x00, 0x00, 0x00, 0x00,                            // current_transition_ticks = 0
     0x00, 0x00, 0x00, 0x00,                            // total_transition_ticks = 0
