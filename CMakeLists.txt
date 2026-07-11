@@ -28,7 +28,11 @@ add_library(endweave_protocol STATIC
         src/protocol/attribute_layer_sync.cpp
         src/protocol/protocol.cpp
         src/protocol/v975_to_v1001.cpp
-        src/protocol/v1001_to_v975.cpp)
+        src/protocol/v1001_to_v975.cpp
+        src/protocol/manager.cpp
+        src/protocol/base.cpp
+        src/connection.cpp
+        src/pipeline_core.cpp)
 target_include_directories(endweave_protocol PUBLIC include)
 target_link_libraries(endweave_protocol PUBLIC bedrock::protocol)
 target_compile_features(endweave_protocol PUBLIC cxx_std_23)
@@ -47,6 +51,7 @@ if (ENDWEAVE_BUILD_PLUGIN)
 
     endstone_add_plugin(${PROJECT_NAME} src/plugin.cpp)
     target_include_directories(${PROJECT_NAME} PRIVATE include ${CMAKE_CURRENT_BINARY_DIR}/include)
+    target_link_libraries(${PROJECT_NAME} PRIVATE endweave_protocol)
 endif ()
 
 if (ENDWEAVE_BUILD_TESTS)

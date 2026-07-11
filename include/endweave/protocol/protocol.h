@@ -1,5 +1,9 @@
 #pragma once
 
+#include "endweave/protocol/direction.h"
+
+#include <bedrock/serializer.hpp>
+#include <bedrock/stream.hpp>
 #include <expected>
 #include <functional>
 #include <initializer_list>
@@ -9,25 +13,26 @@
 #include <unordered_set>
 #include <utility>
 
-#include <bedrock/serializer.hpp>
-#include <bedrock/stream.hpp>
-
-#include "endweave/protocol/direction.h"
-
 namespace endweave {
+
+class UserConnection;
 
 // Outcome of Protocol::transform. Passthrough is "no handler, not cancelled" (out
 // left untouched, caller forwards the original bytes); Cancelled stands in for
 // ViaVersion's PacketWrapper::cancel(); Translated means the rewritten body is in out.
-enum class TransformResult { Passthrough, Translated, Cancelled };
+enum class TransformResult {
+    Passthrough,
+    Translated,
+    Cancelled
+};
 
 // A per-boundary, bidirectional protocol, mirroring ViaVersion's Protocol. It holds
 // one handler table and one cancel set per Direction and translates a packet body
 // (bytes in -> bytes out) through the bedrock-protocol codec.
 class Protocol {
 public:
-    using Handler = std::function<std::expected<void, std::error_code>(bedrock::protocol::BinaryReader &,
-                                                                        bedrock::protocol::BinaryWriter &)>;
+    using Handler = std::function<std::expected<void, std::error_code>(
+        UserConnection &, bedrock::protocol::BinaryReader &, bedrock::protocol::BinaryWriter &)>;
 
     Protocol(int server_protocol, int client_protocol, std::string name = "", bool is_base = false);
 
@@ -54,13 +59,39 @@ public:
     [[nodiscard]] bool has_handler_or_cancel(Direction direction, int packet_id) const;
 
     std::expected<TransformResult, std::error_code> transform(Direction direction, int packet_id,
+                                                              UserConnection &connection,
                                                               bedrock::protocol::BinaryReader &in,
                                                               bedrock::protocol::BinaryWriter &out) const;
 
-    [[nodiscard]] int server_protocol() const { return server_protocol_; }
-    [[nodiscard]] int client_protocol() const { return client_protocol_; }
-    [[nodiscard]] const std::string &name() const { return name_; }
-    [[nodiscard]] bool is_base() const { return is_base_; }
+    // Per-connection init hook (ViaVersion's Protocol.init), called once when a
+    // chain is first resolved for a connection. No-op unless set_init installs one.
+    void set_init(std::function<void(UserConnection &)> on_init)
+    {
+        on_init_ = std::move(on_init);
+    }
+    void init(UserConnection &connection) const
+    {
+        if (on_init_) {
+            on_init_(connection);
+        }
+    }
+
+    [[nodiscard]] int server_protocol() const
+    {
+        return server_protocol_;
+    }
+    [[nodiscard]] int client_protocol() const
+    {
+        return client_protocol_;
+    }
+    [[nodiscard]] const std::string &name() const
+    {
+        return name_;
+    }
+    [[nodiscard]] bool is_base() const
+    {
+        return is_base_;
+    }
 
 private:
     int server_protocol_;
@@ -69,6 +100,7 @@ private:
     bool is_base_;
     std::unordered_map<Direction, std::unordered_map<int, Handler>> handlers_;
     std::unordered_map<Direction, std::unordered_set<int>> cancel_;
+    std::function<void(UserConnection &)> on_init_;
 };
 
 // Wraps a typed converter as a byte-level Handler: deserialize From, convert,
@@ -76,7 +108,7 @@ private:
 template <class From, class To>
 Protocol::Handler translate(To (*fn)(const From &))
 {
-    return [fn](bedrock::protocol::BinaryReader &in,
+    return [fn](UserConnection &, bedrock::protocol::BinaryReader &in,
                 bedrock::protocol::BinaryWriter &out) -> std::expected<void, std::error_code> {
         auto packet = bedrock::protocol::Serializer<From>::deserialize(in);
         if (!packet) {
@@ -87,4 +119,4 @@ Protocol::Handler translate(To (*fn)(const From &))
     };
 }
 
-}  // namespace endweave
+} // namespace endweave

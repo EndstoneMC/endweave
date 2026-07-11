@@ -1,37 +1,47 @@
-#include <string>
-
-#include <bedrock/stream.hpp>
-#include <catch2/catch_test_macros.hpp>
-
+#include "attribute_layer_goldens.h"
+#include "endweave/connection.h"
+#include "endweave/log_sink.h"
 #include "endweave/protocol/attribute_layer_sync.h"
 #include "endweave/protocol/protocol.h"
 #include "endweave/protocol/v1001_to_v975.h"
 #include "endweave/protocol/v975_to_v1001.h"
 
-#include "attribute_layer_goldens.h"
+#include <bedrock/stream.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <string>
 
 namespace bp = bedrock::protocol;
 using endweave::Direction;
 using endweave::Protocol;
 using endweave::TransformResult;
+using endweave::UserConnection;
 
 namespace {
 
 constexpr int kAttributeLayerSync = 345;
 
+// The version protocols are connection-stateless, so any connection works.
+endweave::LogSink g_sink;
+
+UserConnection make_connection()
+{
+    return UserConnection{"test", g_sink, 1001};
+}
+
 std::string transform_out(const Protocol &protocol, Direction direction, int packet_id, const std::string &in_bytes,
                           TransformResult &result)
 {
+    auto connection = make_connection();
     bp::BinaryReader in{in_bytes};
     std::string buffer;
     bp::BinaryWriter out{buffer};
-    auto outcome = protocol.transform(direction, packet_id, in, out);
+    auto outcome = protocol.transform(direction, packet_id, connection, in, out);
     REQUIRE(outcome.has_value());
     result = *outcome;
     return buffer;
 }
 
-}  // namespace
+} // namespace
 
 TEST_CASE("v975_to_v1001 upgrades a clientbound attribute-layer-sync body")
 {
@@ -39,10 +49,11 @@ TEST_CASE("v975_to_v1001 upgrades a clientbound attribute-layer-sync body")
     CHECK(protocol.server_protocol() == 975);
     CHECK(protocol.client_protocol() == 1001);
 
+    auto connection = make_connection();
     bp::BinaryReader in{golden_975};
     std::string buffer;
     bp::BinaryWriter out{buffer};
-    auto result = protocol.transform(Direction::Clientbound, kAttributeLayerSync, in, out);
+    auto result = protocol.transform(Direction::Clientbound, kAttributeLayerSync, connection, in, out);
 
     REQUIRE(result.has_value());
     CHECK(*result == TransformResult::Translated);
@@ -93,10 +104,11 @@ TEST_CASE("a truncated body surfaces the codec error")
 {
     const auto protocol = endweave::v975_to_v1001::create_protocol();
 
-    bp::BinaryReader in{golden_975.substr(0, 3)};  // payload type + a string length with no bytes behind it
+    auto connection = make_connection();
+    bp::BinaryReader in{golden_975.substr(0, 3)}; // payload type + a string length with no bytes behind it
     std::string buffer;
     bp::BinaryWriter out{buffer};
-    auto result = protocol.transform(Direction::Clientbound, kAttributeLayerSync, in, out);
+    auto result = protocol.transform(Direction::Clientbound, kAttributeLayerSync, connection, in, out);
 
     CHECK_FALSE(result.has_value());
 }

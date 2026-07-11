@@ -24,6 +24,7 @@ bool Protocol::has_handler_or_cancel(Direction direction, int packet_id) const
 }
 
 std::expected<TransformResult, std::error_code> Protocol::transform(Direction direction, int packet_id,
+                                                                    UserConnection &connection,
                                                                     bedrock::protocol::BinaryReader &in,
                                                                     bedrock::protocol::BinaryWriter &out) const
 {
@@ -38,10 +39,10 @@ std::expected<TransformResult, std::error_code> Protocol::transform(Direction di
     if (h == d->second.end()) {
         return TransformResult::Passthrough;
     }
-    if (auto result = h->second(in, out); !result) {
+    if (auto result = h->second(connection, in, out); !result) {
         return std::unexpected(result.error());
     }
     return TransformResult::Translated;
 }
 
-}  // namespace endweave
+} // namespace endweave
