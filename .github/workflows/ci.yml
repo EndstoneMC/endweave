@@ -7,6 +7,9 @@ on:
     branches: [develop]
 
 jobs:
+  # Three compilers across three standard libraries. Clang pairs with libc++
+  # rather than libstdc++ because libstdc++'s <expected> is incompatible with
+  # Clang's concepts front end; libstdc++ itself is still covered by the GCC job.
   build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -17,10 +20,11 @@ jobs:
           - name: Linux GCC (libstdc++)
             os: ubuntu-24.04
             cxx: g++
-          - name: Linux Clang (libstdc++)
+          - name: Linux Clang (libc++)
             os: ubuntu-24.04
             cxx: clang++-18
             llvm: "18"
+            cmakeflags: -DCMAKE_CXX_FLAGS=-stdlib=libc++
           - name: Windows MSVC
             os: windows-2022
             cxx: cl
@@ -40,7 +44,7 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - uses: lukka/get-cmake@latest
 
-      - name: Install Clang ${{ matrix.llvm }}
+      - name: Install Clang ${{ matrix.llvm }} + libc++
         if: matrix.llvm
         run: |
           sudo apt-get update -y -q
@@ -48,6 +52,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh ${{ matrix.llvm }}
+          sudo apt-get install -y -q libc++-${{ matrix.llvm }}-dev libc++abi-${{ matrix.llvm }}-dev
 
       - name: Set up MSVC
         if: runner.os == 'Windows'
@@ -55,10 +60,9 @@ jobs:
 
       # ENDWEAVE_BUILD_PLUGIN=OFF skips the heavy Endstone SDK fetch; the
       # translation library + Catch2 tests build against only bedrock::protocol.
-      # No -stdlib override: each compiler uses its native standard library.
       - name: Configure
         working-directory: endweave
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DENDWEAVE_BUILD_PLUGIN=OFF
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DENDWEAVE_BUILD_PLUGIN=OFF ${{ matrix.cmakeflags }}
       - name: Build
         working-directory: endweave
         run: cmake --build build
