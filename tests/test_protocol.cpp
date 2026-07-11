@@ -105,7 +105,8 @@ TEST_CASE("a truncated body surfaces the codec error")
     const auto protocol = endweave::v975_to_v1001::create_protocol();
 
     auto connection = make_connection();
-    bp::BinaryReader in{golden_975.substr(0, 3)}; // payload type + a string length with no bytes behind it
+    const std::string truncated = golden_975.substr(0, 3); // payload type + a string length with no bytes behind it
+    bp::BinaryReader in{truncated};                         // named so the reader's view does not dangle
     std::string buffer;
     bp::BinaryWriter out{buffer};
     auto result = protocol.transform(Direction::Clientbound, kAttributeLayerSync, connection, in, out);
