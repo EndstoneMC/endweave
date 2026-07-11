@@ -1,4 +1,4 @@
-add_executable(endweave_tests test_attribute_layer_sync.cpp)
+add_executable(endweave_tests test_attribute_layer_sync.cpp test_protocol.cpp)
 target_link_libraries(endweave_tests PRIVATE endweave_protocol Catch2::Catch2WithMain)
 
 include(Catch)

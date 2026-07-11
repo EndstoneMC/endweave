@@ -24,7 +24,11 @@ add_subdirectory(${BEDROCK_PROTOCOL_SOURCE_DIR} bedrock-protocol EXCLUDE_FROM_AL
 
 # Translation layer: a pure codec consumer with no Endstone dependency, so it
 # builds (and the tests run) even when the plugin is gated off.
-add_library(endweave_protocol STATIC src/protocol/attribute_layer_sync.cpp)
+add_library(endweave_protocol STATIC
+        src/protocol/attribute_layer_sync.cpp
+        src/protocol/protocol.cpp
+        src/protocol/v975_to_v1001.cpp
+        src/protocol/v1001_to_v975.cpp)
 target_include_directories(endweave_protocol PUBLIC include)
 target_link_libraries(endweave_protocol PUBLIC bedrock::protocol)
 target_compile_features(endweave_protocol PUBLIC cxx_std_23)
