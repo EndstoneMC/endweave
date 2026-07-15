@@ -19,6 +19,7 @@ using endweave::UserConnection;
 namespace {
 
 constexpr int kAttributeLayerSync = 345;
+constexpr int kUpdateSoundData = 348;
 
 // The version protocols are connection-stateless, so any connection works.
 endweave::LogSink g_sink;
@@ -98,6 +99,22 @@ TEST_CASE("a cancelled id drops the packet")
     TransformResult result{};
     auto buffer = transform_out(protocol, Direction::Clientbound, kAttributeLayerSync, golden_1001, result);
     CHECK(result == TransformResult::Cancelled);
+}
+
+TEST_CASE("v1001_to_v975 cancels the 1001-only update-sound-data packet")
+{
+    const auto protocol = endweave::v1001_to_v975::create_protocol();
+    CHECK(protocol.has_handler_or_cancel(Direction::Clientbound, kUpdateSoundData));
+
+    TransformResult result{};
+    transform_out(protocol, Direction::Clientbound, kUpdateSoundData, /*body=*/"", result);
+    CHECK(result == TransformResult::Cancelled);
+}
+
+TEST_CASE("v975_to_v1001 leaves update-sound-data untouched")
+{
+    const auto protocol = endweave::v975_to_v1001::create_protocol();
+    CHECK_FALSE(protocol.has_handler_or_cancel(Direction::Clientbound, kUpdateSoundData));
 }
 
 TEST_CASE("a truncated body surfaces the codec error")

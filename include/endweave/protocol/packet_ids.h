@@ -254,6 +254,7 @@ enum class PacketId : int {
     ClientboundAttributeLayerSync = 345,
     ServerStoreInfo = 346,
     ServerPresenceInfo = 347,
+    ClientboundUpdateSoundData = 348,
 };
 
 } // namespace endweave
