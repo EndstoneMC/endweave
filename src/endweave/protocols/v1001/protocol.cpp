@@ -27,20 +27,15 @@ constexpr auto kV1001 = ProtocolVersion::V1001;
 //
 // The 976 diff is confined to two nested types; the rest of the closure is version-shared.
 
-/** EnvironmentAttributeData gained local_transition_ticks and noise_transition. */
+/** EnvironmentAttributeData appended local_transition_ticks and noise_transition. */
 template <>
 struct Conversion<bp::EnvironmentAttributeData_<kV1001>, bp::EnvironmentAttributeData_<kV975>> {
     static bp::EnvironmentAttributeData_<kV1001> apply(const bp::EnvironmentAttributeData_<kV975> &in)
     {
-        return {.name = in.name,
-                .from_attribute = in.from_attribute,
-                .attribute = in.attribute,
-                .to_attribute = in.to_attribute,
-                .current_transition_ticks = in.current_transition_ticks,
-                .total_transition_ticks = in.total_transition_ticks,
-                .easing = in.easing,
-                .local_transition_ticks = 0, // polyfill
-                .noise_transition = false};  // polyfill
+        auto out = convertAcrossGap<7, 2, bp::EnvironmentAttributeData_<kV1001>>(in);
+        out.local_transition_ticks = 0; // polyfill
+        out.noise_transition = false;   // polyfill
+        return out;
     }
 };
 
@@ -49,26 +44,18 @@ struct Conversion<bp::EnvironmentAttributeData_<kV975>, bp::EnvironmentAttribute
     static bp::EnvironmentAttributeData_<kV975> apply(const bp::EnvironmentAttributeData_<kV1001> &in)
     {
         // local_transition_ticks, noise_transition dropped (lossy)
-        return {.name = in.name,
-                .from_attribute = in.from_attribute,
-                .attribute = in.attribute,
-                .to_attribute = in.to_attribute,
-                .current_transition_ticks = in.current_transition_ticks,
-                .total_transition_ticks = in.total_transition_ticks,
-                .easing = in.easing};
+        return convertAcrossGap<7, 2, bp::EnvironmentAttributeData_<kV975>>(in);
     }
 };
 
-/** AttributeLayerData gained noise_name, inserted after name. */
+/** AttributeLayerData inserted noise_name after name. */
 template <>
 struct Conversion<bp::AttributeLayerData_<kV1001>, bp::AttributeLayerData_<kV975>> {
     static bp::AttributeLayerData_<kV1001> apply(const bp::AttributeLayerData_<kV975> &in)
     {
-        return {.name = in.name,
-                .noise_name = std::nullopt, // polyfill
-                .dimension_id = in.dimension_id,
-                .settings = in.settings,
-                .attributes = convert<std::vector<bp::EnvironmentAttributeData_<kV1001>>>(in.attributes)};
+        auto out = convertAcrossGap<1, 1, bp::AttributeLayerData_<kV1001>>(in);
+        out.noise_name = std::nullopt; // polyfill
+        return out;
     }
 };
 
@@ -77,35 +64,20 @@ struct Conversion<bp::AttributeLayerData_<kV975>, bp::AttributeLayerData_<kV1001
     static bp::AttributeLayerData_<kV975> apply(const bp::AttributeLayerData_<kV1001> &in)
     {
         // noise_name dropped (lossy)
-        return {.name = in.name,
-                .dimension_id = in.dimension_id,
-                .settings = in.settings,
-                .attributes = convert<std::vector<bp::EnvironmentAttributeData_<kV975>>>(in.attributes)};
+        return convertAcrossGap<1, 1, bp::AttributeLayerData_<kV975>>(in);
     }
 };
 
 // --- 315 ServerboundDiagnostics --------------------------------------------------------
 
-/** The packet gained a trailing whisker_scopes list at 978. */
+/** The packet appended a whisker_scopes list at 978. */
 template <>
 struct Conversion<bp::ServerboundDiagnosticsPacket_<kV1001>, bp::ServerboundDiagnosticsPacket_<kV975>> {
     static bp::ServerboundDiagnosticsPacket_<kV1001> apply(const bp::ServerboundDiagnosticsPacket_<kV975> &in)
     {
-        return {.avg_fps = in.avg_fps,
-                .avg_server_sim_tick_time_ms = in.avg_server_sim_tick_time_ms,
-                .avg_client_sim_tick_time_ms = in.avg_client_sim_tick_time_ms,
-                .avg_begin_frame_time_ms = in.avg_begin_frame_time_ms,
-                .avg_input_time_ms = in.avg_input_time_ms,
-                .avg_render_time_ms = in.avg_render_time_ms,
-                .avg_end_frame_time_ms = in.avg_end_frame_time_ms,
-                .avg_remainder_time_percent = in.avg_remainder_time_percent,
-                .avg_unaccounted_time_percent = in.avg_unaccounted_time_percent,
-                .memory_category_values = in.memory_category_values,
-                .entity_diagnostics = in.entity_diagnostics,
-                .system_diagnostics = in.system_diagnostics,
-                // A 975 client collects no whisker scopes, and the list is length-prefixed, so
-                // an empty one is a faithful "none collected".
-                .whisker_scopes = {}};
+        // A 975 client collects no whisker scopes, and the list is length-prefixed, so an empty
+        // one is a faithful "none collected" -- which is what the gap is left as.
+        return convertAcrossGap<12, 1, bp::ServerboundDiagnosticsPacket_<kV1001>>(in);
     }
 };
 
@@ -114,18 +86,7 @@ struct Conversion<bp::ServerboundDiagnosticsPacket_<kV975>, bp::ServerboundDiagn
     static bp::ServerboundDiagnosticsPacket_<kV975> apply(const bp::ServerboundDiagnosticsPacket_<kV1001> &in)
     {
         // whisker_scopes dropped (lossy)
-        return {.avg_fps = in.avg_fps,
-                .avg_server_sim_tick_time_ms = in.avg_server_sim_tick_time_ms,
-                .avg_client_sim_tick_time_ms = in.avg_client_sim_tick_time_ms,
-                .avg_begin_frame_time_ms = in.avg_begin_frame_time_ms,
-                .avg_input_time_ms = in.avg_input_time_ms,
-                .avg_render_time_ms = in.avg_render_time_ms,
-                .avg_end_frame_time_ms = in.avg_end_frame_time_ms,
-                .avg_remainder_time_percent = in.avg_remainder_time_percent,
-                .avg_unaccounted_time_percent = in.avg_unaccounted_time_percent,
-                .memory_category_values = in.memory_category_values,
-                .entity_diagnostics = in.entity_diagnostics,
-                .system_diagnostics = in.system_diagnostics};
+        return convertAcrossGap<12, 1, bp::ServerboundDiagnosticsPacket_<kV975>>(in);
     }
 };
 
@@ -224,17 +185,13 @@ struct Conversion<bp::ClientCacheBlobStatusPacket_<kV975>, bp::ClientCacheBlobSt
 
 // --- 331 GraphicsOverrideParameter -----------------------------------------------------
 
+/** player_id was inserted between biome_id and parameter_id. */
 template <>
 struct Conversion<bp::GraphicsOverrideParameterPacket_<kV1001>, bp::GraphicsOverrideParameterPacket_<kV975>> {
     static bp::GraphicsOverrideParameterPacket_<kV1001> apply(const bp::GraphicsOverrideParameterPacket_<kV975> &in)
     {
-        return {.keyframes = in.keyframes,
-                .float_value = in.float_value,
-                .vec3_value = in.vec3_value,
-                .biome_id = in.biome_id,
-                .player_id = std::nullopt, // polyfill: a 975 override is never per-player
-                .parameter_id = in.parameter_id,
-                .reset_parameter = in.reset_parameter};
+        // The gap is left absent: a 975 override is never per-player.
+        return convertAcrossGap<4, 1, bp::GraphicsOverrideParameterPacket_<kV1001>>(in);
     }
 };
 
@@ -243,12 +200,7 @@ struct Conversion<bp::GraphicsOverrideParameterPacket_<kV975>, bp::GraphicsOverr
     static bp::GraphicsOverrideParameterPacket_<kV975> apply(const bp::GraphicsOverrideParameterPacket_<kV1001> &in)
     {
         // player_id dropped (lossy): a targeted override becomes a broadcast one.
-        return {.keyframes = in.keyframes,
-                .float_value = in.float_value,
-                .vec3_value = in.vec3_value,
-                .biome_id = in.biome_id,
-                .parameter_id = in.parameter_id,
-                .reset_parameter = in.reset_parameter};
+        return convertAcrossGap<4, 1, bp::GraphicsOverrideParameterPacket_<kV975>>(in);
     }
 };
 
@@ -257,64 +209,12 @@ struct Conversion<bp::GraphicsOverrideParameterPacket_<kV975>, bp::GraphicsOverr
 // One field inserted on the packet and two appended to LevelSettings. Both are wider than the
 // field-count ladder, so their shared prefix is spelled out.
 
-/** Every field LevelSettings has carried since 975. */
-#define ENDWEAVE_LEVEL_SETTINGS_SHARED(out, in)                                             \
-    (out).seed = (in).seed;                                                                 \
-    (out).spawn_settings = (in).spawn_settings;                                             \
-    (out).generator = (in).generator;                                                       \
-    (out).game_type = (in).game_type;                                                       \
-    (out).is_hardcore = (in).is_hardcore;                                                   \
-    (out).game_difficulty = (in).game_difficulty;                                           \
-    (out).default_spawn = (in).default_spawn;                                               \
-    (out).achievements_disabled = (in).achievements_disabled;                               \
-    (out).editor_world_type = (in).editor_world_type;                                       \
-    (out).is_created_in_editor = (in).is_created_in_editor;                                 \
-    (out).is_exported_from_editor = (in).is_exported_from_editor;                           \
-    (out).time = (in).time;                                                                 \
-    (out).education_edition_offer = (in).education_edition_offer;                           \
-    (out).education_features_enabled = (in).education_features_enabled;                     \
-    (out).education_product_id = (in).education_product_id;                                 \
-    (out).rain_level = (in).rain_level;                                                     \
-    (out).lightning_level = (in).lightning_level;                                           \
-    (out).confirmed_platform_locked_content = (in).confirmed_platform_locked_content;       \
-    (out).multiplayer_game_intent = (in).multiplayer_game_intent;                           \
-    (out).lan_broadcast_intent = (in).lan_broadcast_intent;                                 \
-    (out).xbl_broadcast_intent = (in).xbl_broadcast_intent;                                 \
-    (out).platform_broadcast_intent = (in).platform_broadcast_intent;                       \
-    (out).commands_enabled = (in).commands_enabled;                                         \
-    (out).texture_packs_required = (in).texture_packs_required;                             \
-    (out).game_rules = (in).game_rules;                                                     \
-    (out).experiments = (in).experiments;                                                   \
-    (out).experiments_previously_toggled = (in).experiments_previously_toggled;             \
-    (out).bonus_chest_enabled = (in).bonus_chest_enabled;                                   \
-    (out).start_with_map_enabled = (in).start_with_map_enabled;                             \
-    (out).default_permissions = (in).default_permissions;                                   \
-    (out).server_chunk_tick_range = (in).server_chunk_tick_range;                           \
-    (out).has_locked_behavior_pack = (in).has_locked_behavior_pack;                         \
-    (out).has_locked_resource_pack = (in).has_locked_resource_pack;                         \
-    (out).is_from_locked_template = (in).is_from_locked_template;                           \
-    (out).use_msa_gamertags_only = (in).use_msa_gamertags_only;                             \
-    (out).is_from_world_template = (in).is_from_world_template;                             \
-    (out).is_world_template_option_locked = (in).is_world_template_option_locked;           \
-    (out).spawn_v1_villagers = (in).spawn_v1_villagers;                                     \
-    (out).persona_disabled = (in).persona_disabled;                                         \
-    (out).custom_skins_disabled = (in).custom_skins_disabled;                               \
-    (out).emote_chat_muted = (in).emote_chat_muted;                                         \
-    (out).base_game_version = (in).base_game_version;                                       \
-    (out).limited_world_width = (in).limited_world_width;                                   \
-    (out).limited_world_depth = (in).limited_world_depth;                                   \
-    (out).nether_type = (in).nether_type;                                                   \
-    (out).edu_shared_uri_resource = (in).edu_shared_uri_resource;                           \
-    (out).override_force_experimental_gameplay = (in).override_force_experimental_gameplay; \
-    (out).chat_restriction_level = (in).chat_restriction_level;                             \
-    (out).disable_player_interactions = (in).disable_player_interactions
-
+/** LevelSettings appended two editor fields at 1001; StartGame inserted is_chat_logging. */
 template <>
 struct Conversion<bp::LevelSettings_<kV1001>, bp::LevelSettings_<kV975>> {
     static bp::LevelSettings_<kV1001> apply(const bp::LevelSettings_<kV975> &in)
     {
-        bp::LevelSettings_<kV1001> out;
-        ENDWEAVE_LEVEL_SETTINGS_SHARED(out, in);
+        auto out = convertAcrossGap<49, 2, bp::LevelSettings_<kV1001>>(in);
         // A 975 server never opts a world into editor connections.
         out.server_editor_connection_policy = bp::ServerEditorConnectionPolicy::MATCH_WORLD_TYPE;
         out.allow_anonymous_block_drops_in_editor_worlds = false;
@@ -326,49 +226,19 @@ template <>
 struct Conversion<bp::LevelSettings_<kV975>, bp::LevelSettings_<kV1001>> {
     static bp::LevelSettings_<kV975> apply(const bp::LevelSettings_<kV1001> &in)
     {
-        bp::LevelSettings_<kV975> out;
-        ENDWEAVE_LEVEL_SETTINGS_SHARED(out, in);
         // server_editor_connection_policy, allow_anonymous_block_drops_in_editor_worlds dropped
-        return out;
+        return convertAcrossGap<49, 2, bp::LevelSettings_<kV975>>(in);
     }
 };
-
-/** Every StartGamePacket field that is not itself versioned. */
-#define ENDWEAVE_START_GAME_SHARED(out, in)                                                   \
-    (out).entity_id = (in).entity_id;                                                         \
-    (out).runtime_id = (in).runtime_id;                                                       \
-    (out).entity_game_type = (in).entity_game_type;                                           \
-    (out).pos = (in).pos;                                                                     \
-    (out).rot = (in).rot;                                                                     \
-    (out).level_id = (in).level_id;                                                           \
-    (out).level_name = (in).level_name;                                                       \
-    (out).template_content_identity = (in).template_content_identity;                         \
-    (out).is_trial = (in).is_trial;                                                           \
-    (out).movement_settings = (in).movement_settings;                                         \
-    (out).level_current_time = (in).level_current_time;                                       \
-    (out).enchantment_seed = (in).enchantment_seed;                                           \
-    (out).block_properties = (in).block_properties;                                           \
-    (out).multiplayer_correlation_id = (in).multiplayer_correlation_id;                       \
-    (out).enable_item_stack_net_manager = (in).enable_item_stack_net_manager;                 \
-    (out).server_version = (in).server_version;                                               \
-    (out).player_property_data = (in).player_property_data;                                   \
-    (out).server_block_type_registry_checksum = (in).server_block_type_registry_checksum;     \
-    (out).world_template_id = (in).world_template_id;                                         \
-    (out).server_enabled_client_side_generation = (in).server_enabled_client_side_generation; \
-    (out).block_network_ids_are_hashes = (in).block_network_ids_are_hashes;                   \
-    (out).network_permissions = (in).network_permissions;                                     \
-    (out).server_telemetry_data = (in).server_telemetry_data
 
 template <>
 struct Conversion<bp::StartGamePacket_<kV1001>, bp::StartGamePacket_<kV975>> {
     static bp::StartGamePacket_<kV1001> apply(const bp::StartGamePacket_<kV975> &in)
     {
-        bp::StartGamePacket_<kV1001> out;
-        ENDWEAVE_START_GAME_SHARED(out, in);
-        out.settings = convert<bp::LevelSettings_<kV1001>>(in.settings);
+        // settings and server_configuration_join_info are versioned, and the positional walk
+        // recurses into them on its own.
+        auto out = convertAcrossGap<23, 1, bp::StartGamePacket_<kV1001>>(in);
         out.is_chat_logging = false; // polyfill: a 975 server never asks the client to log chat
-        out.server_configuration_join_info =
-            convert<std::optional<bp::ServerConfigurationJoinInfo_<kV1001>>>(in.server_configuration_join_info);
         return out;
     }
 };
@@ -377,13 +247,8 @@ template <>
 struct Conversion<bp::StartGamePacket_<kV975>, bp::StartGamePacket_<kV1001>> {
     static bp::StartGamePacket_<kV975> apply(const bp::StartGamePacket_<kV1001> &in)
     {
-        bp::StartGamePacket_<kV975> out;
-        ENDWEAVE_START_GAME_SHARED(out, in);
-        out.settings = convert<bp::LevelSettings_<kV975>>(in.settings);
         // is_chat_logging dropped (lossy)
-        out.server_configuration_join_info =
-            convert<std::optional<bp::ServerConfigurationJoinInfo_<kV975>>>(in.server_configuration_join_info);
-        return out;
+        return convertAcrossGap<23, 1, bp::StartGamePacket_<kV975>>(in);
     }
 };
 
