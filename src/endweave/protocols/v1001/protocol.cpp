@@ -27,41 +27,31 @@ constexpr auto kV1001 = ProtocolVersion::V1001;
 //
 // The 976 diff is confined to two nested types; the rest of the closure is version-shared.
 
-inline constexpr auto kEnvironmentAttributeFields = fieldList(
-    [](auto &v) -> decltype((v.name)) {
-        return v.name;
-    },
-    [](auto &v) -> decltype((v.from_attribute)) {
-        return v.from_attribute;
-    },
-    [](auto &v) -> decltype((v.attribute)) {
-        return v.attribute;
-    },
-    [](auto &v) -> decltype((v.to_attribute)) {
-        return v.to_attribute;
-    },
-    [](auto &v) -> decltype((v.current_transition_ticks)) {
-        return v.current_transition_ticks;
-    },
-    [](auto &v) -> decltype((v.total_transition_ticks)) {
-        return v.total_transition_ticks;
-    },
-    [](auto &v) -> decltype((v.easing)) {
-        return v.easing;
-    },
-    [](auto &v) -> decltype((v.local_transition_ticks)) {
-        return v.local_transition_ticks;
-    },
-    [](auto &v) -> decltype((v.noise_transition)) {
-        return v.noise_transition;
-    });
+/**
+ * Copies every field both versions of EnvironmentAttributeData have.
+ *
+ * Only 1001 has local_transition_ticks, noise_transition. The converter sets or drops it
+ * deliberately.
+ */
+template <class To, class From>
+void copyEnvironmentAttribute(To &to, const From &from)
+{
+    to.name = from.name;
+    to.from_attribute = from.from_attribute;
+    to.attribute = from.attribute;
+    to.to_attribute = from.to_attribute;
+    to.current_transition_ticks = from.current_transition_ticks;
+    to.total_transition_ticks = from.total_transition_ticks;
+    to.easing = from.easing;
+}
 
 /** EnvironmentAttributeData appended local_transition_ticks and noise_transition. */
 template <>
 struct Conversion<bp::EnvironmentAttributeData_<kV1001>, bp::EnvironmentAttributeData_<kV975>> {
     static bp::EnvironmentAttributeData_<kV1001> apply(const bp::EnvironmentAttributeData_<kV975> &in)
     {
-        auto out = kEnvironmentAttributeFields.copy<bp::EnvironmentAttributeData_<kV1001>>(in);
+        bp::EnvironmentAttributeData_<kV1001> out;
+        copyEnvironmentAttribute(out, in);
         out.local_transition_ticks = 0; // polyfill
         out.noise_transition = false;   // polyfill
         return out;
@@ -73,33 +63,33 @@ struct Conversion<bp::EnvironmentAttributeData_<kV975>, bp::EnvironmentAttribute
     static bp::EnvironmentAttributeData_<kV975> apply(const bp::EnvironmentAttributeData_<kV1001> &in)
     {
         // local_transition_ticks, noise_transition dropped (lossy)
-        return kEnvironmentAttributeFields.copy<bp::EnvironmentAttributeData_<kV975>>(in);
+        bp::EnvironmentAttributeData_<kV975> out;
+        copyEnvironmentAttribute(out, in);
+        return out;
     }
 };
 
-inline constexpr auto kAttributeLayerFields = fieldList(
-    [](auto &v) -> decltype((v.name)) {
-        return v.name;
-    },
-    [](auto &v) -> decltype((v.dimension_id)) {
-        return v.dimension_id;
-    },
-    [](auto &v) -> decltype((v.settings)) {
-        return v.settings;
-    },
-    [](auto &v) -> decltype((v.attributes)) {
-        return v.attributes;
-    },
-    [](auto &v) -> decltype((v.noise_name)) {
-        return v.noise_name;
-    });
+/**
+ * Copies every field both versions of AttributeLayerData have.
+ *
+ * Only 1001 has noise_name. The converter sets or drops it deliberately.
+ */
+template <class To, class From>
+void copyAttributeLayer(To &to, const From &from)
+{
+    to.name = from.name;
+    to.dimension_id = from.dimension_id;
+    to.settings = from.settings;
+    to.attributes = convert<decltype(to.attributes)>(from.attributes);
+}
 
 /** AttributeLayerData inserted noise_name after name. */
 template <>
 struct Conversion<bp::AttributeLayerData_<kV1001>, bp::AttributeLayerData_<kV975>> {
     static bp::AttributeLayerData_<kV1001> apply(const bp::AttributeLayerData_<kV975> &in)
     {
-        auto out = kAttributeLayerFields.copy<bp::AttributeLayerData_<kV1001>>(in);
+        bp::AttributeLayerData_<kV1001> out;
+        copyAttributeLayer(out, in);
         out.noise_name = std::nullopt; // polyfill
         return out;
     }
@@ -110,52 +100,35 @@ struct Conversion<bp::AttributeLayerData_<kV975>, bp::AttributeLayerData_<kV1001
     static bp::AttributeLayerData_<kV975> apply(const bp::AttributeLayerData_<kV1001> &in)
     {
         // noise_name dropped (lossy)
-        return kAttributeLayerFields.copy<bp::AttributeLayerData_<kV975>>(in);
+        bp::AttributeLayerData_<kV975> out;
+        copyAttributeLayer(out, in);
+        return out;
     }
 };
 
 // --- 315 ServerboundDiagnostics --------------------------------------------------------
 
-inline constexpr auto kDiagnosticsFields = fieldList(
-    [](auto &v) -> decltype((v.avg_fps)) {
-        return v.avg_fps;
-    },
-    [](auto &v) -> decltype((v.avg_server_sim_tick_time_ms)) {
-        return v.avg_server_sim_tick_time_ms;
-    },
-    [](auto &v) -> decltype((v.avg_client_sim_tick_time_ms)) {
-        return v.avg_client_sim_tick_time_ms;
-    },
-    [](auto &v) -> decltype((v.avg_begin_frame_time_ms)) {
-        return v.avg_begin_frame_time_ms;
-    },
-    [](auto &v) -> decltype((v.avg_input_time_ms)) {
-        return v.avg_input_time_ms;
-    },
-    [](auto &v) -> decltype((v.avg_render_time_ms)) {
-        return v.avg_render_time_ms;
-    },
-    [](auto &v) -> decltype((v.avg_end_frame_time_ms)) {
-        return v.avg_end_frame_time_ms;
-    },
-    [](auto &v) -> decltype((v.avg_remainder_time_percent)) {
-        return v.avg_remainder_time_percent;
-    },
-    [](auto &v) -> decltype((v.avg_unaccounted_time_percent)) {
-        return v.avg_unaccounted_time_percent;
-    },
-    [](auto &v) -> decltype((v.memory_category_values)) {
-        return v.memory_category_values;
-    },
-    [](auto &v) -> decltype((v.entity_diagnostics)) {
-        return v.entity_diagnostics;
-    },
-    [](auto &v) -> decltype((v.system_diagnostics)) {
-        return v.system_diagnostics;
-    },
-    [](auto &v) -> decltype((v.whisker_scopes)) {
-        return v.whisker_scopes;
-    });
+/**
+ * Copies every field both versions of ServerboundDiagnosticsPacket have.
+ *
+ * Only 1001 has whisker_scopes. The converter sets or drops it deliberately.
+ */
+template <class To, class From>
+void copyDiagnostics(To &to, const From &from)
+{
+    to.avg_fps = from.avg_fps;
+    to.avg_server_sim_tick_time_ms = from.avg_server_sim_tick_time_ms;
+    to.avg_client_sim_tick_time_ms = from.avg_client_sim_tick_time_ms;
+    to.avg_begin_frame_time_ms = from.avg_begin_frame_time_ms;
+    to.avg_input_time_ms = from.avg_input_time_ms;
+    to.avg_render_time_ms = from.avg_render_time_ms;
+    to.avg_end_frame_time_ms = from.avg_end_frame_time_ms;
+    to.avg_remainder_time_percent = from.avg_remainder_time_percent;
+    to.avg_unaccounted_time_percent = from.avg_unaccounted_time_percent;
+    to.memory_category_values = from.memory_category_values;
+    to.entity_diagnostics = from.entity_diagnostics;
+    to.system_diagnostics = from.system_diagnostics;
+}
 
 /**
  * The packet appended a whisker_scopes list at 978.
@@ -167,7 +140,9 @@ template <>
 struct Conversion<bp::ServerboundDiagnosticsPacket_<kV1001>, bp::ServerboundDiagnosticsPacket_<kV975>> {
     static bp::ServerboundDiagnosticsPacket_<kV1001> apply(const bp::ServerboundDiagnosticsPacket_<kV975> &in)
     {
-        return kDiagnosticsFields.copy<bp::ServerboundDiagnosticsPacket_<kV1001>>(in);
+        bp::ServerboundDiagnosticsPacket_<kV1001> out;
+        copyDiagnostics(out, in);
+        return out;
     }
 };
 
@@ -175,7 +150,9 @@ template <>
 struct Conversion<bp::ServerboundDiagnosticsPacket_<kV975>, bp::ServerboundDiagnosticsPacket_<kV1001>> {
     static bp::ServerboundDiagnosticsPacket_<kV975> apply(const bp::ServerboundDiagnosticsPacket_<kV1001> &in)
     {
-        return kDiagnosticsFields.copy<bp::ServerboundDiagnosticsPacket_<kV975>>(in);
+        bp::ServerboundDiagnosticsPacket_<kV975> out;
+        copyDiagnostics(out, in);
+        return out;
     }
 };
 
@@ -185,23 +162,25 @@ struct Conversion<bp::ServerboundDiagnosticsPacket_<kV975>, bp::ServerboundDiagn
 // same three values, so neither direction loses anything. SubChunkPos keeps its field list --
 // only the encoding moved, varint32 to fixed int32 -- so it needs no converter.
 
-inline constexpr auto kSubChunkRequestFields = fieldList(
-    [](auto &v) -> decltype((v.dimension_type)) {
-        return v.dimension_type;
-    },
-    [](auto &v) -> decltype((v.center_pos)) {
-        return v.center_pos;
-    },
-    [](auto &v) -> decltype((v.sub_chunk_pos_offsets)) {
-        return v.sub_chunk_pos_offsets;
-    });
+/**
+ * Copies every field both versions of SubChunkRequestPacket have.
+ */
+template <class To, class From>
+void copySubChunkRequest(To &to, const From &from)
+{
+    to.dimension_type = from.dimension_type;
+    to.center_pos = convert<decltype(to.center_pos)>(from.center_pos);
+    to.sub_chunk_pos_offsets = from.sub_chunk_pos_offsets;
+}
 
 /** 979 moved center_pos behind the offsets; matching by name makes the reorder a non-event. */
 template <>
 struct Conversion<bp::SubChunkRequestPacket_<kV1001>, bp::SubChunkRequestPacket_<kV975>> {
     static bp::SubChunkRequestPacket_<kV1001> apply(const bp::SubChunkRequestPacket_<kV975> &in)
     {
-        return kSubChunkRequestFields.copy<bp::SubChunkRequestPacket_<kV1001>>(in);
+        bp::SubChunkRequestPacket_<kV1001> out;
+        copySubChunkRequest(out, in);
+        return out;
     }
 };
 
@@ -209,7 +188,9 @@ template <>
 struct Conversion<bp::SubChunkRequestPacket_<kV975>, bp::SubChunkRequestPacket_<kV1001>> {
     static bp::SubChunkRequestPacket_<kV975> apply(const bp::SubChunkRequestPacket_<kV1001> &in)
     {
-        return kSubChunkRequestFields.copy<bp::SubChunkRequestPacket_<kV975>>(in);
+        bp::SubChunkRequestPacket_<kV975> out;
+        copySubChunkRequest(out, in);
+        return out;
     }
 };
 
@@ -261,26 +242,26 @@ struct Conversion<std::optional<bp::PresenceConfiguration_<kV975>>, std::optiona
 //
 // 975 writes both counts up front then both arrays; 1001 gives each list its own prefix.
 
-inline constexpr auto kBlobStatusFields = fieldList(
-    [](auto &v) -> decltype((v.missing_count)) {
-        return v.missing_count;
-    },
-    [](auto &v) -> decltype((v.found_count)) {
-        return v.found_count;
-    },
-    [](auto &v) -> decltype((v.missing_ids)) {
-        return v.missing_ids;
-    },
-    [](auto &v) -> decltype((v.found_ids)) {
-        return v.found_ids;
-    });
+/**
+ * Copies every field both versions of ClientCacheBlobStatusPacket have.
+ *
+ * Only 975 has missing_count, found_count. The converter sets or drops it deliberately.
+ */
+template <class To, class From>
+void copyBlobStatus(To &to, const From &from)
+{
+    to.missing_ids = from.missing_ids;
+    to.found_ids = from.found_ids;
+}
 
 template <>
 struct Conversion<bp::ClientCacheBlobStatusPacket_<kV1001>, bp::ClientCacheBlobStatusPacket_<kV975>> {
     static bp::ClientCacheBlobStatusPacket_<kV1001> apply(const bp::ClientCacheBlobStatusPacket_<kV975> &in)
     {
         // 1001 prefixes each list instead of carrying the counts up front, so they just go.
-        return kBlobStatusFields.copy<bp::ClientCacheBlobStatusPacket_<kV1001>>(in);
+        bp::ClientCacheBlobStatusPacket_<kV1001> out;
+        copyBlobStatus(out, in);
+        return out;
     }
 };
 
@@ -288,7 +269,8 @@ template <>
 struct Conversion<bp::ClientCacheBlobStatusPacket_<kV975>, bp::ClientCacheBlobStatusPacket_<kV1001>> {
     static bp::ClientCacheBlobStatusPacket_<kV975> apply(const bp::ClientCacheBlobStatusPacket_<kV1001> &in)
     {
-        auto out = kBlobStatusFields.copy<bp::ClientCacheBlobStatusPacket_<kV975>>(in);
+        bp::ClientCacheBlobStatusPacket_<kV975> out;
+        copyBlobStatus(out, in);
         // 975 states each length up front; 1001 only implies it through the list prefix.
         out.missing_count = static_cast<std::uint32_t>(out.missing_ids.size());
         out.found_count = static_cast<std::uint32_t>(out.found_ids.size());
@@ -298,28 +280,21 @@ struct Conversion<bp::ClientCacheBlobStatusPacket_<kV975>, bp::ClientCacheBlobSt
 
 // --- 331 GraphicsOverrideParameter -----------------------------------------------------
 
-inline constexpr auto kGraphicsOverrideFields = fieldList(
-    [](auto &v) -> decltype((v.keyframes)) {
-        return v.keyframes;
-    },
-    [](auto &v) -> decltype((v.float_value)) {
-        return v.float_value;
-    },
-    [](auto &v) -> decltype((v.vec3_value)) {
-        return v.vec3_value;
-    },
-    [](auto &v) -> decltype((v.biome_id)) {
-        return v.biome_id;
-    },
-    [](auto &v) -> decltype((v.parameter_id)) {
-        return v.parameter_id;
-    },
-    [](auto &v) -> decltype((v.reset_parameter)) {
-        return v.reset_parameter;
-    },
-    [](auto &v) -> decltype((v.player_id)) {
-        return v.player_id;
-    });
+/**
+ * Copies every field both versions of GraphicsOverrideParameterPacket have.
+ *
+ * Only 1001 has player_id. The converter sets or drops it deliberately.
+ */
+template <class To, class From>
+void copyGraphicsOverride(To &to, const From &from)
+{
+    to.keyframes = from.keyframes;
+    to.float_value = from.float_value;
+    to.vec3_value = from.vec3_value;
+    to.biome_id = from.biome_id;
+    to.parameter_id = from.parameter_id;
+    to.reset_parameter = from.reset_parameter;
+}
 
 /**
  * player_id was inserted between biome_id and parameter_id.
@@ -331,7 +306,9 @@ template <>
 struct Conversion<bp::GraphicsOverrideParameterPacket_<kV1001>, bp::GraphicsOverrideParameterPacket_<kV975>> {
     static bp::GraphicsOverrideParameterPacket_<kV1001> apply(const bp::GraphicsOverrideParameterPacket_<kV975> &in)
     {
-        return kGraphicsOverrideFields.copy<bp::GraphicsOverrideParameterPacket_<kV1001>>(in);
+        bp::GraphicsOverrideParameterPacket_<kV1001> out;
+        copyGraphicsOverride(out, in);
+        return out;
     }
 };
 
@@ -339,7 +316,9 @@ template <>
 struct Conversion<bp::GraphicsOverrideParameterPacket_<kV975>, bp::GraphicsOverrideParameterPacket_<kV1001>> {
     static bp::GraphicsOverrideParameterPacket_<kV975> apply(const bp::GraphicsOverrideParameterPacket_<kV1001> &in)
     {
-        return kGraphicsOverrideFields.copy<bp::GraphicsOverrideParameterPacket_<kV975>>(in);
+        bp::GraphicsOverrideParameterPacket_<kV975> out;
+        copyGraphicsOverride(out, in);
+        return out;
     }
 };
 
@@ -348,247 +327,109 @@ struct Conversion<bp::GraphicsOverrideParameterPacket_<kV975>, bp::GraphicsOverr
 // One field inserted on the packet and two appended to LevelSettings. Both are wider than the
 // field-count ladder, so their shared prefix is spelled out.
 
-inline constexpr auto kLevelSettingsFields = fieldList(
-    [](auto &v) -> decltype((v.seed)) {
-        return v.seed;
-    },
-    [](auto &v) -> decltype((v.spawn_settings)) {
-        return v.spawn_settings;
-    },
-    [](auto &v) -> decltype((v.generator)) {
-        return v.generator;
-    },
-    [](auto &v) -> decltype((v.game_type)) {
-        return v.game_type;
-    },
-    [](auto &v) -> decltype((v.is_hardcore)) {
-        return v.is_hardcore;
-    },
-    [](auto &v) -> decltype((v.game_difficulty)) {
-        return v.game_difficulty;
-    },
-    [](auto &v) -> decltype((v.default_spawn)) {
-        return v.default_spawn;
-    },
-    [](auto &v) -> decltype((v.achievements_disabled)) {
-        return v.achievements_disabled;
-    },
-    [](auto &v) -> decltype((v.editor_world_type)) {
-        return v.editor_world_type;
-    },
-    [](auto &v) -> decltype((v.is_created_in_editor)) {
-        return v.is_created_in_editor;
-    },
-    [](auto &v) -> decltype((v.is_exported_from_editor)) {
-        return v.is_exported_from_editor;
-    },
-    [](auto &v) -> decltype((v.time)) {
-        return v.time;
-    },
-    [](auto &v) -> decltype((v.education_edition_offer)) {
-        return v.education_edition_offer;
-    },
-    [](auto &v) -> decltype((v.education_features_enabled)) {
-        return v.education_features_enabled;
-    },
-    [](auto &v) -> decltype((v.education_product_id)) {
-        return v.education_product_id;
-    },
-    [](auto &v) -> decltype((v.rain_level)) {
-        return v.rain_level;
-    },
-    [](auto &v) -> decltype((v.lightning_level)) {
-        return v.lightning_level;
-    },
-    [](auto &v) -> decltype((v.confirmed_platform_locked_content)) {
-        return v.confirmed_platform_locked_content;
-    },
-    [](auto &v) -> decltype((v.multiplayer_game_intent)) {
-        return v.multiplayer_game_intent;
-    },
-    [](auto &v) -> decltype((v.lan_broadcast_intent)) {
-        return v.lan_broadcast_intent;
-    },
-    [](auto &v) -> decltype((v.xbl_broadcast_intent)) {
-        return v.xbl_broadcast_intent;
-    },
-    [](auto &v) -> decltype((v.platform_broadcast_intent)) {
-        return v.platform_broadcast_intent;
-    },
-    [](auto &v) -> decltype((v.commands_enabled)) {
-        return v.commands_enabled;
-    },
-    [](auto &v) -> decltype((v.texture_packs_required)) {
-        return v.texture_packs_required;
-    },
-    [](auto &v) -> decltype((v.game_rules)) {
-        return v.game_rules;
-    },
-    [](auto &v) -> decltype((v.experiments)) {
-        return v.experiments;
-    },
-    [](auto &v) -> decltype((v.experiments_previously_toggled)) {
-        return v.experiments_previously_toggled;
-    },
-    [](auto &v) -> decltype((v.bonus_chest_enabled)) {
-        return v.bonus_chest_enabled;
-    },
-    [](auto &v) -> decltype((v.start_with_map_enabled)) {
-        return v.start_with_map_enabled;
-    },
-    [](auto &v) -> decltype((v.default_permissions)) {
-        return v.default_permissions;
-    },
-    [](auto &v) -> decltype((v.server_chunk_tick_range)) {
-        return v.server_chunk_tick_range;
-    },
-    [](auto &v) -> decltype((v.has_locked_behavior_pack)) {
-        return v.has_locked_behavior_pack;
-    },
-    [](auto &v) -> decltype((v.has_locked_resource_pack)) {
-        return v.has_locked_resource_pack;
-    },
-    [](auto &v) -> decltype((v.is_from_locked_template)) {
-        return v.is_from_locked_template;
-    },
-    [](auto &v) -> decltype((v.use_msa_gamertags_only)) {
-        return v.use_msa_gamertags_only;
-    },
-    [](auto &v) -> decltype((v.is_from_world_template)) {
-        return v.is_from_world_template;
-    },
-    [](auto &v) -> decltype((v.is_world_template_option_locked)) {
-        return v.is_world_template_option_locked;
-    },
-    [](auto &v) -> decltype((v.spawn_v1_villagers)) {
-        return v.spawn_v1_villagers;
-    },
-    [](auto &v) -> decltype((v.persona_disabled)) {
-        return v.persona_disabled;
-    },
-    [](auto &v) -> decltype((v.custom_skins_disabled)) {
-        return v.custom_skins_disabled;
-    },
-    [](auto &v) -> decltype((v.emote_chat_muted)) {
-        return v.emote_chat_muted;
-    },
-    [](auto &v) -> decltype((v.base_game_version)) {
-        return v.base_game_version;
-    },
-    [](auto &v) -> decltype((v.limited_world_width)) {
-        return v.limited_world_width;
-    },
-    [](auto &v) -> decltype((v.limited_world_depth)) {
-        return v.limited_world_depth;
-    },
-    [](auto &v) -> decltype((v.nether_type)) {
-        return v.nether_type;
-    },
-    [](auto &v) -> decltype((v.edu_shared_uri_resource)) {
-        return v.edu_shared_uri_resource;
-    },
-    [](auto &v) -> decltype((v.override_force_experimental_gameplay)) {
-        return v.override_force_experimental_gameplay;
-    },
-    [](auto &v) -> decltype((v.chat_restriction_level)) {
-        return v.chat_restriction_level;
-    },
-    [](auto &v) -> decltype((v.disable_player_interactions)) {
-        return v.disable_player_interactions;
-    },
-    [](auto &v) -> decltype((v.server_editor_connection_policy)) {
-        return v.server_editor_connection_policy;
-    },
-    [](auto &v) -> decltype((v.allow_anonymous_block_drops_in_editor_worlds)) {
-        return v.allow_anonymous_block_drops_in_editor_worlds;
-    });
+/**
+ * Copies every field both versions of LevelSettings have.
+ *
+ * Only 1001 has server_editor_connection_policy, allow_anonymous_block_drops_in_editor_worlds.
+ * The converter sets or drops it deliberately.
+ */
+template <class To, class From>
+void copyLevelSettings(To &to, const From &from)
+{
+    to.seed = from.seed;
+    to.spawn_settings = from.spawn_settings;
+    to.generator = from.generator;
+    to.game_type = from.game_type;
+    to.is_hardcore = from.is_hardcore;
+    to.game_difficulty = from.game_difficulty;
+    to.default_spawn = from.default_spawn;
+    to.achievements_disabled = from.achievements_disabled;
+    to.editor_world_type = from.editor_world_type;
+    to.is_created_in_editor = from.is_created_in_editor;
+    to.is_exported_from_editor = from.is_exported_from_editor;
+    to.time = from.time;
+    to.education_edition_offer = from.education_edition_offer;
+    to.education_features_enabled = from.education_features_enabled;
+    to.education_product_id = from.education_product_id;
+    to.rain_level = from.rain_level;
+    to.lightning_level = from.lightning_level;
+    to.confirmed_platform_locked_content = from.confirmed_platform_locked_content;
+    to.multiplayer_game_intent = from.multiplayer_game_intent;
+    to.lan_broadcast_intent = from.lan_broadcast_intent;
+    to.xbl_broadcast_intent = from.xbl_broadcast_intent;
+    to.platform_broadcast_intent = from.platform_broadcast_intent;
+    to.commands_enabled = from.commands_enabled;
+    to.texture_packs_required = from.texture_packs_required;
+    to.game_rules = from.game_rules;
+    to.experiments = from.experiments;
+    to.experiments_previously_toggled = from.experiments_previously_toggled;
+    to.bonus_chest_enabled = from.bonus_chest_enabled;
+    to.start_with_map_enabled = from.start_with_map_enabled;
+    to.default_permissions = from.default_permissions;
+    to.server_chunk_tick_range = from.server_chunk_tick_range;
+    to.has_locked_behavior_pack = from.has_locked_behavior_pack;
+    to.has_locked_resource_pack = from.has_locked_resource_pack;
+    to.is_from_locked_template = from.is_from_locked_template;
+    to.use_msa_gamertags_only = from.use_msa_gamertags_only;
+    to.is_from_world_template = from.is_from_world_template;
+    to.is_world_template_option_locked = from.is_world_template_option_locked;
+    to.spawn_v1_villagers = from.spawn_v1_villagers;
+    to.persona_disabled = from.persona_disabled;
+    to.custom_skins_disabled = from.custom_skins_disabled;
+    to.emote_chat_muted = from.emote_chat_muted;
+    to.base_game_version = from.base_game_version;
+    to.limited_world_width = from.limited_world_width;
+    to.limited_world_depth = from.limited_world_depth;
+    to.nether_type = from.nether_type;
+    to.edu_shared_uri_resource = from.edu_shared_uri_resource;
+    to.override_force_experimental_gameplay = from.override_force_experimental_gameplay;
+    to.chat_restriction_level = from.chat_restriction_level;
+    to.disable_player_interactions = from.disable_player_interactions;
+}
 
-inline constexpr auto kStartGameFields = fieldList(
-    [](auto &v) -> decltype((v.entity_id)) {
-        return v.entity_id;
-    },
-    [](auto &v) -> decltype((v.runtime_id)) {
-        return v.runtime_id;
-    },
-    [](auto &v) -> decltype((v.entity_game_type)) {
-        return v.entity_game_type;
-    },
-    [](auto &v) -> decltype((v.pos)) {
-        return v.pos;
-    },
-    [](auto &v) -> decltype((v.rot)) {
-        return v.rot;
-    },
-    [](auto &v) -> decltype((v.settings)) {
-        return v.settings;
-    },
-    [](auto &v) -> decltype((v.level_id)) {
-        return v.level_id;
-    },
-    [](auto &v) -> decltype((v.level_name)) {
-        return v.level_name;
-    },
-    [](auto &v) -> decltype((v.template_content_identity)) {
-        return v.template_content_identity;
-    },
-    [](auto &v) -> decltype((v.is_trial)) {
-        return v.is_trial;
-    },
-    [](auto &v) -> decltype((v.movement_settings)) {
-        return v.movement_settings;
-    },
-    [](auto &v) -> decltype((v.level_current_time)) {
-        return v.level_current_time;
-    },
-    [](auto &v) -> decltype((v.enchantment_seed)) {
-        return v.enchantment_seed;
-    },
-    [](auto &v) -> decltype((v.block_properties)) {
-        return v.block_properties;
-    },
-    [](auto &v) -> decltype((v.multiplayer_correlation_id)) {
-        return v.multiplayer_correlation_id;
-    },
-    [](auto &v) -> decltype((v.enable_item_stack_net_manager)) {
-        return v.enable_item_stack_net_manager;
-    },
-    [](auto &v) -> decltype((v.server_version)) {
-        return v.server_version;
-    },
-    [](auto &v) -> decltype((v.player_property_data)) {
-        return v.player_property_data;
-    },
-    [](auto &v) -> decltype((v.server_block_type_registry_checksum)) {
-        return v.server_block_type_registry_checksum;
-    },
-    [](auto &v) -> decltype((v.world_template_id)) {
-        return v.world_template_id;
-    },
-    [](auto &v) -> decltype((v.server_enabled_client_side_generation)) {
-        return v.server_enabled_client_side_generation;
-    },
-    [](auto &v) -> decltype((v.block_network_ids_are_hashes)) {
-        return v.block_network_ids_are_hashes;
-    },
-    [](auto &v) -> decltype((v.network_permissions)) {
-        return v.network_permissions;
-    },
-    [](auto &v) -> decltype((v.server_configuration_join_info)) {
-        return v.server_configuration_join_info;
-    },
-    [](auto &v) -> decltype((v.server_telemetry_data)) {
-        return v.server_telemetry_data;
-    },
-    [](auto &v) -> decltype((v.is_chat_logging)) {
-        return v.is_chat_logging;
-    });
+/**
+ * Copies every field both versions of StartGamePacket have.
+ *
+ * Only 1001 has is_chat_logging. The converter sets or drops it deliberately.
+ */
+template <class To, class From>
+void copyStartGame(To &to, const From &from)
+{
+    to.entity_id = from.entity_id;
+    to.runtime_id = from.runtime_id;
+    to.entity_game_type = from.entity_game_type;
+    to.pos = from.pos;
+    to.rot = from.rot;
+    to.settings = convert<decltype(to.settings)>(from.settings);
+    to.level_id = from.level_id;
+    to.level_name = from.level_name;
+    to.template_content_identity = from.template_content_identity;
+    to.is_trial = from.is_trial;
+    to.movement_settings = from.movement_settings;
+    to.level_current_time = from.level_current_time;
+    to.enchantment_seed = from.enchantment_seed;
+    to.block_properties = from.block_properties;
+    to.multiplayer_correlation_id = from.multiplayer_correlation_id;
+    to.enable_item_stack_net_manager = from.enable_item_stack_net_manager;
+    to.server_version = from.server_version;
+    to.player_property_data = from.player_property_data;
+    to.server_block_type_registry_checksum = from.server_block_type_registry_checksum;
+    to.world_template_id = from.world_template_id;
+    to.server_enabled_client_side_generation = from.server_enabled_client_side_generation;
+    to.block_network_ids_are_hashes = from.block_network_ids_are_hashes;
+    to.network_permissions = from.network_permissions;
+    to.server_configuration_join_info =
+        convert<decltype(to.server_configuration_join_info)>(from.server_configuration_join_info);
+    to.server_telemetry_data = from.server_telemetry_data;
+}
 
 /** LevelSettings appended two editor fields at 1001; StartGame inserted is_chat_logging. */
 template <>
 struct Conversion<bp::LevelSettings_<kV1001>, bp::LevelSettings_<kV975>> {
     static bp::LevelSettings_<kV1001> apply(const bp::LevelSettings_<kV975> &in)
     {
-        auto out = kLevelSettingsFields.copy<bp::LevelSettings_<kV1001>>(in);
+        bp::LevelSettings_<kV1001> out;
+        copyLevelSettings(out, in);
         // A 975 server never opts a world into editor connections.
         out.server_editor_connection_policy = bp::ServerEditorConnectionPolicy::MATCH_WORLD_TYPE;
         out.allow_anonymous_block_drops_in_editor_worlds = false;
@@ -601,7 +442,9 @@ struct Conversion<bp::LevelSettings_<kV975>, bp::LevelSettings_<kV1001>> {
     static bp::LevelSettings_<kV975> apply(const bp::LevelSettings_<kV1001> &in)
     {
         // server_editor_connection_policy, allow_anonymous_block_drops_in_editor_worlds dropped
-        return kLevelSettingsFields.copy<bp::LevelSettings_<kV975>>(in);
+        bp::LevelSettings_<kV975> out;
+        copyLevelSettings(out, in);
+        return out;
     }
 };
 
@@ -610,7 +453,8 @@ struct Conversion<bp::StartGamePacket_<kV1001>, bp::StartGamePacket_<kV975>> {
     static bp::StartGamePacket_<kV1001> apply(const bp::StartGamePacket_<kV975> &in)
     {
         // settings and server_configuration_join_info are versioned; the copy recurses.
-        auto out = kStartGameFields.copy<bp::StartGamePacket_<kV1001>>(in);
+        bp::StartGamePacket_<kV1001> out;
+        copyStartGame(out, in);
         out.is_chat_logging = false; // polyfill: a 975 server never asks the client to log chat
         return out;
     }
@@ -621,7 +465,9 @@ struct Conversion<bp::StartGamePacket_<kV975>, bp::StartGamePacket_<kV1001>> {
     static bp::StartGamePacket_<kV975> apply(const bp::StartGamePacket_<kV1001> &in)
     {
         // is_chat_logging dropped (lossy)
-        return kStartGameFields.copy<bp::StartGamePacket_<kV975>>(in);
+        bp::StartGamePacket_<kV975> out;
+        copyStartGame(out, in);
+        return out;
     }
 };
 
@@ -630,34 +476,23 @@ struct Conversion<bp::StartGamePacket_<kV975>, bp::StartGamePacket_<kV1001>> {
 // 984 cerealised the packet: player_id moved ahead of event_type, darken_screen went, and the
 // eight switch arms flattened so every field is now written unconditionally.
 
-inline constexpr auto kBossEventFields = fieldList(
-    [](auto &v) -> decltype((v.boss_id)) {
-        return v.boss_id;
-    },
-    [](auto &v) -> decltype((v.event_type)) {
-        return v.event_type;
-    },
-    [](auto &v) -> decltype((v.player_id)) {
-        return v.player_id;
-    },
-    [](auto &v) -> decltype((v.name)) {
-        return v.name;
-    },
-    [](auto &v) -> decltype((v.filtered_name)) {
-        return v.filtered_name;
-    },
-    [](auto &v) -> decltype((v.health_percent)) {
-        return v.health_percent;
-    },
-    [](auto &v) -> decltype((v.darken_screen)) {
-        return v.darken_screen;
-    },
-    [](auto &v) -> decltype((v.color)) {
-        return v.color;
-    },
-    [](auto &v) -> decltype((v.overlay)) {
-        return v.overlay;
-    });
+/**
+ * Copies every field both versions of BossEventPacket have.
+ *
+ * Only 975 has darken_screen. The converter sets or drops it deliberately.
+ */
+template <class To, class From>
+void copyBossEvent(To &to, const From &from)
+{
+    to.boss_id = from.boss_id;
+    to.event_type = from.event_type;
+    to.player_id = from.player_id;
+    to.name = from.name;
+    to.filtered_name = from.filtered_name;
+    to.health_percent = from.health_percent;
+    to.color = from.color;
+    to.overlay = from.overlay;
+}
 
 /**
  * 984 cerealised the packet: player_id moved ahead of event_type, darken_screen went, and the
@@ -672,7 +507,9 @@ struct Conversion<bp::BossEventPacket_<kV1001>, bp::BossEventPacket_<kV975>> {
     static bp::BossEventPacket_<kV1001> apply(const bp::BossEventPacket_<kV975> &in)
     {
         // darken_screen has nowhere to go (lossy).
-        return kBossEventFields.copy<bp::BossEventPacket_<kV1001>>(in);
+        bp::BossEventPacket_<kV1001> out;
+        copyBossEvent(out, in);
+        return out;
     }
 };
 
@@ -680,7 +517,8 @@ template <>
 struct Conversion<bp::BossEventPacket_<kV975>, bp::BossEventPacket_<kV1001>> {
     static bp::BossEventPacket_<kV975> apply(const bp::BossEventPacket_<kV1001> &in)
     {
-        auto out = kBossEventFields.copy<bp::BossEventPacket_<kV975>>(in);
+        bp::BossEventPacket_<kV975> out;
+        copyBossEvent(out, in);
         out.darken_screen = 0; // polyfill: 1001 carries no value to restore
         return out;
     }

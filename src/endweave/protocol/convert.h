@@ -24,8 +24,8 @@ namespace endweave {
  * The primary template walks an aggregate field by field, so a type whose field list did not
  * change between the two versions needs no converter at all -- it only differs by the nested
  * types it carries, and those recurse. A type whose field list *did* change specialises this,
- * usually over a name-keyed copy (see fieldList), and the specialisation must
- * be declared before the first use.
+ * usually over a plain copy_fields-style helper, and the specialisation must be declared
+ * before the first use.
  *
  * @note The primary walk is positional and static_asserts that the two shapes have the same
  * number of fields, so a version that added, removed or reordered a field fails to compile
@@ -164,82 +164,6 @@ struct Conversion {
         return out;
     }
 };
-
-/**
- * Names one field, for a copy that matches fields by name rather than by position.
- *
- * An accessor is a generic callable returning a reference to the field it names, written so the
- * name appears in its return type as well as its body:
- *
- *     [](auto &v) -> decltype((v.boss_id)) { return v.boss_id; }
- *
- * The trailing return type is what makes it usable here: it puts the field lookup in the
- * immediate context, so asking whether a version has the field is a substitution failure rather
- * than a hard error.
- */
-template <class... Accessors>
-class FieldList {
-public:
-    constexpr explicit FieldList(Accessors... accessors) : accessors_(accessors...) {}
-
-    /**
-     * Copies every field both versions have, leaving the rest of the target default.
-     *
-     * Field order is irrelevant, so this handles a reorder as well as a field coming or going.
-     * The caller sets whatever only the target has, and simply does not mention whatever only
-     * the source had.
-     *
-     * @param in The source-version value.
-     * @return The target-version value.
-     */
-    template <class To, class From>
-    To copy(const From &in) const
-    {
-        static_assert(sizeof...(Accessors) == std::max(detail::kArity<To>, detail::kArity<From>),
-                      "the field list does not name every field of both versions of this type");
-        To out{};
-        std::apply(
-            [&](const Accessors &...field) {
-                (copyOne(out, in, field), ...);
-            },
-            accessors_);
-        return out;
-    }
-
-private:
-    template <class To, class From, class Accessor>
-    static void copyOne(To &out, const From &in, const Accessor &field)
-    {
-        static_assert(
-            requires { field(in); } || requires { field(out); },
-            "this accessor names a field neither version of the type has");
-        if constexpr (requires {
-                          field(in);
-                          field(out);
-                      }) {
-            field(out) = convert<std::remove_cvref_t<decltype(field(out))>>(field(in));
-        }
-    }
-
-    std::tuple<Accessors...> accessors_;
-};
-
-/**
- * Builds the field list for a type whose field list changed between versions.
- *
- * One list serves both directions: which way the copy runs is decided by the target type.
- *
- * @note The list must name every field of both versions. Its length is checked against the two
- * field counts and every accessor is checked to name a real field, so an omission or a typo is
- * a compile error rather than a field that quietly stops copying. The length check assumes one
- * version's fields are a subset of the other's, which holds for every packet modelled so far; a
- * version where each side gained a field of its own would trip it, and should.
- */
-template <class... Accessors>
-constexpr auto fieldList(Accessors... accessors)
-{
-    return FieldList<Accessors...>(accessors...);
-}
 
 /**
  * An absent value stays absent; a present one converts.
