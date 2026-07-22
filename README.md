@@ -9,7 +9,31 @@ library, which generates a C++ packet type per protocol version from a Python sc
 owns the *translation* semantics: what to do when a field is added, removed, or reshaped
 between versions.
 
-Bridged today: protocol **975** (1.26.20) ↔ **1001** (1.26.30).
+Bridged today: protocol **975** (1.26.20) ↔ **1001** (1.26.30) — every packet whose wire form
+changed between them, bar one:
+
+| id | packet | note |
+| --- | --- | --- |
+| 11 | StartGame | |
+| 30, 32, 49 | InventoryTransaction, MobArmorEquipment, InventoryContent | the item-descriptor closure |
+| 74 | BossEvent | `darken_screen` is lost going up |
+| 122 | BiomeDefinitionList | |
+| 135 | ClientCacheBlobStatus | lossless both ways |
+| 175 | SubChunkRequest | lossless both ways |
+| 315 | ServerboundDiagnostics | |
+| 328 | PrimitiveShapes | shapes 975 cannot draw are dropped, not clamped |
+| 331 | GraphicsOverrideParameter | |
+| 345 | ClientboundAttributeLayerSync | |
+| 347 | ServerPresenceInfo | |
+| 348 | ClientboundUpdateSoundData | 1001-only, so cancelled going down |
+| 123 | LevelSoundEvent | **cancelled both ways** — see below |
+
+**123 is not translated.** It carries a numeric sound id at 975 and a free-form sound name at
+1001, so bridging it needs a number-to-name table for each era. protocol-docs publishes wire
+names only for 1001 (`r26_u3`); its 975 dump lists BDS symbol names instead. Six values were
+also removed at 1001 and 601 was reused — `Undefined` at 975, `slime_landing` at 1001 — so no
+mechanical mapping bridges the two. Rather than invent one and play the wrong sound, the packet
+is dropped: the sound goes missing instead of the frame being misread.
 
 ## Design
 
