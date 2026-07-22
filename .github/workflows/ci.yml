@@ -7,9 +7,10 @@ on:
     branches: [develop]
 
 jobs:
-  # Three compilers across three standard libraries. Clang pairs with libc++
-  # rather than libstdc++ because libstdc++'s <expected> is incompatible with
-  # Clang's concepts front end; libstdc++ itself is still covered by the GCC job.
+  # Endstone's root CMakeLists hard-errors on anything but Clang (Linux) or clang-cl
+  # (Windows), and on a non-Ninja generator -- and it runs those checks before the return()
+  # that makes its FetchContent header-only, so they fire here too. These are the only two
+  # toolchains an Endstone plugin ships on.
   build:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -17,17 +18,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Linux GCC (libstdc++)
-            os: ubuntu-24.04
-            cxx: g++
-          - name: Linux Clang (libc++)
-            os: ubuntu-24.04
+          # 22.04 is the glibc floor: a plugin built on a newer image will not load on it.
+          - name: Linux clang-18 (libc++)
+            os: ubuntu-22.04
             cxx: clang++-18
             llvm: "18"
-            cmakeflags: -DCMAKE_CXX_FLAGS=-stdlib=libc++
-          - name: Windows MSVC
+          - name: Windows clang-cl
             os: windows-2022
-            cxx: cl
+            cxx: clang-cl
     steps:
       - name: Checkout endweave
         uses: actions/checkout@v4
@@ -58,14 +56,31 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
-      # ENDWEAVE_BUILD_PLUGIN=OFF skips the heavy Endstone SDK fetch; the
-      # translation library + Catch2 tests build against only bedrock::protocol.
       - name: Configure
         working-directory: endweave
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} -DENDWEAVE_BUILD_PLUGIN=OFF ${{ matrix.cmakeflags }}
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
       - name: Build
         working-directory: endweave
         run: cmake --build build
-      - name: Test
+
+      - name: Print the version graph
         working-directory: endweave
-        run: ctest --test-dir build --output-on-failure
+        run: ./build/endweave_paths
+
+      # The plugin is dlopen'd next to an LD_PRELOADed runtime carrying its own libc++, so
+      # anything exported at default visibility can interpose. Expect single digits.
+      - name: Check exported symbols
+        if: runner.os == 'Linux'
+        working-directory: endweave
+        run: |
+          nm -D --defined-only build/endstone_endweave.so
+          test "$(nm -D --defined-only build/endstone_endweave.so | wc -l)" -lt 20
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}
+          path: |
+            endweave/build/endstone_endweave.so
+            endweave/build/endstone_endweave.dll
+            endweave/build/endstone_endweave.pdb
+          if-no-files-found: ignore
