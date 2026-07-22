@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <concepts>
 #include <cstddef>
 #include <map>
@@ -10,6 +11,11 @@
 #include <variant>
 #include <vector>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wundefined-inline"
+#endif
+
 namespace endweave {
 
 /**
@@ -17,12 +23,13 @@ namespace endweave {
  *
  * The primary template walks an aggregate field by field, so a type whose field list did not
  * change between the two versions needs no converter at all -- it only differs by the nested
- * types it carries, and those recurse. A type that really was reshaped specialises this, and
- * the specialisation must be declared before the first use.
+ * types it carries, and those recurse. A type whose field list *did* change specialises this,
+ * usually over a name-keyed copy (see ENDWEAVE_DEFINE_FIELD_COPY), and the specialisation must
+ * be declared before the first use.
  *
- * @note The walk is positional and static_asserts that the two shapes have the same number of
- * fields, so a version that added, removed or reordered a field fails to compile rather than
- * silently losing it. That is the point: only a same-shape copy is safe to derive.
+ * @note The primary walk is positional and static_asserts that the two shapes have the same
+ * number of fields, so a version that added, removed or reordered a field fails to compile
+ * rather than silently losing it.
  */
 template <class To, class From>
 struct Conversion;
@@ -52,6 +59,8 @@ namespace detail {
  */
 template <class T>
 struct AnyField {
+    // Only ever named in an unevaluated requires-expression, so it needs no definition; the
+    // pragma keeps Clang from warning about the one it cannot see.
     template <class U>
         requires(!std::same_as<std::remove_cvref_t<U>, T>)
     constexpr operator U() const;
@@ -78,13 +87,14 @@ inline constexpr std::size_t kArity = countFields<T>();
  * Binds an aggregate's fields as a tuple of references.
  *
  * Structured bindings need the field count as a literal, so this is a ladder rather than a
- * loop. It is generated; extend the bound if a wider type turns up.
+ * loop. Only same-shape types come through here; a reshaped one is copied by name instead, so
+ * the bound stays small.
  */
 template <class T>
 auto asTuple(T &value)
 {
     constexpr std::size_t arity = kArity<std::remove_cvref_t<T>>;
-    static_assert(arity >= 1 && arity <= 64, "aggregate is outside the supported field-count range");
+    static_assert(arity >= 1 && arity <= 12, "aggregate is outside the positional range -- give it a name-keyed copy");
     if constexpr (arity == 1) {
         auto &[f0] = value;
         return std::tie(f0);
@@ -133,362 +143,6 @@ auto asTuple(T &value)
         auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11] = value;
         return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11);
     }
-    else if constexpr (arity == 13) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12);
-    }
-    else if constexpr (arity == 14) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13);
-    }
-    else if constexpr (arity == 15) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14);
-    }
-    else if constexpr (arity == 16) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15);
-    }
-    else if constexpr (arity == 17) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16);
-    }
-    else if constexpr (arity == 18) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17);
-    }
-    else if constexpr (arity == 19) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18);
-    }
-    else if constexpr (arity == 20) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19);
-    }
-    else if constexpr (arity == 21) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20);
-    }
-    else if constexpr (arity == 22) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21] =
-            value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21);
-    }
-    else if constexpr (arity == 23) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21,
-               f22] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22);
-    }
-    else if constexpr (arity == 24) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23);
-    }
-    else if constexpr (arity == 25) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24);
-    }
-    else if constexpr (arity == 26) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25);
-    }
-    else if constexpr (arity == 27) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26);
-    }
-    else if constexpr (arity == 28) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27);
-    }
-    else if constexpr (arity == 29) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28);
-    }
-    else if constexpr (arity == 30) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29);
-    }
-    else if constexpr (arity == 31) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30);
-    }
-    else if constexpr (arity == 32) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31);
-    }
-    else if constexpr (arity == 33) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32);
-    }
-    else if constexpr (arity == 34) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33);
-    }
-    else if constexpr (arity == 35) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34);
-    }
-    else if constexpr (arity == 36) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35);
-    }
-    else if constexpr (arity == 37) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36);
-    }
-    else if constexpr (arity == 38) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37);
-    }
-    else if constexpr (arity == 39) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38);
-    }
-    else if constexpr (arity == 40) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39);
-    }
-    else if constexpr (arity == 41) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40);
-    }
-    else if constexpr (arity == 42) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41);
-    }
-    else if constexpr (arity == 43) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42] =
-            value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42);
-    }
-    else if constexpr (arity == 44) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42,
-               f43] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43);
-    }
-    else if constexpr (arity == 45) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44);
-    }
-    else if constexpr (arity == 46) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45);
-    }
-    else if constexpr (arity == 47) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46);
-    }
-    else if constexpr (arity == 48) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47);
-    }
-    else if constexpr (arity == 49) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48);
-    }
-    else if constexpr (arity == 50) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49);
-    }
-    else if constexpr (arity == 51) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50);
-    }
-    else if constexpr (arity == 52) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51);
-    }
-    else if constexpr (arity == 53) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52);
-    }
-    else if constexpr (arity == 54) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53);
-    }
-    else if constexpr (arity == 55) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54);
-    }
-    else if constexpr (arity == 56) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55);
-    }
-    else if constexpr (arity == 57) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56);
-    }
-    else if constexpr (arity == 58) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57);
-    }
-    else if constexpr (arity == 59) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58);
-    }
-    else if constexpr (arity == 60) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58, f59] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58,
-                        f59);
-    }
-    else if constexpr (arity == 61) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58, f59, f60] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58,
-                        f59, f60);
-    }
-    else if constexpr (arity == 62) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58, f59, f60, f61] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58,
-                        f59, f60, f61);
-    }
-    else if constexpr (arity == 63) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58, f59, f60, f61, f62] = value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58,
-                        f59, f60, f61, f62);
-    }
-    else if constexpr (arity == 64) {
-        auto &[f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22,
-               f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39, f40, f41, f42, f43,
-               f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58, f59, f60, f61, f62, f63] =
-            value;
-        return std::tie(f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20,
-                        f21, f22, f23, f24, f25, f26, f27, f28, f29, f30, f31, f32, f33, f34, f35, f36, f37, f38, f39,
-                        f40, f41, f42, f43, f44, f45, f46, f47, f48, f49, f50, f51, f52, f53, f54, f55, f56, f57, f58,
-                        f59, f60, f61, f62, f63);
-    }
-}
-
-/**
- * Copies field `FromIndex` of one tuple onto field `ToIndex` of another, converting as it goes.
- */
-template <std::size_t ToIndex, std::size_t FromIndex, class Out, class In>
-void copyField(Out &out, const In &in)
-{
-    using Target = std::remove_cvref_t<decltype(std::get<ToIndex>(out))>;
-    std::get<ToIndex>(out) = convert<Target>(std::get<FromIndex>(in));
 }
 
 } // namespace detail
@@ -504,49 +158,64 @@ struct Conversion {
         auto fields = detail::asTuple(out);
         const auto source = detail::asTuple(in);
         [&]<std::size_t... I>(std::index_sequence<I...>) {
-            (detail::copyField<I, I>(fields, source), ...);
+            ((std::get<I>(fields) = convert<std::remove_cvref_t<decltype(std::get<I>(fields))>>(std::get<I>(source))),
+             ...);
         }(std::make_index_sequence<detail::kArity<From>>{});
         return out;
     }
 };
 
 /**
- * Copies a shape that only gained or lost a run of fields, leaving the new ones untouched.
+ * Copies one field when both versions have it under that name, converting as it goes.
  *
- * The fields before the gap line up one for one, and so do the fields after it, so only the
- * gap itself has to be spelled out by the caller. Use it for a version that appended or
- * inserted fields -- not for one that reordered or retyped them, which stays hand-written.
- *
- * @note Both sides are still copied positionally through convert(), so a field whose type
- * changed underneath recurses, and a mismatched pair fails to compile.
- *
- * @param in The source-version value.
- * @return The target-version value, with the gap left default-constructed.
+ * A field only one version has is skipped, leaving the target's default for the caller to fill
+ * in or drop deliberately.
  */
-template <std::size_t At, std::size_t Count, class To, class From>
-To convertAcrossGap(const From &in)
-{
-    constexpr std::size_t to_arity = detail::kArity<To>;
-    constexpr std::size_t from_arity = detail::kArity<From>;
-    static_assert(to_arity + Count == from_arity || from_arity + Count == to_arity,
-                  "the gap does not account for the difference in field counts");
-    constexpr bool widening = to_arity > from_arity;
-    constexpr std::size_t shared = (widening ? from_arity : to_arity);
-    static_assert(At <= shared, "the gap starts past the end of the shared fields");
+#define ENDWEAVE_COPY_FIELD(field)                                                           \
+    if constexpr (requires {                                                                 \
+                      in.field;                                                              \
+                      out.field;                                                             \
+                  }) {                                                                       \
+        out.field = ::endweave::convert<std::remove_cvref_t<decltype(out.field)>>(in.field); \
+    }
 
-    To out{};
-    auto fields = detail::asTuple(out);
-    const auto source = detail::asTuple(in);
-    // Everything before the gap lines up.
-    [&]<std::size_t... I>(std::index_sequence<I...>) {
-        (detail::copyField<I, I>(fields, source), ...);
-    }(std::make_index_sequence<At>{});
-    // Everything after it is shifted by the width of the gap, on whichever side is wider.
-    [&]<std::size_t... I>(std::index_sequence<I...>) {
-        (detail::copyField<At + I + (widening ? Count : 0), At + I + (widening ? 0 : Count)>(fields, source), ...);
-    }(std::make_index_sequence<shared - At>{});
-    return out;
-}
+#define ENDWEAVE_COUNT_FIELD(field) +1
+
+/**
+ * Rejects a name no version of the type actually has, so a typo in a field list is a compile
+ * error rather than a field that quietly stops being copied.
+ */
+#define ENDWEAVE_ASSERT_FIELD(field)                                                \
+    static_assert(                                                                  \
+        requires(const From &f) { f.field; } || requires(const To &t) { t.field; }, \
+        "neither version of this type has a field called " #field);
+
+/**
+ * Defines a name-keyed copy between two versions of a type whose field list changed.
+ *
+ * Field order is irrelevant, so this handles a reorder as well as a field coming or going --
+ * which is why it is preferred over the positional walk for any reshaped type. The generated
+ * function copies every name both versions share; the caller then sets whatever only the
+ * target has, and simply does not mention whatever only the source had.
+ *
+ * The list must name every field of both versions. Its length is checked against the two field
+ * counts and every name is checked to exist on at least one side, so an omission or a typo is a
+ * compile error rather than a field that quietly stops copying.
+ *
+ * @note That check assumes one version's fields are a subset of the other's, which is true of
+ * every packet modelled so far. A version where each side gained a field of its own would trip
+ * it, and should -- it wants looking at rather than counting.
+ */
+#define ENDWEAVE_DEFINE_FIELD_COPY(name, fields)                                                      \
+    template <class To, class From>                                                                   \
+    To name(const From &in)                                                                           \
+    {                                                                                                 \
+        static_assert((0 fields(ENDWEAVE_COUNT_FIELD)) ==                                             \
+                          std::max(::endweave::detail::kArity<To>, ::endweave::detail::kArity<From>), \
+                      "the field list does not name every field of both versions of " #name);         \
+        fields(ENDWEAVE_ASSERT_FIELD) To out{};                                                       \
+        fields(ENDWEAVE_COPY_FIELD) return out;                                                       \
+    }
 
 /**
  * An absent value stays absent; a present one converts.
@@ -610,3 +279,7 @@ struct Conversion<std::variant<To...>, std::variant<From...>> {
 };
 
 } // namespace endweave
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

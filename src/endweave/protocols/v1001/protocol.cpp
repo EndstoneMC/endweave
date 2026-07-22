@@ -27,12 +27,18 @@ constexpr auto kV1001 = ProtocolVersion::V1001;
 //
 // The 976 diff is confined to two nested types; the rest of the closure is version-shared.
 
+#define ENDWEAVE_ENVIRONMENT_ATTRIBUTE_FIELDS(X)                                                                   \
+    X(name)                                                                                                        \
+    X(from_attribute) X(attribute) X(to_attribute) X(current_transition_ticks) X(total_transition_ticks) X(easing) \
+        X(local_transition_ticks) X(noise_transition)
+ENDWEAVE_DEFINE_FIELD_COPY(copyEnvironmentAttribute, ENDWEAVE_ENVIRONMENT_ATTRIBUTE_FIELDS)
+
 /** EnvironmentAttributeData appended local_transition_ticks and noise_transition. */
 template <>
 struct Conversion<bp::EnvironmentAttributeData_<kV1001>, bp::EnvironmentAttributeData_<kV975>> {
     static bp::EnvironmentAttributeData_<kV1001> apply(const bp::EnvironmentAttributeData_<kV975> &in)
     {
-        auto out = convertAcrossGap<7, 2, bp::EnvironmentAttributeData_<kV1001>>(in);
+        auto out = copyEnvironmentAttribute<bp::EnvironmentAttributeData_<kV1001>>(in);
         out.local_transition_ticks = 0; // polyfill
         out.noise_transition = false;   // polyfill
         return out;
@@ -44,16 +50,19 @@ struct Conversion<bp::EnvironmentAttributeData_<kV975>, bp::EnvironmentAttribute
     static bp::EnvironmentAttributeData_<kV975> apply(const bp::EnvironmentAttributeData_<kV1001> &in)
     {
         // local_transition_ticks, noise_transition dropped (lossy)
-        return convertAcrossGap<7, 2, bp::EnvironmentAttributeData_<kV975>>(in);
+        return copyEnvironmentAttribute<bp::EnvironmentAttributeData_<kV975>>(in);
     }
 };
+
+#define ENDWEAVE_ATTRIBUTE_LAYER_FIELDS(X) X(name) X(noise_name) X(dimension_id) X(settings) X(attributes)
+ENDWEAVE_DEFINE_FIELD_COPY(copyAttributeLayer, ENDWEAVE_ATTRIBUTE_LAYER_FIELDS)
 
 /** AttributeLayerData inserted noise_name after name. */
 template <>
 struct Conversion<bp::AttributeLayerData_<kV1001>, bp::AttributeLayerData_<kV975>> {
     static bp::AttributeLayerData_<kV1001> apply(const bp::AttributeLayerData_<kV975> &in)
     {
-        auto out = convertAcrossGap<1, 1, bp::AttributeLayerData_<kV1001>>(in);
+        auto out = copyAttributeLayer<bp::AttributeLayerData_<kV1001>>(in);
         out.noise_name = std::nullopt; // polyfill
         return out;
     }
@@ -64,20 +73,30 @@ struct Conversion<bp::AttributeLayerData_<kV975>, bp::AttributeLayerData_<kV1001
     static bp::AttributeLayerData_<kV975> apply(const bp::AttributeLayerData_<kV1001> &in)
     {
         // noise_name dropped (lossy)
-        return convertAcrossGap<1, 1, bp::AttributeLayerData_<kV975>>(in);
+        return copyAttributeLayer<bp::AttributeLayerData_<kV975>>(in);
     }
 };
 
 // --- 315 ServerboundDiagnostics --------------------------------------------------------
 
-/** The packet appended a whisker_scopes list at 978. */
+#define ENDWEAVE_DIAGNOSTICS_FIELDS(X)                                                                               \
+    X(avg_fps)                                                                                                       \
+    X(avg_server_sim_tick_time_ms) X(avg_client_sim_tick_time_ms) X(avg_begin_frame_time_ms) X(avg_input_time_ms)    \
+        X(avg_render_time_ms) X(avg_end_frame_time_ms) X(avg_remainder_time_percent) X(avg_unaccounted_time_percent) \
+            X(memory_category_values) X(entity_diagnostics) X(system_diagnostics) X(whisker_scopes)
+ENDWEAVE_DEFINE_FIELD_COPY(copyDiagnostics, ENDWEAVE_DIAGNOSTICS_FIELDS)
+
+/**
+ * The packet appended a whisker_scopes list at 978.
+ *
+ * Neither direction needs a fixup: going up the list is left empty, a faithful "a 975 client
+ * collects none", and going down it is simply not copied (lossy).
+ */
 template <>
 struct Conversion<bp::ServerboundDiagnosticsPacket_<kV1001>, bp::ServerboundDiagnosticsPacket_<kV975>> {
     static bp::ServerboundDiagnosticsPacket_<kV1001> apply(const bp::ServerboundDiagnosticsPacket_<kV975> &in)
     {
-        // A 975 client collects no whisker scopes, and the list is length-prefixed, so an empty
-        // one is a faithful "none collected" -- which is what the gap is left as.
-        return convertAcrossGap<12, 1, bp::ServerboundDiagnosticsPacket_<kV1001>>(in);
+        return copyDiagnostics<bp::ServerboundDiagnosticsPacket_<kV1001>>(in);
     }
 };
 
@@ -85,8 +104,7 @@ template <>
 struct Conversion<bp::ServerboundDiagnosticsPacket_<kV975>, bp::ServerboundDiagnosticsPacket_<kV1001>> {
     static bp::ServerboundDiagnosticsPacket_<kV975> apply(const bp::ServerboundDiagnosticsPacket_<kV1001> &in)
     {
-        // whisker_scopes dropped (lossy)
-        return convertAcrossGap<12, 1, bp::ServerboundDiagnosticsPacket_<kV975>>(in);
+        return copyDiagnostics<bp::ServerboundDiagnosticsPacket_<kV975>>(in);
     }
 };
 
@@ -96,13 +114,15 @@ struct Conversion<bp::ServerboundDiagnosticsPacket_<kV975>, bp::ServerboundDiagn
 // same three values, so neither direction loses anything. SubChunkPos keeps its field list --
 // only the encoding moved, varint32 to fixed int32 -- so it needs no converter.
 
+#define ENDWEAVE_SUB_CHUNK_REQUEST_FIELDS(X) X(dimension_type) X(center_pos) X(sub_chunk_pos_offsets)
+ENDWEAVE_DEFINE_FIELD_COPY(copySubChunkRequest, ENDWEAVE_SUB_CHUNK_REQUEST_FIELDS)
+
+/** 979 moved center_pos behind the offsets; matching by name makes the reorder a non-event. */
 template <>
 struct Conversion<bp::SubChunkRequestPacket_<kV1001>, bp::SubChunkRequestPacket_<kV975>> {
     static bp::SubChunkRequestPacket_<kV1001> apply(const bp::SubChunkRequestPacket_<kV975> &in)
     {
-        return {.dimension_type = in.dimension_type,
-                .sub_chunk_pos_offsets = in.sub_chunk_pos_offsets,
-                .center_pos = convert<bp::SubChunkPos_<kV1001>>(in.center_pos)};
+        return copySubChunkRequest<bp::SubChunkRequestPacket_<kV1001>>(in);
     }
 };
 
@@ -110,9 +130,7 @@ template <>
 struct Conversion<bp::SubChunkRequestPacket_<kV975>, bp::SubChunkRequestPacket_<kV1001>> {
     static bp::SubChunkRequestPacket_<kV975> apply(const bp::SubChunkRequestPacket_<kV1001> &in)
     {
-        return {.dimension_type = in.dimension_type,
-                .center_pos = convert<bp::SubChunkPos_<kV975>>(in.center_pos),
-                .sub_chunk_pos_offsets = in.sub_chunk_pos_offsets};
+        return copySubChunkRequest<bp::SubChunkRequestPacket_<kV975>>(in);
     }
 };
 
@@ -164,11 +182,15 @@ struct Conversion<std::optional<bp::PresenceConfiguration_<kV975>>, std::optiona
 //
 // 975 writes both counts up front then both arrays; 1001 gives each list its own prefix.
 
+#define ENDWEAVE_BLOB_STATUS_FIELDS(X) X(missing_count) X(found_count) X(missing_ids) X(found_ids)
+ENDWEAVE_DEFINE_FIELD_COPY(copyBlobStatus, ENDWEAVE_BLOB_STATUS_FIELDS)
+
 template <>
 struct Conversion<bp::ClientCacheBlobStatusPacket_<kV1001>, bp::ClientCacheBlobStatusPacket_<kV975>> {
     static bp::ClientCacheBlobStatusPacket_<kV1001> apply(const bp::ClientCacheBlobStatusPacket_<kV975> &in)
     {
-        return {.missing_ids = in.missing_ids, .found_ids = in.found_ids};
+        // 1001 prefixes each list instead of carrying the counts up front, so they just go.
+        return copyBlobStatus<bp::ClientCacheBlobStatusPacket_<kV1001>>(in);
     }
 };
 
@@ -176,22 +198,31 @@ template <>
 struct Conversion<bp::ClientCacheBlobStatusPacket_<kV975>, bp::ClientCacheBlobStatusPacket_<kV1001>> {
     static bp::ClientCacheBlobStatusPacket_<kV975> apply(const bp::ClientCacheBlobStatusPacket_<kV1001> &in)
     {
-        return {.missing_count = static_cast<std::uint32_t>(in.missing_ids.size()),
-                .found_count = static_cast<std::uint32_t>(in.found_ids.size()),
-                .missing_ids = in.missing_ids,
-                .found_ids = in.found_ids};
+        auto out = copyBlobStatus<bp::ClientCacheBlobStatusPacket_<kV975>>(in);
+        // 975 states each length up front; 1001 only implies it through the list prefix.
+        out.missing_count = static_cast<std::uint32_t>(out.missing_ids.size());
+        out.found_count = static_cast<std::uint32_t>(out.found_ids.size());
+        return out;
     }
 };
 
 // --- 331 GraphicsOverrideParameter -----------------------------------------------------
 
-/** player_id was inserted between biome_id and parameter_id. */
+#define ENDWEAVE_GRAPHICS_OVERRIDE_FIELDS(X) \
+    X(keyframes) X(float_value) X(vec3_value) X(biome_id) X(player_id) X(parameter_id) X(reset_parameter)
+ENDWEAVE_DEFINE_FIELD_COPY(copyGraphicsOverride, ENDWEAVE_GRAPHICS_OVERRIDE_FIELDS)
+
+/**
+ * player_id was inserted between biome_id and parameter_id.
+ *
+ * Going up it is left absent -- a 975 override is never per-player -- and going down it is
+ * dropped, so a targeted override becomes a broadcast one (lossy). Neither needs a fixup.
+ */
 template <>
 struct Conversion<bp::GraphicsOverrideParameterPacket_<kV1001>, bp::GraphicsOverrideParameterPacket_<kV975>> {
     static bp::GraphicsOverrideParameterPacket_<kV1001> apply(const bp::GraphicsOverrideParameterPacket_<kV975> &in)
     {
-        // The gap is left absent: a 975 override is never per-player.
-        return convertAcrossGap<4, 1, bp::GraphicsOverrideParameterPacket_<kV1001>>(in);
+        return copyGraphicsOverride<bp::GraphicsOverrideParameterPacket_<kV1001>>(in);
     }
 };
 
@@ -199,8 +230,7 @@ template <>
 struct Conversion<bp::GraphicsOverrideParameterPacket_<kV975>, bp::GraphicsOverrideParameterPacket_<kV1001>> {
     static bp::GraphicsOverrideParameterPacket_<kV975> apply(const bp::GraphicsOverrideParameterPacket_<kV1001> &in)
     {
-        // player_id dropped (lossy): a targeted override becomes a broadcast one.
-        return convertAcrossGap<4, 1, bp::GraphicsOverrideParameterPacket_<kV975>>(in);
+        return copyGraphicsOverride<bp::GraphicsOverrideParameterPacket_<kV975>>(in);
     }
 };
 
@@ -209,12 +239,42 @@ struct Conversion<bp::GraphicsOverrideParameterPacket_<kV975>, bp::GraphicsOverr
 // One field inserted on the packet and two appended to LevelSettings. Both are wider than the
 // field-count ladder, so their shared prefix is spelled out.
 
+#define ENDWEAVE_LEVEL_SETTINGS_FIELDS(X)                                                                              \
+    X(seed)                                                                                                            \
+    X(spawn_settings) X(generator) X(game_type) X(is_hardcore) X(game_difficulty) X(default_spawn)                     \
+        X(achievements_disabled) X(editor_world_type) X(is_created_in_editor) X(is_exported_from_editor) X(time)       \
+            X(education_edition_offer) X(education_features_enabled) X(education_product_id) X(rain_level)             \
+                X(lightning_level) X(confirmed_platform_locked_content) X(multiplayer_game_intent)                     \
+                    X(lan_broadcast_intent) X(xbl_broadcast_intent) X(platform_broadcast_intent) X(commands_enabled)   \
+                        X(texture_packs_required) X(game_rules) X(experiments) X(experiments_previously_toggled)       \
+                            X(bonus_chest_enabled) X(start_with_map_enabled) X(default_permissions)                    \
+                                X(server_chunk_tick_range) X(has_locked_behavior_pack) X(has_locked_resource_pack)     \
+                                    X(is_from_locked_template) X(use_msa_gamertags_only) X(is_from_world_template)     \
+                                        X(is_world_template_option_locked) X(spawn_v1_villagers) X(persona_disabled)   \
+                                            X(custom_skins_disabled) X(emote_chat_muted) X(base_game_version)          \
+                                                X(limited_world_width) X(limited_world_depth) X(nether_type)           \
+                                                    X(edu_shared_uri_resource) X(override_force_experimental_gameplay) \
+                                                        X(chat_restriction_level) X(disable_player_interactions)       \
+                                                            X(server_editor_connection_policy)                         \
+                                                                X(allow_anonymous_block_drops_in_editor_worlds)
+ENDWEAVE_DEFINE_FIELD_COPY(copyLevelSettings, ENDWEAVE_LEVEL_SETTINGS_FIELDS)
+
+#define ENDWEAVE_START_GAME_FIELDS(X)                                                                                  \
+    X(entity_id)                                                                                                       \
+    X(runtime_id) X(entity_game_type) X(pos) X(rot) X(settings) X(level_id) X(level_name) X(template_content_identity) \
+        X(is_trial) X(movement_settings) X(level_current_time) X(enchantment_seed) X(block_properties)                 \
+            X(multiplayer_correlation_id) X(enable_item_stack_net_manager) X(server_version) X(player_property_data)   \
+                X(server_block_type_registry_checksum) X(world_template_id) X(server_enabled_client_side_generation)   \
+                    X(block_network_ids_are_hashes) X(network_permissions) X(is_chat_logging)                          \
+                        X(server_configuration_join_info) X(server_telemetry_data)
+ENDWEAVE_DEFINE_FIELD_COPY(copyStartGame, ENDWEAVE_START_GAME_FIELDS)
+
 /** LevelSettings appended two editor fields at 1001; StartGame inserted is_chat_logging. */
 template <>
 struct Conversion<bp::LevelSettings_<kV1001>, bp::LevelSettings_<kV975>> {
     static bp::LevelSettings_<kV1001> apply(const bp::LevelSettings_<kV975> &in)
     {
-        auto out = convertAcrossGap<49, 2, bp::LevelSettings_<kV1001>>(in);
+        auto out = copyLevelSettings<bp::LevelSettings_<kV1001>>(in);
         // A 975 server never opts a world into editor connections.
         out.server_editor_connection_policy = bp::ServerEditorConnectionPolicy::MATCH_WORLD_TYPE;
         out.allow_anonymous_block_drops_in_editor_worlds = false;
@@ -227,7 +287,7 @@ struct Conversion<bp::LevelSettings_<kV975>, bp::LevelSettings_<kV1001>> {
     static bp::LevelSettings_<kV975> apply(const bp::LevelSettings_<kV1001> &in)
     {
         // server_editor_connection_policy, allow_anonymous_block_drops_in_editor_worlds dropped
-        return convertAcrossGap<49, 2, bp::LevelSettings_<kV975>>(in);
+        return copyLevelSettings<bp::LevelSettings_<kV975>>(in);
     }
 };
 
@@ -235,9 +295,8 @@ template <>
 struct Conversion<bp::StartGamePacket_<kV1001>, bp::StartGamePacket_<kV975>> {
     static bp::StartGamePacket_<kV1001> apply(const bp::StartGamePacket_<kV975> &in)
     {
-        // settings and server_configuration_join_info are versioned, and the positional walk
-        // recurses into them on its own.
-        auto out = convertAcrossGap<23, 1, bp::StartGamePacket_<kV1001>>(in);
+        // settings and server_configuration_join_info are versioned; the copy recurses.
+        auto out = copyStartGame<bp::StartGamePacket_<kV1001>>(in);
         out.is_chat_logging = false; // polyfill: a 975 server never asks the client to log chat
         return out;
     }
@@ -248,7 +307,7 @@ struct Conversion<bp::StartGamePacket_<kV975>, bp::StartGamePacket_<kV1001>> {
     static bp::StartGamePacket_<kV975> apply(const bp::StartGamePacket_<kV1001> &in)
     {
         // is_chat_logging dropped (lossy)
-        return convertAcrossGap<23, 1, bp::StartGamePacket_<kV975>>(in);
+        return copyStartGame<bp::StartGamePacket_<kV975>>(in);
     }
 };
 
@@ -257,21 +316,25 @@ struct Conversion<bp::StartGamePacket_<kV975>, bp::StartGamePacket_<kV1001>> {
 // 984 cerealised the packet: player_id moved ahead of event_type, darken_screen went, and the
 // eight switch arms flattened so every field is now written unconditionally.
 
+#define ENDWEAVE_BOSS_EVENT_FIELDS(X) \
+    X(boss_id)                        \
+    X(player_id) X(event_type) X(name) X(filtered_name) X(health_percent) X(darken_screen) X(color) X(overlay)
+ENDWEAVE_DEFINE_FIELD_COPY(copyBossEvent, ENDWEAVE_BOSS_EVENT_FIELDS)
+
+/**
+ * 984 cerealised the packet: player_id moved ahead of event_type, darken_screen went, and the
+ * eight switch arms flattened so every field is now written unconditionally.
+ *
+ * The reorder needs no handling -- fields match by name. The 975 form only wrote the fields its
+ * event type selected and left the rest default-constructed; 1001 writes them all, so the
+ * unselected ones go out as defaults.
+ */
 template <>
 struct Conversion<bp::BossEventPacket_<kV1001>, bp::BossEventPacket_<kV975>> {
     static bp::BossEventPacket_<kV1001> apply(const bp::BossEventPacket_<kV975> &in)
     {
-        // The 975 form only wrote the fields its event type selected and left the rest
-        // default-constructed; 1001 writes them all, so the unselected ones go out as defaults.
         // darken_screen has nowhere to go (lossy).
-        return {.boss_id = in.boss_id,
-                .player_id = in.player_id,
-                .event_type = in.event_type,
-                .name = in.name,
-                .filtered_name = in.filtered_name,
-                .health_percent = in.health_percent,
-                .color = in.color,
-                .overlay = in.overlay};
+        return copyBossEvent<bp::BossEventPacket_<kV1001>>(in);
     }
 };
 
@@ -279,15 +342,9 @@ template <>
 struct Conversion<bp::BossEventPacket_<kV975>, bp::BossEventPacket_<kV1001>> {
     static bp::BossEventPacket_<kV975> apply(const bp::BossEventPacket_<kV1001> &in)
     {
-        return {.boss_id = in.boss_id,
-                .event_type = in.event_type,
-                .player_id = in.player_id,
-                .name = in.name,
-                .filtered_name = in.filtered_name,
-                .health_percent = in.health_percent,
-                .darken_screen = 0, // polyfill: 1001 carries no value to restore
-                .color = in.color,
-                .overlay = in.overlay};
+        auto out = copyBossEvent<bp::BossEventPacket_<kV975>>(in);
+        out.darken_screen = 0; // polyfill: 1001 carries no value to restore
+        return out;
     }
 };
 
