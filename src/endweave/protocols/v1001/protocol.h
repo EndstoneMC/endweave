@@ -18,6 +18,15 @@ public:
 
 protected:
     void registerPackets() override;
+
+private:
+    /**
+     * Registers both directions of one packet whose form changed at this version.
+     *
+     * @param packet_id The packet id.
+     */
+    template <template <ProtocolVersion> class Packet>
+    void registerBothWays(MinecraftPacketIds packet_id);
 };
 
 } // namespace endweave
