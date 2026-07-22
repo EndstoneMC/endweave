@@ -107,51 +107,28 @@ struct Conversion<bp::AttributeLayerData_<kV975>, bp::AttributeLayerData_<kV1001
 };
 
 // --- 315 ServerboundDiagnostics --------------------------------------------------------
+//
+// 978 appended whisker_scopes. Neither direction needs a fixup: going up the list is left
+// empty, a faithful "a 975 client collects none", and going down it is not copied (lossy).
 
-/**
- * Copies every field both versions of ServerboundDiagnosticsPacket have.
- *
- * Only 1001 has whisker_scopes. The converter sets or drops it deliberately.
- */
 template <class To, class From>
-void copyDiagnostics(To &to, const From &from)
-{
-    to.avg_fps = from.avg_fps;
-    to.avg_server_sim_tick_time_ms = from.avg_server_sim_tick_time_ms;
-    to.avg_client_sim_tick_time_ms = from.avg_client_sim_tick_time_ms;
-    to.avg_begin_frame_time_ms = from.avg_begin_frame_time_ms;
-    to.avg_input_time_ms = from.avg_input_time_ms;
-    to.avg_render_time_ms = from.avg_render_time_ms;
-    to.avg_end_frame_time_ms = from.avg_end_frame_time_ms;
-    to.avg_remainder_time_percent = from.avg_remainder_time_percent;
-    to.avg_unaccounted_time_percent = from.avg_unaccounted_time_percent;
-    to.memory_category_values = from.memory_category_values;
-    to.entity_diagnostics = from.entity_diagnostics;
-    to.system_diagnostics = from.system_diagnostics;
-}
-
-/**
- * The packet appended a whisker_scopes list at 978.
- *
- * Neither direction needs a fixup: going up the list is left empty, a faithful "a 975 client
- * collects none", and going down it is simply not copied (lossy).
- */
-template <>
-struct Conversion<bp::ServerboundDiagnosticsPacket_<kV1001>, bp::ServerboundDiagnosticsPacket_<kV975>> {
-    static bp::ServerboundDiagnosticsPacket_<kV1001> apply(const bp::ServerboundDiagnosticsPacket_<kV975> &in)
+    requires(To::Id == bp::ServerboundDiagnosticsPacket::Id && From::Id == To::Id)
+struct Conversion<To, From> {
+    static To apply(const From &in)
     {
-        bp::ServerboundDiagnosticsPacket_<kV1001> out;
-        copyDiagnostics(out, in);
-        return out;
-    }
-};
-
-template <>
-struct Conversion<bp::ServerboundDiagnosticsPacket_<kV975>, bp::ServerboundDiagnosticsPacket_<kV1001>> {
-    static bp::ServerboundDiagnosticsPacket_<kV975> apply(const bp::ServerboundDiagnosticsPacket_<kV1001> &in)
-    {
-        bp::ServerboundDiagnosticsPacket_<kV975> out;
-        copyDiagnostics(out, in);
+        To out;
+        out.avg_fps = in.avg_fps;
+        out.avg_server_sim_tick_time_ms = in.avg_server_sim_tick_time_ms;
+        out.avg_client_sim_tick_time_ms = in.avg_client_sim_tick_time_ms;
+        out.avg_begin_frame_time_ms = in.avg_begin_frame_time_ms;
+        out.avg_input_time_ms = in.avg_input_time_ms;
+        out.avg_render_time_ms = in.avg_render_time_ms;
+        out.avg_end_frame_time_ms = in.avg_end_frame_time_ms;
+        out.avg_remainder_time_percent = in.avg_remainder_time_percent;
+        out.avg_unaccounted_time_percent = in.avg_unaccounted_time_percent;
+        out.memory_category_values = in.memory_category_values;
+        out.entity_diagnostics = in.entity_diagnostics;
+        out.system_diagnostics = in.system_diagnostics;
         return out;
     }
 };
@@ -160,36 +137,17 @@ struct Conversion<bp::ServerboundDiagnosticsPacket_<kV975>, bp::ServerboundDiagn
 //
 // The 979 cerealisation reorders the packet and reworks how two fields encode, but carries the
 // same three values, so neither direction loses anything. SubChunkPos keeps its field list --
-// only the encoding moved, varint32 to fixed int32 -- so it needs no converter.
+// only the encoding moved, varint32 to fixed int32 -- so it needs no converter of its own.
 
-/**
- * Copies every field both versions of SubChunkRequestPacket have.
- */
 template <class To, class From>
-void copySubChunkRequest(To &to, const From &from)
-{
-    to.dimension_type = from.dimension_type;
-    to.center_pos = convert<decltype(to.center_pos)>(from.center_pos);
-    to.sub_chunk_pos_offsets = from.sub_chunk_pos_offsets;
-}
-
-/** 979 moved center_pos behind the offsets; matching by name makes the reorder a non-event. */
-template <>
-struct Conversion<bp::SubChunkRequestPacket_<kV1001>, bp::SubChunkRequestPacket_<kV975>> {
-    static bp::SubChunkRequestPacket_<kV1001> apply(const bp::SubChunkRequestPacket_<kV975> &in)
+    requires(To::Id == bp::SubChunkRequestPacket::Id && From::Id == To::Id)
+struct Conversion<To, From> {
+    static To apply(const From &in)
     {
-        bp::SubChunkRequestPacket_<kV1001> out;
-        copySubChunkRequest(out, in);
-        return out;
-    }
-};
-
-template <>
-struct Conversion<bp::SubChunkRequestPacket_<kV975>, bp::SubChunkRequestPacket_<kV1001>> {
-    static bp::SubChunkRequestPacket_<kV975> apply(const bp::SubChunkRequestPacket_<kV1001> &in)
-    {
-        bp::SubChunkRequestPacket_<kV975> out;
-        copySubChunkRequest(out, in);
+        To out;
+        out.dimension_type = in.dimension_type;
+        out.center_pos = convert<decltype(out.center_pos)>(in.center_pos);
+        out.sub_chunk_pos_offsets = in.sub_chunk_pos_offsets;
         return out;
     }
 };
@@ -242,96 +200,54 @@ struct Conversion<std::optional<bp::PresenceConfiguration_<kV975>>, std::optiona
 //
 // 975 writes both counts up front then both arrays; 1001 gives each list its own prefix.
 
-/**
- * Copies every field both versions of ClientCacheBlobStatusPacket have.
- *
- * Only 975 has missing_count, found_count. The converter sets or drops it deliberately.
- */
 template <class To, class From>
-void copyBlobStatus(To &to, const From &from)
-{
-    to.missing_ids = from.missing_ids;
-    to.found_ids = from.found_ids;
-}
-
-template <>
-struct Conversion<bp::ClientCacheBlobStatusPacket_<kV1001>, bp::ClientCacheBlobStatusPacket_<kV975>> {
-    static bp::ClientCacheBlobStatusPacket_<kV1001> apply(const bp::ClientCacheBlobStatusPacket_<kV975> &in)
+    requires(To::Id == bp::ClientCacheBlobStatusPacket::Id && From::Id == To::Id)
+struct Conversion<To, From> {
+    static To apply(const From &in)
     {
-        // 1001 prefixes each list instead of carrying the counts up front, so they just go.
-        bp::ClientCacheBlobStatusPacket_<kV1001> out;
-        copyBlobStatus(out, in);
-        return out;
-    }
-};
-
-template <>
-struct Conversion<bp::ClientCacheBlobStatusPacket_<kV975>, bp::ClientCacheBlobStatusPacket_<kV1001>> {
-    static bp::ClientCacheBlobStatusPacket_<kV975> apply(const bp::ClientCacheBlobStatusPacket_<kV1001> &in)
-    {
-        bp::ClientCacheBlobStatusPacket_<kV975> out;
-        copyBlobStatus(out, in);
-        // 975 states each length up front; 1001 only implies it through the list prefix.
-        out.missing_count = static_cast<std::uint32_t>(out.missing_ids.size());
-        out.found_count = static_cast<std::uint32_t>(out.found_ids.size());
+        To out;
+        out.missing_ids = in.missing_ids;
+        out.found_ids = in.found_ids;
+        // Only 975 states the lengths up front; 1001 only implies them through the prefixes.
+        if constexpr (requires { out.missing_count; }) {
+            out.missing_count = static_cast<std::uint32_t>(out.missing_ids.size());
+            out.found_count = static_cast<std::uint32_t>(out.found_ids.size());
+        }
         return out;
     }
 };
 
 // --- 331 GraphicsOverrideParameter -----------------------------------------------------
-
-/**
- * Copies every field both versions of GraphicsOverrideParameterPacket have.
- *
- * Only 1001 has player_id. The converter sets or drops it deliberately.
- */
-template <class To, class From>
-void copyGraphicsOverride(To &to, const From &from)
-{
-    to.keyframes = from.keyframes;
-    to.float_value = from.float_value;
-    to.vec3_value = from.vec3_value;
-    to.biome_id = from.biome_id;
-    to.parameter_id = from.parameter_id;
-    to.reset_parameter = from.reset_parameter;
-}
-
-/**
- * player_id was inserted between biome_id and parameter_id.
- *
- * Going up it is left absent -- a 975 override is never per-player -- and going down it is
- * dropped, so a targeted override becomes a broadcast one (lossy). Neither needs a fixup.
- */
-template <>
-struct Conversion<bp::GraphicsOverrideParameterPacket_<kV1001>, bp::GraphicsOverrideParameterPacket_<kV975>> {
-    static bp::GraphicsOverrideParameterPacket_<kV1001> apply(const bp::GraphicsOverrideParameterPacket_<kV975> &in)
-    {
-        bp::GraphicsOverrideParameterPacket_<kV1001> out;
-        copyGraphicsOverride(out, in);
-        return out;
-    }
-};
-
-template <>
-struct Conversion<bp::GraphicsOverrideParameterPacket_<kV975>, bp::GraphicsOverrideParameterPacket_<kV1001>> {
-    static bp::GraphicsOverrideParameterPacket_<kV975> apply(const bp::GraphicsOverrideParameterPacket_<kV1001> &in)
-    {
-        bp::GraphicsOverrideParameterPacket_<kV975> out;
-        copyGraphicsOverride(out, in);
-        return out;
-    }
-};
-
-// --- 11 StartGame ----------------------------------------------------------------------
 //
-// One field inserted on the packet and two appended to LevelSettings. Both are wider than the
-// field-count ladder, so their shared prefix is spelled out.
+// player_id was inserted between biome_id and parameter_id. Going up it is left absent -- a 975
+// override is never per-player -- and going down it is dropped, so a targeted override becomes
+// a broadcast one (lossy). Neither needs a fixup.
+
+template <class To, class From>
+    requires(To::Id == bp::GraphicsOverrideParameterPacket::Id && From::Id == To::Id)
+struct Conversion<To, From> {
+    static To apply(const From &in)
+    {
+        To out;
+        out.keyframes = in.keyframes;
+        out.float_value = in.float_value;
+        out.vec3_value = in.vec3_value;
+        out.biome_id = in.biome_id;
+        out.parameter_id = in.parameter_id;
+        out.reset_parameter = in.reset_parameter;
+        return out;
+    }
+};
+
+// --- LevelSettings, carried by StartGame -----------------------------------------------
+//
+// LevelSettings has no packet id to key a conversion on, so it takes the explicit pair.
 
 /**
  * Copies every field both versions of LevelSettings have.
  *
- * Only 1001 has server_editor_connection_policy, allow_anonymous_block_drops_in_editor_worlds.
- * The converter sets or drops it deliberately.
+ * Left out because a version does not have it -- only 1001 has server_editor_connection_policy,
+ * allow_anonymous_block_drops_in_editor_worlds. The converter sets or drops it deliberately.
  */
 template <class To, class From>
 void copyLevelSettings(To &to, const From &from)
@@ -387,43 +303,6 @@ void copyLevelSettings(To &to, const From &from)
     to.disable_player_interactions = from.disable_player_interactions;
 }
 
-/**
- * Copies every field both versions of StartGamePacket have.
- *
- * Only 1001 has is_chat_logging. The converter sets or drops it deliberately.
- */
-template <class To, class From>
-void copyStartGame(To &to, const From &from)
-{
-    to.entity_id = from.entity_id;
-    to.runtime_id = from.runtime_id;
-    to.entity_game_type = from.entity_game_type;
-    to.pos = from.pos;
-    to.rot = from.rot;
-    to.settings = convert<decltype(to.settings)>(from.settings);
-    to.level_id = from.level_id;
-    to.level_name = from.level_name;
-    to.template_content_identity = from.template_content_identity;
-    to.is_trial = from.is_trial;
-    to.movement_settings = from.movement_settings;
-    to.level_current_time = from.level_current_time;
-    to.enchantment_seed = from.enchantment_seed;
-    to.block_properties = from.block_properties;
-    to.multiplayer_correlation_id = from.multiplayer_correlation_id;
-    to.enable_item_stack_net_manager = from.enable_item_stack_net_manager;
-    to.server_version = from.server_version;
-    to.player_property_data = from.player_property_data;
-    to.server_block_type_registry_checksum = from.server_block_type_registry_checksum;
-    to.world_template_id = from.world_template_id;
-    to.server_enabled_client_side_generation = from.server_enabled_client_side_generation;
-    to.block_network_ids_are_hashes = from.block_network_ids_are_hashes;
-    to.network_permissions = from.network_permissions;
-    to.server_configuration_join_info =
-        convert<decltype(to.server_configuration_join_info)>(from.server_configuration_join_info);
-    to.server_telemetry_data = from.server_telemetry_data;
-}
-
-/** LevelSettings appended two editor fields at 1001; StartGame inserted is_chat_logging. */
 template <>
 struct Conversion<bp::LevelSettings_<kV1001>, bp::LevelSettings_<kV975>> {
     static bp::LevelSettings_<kV1001> apply(const bp::LevelSettings_<kV975> &in)
@@ -448,25 +327,47 @@ struct Conversion<bp::LevelSettings_<kV975>, bp::LevelSettings_<kV1001>> {
     }
 };
 
-template <>
-struct Conversion<bp::StartGamePacket_<kV1001>, bp::StartGamePacket_<kV975>> {
-    static bp::StartGamePacket_<kV1001> apply(const bp::StartGamePacket_<kV975> &in)
-    {
-        // settings and server_configuration_join_info are versioned; the copy recurses.
-        bp::StartGamePacket_<kV1001> out;
-        copyStartGame(out, in);
-        out.is_chat_logging = false; // polyfill: a 975 server never asks the client to log chat
-        return out;
-    }
-};
+// --- 11 StartGame ----------------------------------------------------------------------
+//
+// One field inserted on the packet; settings and server_configuration_join_info are themselves
+// versioned and convert on their own.
 
-template <>
-struct Conversion<bp::StartGamePacket_<kV975>, bp::StartGamePacket_<kV1001>> {
-    static bp::StartGamePacket_<kV975> apply(const bp::StartGamePacket_<kV1001> &in)
+template <class To, class From>
+    requires(To::Id == bp::StartGamePacket::Id && From::Id == To::Id)
+struct Conversion<To, From> {
+    static To apply(const From &in)
     {
-        // is_chat_logging dropped (lossy)
-        bp::StartGamePacket_<kV975> out;
-        copyStartGame(out, in);
+        To out;
+        out.entity_id = in.entity_id;
+        out.runtime_id = in.runtime_id;
+        out.entity_game_type = in.entity_game_type;
+        out.pos = in.pos;
+        out.rot = in.rot;
+        out.settings = convert<decltype(out.settings)>(in.settings);
+        out.level_id = in.level_id;
+        out.level_name = in.level_name;
+        out.template_content_identity = in.template_content_identity;
+        out.is_trial = in.is_trial;
+        out.movement_settings = in.movement_settings;
+        out.level_current_time = in.level_current_time;
+        out.enchantment_seed = in.enchantment_seed;
+        out.block_properties = in.block_properties;
+        out.multiplayer_correlation_id = in.multiplayer_correlation_id;
+        out.enable_item_stack_net_manager = in.enable_item_stack_net_manager;
+        out.server_version = in.server_version;
+        out.player_property_data = in.player_property_data;
+        out.server_block_type_registry_checksum = in.server_block_type_registry_checksum;
+        out.world_template_id = in.world_template_id;
+        out.server_enabled_client_side_generation = in.server_enabled_client_side_generation;
+        out.block_network_ids_are_hashes = in.block_network_ids_are_hashes;
+        out.network_permissions = in.network_permissions;
+        out.server_configuration_join_info =
+            convert<decltype(out.server_configuration_join_info)>(in.server_configuration_join_info);
+        out.server_telemetry_data = in.server_telemetry_data;
+        // Only 1001 has is_chat_logging; a 975 server never asks the client to log chat.
+        if constexpr (requires { out.is_chat_logging; }) {
+            out.is_chat_logging = false;
+        }
         return out;
     }
 };
@@ -474,52 +375,29 @@ struct Conversion<bp::StartGamePacket_<kV975>, bp::StartGamePacket_<kV1001>> {
 // --- 74 BossEvent ----------------------------------------------------------------------
 //
 // 984 cerealised the packet: player_id moved ahead of event_type, darken_screen went, and the
-// eight switch arms flattened so every field is now written unconditionally.
+// eight switch arms flattened so every field is now written unconditionally. Matching by name
+// makes the reorder a non-event, and the 975 form's unselected fields were already
+// default-constructed, so they go out at 1001 as defaults.
 
-/**
- * Copies every field both versions of BossEventPacket have.
- *
- * Only 975 has darken_screen. The converter sets or drops it deliberately.
- */
 template <class To, class From>
-void copyBossEvent(To &to, const From &from)
-{
-    to.boss_id = from.boss_id;
-    to.event_type = from.event_type;
-    to.player_id = from.player_id;
-    to.name = from.name;
-    to.filtered_name = from.filtered_name;
-    to.health_percent = from.health_percent;
-    to.color = from.color;
-    to.overlay = from.overlay;
-}
-
-/**
- * 984 cerealised the packet: player_id moved ahead of event_type, darken_screen went, and the
- * eight switch arms flattened so every field is now written unconditionally.
- *
- * The reorder needs no handling -- fields match by name. The 975 form only wrote the fields its
- * event type selected and left the rest default-constructed; 1001 writes them all, so the
- * unselected ones go out as defaults.
- */
-template <>
-struct Conversion<bp::BossEventPacket_<kV1001>, bp::BossEventPacket_<kV975>> {
-    static bp::BossEventPacket_<kV1001> apply(const bp::BossEventPacket_<kV975> &in)
+    requires(To::Id == bp::BossEventPacket::Id && From::Id == To::Id)
+struct Conversion<To, From> {
+    static To apply(const From &in)
     {
-        // darken_screen has nowhere to go (lossy).
-        bp::BossEventPacket_<kV1001> out;
-        copyBossEvent(out, in);
-        return out;
-    }
-};
-
-template <>
-struct Conversion<bp::BossEventPacket_<kV975>, bp::BossEventPacket_<kV1001>> {
-    static bp::BossEventPacket_<kV975> apply(const bp::BossEventPacket_<kV1001> &in)
-    {
-        bp::BossEventPacket_<kV975> out;
-        copyBossEvent(out, in);
-        out.darken_screen = 0; // polyfill: 1001 carries no value to restore
+        To out;
+        out.boss_id = in.boss_id;
+        out.event_type = in.event_type;
+        out.player_id = in.player_id;
+        out.name = in.name;
+        out.filtered_name = in.filtered_name;
+        out.health_percent = in.health_percent;
+        out.color = in.color;
+        out.overlay = in.overlay;
+        // Only 975 has darken_screen: 1001 carries no value to restore, and going the other
+        // way it is dropped (lossy).
+        if constexpr (requires { out.darken_screen; }) {
+            out.darken_screen = 0;
+        }
         return out;
     }
 };
