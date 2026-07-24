@@ -50,8 +50,7 @@ add_library(endweave_core STATIC
         src/endweave/protocol/pipeline.cpp
         src/endweave/connection/connection.cpp
         src/endweave/connection/manager.cpp
-        src/endweave/protocols/base/protocol.cpp
-        src/endweave/protocols/v1001/protocol.cpp)
+        src/endweave/protocols/base/protocol.cpp)
 target_include_directories(endweave_core PUBLIC src)
 target_link_libraries(endweave_core PUBLIC bedrock::protocol endstone::endstone)
 
