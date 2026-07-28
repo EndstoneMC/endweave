@@ -67,8 +67,8 @@ void ProtocolManager::registerBaseProtocol(std::unique_ptr<AbstractProtocol> bas
 void ProtocolManager::registerProtocols()
 {
     registerBaseProtocol(std::make_unique<InitialBaseProtocol>());
-    registerProtocol<ProtocolVersion::V975>();
-    registerProtocol<ProtocolVersion::V1001>();
+    registerProtocol<ProtocolVersion::v26_20>();
+    registerProtocol<ProtocolVersion::v26_30>();
 }
 
 const AbstractProtocol *ProtocolManager::getProtocol(int version) const

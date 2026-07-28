@@ -6,15 +6,10 @@
 
 namespace endweave {
 
-std::string addressKey(const endstone::SocketAddress &address)
-{
-    return address.getHostname() + ":" + std::to_string(address.getPort());
-}
-
 template <class Event>
 void PacketListener::translate(Direction direction, Event &event)
 {
-    UserConnection &connection = connections_->getOrCreate(addressKey(event.getAddress()));
+    UserConnection &connection = connections_->getOrCreate(event.getAddress());
     connection.touch();
 
     const std::string_view payload = event.getPayload();
@@ -39,22 +34,22 @@ void PacketListener::translate(Direction direction, Event &event)
 void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
 {
     translate(Direction::Serverbound, event);
-    if (event.getPacketId() == static_cast<int>(MinecraftPacketIds::Disconnect)) {
-        connections_->onDisconnect(addressKey(event.getAddress()));
+    if (event.getPacketId() == static_cast<int>(PacketIds::Disconnect)) {
+        connections_->onDisconnect(event.getAddress());
     }
 }
 
 void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
 {
     translate(Direction::Clientbound, event);
-    if (event.getPacketId() == static_cast<int>(MinecraftPacketIds::Disconnect)) {
-        connections_->onDisconnect(addressKey(event.getAddress()));
+    if (event.getPacketId() == static_cast<int>(PacketIds::Disconnect)) {
+        connections_->onDisconnect(event.getAddress());
     }
 }
 
 void PacketListener::onPlayerQuit(endstone::PlayerQuitEvent &event)
 {
-    connections_->onDisconnect(addressKey(event.getPlayer().getAddress()));
+    connections_->onDisconnect(event.getPlayer().getAddress());
 }
 
 } // namespace endweave

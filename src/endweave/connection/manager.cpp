@@ -10,7 +10,7 @@ ConnectionManager::ConnectionManager(ProtocolManager &protocol_manager, endstone
 {
 }
 
-UserConnection &ConnectionManager::getOrCreate(const std::string &address)
+UserConnection &ConnectionManager::getOrCreate(const endstone::SocketAddress &address)
 {
     auto it = connections_.find(address);
     if (it == connections_.end()) {
@@ -19,13 +19,13 @@ UserConnection &ConnectionManager::getOrCreate(const std::string &address)
     return it->second;
 }
 
-UserConnection *ConnectionManager::get(const std::string &address)
+UserConnection *ConnectionManager::get(const endstone::SocketAddress &address)
 {
     const auto it = connections_.find(address);
     return it == connections_.end() ? nullptr : &it->second;
 }
 
-void ConnectionManager::onDisconnect(const std::string &address)
+void ConnectionManager::onDisconnect(const endstone::SocketAddress &address)
 {
     connections_.erase(address);
 }

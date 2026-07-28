@@ -12,9 +12,9 @@ namespace endweave {
  * backward protocol (Protocol1_20_2To1_20).
  */
 template <>
-class Protocol<ProtocolVersion::V1001> : public AbstractProtocol {
+class Protocol<ProtocolVersion::v26_30> : public AbstractProtocol {
 public:
-    Protocol() : AbstractProtocol(ProtocolVersion::V1001) {}
+    Protocol() : AbstractProtocol(ProtocolVersion::v26_30) {}
 };
 
 } // namespace endweave

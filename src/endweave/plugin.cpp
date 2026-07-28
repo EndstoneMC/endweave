@@ -4,7 +4,8 @@
 
 #include <chrono>
 #include <cstdint>
-#include <endstone/scheduler/scheduler.h>
+#include <endstone/endstone.hpp>
+#include <memory>
 #include <string>
 
 namespace endweave {
@@ -17,19 +18,15 @@ constexpr std::uint64_t kSweepPeriodTicks = 20 * 60;
 
 } // namespace
 
-void EndweavePlugin::onEnable()
+void Plugin::onEnable()
 {
     const int server_protocol_version = getServer().getProtocolVersion();
 
     protocol_manager_.registerProtocols();
     protocol_manager_.refreshVersions(server_protocol_version);
 
-    connections_.emplace(protocol_manager_, getLogger(), server_protocol_version);
-    listener_.emplace(*connections_);
-
-    // Lowest serverbound so an old client's packets reach the server version before any other
-    // plugin decodes them. Highest clientbound so downgrades run after every other plugin has
-    // written. Not Monitor, which must not mutate.
+    connections_ = std::make_unique<ConnectionManager>(protocol_manager_, getLogger(), server_protocol_version);
+    listener_ = std::make_unique<PacketListener>(*connections_);
     registerEvent(&PacketListener::onPacketReceive, *listener_, endstone::EventPriority::Lowest,
                   /*ignore_cancelled=*/true);
     registerEvent(&PacketListener::onPacketSend, *listener_, endstone::EventPriority::Highest,
@@ -50,14 +47,14 @@ void EndweavePlugin::onEnable()
     getLogger().info("Endweave enabled. Server protocol {}, serving {}.", server_protocol_version, versions);
 }
 
-void EndweavePlugin::onDisable()
+void Plugin::onDisable()
 {
     getLogger().info("Endweave disabled.");
 }
 
 } // namespace endweave
 
-ENDSTONE_PLUGIN(/*name=*/"endweave", /*version=*/ENDWEAVE_VERSION, /*main_class=*/endweave::EndweavePlugin)
+ENDSTONE_PLUGIN(/*name=*/"endweave", /*version=*/ENDWEAVE_VERSION, /*main_class=*/endweave::Plugin)
 {
     prefix = "Endweave";
     description = "Bedrock protocol translation plugin for Endstone.";

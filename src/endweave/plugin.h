@@ -4,8 +4,8 @@
 #include "endweave/listener.h"
 #include "endweave/protocol/manager.h"
 
-#include <endstone/plugin/plugin.h>
-#include <optional>
+#include <endstone/endstone.hpp>
+#include <memory>
 
 namespace endweave {
 
@@ -15,15 +15,15 @@ namespace endweave {
  * @note endweave-specific platform binding, standing in for a ViaVersion platform module and its
  * ViaManager. Owns what ViaVersion reaches through the Via global.
  */
-class EndweavePlugin : public endstone::Plugin {
+class Plugin : public endstone::Plugin {
 public:
     void onEnable() override;
     void onDisable() override;
 
 private:
-    ProtocolManager protocol_manager_;              // ViaVersion: owned by ViaManager
-    std::optional<ConnectionManager> connections_;  // ViaVersion: owned by ViaManager
-    std::optional<PacketListener> listener_;        // ViaVersion: the netty decode/encode handlers
+    ProtocolManager protocol_manager_;                 // ViaVersion: owned by ViaManager
+    std::unique_ptr<ConnectionManager> connections_;   // ViaVersion: owned by ViaManager
+    std::unique_ptr<PacketListener> listener_;         // ViaVersion: the netty decode/encode handlers
 };
 
 } // namespace endweave

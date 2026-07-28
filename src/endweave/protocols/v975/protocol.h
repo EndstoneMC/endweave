@@ -11,9 +11,9 @@ namespace endweave {
  * @see ViaVersion's lowest supported protocol (e.g. Protocol1_8To1_9).
  */
 template <>
-class Protocol<ProtocolVersion::V975> : public AbstractProtocol {
+class Protocol<ProtocolVersion::v26_20> : public AbstractProtocol {
 public:
-    Protocol() : AbstractProtocol(ProtocolVersion::V975) {}
+    Protocol() : AbstractProtocol(ProtocolVersion::v26_20) {}
 };
 
 } // namespace endweave

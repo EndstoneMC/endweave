@@ -3,8 +3,7 @@
 #include "endweave/connection/connection.h"
 
 #include <chrono>
-#include <endstone/logger.h>
-#include <string>
+#include <endstone/endstone.hpp>
 #include <unordered_map>
 
 namespace endweave {
@@ -34,16 +33,16 @@ public:
      *
      * @note endweave-specific: ViaVersion registers connections in onLoginSuccess, not lazily.
      */
-    UserConnection &getOrCreate(const std::string &address);
+    UserConnection &getOrCreate(const endstone::SocketAddress &address);
 
     /**
      * @return The connection for an address, or nullptr if there is none.
      * @see ViaVersion ConnectionManager#getServerConnection(UUID).
      */
-    [[nodiscard]] UserConnection *get(const std::string &address);
+    [[nodiscard]] UserConnection *get(const endstone::SocketAddress &address);
 
     /** @see ViaVersion ConnectionManager#onDisconnect(UserConnection). */
-    void onDisconnect(const std::string &address);
+    void onDisconnect(const endstone::SocketAddress &address);
 
     /**
      * Drops connections that have carried no packet for a while.
@@ -59,7 +58,7 @@ private:
     int server_protocol_version_;       // endweave-specific
     // ViaVersion: serverConnections + clientConnections (by UUID). endweave keeps one
     // address-keyed, node-based map, so references handed to handlers survive later insertions.
-    std::unordered_map<std::string, UserConnection> connections_;
+    std::unordered_map<endstone::SocketAddress, UserConnection> connections_;
 };
 
 } // namespace endweave

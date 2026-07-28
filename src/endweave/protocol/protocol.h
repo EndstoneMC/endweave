@@ -3,6 +3,7 @@
 #include "endweave/protocol/direction.h"
 #include "endweave/protocol/handler.h"
 #include "endweave/protocol/packet_ids.h"
+#include "endweave/protocol/version.h"
 
 #include <array>
 #include <bedrock/protocol.hpp>
@@ -14,8 +15,6 @@
 #include <vector>
 
 namespace endweave {
-
-using bedrock::protocol::ProtocolVersion;
 
 class ProtocolManager;
 class UserConnection;
@@ -134,41 +133,41 @@ protected:
     // walked in both transport directions across connections.
 
     /** @see ViaVersion AbstractProtocol#registerServerbound. */
-    void registerUpgrade(MinecraftPacketIds packet_id, PacketHandler handler);
+    void registerUpgrade(PacketIds packet_id, PacketHandler handler);
     /** @see ViaBackwards BackwardsProtocol#registerClientbound. */
-    void registerDowngrade(MinecraftPacketIds packet_id, PacketHandler handler);
+    void registerDowngrade(PacketIds packet_id, PacketHandler handler);
     /** @see ViaVersion AbstractProtocol#cancelServerbound. */
-    void cancelUpgrade(MinecraftPacketIds packet_id);
+    void cancelUpgrade(PacketIds packet_id);
     /** @see ViaBackwards BackwardsProtocol#cancelClientbound. */
-    void cancelDowngrade(MinecraftPacketIds packet_id);
+    void cancelDowngrade(PacketIds packet_id);
     /** @see ViaVersion AbstractProtocol#appendServerbound. */
-    void appendUpgrade(MinecraftPacketIds packet_id, PacketHandler handler);
+    void appendUpgrade(PacketIds packet_id, PacketHandler handler);
     /** @see ViaVersion AbstractProtocol#appendClientbound. */
-    void appendDowngrade(MinecraftPacketIds packet_id, PacketHandler handler);
+    void appendDowngrade(PacketIds packet_id, PacketHandler handler);
     /** @see ViaVersion AbstractProtocol#replaceServerbound. */
-    void replaceUpgrade(MinecraftPacketIds packet_id, PacketHandler handler);
+    void replaceUpgrade(PacketIds packet_id, PacketHandler handler);
     /** @see ViaVersion AbstractProtocol#replaceClientbound. */
-    void replaceDowngrade(MinecraftPacketIds packet_id, PacketHandler handler);
+    void replaceDowngrade(PacketIds packet_id, PacketHandler handler);
 
     // Transport axis: a base protocol.
 
     /** @see ViaVersion AbstractProtocol#registerClientbound. */
-    void registerClientbound(MinecraftPacketIds packet_id, PacketHandler handler);
+    void registerClientbound(PacketIds packet_id, PacketHandler handler);
     /** @see ViaVersion AbstractProtocol#registerServerbound. */
-    void registerServerbound(MinecraftPacketIds packet_id, PacketHandler handler);
+    void registerServerbound(PacketIds packet_id, PacketHandler handler);
     /** @see ViaVersion AbstractProtocol#cancelClientbound. */
-    void cancelClientbound(MinecraftPacketIds packet_id);
+    void cancelClientbound(PacketIds packet_id);
     /** @see ViaVersion AbstractProtocol#cancelServerbound. */
-    void cancelServerbound(MinecraftPacketIds packet_id);
+    void cancelServerbound(PacketIds packet_id);
 
 private:
     friend class ProtocolManager;
 
     void setPreviousVersion(int version);
 
-    void registerAt(std::size_t slot, MinecraftPacketIds packet_id, PacketHandler handler);
-    void appendAt(std::size_t slot, MinecraftPacketIds packet_id, PacketHandler handler);
-    void replaceAt(std::size_t slot, MinecraftPacketIds packet_id, PacketHandler handler);
+    void registerAt(std::size_t slot, PacketIds packet_id, PacketHandler handler);
+    void appendAt(std::size_t slot, PacketIds packet_id, PacketHandler handler);
+    void replaceAt(std::size_t slot, PacketIds packet_id, PacketHandler handler);
 
     std::array<std::vector<PacketHandler>, 2> mappings_; // ViaVersion: clientboundMappings + serverboundMappings
     std::string name_;              // ViaVersion: getClass().getSimpleName()

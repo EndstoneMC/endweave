@@ -93,9 +93,9 @@ std::expected<PacketAction, std::error_code> logPacketViolation(UserConnection &
 
 void InitialBaseProtocol::registerPackets()
 {
-    registerServerbound(MinecraftPacketIds::RequestNetworkSettings, detectClientVersion);
-    registerServerbound(MinecraftPacketIds::Login, rewriteLoginVersion);
-    registerClientbound(MinecraftPacketIds::PacketViolationWarning, logPacketViolation);
+    registerServerbound(PacketIds::RequestNetworkSettings, detectClientVersion);
+    registerServerbound(PacketIds::Login, rewriteLoginVersion);
+    registerClientbound(PacketIds::PacketViolationWarning, logPacketViolation);
 }
 
 } // namespace endweave

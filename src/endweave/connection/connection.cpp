@@ -6,8 +6,8 @@
 
 namespace endweave {
 
-UserConnection::UserConnection(ProtocolManager &protocol_manager, endstone::Logger &logger, std::string address,
-                               int server_protocol_version)
+UserConnection::UserConnection(ProtocolManager &protocol_manager, endstone::Logger &logger,
+                               endstone::SocketAddress address, int server_protocol_version)
     : protocol_manager_(&protocol_manager), logger_(&logger), address_(std::move(address)),
       protocol_info_(ProtocolPipeline{protocol_manager.getBaseProtocols()}, server_protocol_version),
       last_seen_(std::chrono::steady_clock::now())

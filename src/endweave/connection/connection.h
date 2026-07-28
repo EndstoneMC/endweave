@@ -4,8 +4,7 @@
 
 #include <any>
 #include <chrono>
-#include <endstone/logger.h>
-#include <string>
+#include <endstone/endstone.hpp>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
@@ -85,7 +84,7 @@ public:
      * @param server_protocol_version The version the server itself speaks.
      * @see ViaVersion UserConnectionImpl(Channel, boolean).
      */
-    UserConnection(ProtocolManager &protocol_manager, endstone::Logger &logger, std::string address,
+    UserConnection(ProtocolManager &protocol_manager, endstone::Logger &logger, endstone::SocketAddress address,
                    int server_protocol_version);
 
     UserConnection(const UserConnection &) = delete;
@@ -113,7 +112,7 @@ public:
      * @return The peer address this connection is keyed by.
      * @note endweave-specific: ViaVersion keys by UUID once login completes.
      */
-    [[nodiscard]] const std::string &getAddress() const
+    [[nodiscard]] const endstone::SocketAddress &getAddress() const
     {
         return address_;
     }
@@ -181,7 +180,7 @@ public:
 private:
     ProtocolManager *protocol_manager_; // endweave-specific
     endstone::Logger *logger_;          // endweave-specific
-    std::string address_;               // endweave-specific key
+    endstone::SocketAddress address_;   // endweave-specific key
     ProtocolInfo protocol_info_;        // ViaVersion: protocolInfo
     std::unordered_map<std::type_index, std::any> storage_; // ViaVersion: storedObjects
     std::unordered_map<int, std::error_code> reported_errors_; // endweave-specific: reportTranslationError de-dup

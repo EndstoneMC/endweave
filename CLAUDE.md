@@ -146,6 +146,9 @@ The plugin lands at `build/endstone_endweave.so`. Drop it in the server's `plugi
   private members `lower_case_` (trailing underscore), locals/params `lower_case`.
 - Prefer explicit `.value()` on `std::optional` and `std::expected` over `operator*`. Check for
   presence first (`if (!x)`), then read through `.value()`.
+- Prefer `std::unique_ptr` over `std::optional` to hold an owned object with deferred
+  construction. Reserve `std::optional` for genuine value-presence (a missing `int`, an
+  unreachable path, a cancelled body).
 - **Comments:** terse and human. Default to no comment. When one is warranted, keep it to one
   short line. No multi-line explanations, rationale, design-decision narration, or parenthetical
   asides. No "LLM notes" restating what the code plainly does.
