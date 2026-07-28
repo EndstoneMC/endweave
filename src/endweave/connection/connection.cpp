@@ -21,7 +21,8 @@ void UserConnection::reportTranslationError(int packet_id, const std::error_code
         return;
     }
     it->second = error;
-    logger_->error("Translation failed for packet {} from {}: {}", packet_id, address_, error.message());
+    // WARNING to match ViaVersion AbstractProtocol#printRemapError.
+    logger_->warning("Failed to transform packet {} from {}: {}", packet_id, address_, error.message());
 }
 
 } // namespace endweave

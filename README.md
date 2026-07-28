@@ -92,20 +92,18 @@ No existing file is reopened.
 | `src/endweave/protocol/` | the machinery: `AbstractProtocol`, the graph, the pipeline, the handler DSL |
 | `src/endweave/connection/` | `UserConnection`, `ProtocolInfo`, `ConnectionManager` |
 | `src/endweave/protocols/` | one directory per node, plus `base/` for `InitialBaseProtocol` |
-| `src/endweave/plugin.{h,cpp}` | the Endstone plugin; owns the registry and the connection table |
+| `src/endweave/plugin.{h,cpp}` | the Endstone plugin, owning the registry and the connection table |
 | `src/endweave/listener.{h,cpp}` | the packet events |
-| `tools/paths.cpp` | prints the version graph without a server |
 
 ## Building
 
-Requires CMake, Ninja, and Clang 18+ with libc++ (clang-cl on Windows) — Endstone's own
+Requires CMake, Ninja, and Clang 18+ with libc++ (clang-cl on Windows), Endstone's own
 toolchain floor, enforced by its CMake. bedrock-protocol is consumed from a sibling checkout by
-default (`../bedrock-protocol`); the Endstone SDK is fetched.
+default (`../bedrock-protocol`), and the Endstone SDK is fetched.
 
 ```shell
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++
 cmake --build build
-./build/endweave_paths        # print the version graph and the paths through it
 ```
 
-The plugin lands at `build/endstone_endweave.so`; drop it in the server's `plugins/`.
+The plugin lands at `build/endstone_endweave.so`. Drop it in the server's `plugins/`.

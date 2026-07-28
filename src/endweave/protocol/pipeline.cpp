@@ -26,7 +26,6 @@ void ProtocolPipeline::rebuild()
     pipes_.reserve(base_protocols_.size() + path_.size());
     reversed_pipes_.reserve(base_protocols_.size() + path_.size());
 
-    // Base protocols keep their transport direction and stay at the head of both orderings.
     for (const AbstractProtocol *protocol : base_protocols_) {
         pipes_.push_back({protocol, slotOf(Direction::Serverbound)});
         reversed_pipes_.push_back({protocol, slotOf(Direction::Clientbound)});
@@ -49,7 +48,7 @@ std::expected<std::optional<std::string_view>, std::error_code> ProtocolPipeline
 
     for (const Pipe &pipe : direction == Direction::Serverbound ? pipes_ : reversed_pipes_) {
         if (!pipe.protocol->hasMapping(pipe.slot, packet_id)) {
-            continue; // no mapping means the bytes pass through untouched, as in ViaVersion
+            continue;
         }
 
         std::string &out = scratch_[scratch];
@@ -61,12 +60,12 @@ std::expected<std::optional<std::string_view>, std::error_code> ProtocolPipeline
         if (!action) {
             return std::unexpected(action.error());
         }
-        if (*action == PacketAction::Cancelled) {
+        if (action.value() == PacketAction::Cancelled) {
             return std::nullopt;
         }
 
         current = out;
-        scratch ^= 1; // the next stage reads this buffer and writes the other
+        scratch ^= 1;
     }
 
     return current;

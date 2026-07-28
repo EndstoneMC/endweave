@@ -28,8 +28,8 @@ void EndweavePlugin::onEnable()
     listener_.emplace(*connections_);
 
     // Lowest serverbound so an old client's packets reach the server version before any other
-    // plugin decodes them; Highest clientbound so downgrades run after every other plugin has
-    // written. Not Monitor -- that must not mutate.
+    // plugin decodes them. Highest clientbound so downgrades run after every other plugin has
+    // written. Not Monitor, which must not mutate.
     registerEvent(&PacketListener::onPacketReceive, *listener_, endstone::EventPriority::Lowest,
                   /*ignore_cancelled=*/true);
     registerEvent(&PacketListener::onPacketSend, *listener_, endstone::EventPriority::Highest,

@@ -49,7 +49,6 @@ std::expected<PacketAction, std::error_code> AbstractProtocol::transform(std::si
                                                                          bedrock::protocol::BinaryReader &in,
                                                                          bedrock::protocol::BinaryWriter &out) const
 {
-    // hasMapping() is the caller's fast path; an unmapped id never reaches here.
     return mappings_[slot][static_cast<std::size_t>(packet_id)](connection, in, out);
 }
 

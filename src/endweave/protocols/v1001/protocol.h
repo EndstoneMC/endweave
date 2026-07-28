@@ -5,11 +5,11 @@
 namespace endweave {
 
 /**
- * Protocol 1001 (1.26.30).
+ * Protocol 1001 (1.26.30). Owns both directions of the wire diff with the version before it.
+ * Carries no handlers yet. Converters will live in registerPackets() once translation is built.
  *
- * Owns both directions of the wire diff between itself and the version registered before it.
- * Carries no handlers, so every packet passes through untouched: the converters live in
- * registerPackets(), which is empty until the translation layer is redesigned.
+ * @see A ViaVersion forward protocol (e.g. Protocol1_20To1_20_2) fused with its ViaBackwards
+ * backward protocol (Protocol1_20_2To1_20).
  */
 template <>
 class Protocol<ProtocolVersion::V1001> : public AbstractProtocol {

@@ -3,11 +3,12 @@
 namespace endweave {
 
 /**
- * Bedrock packet ids, mirroring BDS's own MinecraftPacketIds.
+ * Bedrock packet ids, mirroring BDS's own MinecraftPacketIds. Ids are stable across versions,
+ * only appended and never renumbered, so one enum serves every version step. The trailing Count
+ * sentinel sizes the handler tables.
  *
- * Ids are stable across protocol versions -- only new ids are appended, none are ever
- * renumbered -- so one enum serves every version step. 200-299 are reserved for
- * title-specific packets.
+ * @see ViaVersion's per-version ClientboundPacketType / ServerboundPacketType, flattened. The id
+ * is the identity, so name-based auto-mapping is not needed.
  */
 enum class MinecraftPacketIds : int {
     KeepAlive = 0,

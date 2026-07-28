@@ -25,14 +25,14 @@ void PacketListener::translate(Direction direction, Event &event)
         event.cancel();
         return;
     }
-    if (!result->has_value()) {
+    const auto &translated = result.value();
+    if (!translated.has_value()) {
         event.cancel();
         return;
     }
-    // setPayload() compares by pointer identity, so calling it at all forces the rewrite path.
-    // The view aliases the input unless a stage actually rewrote.
-    if ((*result)->data() != payload.data()) {
-        event.setPayload(**result);
+    // Only set the payload when a stage rewrote. The view aliases the input otherwise.
+    if (translated.value().data() != payload.data()) {
+        event.setPayload(translated.value());
     }
 }
 

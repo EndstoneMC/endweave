@@ -16,8 +16,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang
     add_link_options(-stdlib=libc++)
 endif ()
 
-# bedrock-protocol is not public yet. Use the local sibling checkout by default;
-# override with -DBEDROCK_PROTOCOL_SOURCE_DIR=... once it has a public remote.
+# bedrock-protocol is not public yet. Use the local sibling checkout by default.
+# Override with -DBEDROCK_PROTOCOL_SOURCE_DIR=... once it has a public remote.
 set(BEDROCK_PROTOCOL_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../bedrock-protocol"
         CACHE PATH "Path to a bedrock-protocol source checkout")
 if (NOT EXISTS "${BEDROCK_PROTOCOL_SOURCE_DIR}/CMakeLists.txt")
@@ -30,7 +30,7 @@ add_subdirectory(${BEDROCK_PROTOCOL_SOURCE_DIR} bedrock-protocol EXCLUDE_FROM_AL
 
 # The Endstone SDK is header-only: its root CMakeLists returns right after the include/ target
 # when consumed as a subproject, so this pulls the headers and endstone_add_plugin(), not the
-# server. It also runs Endstone's toolchain checks in our build -- Clang or clang-cl, Ninja --
+# server. It also runs Endstone's toolchain checks in our build (Clang or clang-cl, Ninja),
 # which is why there is no GCC or MSVC configuration.
 include(FetchContent)
 set(ENDSTONE_API_VERSION "0.11.6" CACHE STRING "Endstone SDK tag")
@@ -43,7 +43,7 @@ FetchContent_MakeAvailable(endstone)
 string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 configure_file(src/endweave/version.h.in src/endweave/version.h)
 
-# The translation layer. Split out from the plugin so a tool can drive it without BDS.
+# The translation layer. Split out from the plugin so it can be built and tested without BDS.
 add_library(endweave_core STATIC
         src/endweave/protocol/protocol.cpp
         src/endweave/protocol/manager.cpp
@@ -54,9 +54,6 @@ add_library(endweave_core STATIC
 target_include_directories(endweave_core PUBLIC src)
 target_link_libraries(endweave_core PUBLIC bedrock::protocol endstone::endstone)
 
-add_executable(endweave_paths tools/paths.cpp)
-target_link_libraries(endweave_paths PRIVATE endweave_core)
-
 endstone_add_plugin(${PROJECT_NAME}
         src/endweave/plugin.cpp
         src/endweave/listener.cpp)
@@ -65,7 +62,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE endweave_core)
 
 # libendstone_runtime.so is LD_PRELOADed, so its libc++ sits in the global lookup scope ahead
 # of anything we dlopen. endstone_add_plugin() statically links libc++ at default visibility,
-# which would leave two interposing copies in one process -- hide everything but the entry
+# which would leave two interposing copies in one process. Hide everything but the entry
 # point, on our own code and on the static libraries we pull in.
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     foreach (target ${PROJECT_NAME} endweave_core bedrock_protocol)

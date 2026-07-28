@@ -13,22 +13,20 @@
 namespace endweave {
 
 /**
- * The version graph and its path finding, mirroring ViaVersion's ProtocolManager.
- *
- * The vertices are protocols -- one Protocol<V> per protocol version, owned here -- and the
- * edges join a node to the node registered before it. Both directions of an edge are served by
- * the newer of its two nodes, so registering a node is all it takes to wire the step up.
+ * The version graph and its path finding. Vertices are nodes (one Protocol<V> per version,
+ * owned here). Edges join a node to the node registered before it.
  *
  * @note Runs on the server thread. Nothing here is synchronised.
+ *
+ * @see ViaVersion ProtocolManager (api) and ProtocolManagerImpl (common).
  */
 class ProtocolManager {
 public:
     /**
-     * Constructs and owns Protocol<V>, initialises it, inserts the vertex, and links it to
-     * the previously registered node in both directions.
+     * Constructs, initialises, and links Protocol<V> into the graph. Protocols must be
+     * registered in ascending version order, or it throws std::invalid_argument.
      *
-     * @note A node's predecessor is whichever node was registered before it, so protocols must
-     * be registered in ascending version order. Throws std::invalid_argument otherwise.
+     * @see ViaVersion ProtocolManagerImpl#registerProtocol.
      */
     template <ProtocolVersion V>
     void registerProtocol()
@@ -37,30 +35,29 @@ public:
     }
 
     /**
-     * Registers a base protocol, which sits at the head of every pipeline and is not a vertex.
+     * Registers a base protocol. Throws std::invalid_argument if it is not a base one.
      *
-     * @param base_protocol The protocol. Throws std::invalid_argument if it is not a base one.
+     * @see ViaVersion ProtocolManagerImpl#registerBaseProtocol.
      */
     void registerBaseProtocol(std::unique_ptr<AbstractProtocol> base_protocol);
 
     /**
-     * ViaVersion's registerProtocols(): the one place the version chain is listed, in
-     * ascending order.
+     * The one place the version chain is listed, in ascending order.
+     *
+     * @see ViaVersion ProtocolManagerImpl#registerProtocols.
      */
     void registerProtocols();
 
     /**
-     * Looks up the node for a protocol version.
-     *
      * @param version The protocol version.
-     * @return The node, or nullptr if that version is not registered.
+     * @return The node for a version, or nullptr if not registered.
+     * @see ViaVersion ProtocolManager#getProtocol.
      */
     [[nodiscard]] const AbstractProtocol *getProtocol(int version) const;
 
     /**
-     * Gets the registered base protocols, in registration order.
-     *
-     * @return The base protocols.
+     * @return The registered base protocols, in registration order.
+     * @see ViaVersion ProtocolManager#getBaseProtocol / #getBaseProtocols.
      */
     [[nodiscard]] const std::vector<const AbstractProtocol *> &getBaseProtocols() const
     {
@@ -68,21 +65,20 @@ public:
     }
 
     /**
-     * Finds the shortest path from a client version to a server version.
-     *
-     * Breadth-first over the node graph. The result is in serverbound order and is cached
-     * until the next registerProtocol(), including the "no path" answer.
+     * Finds the shortest path from a client version to a server version, breadth-first. The
+     * result is in serverbound order and cached until the next registerProtocol(), "no path"
+     * included.
      *
      * @param client_protocol_version The version the stream starts in.
      * @param server_protocol_version The version the stream must end in.
-     * @return The path, empty if the two versions are equal, or std::nullopt if unreachable.
+     * @return The path, empty if the versions are equal, or std::nullopt if unreachable.
+     * @see ViaVersion ProtocolManagerImpl#getProtocolPath.
      */
     [[nodiscard]] std::optional<ProtocolPath> getProtocolPath(int client_protocol_version, int server_protocol_version);
 
     /**
-     * Gets the client versions this server can serve.
-     *
-     * @return The supported versions, ascending.
+     * @return The client versions this server can serve, ascending.
+     * @see ViaVersion ProtocolManager#getSupportedVersions.
      */
     [[nodiscard]] const std::set<int> &getSupportedVersions() const
     {
@@ -92,14 +88,13 @@ public:
     /**
      * Recomputes the supported version set for a server version.
      *
-     * @param server_protocol_version The version the server itself speaks.
+     * @see ViaVersion ProtocolManagerImpl#refreshVersions.
      */
     void refreshVersions(int server_protocol_version);
 
     /**
-     * Gets the fail-safe cap on how many hops a path may contain.
-     *
-     * @return The maximum path length.
+     * @return The fail-safe cap on how many hops a path may contain.
+     * @see ViaVersion ProtocolManager#getMaxProtocolPathSize.
      */
     [[nodiscard]] int getMaxProtocolPathSize() const
     {
@@ -107,34 +102,31 @@ public:
     }
 
 private:
-    /**
-     * One direction of an edge: where it leads, and which table serves it.
-     */
+    /** One direction of an edge: where it leads, and which table serves it. */
     struct Edge {
         int to = 0;
         const AbstractProtocol *protocol = nullptr;
         Step step = Step::Upgrade;
     };
 
-    /**
-     * A vertex: the node's protocol and the edges leaving it.
-     */
+    /** A vertex: the node's protocol and the edges leaving it. */
     struct Node {
         const AbstractProtocol *protocol = nullptr;
         std::vector<Edge> edges;
     };
 
     void registerProtocol(std::unique_ptr<AbstractProtocol> protocol);
+    /** @see ViaVersion ProtocolManagerImpl#calculateProtocolPath. */
     [[nodiscard]] std::optional<ProtocolPath> calculateProtocolPath(int from, int to) const;
 
+    // ViaVersion owns nodes via its `protocols` map. endweave owns them by unique_ptr.
     std::vector<std::unique_ptr<AbstractProtocol>> owned_;
     std::vector<std::unique_ptr<AbstractProtocol>> owned_base_;
-    // Sorted, so the previously registered node is the last entry.
-    std::map<int, Node> nodes_;
-    std::vector<const AbstractProtocol *> base_protocols_;
-    std::unordered_map<ProtocolPathKey, std::optional<ProtocolPath>, ProtocolPathKeyHash> path_cache_;
-    std::set<int> supported_versions_;
-    int max_protocol_path_size_ = 50;
+    std::map<int, Node> nodes_;                            // ViaVersion: registryMap
+    std::vector<const AbstractProtocol *> base_protocols_; // ViaVersion: serverbound/clientboundBaseProtocols
+    std::unordered_map<ProtocolPathKey, std::optional<ProtocolPath>, ProtocolPathKeyHash> path_cache_; // ViaVersion: pathCache
+    std::set<int> supported_versions_; // ViaVersion: supportedVersions
+    int max_protocol_path_size_ = 50;  // ViaVersion: maxProtocolPathSize
 };
 
 } // namespace endweave

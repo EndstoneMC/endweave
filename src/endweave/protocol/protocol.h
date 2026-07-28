@@ -21,13 +21,13 @@ class ProtocolManager;
 class UserConnection;
 
 /**
- * Shared protocol machinery, mirroring ViaVersion's AbstractProtocol: two packet-id-keyed
- * handler tables plus the transform that runs one packet body through them.
+ * Two packet-id-keyed handler tables plus the transform that runs a packet body through them.
  *
- * A base protocol addresses the two tables as a transport Direction, a version node as a
- * version Step; a protocol only ever uses one of the two vocabularies.
+ * A base protocol addresses the tables as a transport Direction, a version node as a Step.
  *
  * @note Runs on the server thread. Nothing here is synchronised.
+ *
+ * @see ViaVersion Protocol (api) and AbstractProtocol (common), collapsed into one class.
  */
 class AbstractProtocol {
 public:
@@ -38,15 +38,15 @@ public:
 
     /**
      * Runs registerPackets() exactly once. Throws std::logic_error if called again.
+     *
+     * @see ViaVersion AbstractProtocol#initialize.
      */
     void initialize();
 
     /**
-     * Sets up per-connection state for this protocol.
+     * Sets up per-connection state. May be called more than once for one connection.
      *
-     * @note May be called more than once for a single UserConnection.
-     *
-     * @param connection The connection being initialised.
+     * @see ViaVersion Protocol#init.
      */
     virtual void init(UserConnection &connection)
     {
@@ -54,9 +54,8 @@ public:
     }
 
     /**
-     * Gets the protocol version this node speaks.
-     *
-     * @return The protocol version, or std::nullopt for a base protocol.
+     * @return The version this node speaks, or std::nullopt for a base protocol.
+     * @see ViaVersion AbstractProtocol#getClientVersion (the higher end of the edge).
      */
     [[nodiscard]] std::optional<int> getVersion() const
     {
@@ -64,11 +63,8 @@ public:
     }
 
     /**
-     * Gets the version this node steps down to.
-     *
-     * @note Set by ProtocolManager::registerProtocol from the previously registered node.
-     *
      * @return The predecessor's version, or std::nullopt for the chain root and base protocols.
+     * @see ViaVersion AbstractProtocol#getServerVersion (the lower end of the edge).
      */
     [[nodiscard]] std::optional<int> getPreviousVersion() const
     {
@@ -76,9 +72,8 @@ public:
     }
 
     /**
-     * Returns whether this protocol is a base protocol.
-     *
-     * @return true if it stays at the head of every pipeline and does no version translation.
+     * @return true if this protocol stays at the head of every pipeline and does no translation.
+     * @see ViaVersion Protocol#isBaseProtocol.
      */
     [[nodiscard]] virtual bool isBaseProtocol() const
     {
@@ -86,9 +81,8 @@ public:
     }
 
     /**
-     * Gets the display name of this protocol.
-     *
      * @return The version number for a node ("1001"), or "base".
+     * @see ViaVersion AbstractProtocol#toString (C++ has no getClass().getSimpleName()).
      */
     [[nodiscard]] const std::string &getName() const
     {
@@ -98,23 +92,24 @@ public:
     /**
      * Checks whether a packet id has a handler in the given table.
      *
-     * @param slot The table to look in, from slotOf(Direction) or slotOf(Step).
+     * @param slot The table, from slotOf(Direction) or slotOf(Step).
      * @param packet_id The packet id.
      * @return true if a handler is registered.
+     * @see ViaVersion Protocol#hasRegisteredClientbound / #hasRegisteredServerbound.
      */
     [[nodiscard]] bool hasMapping(std::size_t slot, int packet_id) const;
 
     /**
-     * Runs a packet body through this protocol's handler for the given id.
+     * Runs a packet body through the handler for the given id. The caller checks hasMapping()
+     * first, so an unmapped id must not reach here.
      *
-     * @note An unmapped id must not reach here; the caller checks hasMapping() first.
-     *
-     * @param slot The table to use, from slotOf(Direction) or slotOf(Step).
+     * @param slot The table, from slotOf(Direction) or slotOf(Step).
      * @param packet_id The packet id.
      * @param connection The connection the packet belongs to.
      * @param in The source-version body.
      * @param out Receives the target-version body.
      * @return Whether the packet was translated or cancelled, or the codec's error.
+     * @see ViaVersion AbstractProtocol#transform.
      */
     [[nodiscard]] std::expected<PacketAction, std::error_code> transform(std::size_t slot, int packet_id,
                                                                          UserConnection &connection,
@@ -122,53 +117,48 @@ public:
                                                                          bedrock::protocol::BinaryWriter &out) const;
 
 protected:
-    /**
-     * Constructs a base protocol, which has no version pair.
-     *
-     * @param name The display name.
-     */
+    /** Constructs a base protocol. */
     explicit AbstractProtocol(std::string name);
 
-    /**
-     * Constructs a version node, named for its version.
-     *
-     * @param version The protocol version this node speaks.
-     */
+    /** Constructs a version node, named for its version. */
     explicit AbstractProtocol(ProtocolVersion version);
 
     /**
      * Registers the packet handlers for this protocol. To be overridden.
+     *
+     * @see ViaVersion AbstractProtocol#registerPackets.
      */
     virtual void registerPackets() {}
 
-    // --- version-step axis: a Protocol<V> node ---
+    // Version-step axis: a Protocol<V> node. Keyed by Upgrade/Downgrade because the same edge is
+    // walked in both transport directions across connections.
 
-    /** Registers a handler translating this node's predecessor form into its own. */
+    /** @see ViaVersion AbstractProtocol#registerServerbound. */
     void registerUpgrade(MinecraftPacketIds packet_id, PacketHandler handler);
-    /** Registers a handler translating this node's form into its predecessor's. */
+    /** @see ViaBackwards BackwardsProtocol#registerClientbound. */
     void registerDowngrade(MinecraftPacketIds packet_id, PacketHandler handler);
-    /** Drops a packet that has no form at this node's version. */
+    /** @see ViaVersion AbstractProtocol#cancelServerbound. */
     void cancelUpgrade(MinecraftPacketIds packet_id);
-    /** Drops a packet that has no form at the predecessor's version. */
+    /** @see ViaBackwards BackwardsProtocol#cancelClientbound. */
     void cancelDowngrade(MinecraftPacketIds packet_id);
-    /** Adds to whatever upgrade handler is registered, or registers if none is. */
+    /** @see ViaVersion AbstractProtocol#appendServerbound. */
     void appendUpgrade(MinecraftPacketIds packet_id, PacketHandler handler);
-    /** Adds to whatever downgrade handler is registered, or registers if none is. */
+    /** @see ViaVersion AbstractProtocol#appendClientbound. */
     void appendDowngrade(MinecraftPacketIds packet_id, PacketHandler handler);
-    /** Replaces a registered upgrade handler. Throws if there is none. */
+    /** @see ViaVersion AbstractProtocol#replaceServerbound. */
     void replaceUpgrade(MinecraftPacketIds packet_id, PacketHandler handler);
-    /** Replaces a registered downgrade handler. Throws if there is none. */
+    /** @see ViaVersion AbstractProtocol#replaceClientbound. */
     void replaceDowngrade(MinecraftPacketIds packet_id, PacketHandler handler);
 
-    // --- transport axis: a base protocol ---
+    // Transport axis: a base protocol.
 
-    /** Registers a handler for a packet travelling server to client. */
+    /** @see ViaVersion AbstractProtocol#registerClientbound. */
     void registerClientbound(MinecraftPacketIds packet_id, PacketHandler handler);
-    /** Registers a handler for a packet travelling client to server. */
+    /** @see ViaVersion AbstractProtocol#registerServerbound. */
     void registerServerbound(MinecraftPacketIds packet_id, PacketHandler handler);
-    /** Drops a packet travelling server to client. */
+    /** @see ViaVersion AbstractProtocol#cancelClientbound. */
     void cancelClientbound(MinecraftPacketIds packet_id);
-    /** Drops a packet travelling client to server. */
+    /** @see ViaVersion AbstractProtocol#cancelServerbound. */
     void cancelServerbound(MinecraftPacketIds packet_id);
 
 private:
@@ -180,21 +170,20 @@ private:
     void appendAt(std::size_t slot, MinecraftPacketIds packet_id, PacketHandler handler);
     void replaceAt(std::size_t slot, MinecraftPacketIds packet_id, PacketHandler handler);
 
-    // ViaVersion's PacketArrayMappings: indexed by packet id, so a hot-path lookup is one
-    // bounds check and one index rather than a hash.
-    std::array<std::vector<PacketHandler>, 2> mappings_;
-    std::string name_;
-    std::optional<int> version_;
-    std::optional<int> previous_;
-    bool initialized_ = false;
+    std::array<std::vector<PacketHandler>, 2> mappings_; // ViaVersion: clientboundMappings + serverboundMappings
+    std::string name_;              // ViaVersion: getClass().getSimpleName()
+    std::optional<int> version_;    // ViaVersion: clientVersion
+    std::optional<int> previous_;   // ViaVersion: serverVersion
+    bool initialized_ = false;      // ViaVersion: initialized
 };
 
 /**
- * A node in the version graph. Owns both directions of the wire diff between V and the node
- * registered before it, so a version step is described once, by the newer of its two ends.
+ * A node in the version graph, owning both directions of the wire diff between V and the node
+ * registered before it. Declared and never defined, so registering a version with no
+ * protocols/vN/ directory is a compile error.
  *
- * @note Declared and never defined, so registering a version with no protocols/vN/ directory
- * is a compile error rather than a silently handler-less vertex.
+ * @see A ViaVersion forward protocol (e.g. Protocol1_20To1_20_2) fused with its ViaBackwards
+ * backward protocol (Protocol1_20_2To1_20).
  */
 template <ProtocolVersion V>
 class Protocol;

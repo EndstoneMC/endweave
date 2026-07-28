@@ -12,10 +12,8 @@
 namespace endweave {
 
 /**
- * Builds the key a connection is tracked under.
- *
- * The player object does not exist until well after the version handshake, so the peer address
- * is the only thing available to correlate on.
+ * Builds the key a connection is tracked under. The player object does not exist until after the
+ * handshake, so the peer address is the only thing to correlate on.
  *
  * @param address The peer address.
  * @return The key.
@@ -25,8 +23,9 @@ std::string addressKey(const endstone::SocketAddress &address);
 /**
  * Threads every packet through its connection's pipeline.
  *
- * @note Every handler runs on the server thread, in the tick, for every packet in both
- * directions.
+ * @note Runs on the server thread, in the tick, for every packet in both directions.
+ * @note endweave-specific platform binding, the Endstone-event analogue of ViaVersion's netty
+ * decode/encode handlers.
  */
 class PacketListener {
 public:
@@ -59,8 +58,7 @@ public:
     void onPlayerQuit(endstone::PlayerQuitEvent &event);
 
 private:
-    // PacketReceiveEvent and PacketSendEvent carry the same accessors but share no base that
-    // declares them, so one template serves both.
+    // One template serves PacketReceiveEvent and PacketSendEvent, which share no base.
     template <class Event>
     void translate(Direction direction, Event &event);
 

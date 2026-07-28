@@ -3,7 +3,6 @@
 #include "endweave/connection/connection.h"
 
 #include <chrono>
-#include <cstddef>
 #include <endstone/logger.h>
 #include <string>
 #include <unordered_map>
@@ -13,18 +12,17 @@ namespace endweave {
 class ProtocolManager;
 
 /**
- * The live connections, mirroring ViaVersion's ConnectionManager.
- *
- * Keyed by peer address rather than player, because the version handshake happens well before a
+ * The live connections, keyed by peer address because the version handshake happens before a
  * player object exists.
  *
  * @note Runs on the server thread. Nothing here is synchronised.
+ *
+ * @see ViaVersion ConnectionManager (api) and ConnectionManagerImpl (common). ViaVersion keys
+ * UUID maps once login succeeds. endweave owns each connection from its first packet, by address.
  */
 class ConnectionManager {
 public:
     /**
-     * Constructs the manager.
-     *
      * @param protocol_manager The registry, which must outlive every connection.
      * @param logger The server logger.
      * @param server_protocol_version The version the server itself speaks.
@@ -34,51 +32,33 @@ public:
     /**
      * Gets the connection for an address, creating it if this is the first packet.
      *
-     * @param address The peer address.
-     * @return The connection. The reference stays valid until the connection is removed.
+     * @note endweave-specific: ViaVersion registers connections in onLoginSuccess, not lazily.
      */
     UserConnection &getOrCreate(const std::string &address);
 
     /**
-     * Looks up an existing connection.
-     *
-     * @param address The peer address.
-     * @return The connection, or nullptr if there is none.
+     * @return The connection for an address, or nullptr if there is none.
+     * @see ViaVersion ConnectionManager#getServerConnection(UUID).
      */
     [[nodiscard]] UserConnection *get(const std::string &address);
 
-    /**
-     * Drops a connection that has gone away.
-     *
-     * @param address The peer address.
-     */
+    /** @see ViaVersion ConnectionManager#onDisconnect(UserConnection). */
     void onDisconnect(const std::string &address);
 
     /**
      * Drops connections that have carried no packet for a while.
      *
-     * A connection that fails before login never produces a quit event, so the table would
-     * otherwise grow without bound.
-     *
      * @param idle_timeout How long a connection may stay silent before it is dropped.
+     * @note endweave-specific: ViaVersion evicts on the netty channel-close future.
      */
     void sweep(std::chrono::seconds idle_timeout);
 
-    /**
-     * Gets how many connections are being tracked.
-     *
-     * @return The connection count.
-     */
-    [[nodiscard]] std::size_t size() const
-    {
-        return connections_.size();
-    }
-
 private:
-    ProtocolManager *protocol_manager_;
-    endstone::Logger *logger_;
-    int server_protocol_version_;
-    // Node-based, so a reference handed to a handler survives later insertions.
+    ProtocolManager *protocol_manager_; // endweave-specific
+    endstone::Logger *logger_;          // endweave-specific
+    int server_protocol_version_;       // endweave-specific
+    // ViaVersion: serverConnections + clientConnections (by UUID). endweave keeps one
+    // address-keyed, node-based map, so references handed to handlers survive later insertions.
     std::unordered_map<std::string, UserConnection> connections_;
 };
 

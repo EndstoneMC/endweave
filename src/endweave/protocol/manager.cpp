@@ -31,7 +31,7 @@ void ProtocolManager::registerProtocol(std::unique_ptr<AbstractProtocol> protoco
         throw std::invalid_argument("protocol " + protocol->getName() + " is not a version node");
     }
 
-    const int version = *protocol->getVersion();
+    const int version = protocol->getVersion().value();
     if (nodes_.contains(version)) {
         throw std::invalid_argument("protocol " + std::to_string(version) + " is already registered");
     }
@@ -39,8 +39,6 @@ void ProtocolManager::registerProtocol(std::unique_ptr<AbstractProtocol> protoco
     protocol->initialize();
 
     if (!nodes_.empty()) {
-        // A node's predecessor is whichever node was registered before it, so the registration
-        // order in registerProtocols() is the graph.
         const int previous = nodes_.rbegin()->first;
         if (version <= previous) {
             throw std::invalid_argument("protocols must be registered in ascending version order: " +
@@ -53,7 +51,7 @@ void ProtocolManager::registerProtocol(std::unique_ptr<AbstractProtocol> protoco
 
     nodes_[version].protocol = protocol.get();
     owned_.push_back(std::move(protocol));
-    path_cache_.clear(); // a new edge may make a previously unreachable pair reachable
+    path_cache_.clear();
 }
 
 void ProtocolManager::registerBaseProtocol(std::unique_ptr<AbstractProtocol> base_protocol)
@@ -91,7 +89,7 @@ std::optional<ProtocolPath> ProtocolManager::getProtocolPath(int client_protocol
     }
 
     auto path = calculateProtocolPath(client_protocol_version, server_protocol_version);
-    path_cache_.emplace(key, path); // caches "unreachable" too
+    path_cache_.emplace(key, path);
     return path;
 }
 
@@ -101,7 +99,6 @@ std::optional<ProtocolPath> ProtocolManager::calculateProtocolPath(int from, int
         return std::nullopt;
     }
 
-    // Nodes are stable for the lifetime of the search, so the parent chain can point into it.
     std::deque<PathNode> nodes;
     std::unordered_set<int> visited{from};
     std::deque<const PathNode *> queue;
@@ -112,11 +109,10 @@ std::optional<ProtocolPath> ProtocolManager::calculateProtocolPath(int from, int
         const PathNode *current = queue.front();
         queue.pop_front();
         if (current->depth > max_protocol_path_size_) {
-            continue; // fail-safe: this branch is too deep, but shorter ones keep searching
+            continue; // fail-safe: too deep
         }
 
         for (const Edge &edge : nodes_.at(current->version).edges) {
-            // A direct edge to the target always wins, so check it before anything else.
             if (edge.to == to) {
                 found = &nodes.emplace_back(PathNode{current, edge.to, edge.protocol, edge.step, current->depth + 1});
                 break;
@@ -151,7 +147,7 @@ void ProtocolManager::refreshVersions(int server_protocol_version)
             continue;
         }
         supported_versions_.insert(version);
-        for (const ProtocolPathEntry &entry : *path) {
+        for (const ProtocolPathEntry &entry : path.value()) {
             supported_versions_.insert(entry.output_protocol_version);
         }
     }

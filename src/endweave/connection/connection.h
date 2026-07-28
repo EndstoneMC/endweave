@@ -15,13 +15,14 @@ namespace endweave {
 class ProtocolManager;
 
 /**
- * A connection's version pair and its pipeline, mirroring ViaVersion's ProtocolInfo.
+ * A connection's version pair and its pipeline.
+ *
+ * @see ViaVersion ProtocolInfo (api) and ProtocolInfoImpl (common). State, username, uuid, and
+ * compression are not tracked. endweave keys on the address and lets BDS own compression.
  */
 class ProtocolInfo {
 public:
     /**
-     * Constructs the info for a connection whose client version is not yet known.
-     *
      * @param pipeline The connection's pipeline, seeded with the base protocols.
      * @param server_protocol_version The version the server itself speaks.
      */
@@ -31,79 +32,58 @@ public:
     }
 
     /**
-     * Gets the protocol version the client speaks.
-     *
      * @return The client's version, or 0 before the handshake has been seen.
+     * @see ViaVersion ProtocolInfo#protocolVersion.
      */
     [[nodiscard]] int getProtocolVersion() const
     {
         return protocol_version_;
     }
 
-    /**
-     * Records the protocol version the client speaks.
-     *
-     * @param version The client's version.
-     */
+    /** @see ViaVersion ProtocolInfo#setProtocolVersion. */
     void setProtocolVersion(int version)
     {
         protocol_version_ = version;
     }
 
     /**
-     * Gets the protocol version the server speaks.
-     *
-     * @return The server's version.
+     * @return The version the server speaks.
+     * @see ViaVersion ProtocolInfo#serverProtocolVersion.
      */
     [[nodiscard]] int getServerProtocolVersion() const
     {
         return server_protocol_version_;
     }
 
-    /**
-     * Returns whether the client's version has been seen yet.
-     *
-     * @return true once the handshake has been handled.
-     */
-    [[nodiscard]] bool isKnown() const
-    {
-        return protocol_version_ != 0;
-    }
-
-    /**
-     * Gets the connection's pipeline.
-     *
-     * @return The pipeline.
-     */
+    /** @see ViaVersion ProtocolInfo#getPipeline. */
     [[nodiscard]] ProtocolPipeline &getPipeline()
     {
         return pipeline_;
     }
 
 private:
-    ProtocolPipeline pipeline_;
-    int protocol_version_ = 0;
-    int server_protocol_version_ = 0;
+    ProtocolPipeline pipeline_;       // ViaVersion: pipeline
+    int protocol_version_ = 0;        // ViaVersion: protocolVersion
+    int server_protocol_version_ = 0; // ViaVersion: serverProtocolVersion
 };
 
 /**
- * Per-connection translation state, mirroring ViaVersion's UserConnection.
- *
- * Carries the version pair and pipeline, a type-keyed store for stateful handlers, and the
- * registry itself -- ViaVersion reaches that through the Via global, endweave through the
- * connection a handler is already holding.
+ * Per-connection translation state: the version pair, the pipeline, and a type-keyed store for
+ * stateful handlers.
  *
  * @note Runs on the server thread. Nothing here is synchronised.
+ *
+ * @see ViaVersion UserConnection (api) and UserConnectionImpl (common). The netty channel,
+ * packet tracker, entity trackers, and item hashers are dropped. The StorableObject map stays.
  */
 class UserConnection {
 public:
     /**
-     * Constructs a connection with a base-only pipeline.
-     *
      * @param protocol_manager The registry, which must outlive this connection.
      * @param logger The server logger.
      * @param address The peer address, which is what connections are keyed by.
      * @param server_protocol_version The version the server itself speaks.
+     * @see ViaVersion UserConnectionImpl(Channel, boolean).
      */
     UserConnection(ProtocolManager &protocol_manager, endstone::Logger &logger, std::string address,
                    int server_protocol_version);
@@ -112,9 +92,8 @@ public:
     UserConnection &operator=(const UserConnection &) = delete;
 
     /**
-     * Gets the protocol registry, for a handler that has to resolve a path.
-     *
-     * @return The registry.
+     * @return The protocol registry.
+     * @note endweave-specific: ViaVersion uses the Via.getManager() global.
      */
     [[nodiscard]] ProtocolManager &getProtocolManager() const
     {
@@ -122,9 +101,8 @@ public:
     }
 
     /**
-     * Gets the server logger.
-     *
-     * @return The logger.
+     * @return The server logger.
+     * @note endweave-specific: ViaVersion uses the Via.getPlatform().getLogger() global.
      */
     [[nodiscard]] endstone::Logger &getLogger() const
     {
@@ -132,30 +110,21 @@ public:
     }
 
     /**
-     * Gets the peer address this connection is keyed by.
-     *
-     * @return The address.
+     * @return The peer address this connection is keyed by.
+     * @note endweave-specific: ViaVersion keys by UUID once login completes.
      */
     [[nodiscard]] const std::string &getAddress() const
     {
         return address_;
     }
 
-    /**
-     * Gets the connection's version pair and pipeline.
-     *
-     * @return The protocol info.
-     */
+    /** @see ViaVersion UserConnection#getProtocolInfo. */
     [[nodiscard]] ProtocolInfo &getProtocolInfo()
     {
         return protocol_info_;
     }
 
-    /**
-     * Looks up a stored object by type, ViaVersion's StorableObject map.
-     *
-     * @return A pointer to the stored object, or nullptr if none is stored.
-     */
+    /** @see ViaVersion UserConnection#get(Class). */
     template <class T>
     [[nodiscard]] T *get()
     {
@@ -163,31 +132,21 @@ public:
         return it == storage_.end() ? nullptr : std::any_cast<T>(&it->second);
     }
 
-    /**
-     * Stores an object by type, replacing any previous one.
-     *
-     * @param value The object to store.
-     */
+    /** @see ViaVersion UserConnection#put(StorableObject). */
     template <class T>
     void put(T value)
     {
         storage_[std::type_index(typeid(T))] = std::move(value);
     }
 
-    /**
-     * Returns whether an object of the given type is stored.
-     *
-     * @return true if one is stored.
-     */
+    /** @see ViaVersion UserConnection#has(Class). */
     template <class T>
     [[nodiscard]] bool has() const
     {
         return storage_.contains(std::type_index(typeid(T)));
     }
 
-    /**
-     * Removes the stored object of the given type, if any.
-     */
+    /** @see ViaVersion UserConnection#remove(Class). */
     template <class T>
     void remove()
     {
@@ -196,17 +155,15 @@ public:
 
     /**
      * Marks the connection as active, for the idle sweep.
+     *
+     * @note endweave-specific: ViaVersion cleans up on the netty channel-close future.
      */
     void touch()
     {
         last_seen_ = std::chrono::steady_clock::now();
     }
 
-    /**
-     * Gets when the connection last carried a packet.
-     *
-     * @return The last-seen timestamp.
-     */
+    /** @return When the connection last carried a packet. */
     [[nodiscard]] std::chrono::steady_clock::time_point getLastSeen() const
     {
         return last_seen_;
@@ -215,21 +172,20 @@ public:
     /**
      * Reports a translation failure at most once per packet id.
      *
-     * A malformed packet usually repeats, and one line per occurrence would drown the log.
-     *
      * @param packet_id The packet id that failed.
      * @param error What the codec said.
+     * @see ViaVersion AbstractProtocol#printRemapError (endweave de-duplicates per packet id).
      */
     void reportTranslationError(int packet_id, const std::error_code &error);
 
 private:
-    ProtocolManager *protocol_manager_;
-    endstone::Logger *logger_;
-    std::string address_;
-    ProtocolInfo protocol_info_;
-    std::unordered_map<std::type_index, std::any> storage_;
-    std::unordered_map<int, std::error_code> reported_errors_;
-    std::chrono::steady_clock::time_point last_seen_;
+    ProtocolManager *protocol_manager_; // endweave-specific
+    endstone::Logger *logger_;          // endweave-specific
+    std::string address_;               // endweave-specific key
+    ProtocolInfo protocol_info_;        // ViaVersion: protocolInfo
+    std::unordered_map<std::type_index, std::any> storage_; // ViaVersion: storedObjects
+    std::unordered_map<int, std::error_code> reported_errors_; // endweave-specific: reportTranslationError de-dup
+    std::chrono::steady_clock::time_point last_seen_;       // endweave-specific: idle sweep
 };
 
 } // namespace endweave

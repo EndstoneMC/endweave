@@ -15,10 +15,7 @@ namespace {
 
 namespace bp = bedrock::protocol;
 
-/**
- * Records the client's version from the handshake and builds the pipeline from it -- the
- * Bedrock analogue of ViaVersion building it inside its own handshake handler.
- */
+/** Records the client's version from the handshake and builds the pipeline. */
 std::expected<PacketAction, std::error_code> detectClientVersion(UserConnection &connection, bp::BinaryReader &in,
                                                                  bp::BinaryWriter &out)
 {
@@ -28,21 +25,21 @@ std::expected<PacketAction, std::error_code> detectClientVersion(UserConnection 
     }
 
     ProtocolInfo &info = connection.getProtocolInfo();
-    info.setProtocolVersion(*client_version);
+    info.setProtocolVersion(client_version.value());
     const int server_version = info.getServerProtocolVersion();
 
-    if (*client_version != server_version) {
-        auto path = connection.getProtocolManager().getProtocolPath(*client_version, server_version);
+    if (client_version.value() != server_version) {
+        auto path = connection.getProtocolManager().getProtocolPath(client_version.value(), server_version);
         if (!path) {
-            // Leave the client's own version on the wire so BDS rejects the login itself.
-            connection.getLogger().warning("No protocol path from client {} to server {} for {}", *client_version,
+            // Leave the client's version on the wire so BDS rejects the login.
+            connection.getLogger().warning("No protocol path from client {} to server {} for {}", client_version.value(),
                                            server_version, connection.getAddress());
-            out.write<std::int32_t, std::endian::big>(*client_version);
+            out.write<std::int32_t, std::endian::big>(client_version.value());
             return PacketHandlers::passthrough()(connection, in, out);
         }
-        info.getPipeline().add(*path);
+        info.getPipeline().add(path.value());
         connection.getLogger().info("Translating {} for client {} (server {})", connection.getAddress(),
-                                    *client_version, server_version);
+                                    client_version.value(), server_version);
     }
 
     out.write<std::int32_t, std::endian::big>(server_version);
@@ -61,10 +58,9 @@ std::expected<PacketAction, std::error_code> rewriteLoginVersion(UserConnection 
     }
 
     ProtocolInfo &info = connection.getProtocolInfo();
-    // Without a pipeline there is nothing to translate, so let the mismatch stand and BDS
-    // reject the login rather than accepting a client we cannot serve.
+    // No pipeline means nothing to translate, so let BDS reject the mismatch.
     const bool translating = info.getPipeline().hasNonBaseProtocols();
-    out.write<std::int32_t, std::endian::big>(translating ? info.getServerProtocolVersion() : *client_version);
+    out.write<std::int32_t, std::endian::big>(translating ? info.getServerProtocolVersion() : client_version.value());
     return PacketHandlers::passthrough()(connection, in, out);
 }
 
@@ -84,7 +80,8 @@ std::expected<PacketAction, std::error_code> logPacketViolation(UserConnection &
     const auto context = reader.read<std::string>();
     if (type && severity && packet_id && context) {
         connection.getLogger().warning("Packet violation from {}: type={} severity={} packet={} context={}",
-                                       connection.getAddress(), *type, *severity, *packet_id, *context);
+                                       connection.getAddress(), type.value(), severity.value(), packet_id.value(),
+                                       context.value());
     }
     else {
         connection.getLogger().warning("Packet violation from {} (undecodable)", connection.getAddress());
