@@ -172,10 +172,10 @@ public:
      * Reports a translation failure at most once per packet id.
      *
      * @param packet_id The packet id that failed.
-     * @param error What the codec said.
+     * @param error Why the packet did not make it through.
      * @see ViaVersion AbstractProtocol#printRemapError (endweave de-duplicates per packet id).
      */
-    void reportTranslationError(int packet_id, const std::error_code &error);
+    void reportTranslationError(int packet_id, PacketError error);
 
 private:
     ProtocolManager *protocol_manager_; // endweave-specific
@@ -183,7 +183,7 @@ private:
     endstone::SocketAddress address_;   // endweave-specific key
     ProtocolInfo protocol_info_;        // ViaVersion: protocolInfo
     std::unordered_map<std::type_index, std::any> storage_; // ViaVersion: storedObjects
-    std::unordered_map<int, std::error_code> reported_errors_; // endweave-specific: reportTranslationError de-dup
+    std::unordered_map<int, PacketError> reported_errors_; // endweave-specific: reportTranslationError de-dup
     std::chrono::steady_clock::time_point last_seen_;       // endweave-specific: idle sweep
 };
 

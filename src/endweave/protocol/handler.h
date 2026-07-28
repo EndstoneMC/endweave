@@ -1,9 +1,10 @@
 #pragma once
 
-#include <bedrock/stream.hpp>
+#include "endweave/protocol/error.h"
+#include "endweave/protocol/packet.h"
+
 #include <expected>
 #include <functional>
-#include <system_error>
 #include <utility>
 
 namespace endweave {
@@ -11,77 +12,88 @@ namespace endweave {
 class UserConnection;
 
 /**
- * What a handler did with its packet.
+ * A packet handler, over the packet in flight rather than a PacketWrapper. Cancelling is
+ * PacketError::Cancelled, and a handler that cannot do its job returns its own error.
  *
- * @see ViaVersion PacketWrapper#cancel / CancelException, folded into a return value.
+ * @see ViaVersion PacketHandler, which is void and reports both through exceptions.
  */
-enum class PacketAction {
-    Translated,
-    Cancelled
-};
+using PacketHandler = std::function<std::expected<void, PacketError>(UserConnection &, PacketHolder &)>;
 
 /**
- * A packet handler, over the codec rather than a PacketWrapper.
+ * One packet's converter between the two versions a step joins. It returns the next era's
+ * packet, PacketError::Cancelled to drop it, or the reason it could not convert.
  *
- * @see ViaVersion PacketHandler.
+ * @note endweave-specific: ViaVersion converts field by field over a PacketWrapper (map(Type),
+ * read, create, ValueTransformer). A generated struct per era makes a converter a plain function
+ * from one era's struct to the next one's.
+ * @see ViaVersion PacketHandler#handle, whose CancelException and InformativeException are the
+ * two things this error channel carries.
  */
-using PacketHandler = std::function<std::expected<PacketAction, std::error_code>(
-    UserConnection &, bedrock::protocol::BinaryReader &, bedrock::protocol::BinaryWriter &)>;
+template <class In, class Out>
+using PacketConverter = std::expected<Out, PacketError> (*)(UserConnection &, const In &);
+
+/**
+ * Wraps a converter as a table entry: it decodes In, converts, and leaves Out behind for the
+ * stages after it.
+ *
+ * @note endweave-specific: the bridge from a typed converter to the type-erased handler table,
+ * which ViaVersion does not need because every one of its handlers takes a PacketWrapper.
+ */
+template <class In, class Out>
+PacketHandler makePacketHandler(PacketConverter<In, Out> converter)
+{
+    static_assert(In::Id == Out::Id, "a converter maps one packet id onto itself");
+    return [converter](UserConnection &connection, PacketHolder &packet) -> std::expected<void, PacketError> {
+        auto in = packet.get<In>();
+        if (!in) {
+            return std::unexpected(in.error());
+        }
+        auto out = converter(connection, *in.value());
+        if (!out) {
+            return std::unexpected(out.error());
+        }
+        packet.set(std::move(out.value()));
+        return {};
+    };
+}
 
 /**
  * ViaVersion's PacketHandlers DSL, minus the value model.
  *
- * @note The field converters (ViaVersion's map(Type), create, read, ValueTransformer ...) are
- * the translation bit and are deliberately absent. They will be rebuilt on the bedrock-protocol
- * codec, not ViaVersion's PacketWrapper. Until then a node registers nothing and packets pass
- * through untouched.
+ * @note The field converters (ViaVersion's map(Type), create, read, ValueTransformer ...) have
+ * no counterpart: a converter is a whole-packet function, and a packet no stage rewrites is
+ * forwarded as it arrived, which is what passthrough() amounted to.
  *
  * @see ViaVersion PacketHandlers.
  */
 namespace PacketHandlers {
 
 /**
- * Drops the packet.
+ * Drops the packet, without decoding it.
  *
  * @see ViaVersion PacketWrapper#cancel.
  */
 inline PacketHandler cancel()
 {
-    return [](UserConnection &, bedrock::protocol::BinaryReader &,
-              bedrock::protocol::BinaryWriter &) -> std::expected<PacketAction, std::error_code> {
-        return PacketAction::Cancelled;
+    return [](UserConnection &, PacketHolder &) -> std::expected<void, PacketError> {
+        return std::unexpected(PacketError::Cancelled);
     };
 }
 
 /**
- * Copies every still-unread input byte across.
- *
- * @see ViaVersion PacketWrapper#passthrough.
- */
-inline PacketHandler passthrough()
-{
-    return [](UserConnection &, bedrock::protocol::BinaryReader &in,
-              bedrock::protocol::BinaryWriter &out) -> std::expected<PacketAction, std::error_code> {
-        out.writeRawBytes(in.getView().substr(in.getReadPointer()));
-        return PacketAction::Translated;
-    };
-}
-
-/**
- * Chains two handlers over the same reader and writer.
+ * Chains two handlers over the same packet.
  *
  * @see ViaVersion PacketHandler#then.
  */
 inline PacketHandler then(PacketHandler first, PacketHandler second)
 {
     return [first = std::move(first), second = std::move(second)](
-               UserConnection &connection, bedrock::protocol::BinaryReader &in,
-               bedrock::protocol::BinaryWriter &out) -> std::expected<PacketAction, std::error_code> {
-        auto action = first(connection, in, out);
-        if (!action || action.value() == PacketAction::Cancelled) {
-            return action;
+               UserConnection &connection, PacketHolder &packet) -> std::expected<void, PacketError> {
+        auto result = first(connection, packet);
+        if (!result) {
+            return result;
         }
-        return second(connection, in, out);
+        return second(connection, packet);
     };
 }
 

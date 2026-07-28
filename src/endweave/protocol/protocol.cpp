@@ -4,14 +4,6 @@
 #include <utility>
 
 namespace endweave {
-namespace {
-
-std::size_t indexOf(PacketIds packet_id)
-{
-    return static_cast<std::size_t>(static_cast<int>(packet_id));
-}
-
-} // namespace
 
 AbstractProtocol::AbstractProtocol(std::string name) : name_(std::move(name)) {}
 
@@ -43,18 +35,16 @@ bool AbstractProtocol::hasMapping(std::size_t slot, int packet_id) const
     return static_cast<bool>(table[static_cast<std::size_t>(packet_id)]);
 }
 
-std::expected<PacketAction, std::error_code> AbstractProtocol::transform(std::size_t slot, int packet_id,
-                                                                         UserConnection &connection,
-                                                                         bedrock::protocol::BinaryReader &in,
-                                                                         bedrock::protocol::BinaryWriter &out) const
+std::expected<void, PacketError> AbstractProtocol::transform(std::size_t slot, int packet_id,
+                                                             UserConnection &connection, PacketHolder &packet) const
 {
-    return mappings_[slot][static_cast<std::size_t>(packet_id)](connection, in, out);
+    return mappings_[slot][static_cast<std::size_t>(packet_id)](connection, packet);
 }
 
-void AbstractProtocol::registerAt(std::size_t slot, PacketIds packet_id, PacketHandler handler)
+void AbstractProtocol::registerAt(std::size_t slot, int packet_id, PacketHandler handler)
 {
     std::vector<PacketHandler> &table = mappings_[slot];
-    const std::size_t index = indexOf(packet_id);
+    const auto index = static_cast<std::size_t>(packet_id);
     if (index >= table.size()) {
         table.resize(index + 1);
     }
@@ -65,10 +55,10 @@ void AbstractProtocol::registerAt(std::size_t slot, PacketIds packet_id, PacketH
     table[index] = std::move(handler);
 }
 
-void AbstractProtocol::appendAt(std::size_t slot, PacketIds packet_id, PacketHandler handler)
+void AbstractProtocol::appendAt(std::size_t slot, int packet_id, PacketHandler handler)
 {
     std::vector<PacketHandler> &table = mappings_[slot];
-    const std::size_t index = indexOf(packet_id);
+    const auto index = static_cast<std::size_t>(packet_id);
     if (index < table.size() && table[index]) {
         table[index] = PacketHandlers::then(std::move(table[index]), std::move(handler));
         return;
@@ -76,74 +66,34 @@ void AbstractProtocol::appendAt(std::size_t slot, PacketIds packet_id, PacketHan
     registerAt(slot, packet_id, std::move(handler));
 }
 
-void AbstractProtocol::replaceAt(std::size_t slot, PacketIds packet_id, PacketHandler handler)
+void AbstractProtocol::replaceAt(std::size_t slot, int packet_id, PacketHandler handler)
 {
     std::vector<PacketHandler> &table = mappings_[slot];
-    const std::size_t index = indexOf(packet_id);
+    const auto index = static_cast<std::size_t>(packet_id);
     if (index >= table.size() || !table[index]) {
         throw std::invalid_argument("packet " + std::to_string(index) + " has no handler to replace in " + name_);
     }
     table[index] = std::move(handler);
 }
 
-void AbstractProtocol::registerUpgrade(PacketIds packet_id, PacketHandler handler)
+void AbstractProtocol::cancelUpgrade(bedrock::protocol::MinecraftPacketIds packet_id)
 {
-    registerAt(slotOf(Step::Upgrade), packet_id, std::move(handler));
+    registerAt(slotOf(Step::Upgrade), static_cast<int>(packet_id), PacketHandlers::cancel());
 }
 
-void AbstractProtocol::registerDowngrade(PacketIds packet_id, PacketHandler handler)
+void AbstractProtocol::cancelDowngrade(bedrock::protocol::MinecraftPacketIds packet_id)
 {
-    registerAt(slotOf(Step::Downgrade), packet_id, std::move(handler));
+    registerAt(slotOf(Step::Downgrade), static_cast<int>(packet_id), PacketHandlers::cancel());
 }
 
-void AbstractProtocol::cancelUpgrade(PacketIds packet_id)
+void AbstractProtocol::cancelClientbound(bedrock::protocol::MinecraftPacketIds packet_id)
 {
-    registerAt(slotOf(Step::Upgrade), packet_id, PacketHandlers::cancel());
+    registerAt(slotOf(Direction::Clientbound), static_cast<int>(packet_id), PacketHandlers::cancel());
 }
 
-void AbstractProtocol::cancelDowngrade(PacketIds packet_id)
+void AbstractProtocol::cancelServerbound(bedrock::protocol::MinecraftPacketIds packet_id)
 {
-    registerAt(slotOf(Step::Downgrade), packet_id, PacketHandlers::cancel());
-}
-
-void AbstractProtocol::appendUpgrade(PacketIds packet_id, PacketHandler handler)
-{
-    appendAt(slotOf(Step::Upgrade), packet_id, std::move(handler));
-}
-
-void AbstractProtocol::appendDowngrade(PacketIds packet_id, PacketHandler handler)
-{
-    appendAt(slotOf(Step::Downgrade), packet_id, std::move(handler));
-}
-
-void AbstractProtocol::replaceUpgrade(PacketIds packet_id, PacketHandler handler)
-{
-    replaceAt(slotOf(Step::Upgrade), packet_id, std::move(handler));
-}
-
-void AbstractProtocol::replaceDowngrade(PacketIds packet_id, PacketHandler handler)
-{
-    replaceAt(slotOf(Step::Downgrade), packet_id, std::move(handler));
-}
-
-void AbstractProtocol::registerClientbound(PacketIds packet_id, PacketHandler handler)
-{
-    registerAt(slotOf(Direction::Clientbound), packet_id, std::move(handler));
-}
-
-void AbstractProtocol::registerServerbound(PacketIds packet_id, PacketHandler handler)
-{
-    registerAt(slotOf(Direction::Serverbound), packet_id, std::move(handler));
-}
-
-void AbstractProtocol::cancelClientbound(PacketIds packet_id)
-{
-    registerAt(slotOf(Direction::Clientbound), packet_id, PacketHandlers::cancel());
-}
-
-void AbstractProtocol::cancelServerbound(PacketIds packet_id)
-{
-    registerAt(slotOf(Direction::Serverbound), packet_id, PacketHandlers::cancel());
+    registerAt(slotOf(Direction::Serverbound), static_cast<int>(packet_id), PacketHandlers::cancel());
 }
 
 } // namespace endweave

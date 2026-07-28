@@ -38,37 +38,35 @@ void ProtocolPipeline::rebuild()
     }
 }
 
-std::expected<std::optional<std::string_view>, std::error_code> ProtocolPipeline::transform(Direction direction,
-                                                                                            int packet_id,
-                                                                                            UserConnection &connection,
-                                                                                            std::string_view payload)
+std::expected<std::optional<std::string_view>, PacketError> ProtocolPipeline::transform(Direction direction,
+                                                                                        int packet_id,
+                                                                                        UserConnection &connection,
+                                                                                        std::string_view payload)
 {
-    std::string_view current = payload;
-    std::size_t scratch = 0;
+    PacketHolder packet{payload};
 
     for (const Pipe &pipe : direction == Direction::Serverbound ? pipes_ : reversed_pipes_) {
         if (!pipe.protocol->hasMapping(pipe.slot, packet_id)) {
             continue;
         }
 
-        std::string &out = scratch_[scratch];
-        out.clear(); // BinaryWriter appends
-        bedrock::protocol::BinaryReader in{current};
-        bedrock::protocol::BinaryWriter writer{out};
-
-        auto action = pipe.protocol->transform(pipe.slot, packet_id, connection, in, writer);
-        if (!action) {
-            return std::unexpected(action.error());
+        auto result = pipe.protocol->transform(pipe.slot, packet_id, connection, packet);
+        if (!result) {
+            if (result.error() == PacketError::Cancelled) {
+                return std::nullopt;
+            }
+            return std::unexpected(result.error());
         }
-        if (action.value() == PacketAction::Cancelled) {
-            return std::nullopt;
-        }
-
-        current = out;
-        scratch ^= 1;
     }
 
-    return current;
+    if (!packet.isDecoded()) {
+        return payload;
+    }
+
+    scratch_.clear(); // BinaryWriter appends
+    bedrock::protocol::BinaryWriter writer{scratch_};
+    packet.serialize(writer);
+    return scratch_;
 }
 
 } // namespace endweave

@@ -9,10 +9,10 @@ library, which generates a C++ packet type per protocol version from a Python sc
 owns the *translation* semantics: what to do when a field is added, removed, or reshaped
 between versions.
 
-**No packets are translated yet.** The framework below — the version graph, the pipeline, the
-base protocol — is in place, but no per-version converters are registered, so every packet
-passes through untouched. A version step's converters live in its node's `registerPackets()`
-(see *Adding a version*).
+**No packets are translated across versions yet.** The framework below — the version graph, the
+pipeline, the base protocol — is in place, and the base protocol decodes the handshake, but no
+per-version converters are registered, so every packet crosses a version step untouched. A
+version step's converters live in its node's `registerPackets()` (see *Adding a version*).
 
 ## Design
 
@@ -48,6 +48,27 @@ converter is a plain function of struct to struct, so the value list, the `Type`
 `Rewriter` hierarchy that held them all disappear. Cancellation comes back as a handler return
 value — which is what ViaVersion's `cancelClientbound` amounts to anyway, since it registers
 `PacketWrapper::cancel` as the handler.
+
+A handler therefore names the two shapes it maps between, and the packet id follows from them:
+
+```cpp
+std::expected<bp::FooPacket_<1001>, PacketError> upgradeFoo(UserConnection &connection,
+                                                            const bp::FooPacket_<975> &packet);
+...
+registerUpgrade(&upgradeFoo);   // id taken from FooPacket::Id
+```
+
+ViaVersion reports out of a handler by throwing, so where it throws endweave returns
+`std::unexpected`: its `CancelException` is `PacketError::Cancelled` and its
+`InformativeException` is the rest of the enum. `PacketError` is endweave's own type rather than
+a `std::error_code`.
+
+`ProtocolPipeline` decodes once and encodes once. A `PacketHolder` carries the body undecoded
+until the first stage that handles the id asks for it as a type; later stages receive the struct
+the previous one left behind, and the body is written back out only if some stage decoded it, so
+a packet of no interest is forwarded byte for byte. A step that reshapes a packet and registers
+no converter is caught at runtime rather than silently re-encoded, and so is a body the schema
+does not fully read.
 
 **Dropped as Java-Edition-specific:** the `State` machine (Bedrock has one flat id space), the
 per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable and never
@@ -89,7 +110,7 @@ No existing file is reopened.
 
 | path | |
 | --- | --- |
-| `src/endweave/protocol/` | the machinery: `AbstractProtocol`, the graph, the pipeline, the handler DSL |
+| `src/endweave/protocol/` | the machinery: `AbstractProtocol`, the graph, the pipeline, the packet carrier, the handler DSL |
 | `src/endweave/connection/` | `UserConnection`, `ProtocolInfo`, `ConnectionManager` |
 | `src/endweave/protocols/` | one directory per node, plus `base/` for `InitialBaseProtocol` |
 | `src/endweave/plugin.{h,cpp}` | the Endstone plugin, owning the registry and the connection table |

@@ -14,7 +14,7 @@ UserConnection::UserConnection(ProtocolManager &protocol_manager, endstone::Logg
 {
 }
 
-void UserConnection::reportTranslationError(int packet_id, const std::error_code &error)
+void UserConnection::reportTranslationError(int packet_id, PacketError error)
 {
     const auto [it, inserted] = reported_errors_.try_emplace(packet_id, error);
     if (!inserted && it->second == error) {
@@ -22,7 +22,7 @@ void UserConnection::reportTranslationError(int packet_id, const std::error_code
     }
     it->second = error;
     // WARNING to match ViaVersion AbstractProtocol#printRemapError.
-    logger_->warning("Failed to transform packet {} from {}: {}", packet_id, address_, error.message());
+    logger_->warning("Failed to transform packet {} from {}: {}", packet_id, address_, describe(error));
 }
 
 } // namespace endweave

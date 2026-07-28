@@ -84,18 +84,53 @@ logs at `WARNING`, and `SEVERE`/`error` is reserved for mapping-data load failur
 has none of). Do not add a per-protocol `ProtocolLogger` unless an upstream protocol actually logs
 through one.
 
-### The translation layer is a stub
+### Handlers speak decoded packets, never streams
 
-**No packets are translated yet, and the field-conversion mechanism is deliberately undesigned.**
-It will be rebuilt on the in-house bedrock-protocol codec, **not** ported from ViaVersion's
-`PacketWrapper` + `Type<T>`. Until then:
+A handler is a **converter between two eras' structs of one packet**, not a reader over a buffer.
+It is registered by handing `registerUpgrade` / `registerDowngrade` / `registerServerbound` /
+`registerClientbound` a function, and the packet id comes from the struct's `Id` rather than an
+argument:
 
-- `PacketHandlers` keeps only the parts independent of the value model: `cancel()`, `passthrough()`,
-  `then()`. The field converters (`map<From, To>`, and ViaVersion's `create`/`read`/`ValueReader`/
-  `ValueWriter`/`ValueTransformer` family) are **absent**. Do not add them back until the codec
-  design lands.
-- A version node registers no converters, so `registerPackets()` is empty and every packet passes
-  through untouched.
+```cpp
+std::expected<bp::FooPacket_<1001>, PacketError> upgradeFoo(UserConnection &connection,
+                                                            const bp::FooPacket_<975> &packet);
+...
+registerUpgrade(&upgradeFoo);
+```
+
+`BinaryReader` and `BinaryWriter` are the codec's business, and no handler names them.
+
+**Where ViaVersion throws, endweave returns `std::unexpected`.** Its handler is `void` and
+reports everything through exceptions, so both of them land in the error channel here:
+`CancelException` is `PacketError::Cancelled`, and an `InformativeException` is whichever
+`PacketError` fits. The error type is endweave's own enum in `protocol/error.h`, not
+`std::error_code`, and `describe()` is what the log line prints, which is ViaVersion's
+`printRemapError`.
+
+`ProtocolPipeline::transform` decodes once and encodes once: `PacketHolder` carries the body
+undecoded until the first stage that handles the id asks for it as a type, every later stage
+receives the struct the previous one left behind, and the body is written back out only if some
+stage decoded it. A packet no stage handles is forwarded byte for byte and never decoded.
+
+Two invariants hold the model up:
+
+- A step whose two versions share a packet's shape needs no converter, because `Packet_<975>` and
+  `Packet_<1001>` are then the same C++ type. A step that reshapes one and registers no converter
+  is `PacketError::NoConverter` at runtime.
+- A body that decodes but leaves bytes unread is `PacketError::TrailingBytes`, so a schema that
+  has drifted from the wire fails loudly instead of re-encoding a truncated packet.
+
+`PacketHandlers` keeps `cancel()` and `then()`. ViaVersion's field converters (`map<From, To>`,
+`create`, `read`, the `ValueReader` / `ValueWriter` / `ValueTransformer` family) have no
+counterpart and must not be added back: a whole-struct converter is what replaced them.
+`passthrough()` is gone for the same reason, since a packet nothing handles already passes
+through.
+
+**Packet ids come from bedrock-protocol.** `bp::MinecraftPacketIds` is the generated mirror of
+BDS's enum, and endweave keeps no list of its own.
+
+**Only the base protocol translates so far.** A version node registers no converters, so
+`registerPackets()` is empty and every packet crosses a version step untouched.
 
 ## Correspondence map
 
@@ -110,7 +145,10 @@ It will be rebuilt on the in-house bedrock-protocol codec, **not** ported from V
 | `protocol/direction.h` `Direction` | `Direction` |
 | `protocol/direction.h` `Step` | *(none, the node-model axis)* |
 | `protocol/handler.h` `PacketHandler` / `PacketHandlers` | `PacketHandler` / `PacketHandlers` (remapper) |
-| `protocol/packet_ids.h` `MinecraftPacketIds` | per-version `ClientboundPacketType`/`ServerboundPacketType`, flattened. Mirrors BDS |
+| `protocol/handler.h` `PacketConverter` | *(none, the struct-to-struct handler signature)* |
+| `protocol/error.h` `PacketError` | `CancelException` + `InformativeException`, returned rather than thrown |
+| `protocol/packet.h` `PacketHolder` | what `PacketWrapper` carries, over one decoded struct |
+| `bp::MinecraftPacketIds` (generated) | per-version `ClientboundPacketType`/`ServerboundPacketType`, flattened. Mirrors BDS |
 | `connection/connection.h` `UserConnection` | `UserConnection` + `UserConnectionImpl` |
 | `connection/connection.h` `ProtocolInfo` | `ProtocolInfo` + `ProtocolInfoImpl` |
 | `connection/manager.h` `ConnectionManager` | `ConnectionManager` + `ConnectionManagerImpl` |

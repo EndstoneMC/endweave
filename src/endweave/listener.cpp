@@ -1,7 +1,6 @@
 #include "endweave/listener.h"
 
-#include "endweave/protocol/packet_ids.h"
-
+#include <bedrock/protocol.hpp>
 #include <string_view>
 
 namespace endweave {
@@ -34,7 +33,7 @@ void PacketListener::translate(Direction direction, Event &event)
 void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
 {
     translate(Direction::Serverbound, event);
-    if (event.getPacketId() == static_cast<int>(PacketIds::Disconnect)) {
+    if (event.getPacketId() == static_cast<int>(bedrock::protocol::MinecraftPacketIds::DISCONNECT)) {
         connections_->onDisconnect(event.getAddress());
     }
 }
@@ -42,7 +41,7 @@ void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
 void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
 {
     translate(Direction::Clientbound, event);
-    if (event.getPacketId() == static_cast<int>(PacketIds::Disconnect)) {
+    if (event.getPacketId() == static_cast<int>(bedrock::protocol::MinecraftPacketIds::DISCONNECT)) {
         connections_->onDisconnect(event.getAddress());
     }
 }

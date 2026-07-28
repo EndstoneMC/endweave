@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/direction.h"
 #include "endweave/protocol/handler.h"
-#include "endweave/protocol/packet_ids.h"
+#include "endweave/protocol/packet.h"
 #include "endweave/protocol/version.h"
 
 #include <array>
@@ -11,7 +11,6 @@
 #include <expected>
 #include <optional>
 #include <string>
-#include <system_error>
 #include <vector>
 
 namespace endweave {
@@ -99,21 +98,19 @@ public:
     [[nodiscard]] bool hasMapping(std::size_t slot, int packet_id) const;
 
     /**
-     * Runs a packet body through the handler for the given id. The caller checks hasMapping()
-     * first, so an unmapped id must not reach here.
+     * Runs a packet through the handler for the given id. The caller checks hasMapping() first,
+     * so an unmapped id must not reach here.
      *
      * @param slot The table, from slotOf(Direction) or slotOf(Step).
      * @param packet_id The packet id.
      * @param connection The connection the packet belongs to.
-     * @param in The source-version body.
-     * @param out Receives the target-version body.
-     * @return Whether the packet was translated or cancelled, or the codec's error.
+     * @param packet The packet in flight, which the handler decodes and replaces.
+     * @return Nothing once translated, PacketError::Cancelled if the handler dropped the packet,
+     * or why it could not be translated.
      * @see ViaVersion AbstractProtocol#transform.
      */
-    [[nodiscard]] std::expected<PacketAction, std::error_code> transform(std::size_t slot, int packet_id,
-                                                                         UserConnection &connection,
-                                                                         bedrock::protocol::BinaryReader &in,
-                                                                         bedrock::protocol::BinaryWriter &out) const;
+    [[nodiscard]] std::expected<void, PacketError> transform(std::size_t slot, int packet_id,
+                                                             UserConnection &connection, PacketHolder &packet) const;
 
 protected:
     /** Constructs a base protocol. */
@@ -130,44 +127,85 @@ protected:
     virtual void registerPackets() {}
 
     // Version-step axis: a Protocol<V> node. Keyed by Upgrade/Downgrade because the same edge is
-    // walked in both transport directions across connections.
+    // walked in both transport directions across connections. A converter names the two shapes it
+    // maps between, and the id is the one they share.
 
     /** @see ViaVersion AbstractProtocol#registerServerbound. */
-    void registerUpgrade(PacketIds packet_id, PacketHandler handler);
+    template <class In, class Out>
+    void registerUpgrade(PacketConverter<In, Out> converter)
+    {
+        registerAt(slotOf(Step::Upgrade), In::Id, makePacketHandler(converter));
+    }
+
     /** @see ViaBackwards BackwardsProtocol#registerClientbound. */
-    void registerDowngrade(PacketIds packet_id, PacketHandler handler);
+    template <class In, class Out>
+    void registerDowngrade(PacketConverter<In, Out> converter)
+    {
+        registerAt(slotOf(Step::Downgrade), In::Id, makePacketHandler(converter));
+    }
+
     /** @see ViaVersion AbstractProtocol#cancelServerbound. */
-    void cancelUpgrade(PacketIds packet_id);
+    void cancelUpgrade(bedrock::protocol::MinecraftPacketIds packet_id);
     /** @see ViaBackwards BackwardsProtocol#cancelClientbound. */
-    void cancelDowngrade(PacketIds packet_id);
+    void cancelDowngrade(bedrock::protocol::MinecraftPacketIds packet_id);
+
     /** @see ViaVersion AbstractProtocol#appendServerbound. */
-    void appendUpgrade(PacketIds packet_id, PacketHandler handler);
+    template <class In, class Out>
+    void appendUpgrade(PacketConverter<In, Out> converter)
+    {
+        appendAt(slotOf(Step::Upgrade), In::Id, makePacketHandler(converter));
+    }
+
     /** @see ViaVersion AbstractProtocol#appendClientbound. */
-    void appendDowngrade(PacketIds packet_id, PacketHandler handler);
+    template <class In, class Out>
+    void appendDowngrade(PacketConverter<In, Out> converter)
+    {
+        appendAt(slotOf(Step::Downgrade), In::Id, makePacketHandler(converter));
+    }
+
     /** @see ViaVersion AbstractProtocol#replaceServerbound. */
-    void replaceUpgrade(PacketIds packet_id, PacketHandler handler);
+    template <class In, class Out>
+    void replaceUpgrade(PacketConverter<In, Out> converter)
+    {
+        replaceAt(slotOf(Step::Upgrade), In::Id, makePacketHandler(converter));
+    }
+
     /** @see ViaVersion AbstractProtocol#replaceClientbound. */
-    void replaceDowngrade(PacketIds packet_id, PacketHandler handler);
+    template <class In, class Out>
+    void replaceDowngrade(PacketConverter<In, Out> converter)
+    {
+        replaceAt(slotOf(Step::Downgrade), In::Id, makePacketHandler(converter));
+    }
 
     // Transport axis: a base protocol.
 
     /** @see ViaVersion AbstractProtocol#registerClientbound. */
-    void registerClientbound(PacketIds packet_id, PacketHandler handler);
+    template <class In, class Out>
+    void registerClientbound(PacketConverter<In, Out> converter)
+    {
+        registerAt(slotOf(Direction::Clientbound), In::Id, makePacketHandler(converter));
+    }
+
     /** @see ViaVersion AbstractProtocol#registerServerbound. */
-    void registerServerbound(PacketIds packet_id, PacketHandler handler);
+    template <class In, class Out>
+    void registerServerbound(PacketConverter<In, Out> converter)
+    {
+        registerAt(slotOf(Direction::Serverbound), In::Id, makePacketHandler(converter));
+    }
+
     /** @see ViaVersion AbstractProtocol#cancelClientbound. */
-    void cancelClientbound(PacketIds packet_id);
+    void cancelClientbound(bedrock::protocol::MinecraftPacketIds packet_id);
     /** @see ViaVersion AbstractProtocol#cancelServerbound. */
-    void cancelServerbound(PacketIds packet_id);
+    void cancelServerbound(bedrock::protocol::MinecraftPacketIds packet_id);
 
 private:
     friend class ProtocolManager;
 
     void setPreviousVersion(int version);
 
-    void registerAt(std::size_t slot, PacketIds packet_id, PacketHandler handler);
-    void appendAt(std::size_t slot, PacketIds packet_id, PacketHandler handler);
-    void replaceAt(std::size_t slot, PacketIds packet_id, PacketHandler handler);
+    void registerAt(std::size_t slot, int packet_id, PacketHandler handler);
+    void appendAt(std::size_t slot, int packet_id, PacketHandler handler);
+    void replaceAt(std::size_t slot, int packet_id, PacketHandler handler);
 
     std::array<std::vector<PacketHandler>, 2> mappings_; // ViaVersion: clientboundMappings + serverboundMappings
     std::string name_;              // ViaVersion: getClass().getSimpleName()

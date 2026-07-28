@@ -1,14 +1,11 @@
 #include "endweave/protocols/base/protocol.h"
 
 #include "endweave/connection/connection.h"
+#include "endweave/protocol/error.h"
 #include "endweave/protocol/manager.h"
 
-#include <bedrock/stream.hpp>
-#include <bit>
-#include <cstdint>
+#include <bedrock/protocol.hpp>
 #include <expected>
-#include <string>
-#include <system_error>
 
 namespace endweave {
 namespace {
@@ -16,86 +13,70 @@ namespace {
 namespace bp = bedrock::protocol;
 
 /** Records the client's version from the handshake and builds the pipeline. */
-std::expected<PacketAction, std::error_code> detectClientVersion(UserConnection &connection, bp::BinaryReader &in,
-                                                                 bp::BinaryWriter &out)
+std::expected<bp::RequestNetworkSettingsPacket, PacketError> detectClientVersion(
+    UserConnection &connection, const bp::RequestNetworkSettingsPacket &packet)
 {
-    const auto client_version = in.read<std::int32_t, std::endian::big>();
-    if (!client_version) {
-        return std::unexpected(client_version.error());
-    }
-
+    const int client_version = packet.client_network_version;
     ProtocolInfo &info = connection.getProtocolInfo();
-    info.setProtocolVersion(client_version.value());
+    info.setProtocolVersion(client_version);
     const int server_version = info.getServerProtocolVersion();
-
-    if (client_version.value() != server_version) {
-        auto path = connection.getProtocolManager().getProtocolPath(client_version.value(), server_version);
-        if (!path) {
-            // Leave the client's version on the wire so BDS rejects the login.
-            connection.getLogger().warning("No protocol path from client {} to server {} for {}", client_version.value(),
-                                           server_version, connection.getAddress());
-            out.write<std::int32_t, std::endian::big>(client_version.value());
-            return PacketHandlers::passthrough()(connection, in, out);
-        }
-        info.getPipeline().add(path.value());
-        connection.getLogger().info("Translating {} for client {} (server {})", connection.getAddress(),
-                                    client_version.value(), server_version);
+    if (client_version == server_version) {
+        return packet;
     }
 
-    out.write<std::int32_t, std::endian::big>(server_version);
-    return PacketHandlers::passthrough()(connection, in, out);
+    auto path = connection.getProtocolManager().getProtocolPath(client_version, server_version);
+    if (!path) {
+        // Leave the client's version on the wire so BDS rejects the login.
+        connection.getLogger().warning("No protocol path from client {} to server {} for {}", client_version,
+                                       server_version, connection.getAddress());
+        return packet;
+    }
+    info.getPipeline().add(path.value());
+    connection.getLogger().info("Translating {} for client {} (server {})", connection.getAddress(), client_version,
+                                server_version);
+
+    bp::RequestNetworkSettingsPacket out = packet;
+    out.client_network_version = server_version;
+    return out;
 }
 
 /**
  * Rewrites the version the login claims, so BDS sees a server-version login.
  */
-std::expected<PacketAction, std::error_code> rewriteLoginVersion(UserConnection &connection, bp::BinaryReader &in,
-                                                                 bp::BinaryWriter &out)
+std::expected<bp::LoginPacket, PacketError> rewriteLoginVersion(UserConnection &connection,
+                                                                const bp::LoginPacket &packet)
 {
-    const auto client_version = in.read<std::int32_t, std::endian::big>();
-    if (!client_version) {
-        return std::unexpected(client_version.error());
-    }
-
     ProtocolInfo &info = connection.getProtocolInfo();
     // No pipeline means nothing to translate, so let BDS reject the mismatch.
-    const bool translating = info.getPipeline().hasNonBaseProtocols();
-    out.write<std::int32_t, std::endian::big>(translating ? info.getServerProtocolVersion() : client_version.value());
-    return PacketHandlers::passthrough()(connection, in, out);
+    if (!info.getPipeline().hasNonBaseProtocols()) {
+        return packet;
+    }
+
+    bp::LoginPacket out = packet;
+    out.client_network_version = info.getServerProtocolVersion();
+    return out;
 }
 
 /**
  * Logs a packet violation the server reported, then forwards the packet unchanged.
  */
-std::expected<PacketAction, std::error_code> logPacketViolation(UserConnection &connection, bp::BinaryReader &in,
-                                                                bp::BinaryWriter &out)
+std::expected<bp::PacketViolationWarningPacket, PacketError> logPacketViolation(
+    UserConnection &connection, const bp::PacketViolationWarningPacket &packet)
 {
-    const std::string_view body = in.getView().substr(in.getReadPointer());
-    out.writeRawBytes(body);
-
-    bp::BinaryReader reader{body};
-    const auto type = reader.readVarInt<std::int32_t>();
-    const auto severity = reader.readVarInt<std::int32_t>();
-    const auto packet_id = reader.readVarInt<std::int32_t>();
-    const auto context = reader.read<std::string>();
-    if (type && severity && packet_id && context) {
-        connection.getLogger().warning("Packet violation from {}: type={} severity={} packet={} context={}",
-                                       connection.getAddress(), type.value(), severity.value(), packet_id.value(),
-                                       context.value());
-    }
-    else {
-        connection.getLogger().warning("Packet violation from {} (undecodable)", connection.getAddress());
-    }
-    return PacketAction::Translated;
+    connection.getLogger().warning("Packet violation from {}: type={} severity={} packet={} context={}",
+                                   connection.getAddress(), static_cast<int>(packet.violation_type),
+                                   static_cast<int>(packet.violation_severity),
+                                   static_cast<int>(packet.violating_packet_id), packet.violation_context);
+    return packet;
 }
 
 } // namespace
 
 void InitialBaseProtocol::registerPackets()
 {
-    registerServerbound(PacketIds::RequestNetworkSettings, detectClientVersion);
-    registerServerbound(PacketIds::Login, rewriteLoginVersion);
-    registerClientbound(PacketIds::PacketViolationWarning, logPacketViolation);
+    registerServerbound(&detectClientVersion);
+    registerServerbound(&rewriteLoginVersion);
+    registerClientbound(&logPacketViolation);
 }
 
 } // namespace endweave

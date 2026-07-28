@@ -1,15 +1,14 @@
 #pragma once
 
 #include "endweave/protocol/direction.h"
+#include "endweave/protocol/error.h"
 #include "endweave/protocol/path.h"
 
-#include <array>
 #include <cstddef>
 #include <expected>
 #include <optional>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <vector>
 
 namespace endweave {
@@ -78,21 +77,24 @@ public:
     }
 
     /**
-     * Threads a packet body through every stage that handles the given id.
+     * Threads a packet through every stage that handles the given id. The first such stage
+     * decodes the body, the rest hand the decoded packet along, and it is written back out
+     * once at the end. A packet no stage handles is never decoded.
      *
-     * @note The returned view aliases the input when no stage rewrote, and a buffer owned by
-     * this pipeline otherwise. It does not survive the next call.
+     * @note The returned view aliases the input when no stage handled the id, and a buffer
+     * owned by this pipeline otherwise. It does not survive the next call.
      *
      * @param direction Which way the packet is travelling.
      * @param packet_id The packet id.
      * @param connection The connection the packet belongs to.
      * @param payload The packet body, excluding the header.
-     * @return The body to forward, std::nullopt if a stage cancelled, or a codec error.
+     * @return The body to forward, std::nullopt if a stage cancelled, or why it could not be
+     * translated.
      * @see ViaVersion ProtocolPipelineImpl#transform.
      */
-    std::expected<std::optional<std::string_view>, std::error_code> transform(Direction direction, int packet_id,
-                                                                              UserConnection &connection,
-                                                                              std::string_view payload);
+    std::expected<std::optional<std::string_view>, PacketError> transform(Direction direction, int packet_id,
+                                                                          UserConnection &connection,
+                                                                          std::string_view payload);
 
 private:
     /** @see ViaVersion ProtocolPipelineImpl#refreshReversedList. */
@@ -102,8 +104,8 @@ private:
     ProtocolPath path_;
     std::vector<Pipe> pipes_;          // ViaVersion: protocolList
     std::vector<Pipe> reversed_pipes_; // ViaVersion: reversedProtocolList
-    // endweave-specific codec scratch, ping-ponged between stages and reused across packets.
-    std::array<std::string, 2> scratch_;
+    // endweave-specific encode scratch, written once per packet and reused across packets.
+    std::string scratch_;
 };
 
 } // namespace endweave
