@@ -95,13 +95,23 @@ a trait declared undefined in `protocol/transform.h` and specialized per type th
   listed in `endstone_add_plugin`. An out-of-line body rules out a deduced return type, so the
   declaration spells the returned struct outright. No trailing return types.
 - **A transform consumes its source.** It takes an rvalue reference and moves every field that owns
-  storage, since the packet it came from is on its way out. An lvalue caller has to say `std::move`,
-  so a copy is never silent.
+  storage, since the packet it came from is on its way out. A `const` source is a compile error
+  rather than a copy.
 - **Assign every field explicitly, in declaration order.** Only a field whose shape actually changed
   carries logic, and it reads as the odd one out against the plain assignments around it.
-- **A packet delegates to the `Transformer` of each changed field's type,** moving into it, and
-  reserves a `std::vector` before moving its elements through one by one. The arithmetic of a
-  changed field lives in that field's transform, never restated at the packet.
+- **A packet delegates to the `Transformer` of each changed field's type,** moving into it. The
+  arithmetic of a changed field lives in that field's transform, never restated at the packet.
+- **Call through `ew::transform`,** which deduces the source type off the argument and does the cast
+  to `&&` itself, so a field reads `to.slots = ew::transform(from.slots);` — no versioned type and no
+  `std::move` at the call site. It always consumes what it is handed, so never pass it something the
+  rest of the body still reads. Qualifying is not optional: inside a `Transformer<...>::transform`
+  body the unqualified name finds the member, lookup stops at class scope, and the free function is
+  never a candidate.
+- **`std::optional` and `std::vector` are already specialized** in `protocol/transform.h`. They
+  unwrap, delegate to the element's `Transformer`, and take their target from its return type, so
+  they compose (`optional<vector<T>>`) and a field never spells a loop or a `has_value()` guard.
+  An element with no `Transformer` is a compile error, which is what keeps a missing include from
+  passing the value through untranslated.
 - **A projection is written out both ways.** v1001's tagged `ItemStackNetIdVariant` reaches v2168 as
   one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
   `ItemStackLegacyRequestId`), and v2168's transform reads the case back from sign and parity. The
@@ -146,4 +156,6 @@ The plugin lands at `build/endstone_endweave.so`. Drop it in the server's `plugi
   only one module is needed. The umbrella's `protocol/game.h` has an enumerator named `VOID` that
   clashes with `winnt.h` once `<endstone/endstone.hpp>` has pulled in `windows.h`.
 - `namespace bp = bedrock::protocol;`, declared after the includes and above `namespace endweave`.
-  Generated types are spelled through it, so a versioned one reads `bp::v1001::Foo`.
+  Generated types are spelled through it, so a versioned one reads `bp::v1001::Foo`. `namespace ew =
+  endweave;` follows the same placement, but only in the `.cpp` that calls through it — an alias for
+  our own namespace has no business in a header everything includes.
