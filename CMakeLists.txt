@@ -45,6 +45,7 @@ src/endweave/connection/manager.cpp
         src/endweave/protocols/v2168/transform.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(${PROJECT_NAME} PRIVATE bedrock::protocol endstone::endstone)
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" OUTPUT_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
 
 # Install into a server: the plugin endstone loads.
 install(TARGETS ${PROJECT_NAME} COMPONENT plugin
