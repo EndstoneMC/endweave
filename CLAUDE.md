@@ -113,6 +113,20 @@ compile.
   shape and propagates versioning transitively — `StartGamePacket` is versioned at 1001 only because
   `LevelSettings` moved underneath it — so the same type means the same bytes, and an unchanged
   packet keeps its payload rather than round-tripping through a codec for nothing.
+- **A packet the destination does not have is cancelled, never forwarded.** `shouldCancel` is
+  `has_packet<From, Id> && !has_packet<To, Id>`, and that one predicate covers every case: a newer
+  client sending something an older server never knew, a newer server sending something an older
+  client cannot parse, and either direction across a version that removed a packet. `isCancelled(id)`
+  is a second `constexpr` table beside the handlers, queried before them, so a cancelled packet costs
+  one indexed load and builds no buffer either. Cancelling and handling are disjoint by
+  construction, since `shouldHandle` demands the packet at both ends. Forwarding an id the peer does
+  not know is worse than dropping it — it desynchronises or disconnects.
+- **Cancellation reaches only as far as the schema does.** `has_packet` means "bedrock-protocol
+  models this", not "this exists on the wire", so an id modelled at neither version reads false on
+  both sides and still passes through: nothing in the schema says whether the destination has it.
+  Between 1001 and 2168 nothing cancels today, because both model the same 18 packets. The predicate
+  first bites at a real range boundary — `ClientboundUpdateSoundDataPacket` (348) arrives at 1001, so
+  1001 to 975 cancels it.
 - **Null means passthrough, and the caller must be able to see it before it builds anything.**
   `PacketHandler` takes only the two streams, so `PacketHandlers::get(id)` answers without them. A
   handler that takes the id would force the caller to construct a `BinaryReader` and a

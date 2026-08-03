@@ -46,6 +46,17 @@ consteval bool shouldHandle()
 }
 
 template <ProtocolVersion From, ProtocolVersion To, int Id>
+consteval bool shouldCancel()
+{
+    if constexpr (Id >= kSkipBegin && Id <= kSkipEnd) {
+        return false;
+    }
+    else {
+        return has_packet<From, Id> && !has_packet<To, Id>;
+    }
+}
+
+template <ProtocolVersion From, ProtocolVersion To, int Id>
 std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWriter &out)
 {
     auto result = bp::deserialize<packet_of<From, Id>>(in);
@@ -91,6 +102,15 @@ consteval std::array<PacketHandler, sizeof...(Ids)> makeHandlers(std::integer_se
 template <ProtocolVersion From, ProtocolVersion To>
 inline constexpr auto kHandlers = makeHandlers<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
 
+template <ProtocolVersion From, ProtocolVersion To, int... Ids>
+consteval std::array<bool, sizeof...(Ids)> makeCancelled(std::integer_sequence<int, Ids...>)
+{
+    return {shouldCancel<From, To, Ids>()...};
+}
+
+template <ProtocolVersion From, ProtocolVersion To>
+inline constexpr auto kCancelled = makeCancelled<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
+
 } // namespace detail
 
 /** @see ViaVersion PacketHandlers, Velocity StateRegistry.PacketRegistry.ProtocolRegistry. */
@@ -98,15 +118,25 @@ class PacketHandlers {
 public:
     constexpr PacketHandlers() = default;
 
-    constexpr explicit PacketHandlers(std::span<const PacketHandler> handlers) : handlers_(handlers) {}
+    constexpr PacketHandlers(std::span<const PacketHandler> handlers, std::span<const bool> cancelled)
+        : handlers_(handlers), cancelled_(cancelled)
+    {
+    }
 
     [[nodiscard]] constexpr PacketHandler get(int id) const
     {
         return id >= 0 && std::cmp_less(id, handlers_.size()) ? handlers_[id] : nullptr;
     }
 
+    /** @see ViaVersion Protocol#cancelServerbound, Protocol#cancelClientbound. */
+    [[nodiscard]] constexpr bool isCancelled(int id) const
+    {
+        return id >= 0 && std::cmp_less(id, cancelled_.size()) && cancelled_[id];
+    }
+
 private:
     std::span<const PacketHandler> handlers_;
+    std::span<const bool> cancelled_;
 };
 
 namespace detail {
@@ -116,7 +146,7 @@ constexpr PacketHandlers getPacketHandlers(ProtocolVersion to)
 {
     PacketHandlers handlers;
     ProtocolVersions::visit(to, [&]<ProtocolVersion To>() {
-        handlers = PacketHandlers{kHandlers<From, To>};
+        handlers = PacketHandlers{kHandlers<From, To>, kCancelled<From, To>};
     });
     return handlers;
 }
