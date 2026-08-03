@@ -31,32 +31,51 @@ resolve both tables onto `UserConnection`, and call them from the listener. `Use
 carries the type-keyed store that stateful handlers key into, and the listener still keeps the
 connection table warm and evicts on disconnect and quit, so the table is live for it to hang off.
 
-## The prime directive: endweave is an exact port of ViaVersion
+## What endweave takes from ViaVersion, and what it does not
 
-endweave is a faithful C++ port of [ViaVersion](https://github.com/ViaVersion/ViaVersion) (its
-forward protocols) fused with [ViaBackwards](https://github.com/ViaVersion/ViaBackwards) (its
-backward protocols). Maintainability against upstream is the point. A dev looking at any endweave
-file should be able to find the ViaVersion class it came from, so that when upstream changes, the
-corresponding endweave code can be updated in lockstep.
+endweave began as a port of [ViaVersion](https://github.com/ViaVersion/ViaVersion) (its forward
+protocols) fused with [ViaBackwards](https://github.com/ViaVersion/ViaBackwards) (its backward
+protocols), and is no longer one. Upstream registers handlers by hand at runtime; endweave derives
+them from bedrock-protocol's schema at compile time. That single difference reaches everything above
+the transforms — there is no `Protocol` class, no registration call, no `PacketWrapper`, no
+`ProtocolPipeline`, no `ProtocolManager` and no path-finding. Do not restore any of them for the
+sake of the resemblance. Structural fidelity was the earlier goal and is not the goal now; the
+guarantees in **The handler layer** are, and several of them are only reachable by giving that
+structure up.
 
-Treat the ViaVersion Java source as the specification. When in doubt, match it.
+Upstream stays valuable for three things.
+
+- **Translation semantics.** ViaVersion and ViaBackwards encode years of per-packet knowledge: which
+  field moved where, what a field with no source should default to, which rewrite is load-bearing
+  and which is cosmetic. That is the part to read before writing a `Transformer`, it does not go
+  stale, and nothing in this repo replaces it.
+- **Vocabulary.** Where a type has a real counterpart it keeps upstream's name, so a reader can find
+  the class it came from. See the correspondence map, and note that some names are ViaVersion's
+  while the behaviour is Velocity's.
+- **Problem decomposition.** The shape of the problem — per-packet handlers, per-version tables,
+  connection-scoped resolution, and translate / passthrough / cancel as the three outcomes — is
+  upstream's and is worth keeping.
 
 ### Rules
 
-1. **Mirror upstream structure, names, hierarchy, and members.** Classes keep their ViaVersion
-   names, the inheritance tree matches, methods keep their upstream names and semantics, and member
-   fields correspond one to one. Snake_case with a trailing underscore is the only concession, so
+1. **Keep upstream's name where a counterpart exists, and only then.** A type that corresponds to a
+   ViaVersion or Velocity one takes its name and carries a single `@see` line. A type with no
+   counterpart gets the name that describes it and no `@see` at all; do not invent a correspondence
+   to justify a name. Snake_case with a trailing underscore is the only spelling concession, so
    `serverProtocolVersion` becomes `server_protocol_version_`.
 
-2. **Do not add methods, helpers, or members that are not in upstream ViaVersion.** If you reach
-   for something ViaVersion does not have, it must be one of:
-   - **Platform glue**, the Endstone integration ViaVersion keeps in its own platform modules
-     (the plugin main, the netty handlers, connection lifecycle). Lives in `plugin.*`,
-     `listener.*`, and the address-keyed connection bookkeeping.
-   - **A language-gap accommodation**, something the JVM gives ViaVersion for free that C++ must
-     spell out, such as ownership where Java relies on GC.
+2. **Derive, do not register.** Anything that can be computed from the schema must be, and a helper
+   that exists to do the computing needs no upstream precedent. `shouldHandle`, `shouldCancel`,
+   `packet_of` and `ProtocolVersions::visit` have no ViaVersion counterpart and are the point. What
+   still needs justifying is the opposite: a hand-maintained list, a runtime registration, or a
+   lookup that could have been a compile-time one.
 
-3. **No API/Impl interface split.** ViaVersion splits every core type into an interface (in its
+3. **A mistake that compiles is a design bug.** ViaVersion cannot tell you at build time that a
+   packet was forgotten, because registration is a runtime call. Here it can, and the missing
+   `Transformer` build failure is the whole return on abandoning the port. Weigh a change by what it
+   still catches.
+
+4. **No API/Impl interface split.** ViaVersion splits every core type into an interface (in its
    `api/` module) and an `Impl` (in `common/`), such as `ProtocolManager` + `ProtocolManagerImpl`.
    endweave has no third-party API surface, so that split is deliberately collapsed into one
    concrete class per type. Reproducing it is over-engineering. The `@see` names both halves.
@@ -64,9 +83,10 @@ Treat the ViaVersion Java source as the specification. When in doubt, match it.
 Upstream lives under `com.viaversion.viaversion` (api in the `api/` module, impls in `common/`)
 and `com.viaversion.viabackwards`.
 
-## Settled decisions for the rebuilt translation layer
+## Settled decisions for the translation layer
 
-These are directives, not descriptions of code that exists today.
+Most of these are now realised in `protocol/handler.h` rather than pending; the logger rule is
+still a directive. Either way they are binding.
 
 - **No protocol classes at all.** ViaVersion has a protocol per adjacent-version *pair*
   (`Protocol1_20To1_20_2`) that packets are registered into by hand. endweave derives the whole
@@ -125,8 +145,8 @@ compile.
   models this", not "this exists on the wire", so an id modelled at neither version reads false on
   both sides and still passes through: nothing in the schema says whether the destination has it.
   Between 1001 and 2168 nothing cancels today, because both model the same 18 packets. The predicate
-  first bites at a real range boundary — `ClientboundUpdateSoundDataPacket` (348) arrives at 1001, so
-  1001 to 975 cancels it.
+  first bites at a real range boundary — `ClientboundUpdateSoundDataPacket` (348) arrives at 1001,
+  so 1001 to 975 cancels it.
 - **Null means passthrough, and the caller must be able to see it before it builds anything.**
   `PacketHandler` takes only the two streams, so `PacketHandlers::get(id)` answers without them. A
   handler that takes the id would force the caller to construct a `BinaryReader` and a
