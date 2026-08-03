@@ -46,6 +46,10 @@ src/endweave/connection/manager.cpp
 target_include_directories(${PROJECT_NAME} PRIVATE src ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(${PROJECT_NAME} PRIVATE bedrock::protocol endstone::endstone)
 
+# Install into a server: the plugin endstone loads.
+install(TARGETS ${PROJECT_NAME} COMPONENT plugin
+        LIBRARY DESTINATION plugins RUNTIME DESTINATION plugins)
+
 if (ENDWEAVE_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
