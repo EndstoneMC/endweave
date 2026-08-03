@@ -22,6 +22,11 @@ struct Transformer<bp::v1001::InventoryContentPacket> {
 };
 
 template <>
+struct Transformer<bp::ExperimentData> {
+    static bp::ExperimentToggle transform(bp::ExperimentData &&from);
+};
+
+template <>
 struct Transformer<bp::v1001::LevelSettings> {
     static bp::v2168::LevelSettings transform(bp::v1001::LevelSettings &&from);
 };
@@ -29,6 +34,16 @@ struct Transformer<bp::v1001::LevelSettings> {
 template <>
 struct Transformer<bp::BlockEntry> {
     static bp::v2168::ServerBlockProperty transform(bp::BlockEntry &&from);
+};
+
+template <>
+struct Transformer<bp::v1001::PresenceConfiguration> {
+    static bp::v2168::PresenceConfiguration transform(bp::v1001::PresenceConfiguration &&from);
+};
+
+template <>
+struct Transformer<bp::v1001::GatheringsConfigurationJoinInfo> {
+    static bp::v2168::GatheringsConfigurationJoinInfo transform(bp::v1001::GatheringsConfigurationJoinInfo &&from);
 };
 
 template <>

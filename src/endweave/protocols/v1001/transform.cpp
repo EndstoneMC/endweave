@@ -42,6 +42,112 @@ bp::v2168::InventoryContentPacket Transformer<bp::v1001::InventoryContentPacket>
     return to;
 }
 
+bp::ExperimentToggle Transformer<bp::ExperimentData>::transform(bp::ExperimentData &&from)
+{
+    bp::ExperimentToggle to;
+    to.name = std::move(from.name);
+    to.enabled = from.enabled;
+    return to;
+}
+
+bp::v2168::LevelSettings Transformer<bp::v1001::LevelSettings>::transform(bp::v1001::LevelSettings &&from)
+{
+    bp::v2168::LevelSettings to;
+    to.seed = static_cast<std::uint64_t>(from.seed);
+    to.spawn_settings = std::move(from.spawn_settings);
+    to.generator = from.generator;
+    to.game_type = from.game_type;
+    to.is_hardcore = from.is_hardcore;
+    to.game_difficulty = from.game_difficulty;
+    to.default_spawn = from.default_spawn;
+    to.achievements_disabled = from.achievements_disabled;
+    to.editor_world_type = from.editor_world_type;
+    to.is_created_in_editor = from.is_created_in_editor;
+    to.is_exported_from_editor = from.is_exported_from_editor;
+    to.time = from.time;
+    to.education_edition_offer = from.education_edition_offer;
+    to.education_features_enabled = from.education_features_enabled;
+    to.education_product_id = std::move(from.education_product_id);
+    to.rain_level = from.rain_level;
+    to.lightning_level = from.lightning_level;
+    to.confirmed_platform_locked_content = from.confirmed_platform_locked_content;
+    to.multiplayer_game_intent = from.multiplayer_game_intent;
+    to.lan_broadcast_intent = from.lan_broadcast_intent;
+    to.xbl_broadcast_intent = from.xbl_broadcast_intent;
+    to.platform_broadcast_intent = from.platform_broadcast_intent;
+    to.commands_enabled = from.commands_enabled;
+    to.texture_packs_required = from.texture_packs_required;
+    to.rule_data.rules = std::move(from.game_rules);
+    to.experiments.toggles = ew::transform(from.experiments);
+    to.experiments.experiments_ever_toggled = from.experiments_previously_toggled;
+    to.bonus_chest_enabled = from.bonus_chest_enabled;
+    to.start_with_map_enabled = from.start_with_map_enabled;
+    to.default_permissions = from.default_permissions;
+    to.server_chunk_tick_range = from.server_chunk_tick_range;
+    to.has_locked_behavior_pack = from.has_locked_behavior_pack;
+    to.has_locked_resource_pack = from.has_locked_resource_pack;
+    to.is_from_locked_template = from.is_from_locked_template;
+    to.use_msa_gamertags_only = from.use_msa_gamertags_only;
+    to.is_from_world_template = from.is_from_world_template;
+    to.is_world_template_option_locked = from.is_world_template_option_locked;
+    to.spawn_v1_villagers = from.spawn_v1_villagers;
+    to.persona_disabled = from.persona_disabled;
+    to.custom_skins_disabled = from.custom_skins_disabled;
+    to.emote_chat_muted = from.emote_chat_muted;
+    to.base_game_version = std::move(from.base_game_version);
+    to.limited_world_width = from.limited_world_width;
+    to.limited_world_depth = from.limited_world_depth;
+    to.nether_type = from.nether_type;
+    to.edu_shared_uri_resource = std::move(from.edu_shared_uri_resource);
+    to.override_force_experimental_gameplay = from.override_force_experimental_gameplay;
+    to.chat_restriction_level = from.chat_restriction_level;
+    to.disable_player_interactions = from.disable_player_interactions;
+    to.server_editor_connection_policy = from.server_editor_connection_policy;
+    to.allow_anonymous_block_drops_in_editor_worlds = from.allow_anonymous_block_drops_in_editor_worlds;
+    return to;
+}
+
+bp::v2168::ServerBlockProperty Transformer<bp::BlockEntry>::transform(bp::BlockEntry &&from)
+{
+    bp::v2168::ServerBlockProperty to;
+    to.block_name = std::move(from.name);
+    to.block_definition = std::move(from.properties);
+    return to;
+}
+
+bp::v2168::PresenceConfiguration Transformer<bp::v1001::PresenceConfiguration>::transform(
+    bp::v1001::PresenceConfiguration &&from)
+{
+    bp::v2168::PresenceConfiguration to;
+    to.rich_presence_id = std::move(from.rich_presence_id);
+    return to;
+}
+
+bp::v2168::GatheringsConfigurationJoinInfo Transformer<bp::v1001::GatheringsConfigurationJoinInfo>::transform(
+    bp::v1001::GatheringsConfigurationJoinInfo &&from)
+{
+    bp::v2168::GatheringsConfigurationJoinInfo to;
+    to.experience_id = from.experience_id;
+    to.experience_name = std::move(from.experience_name);
+    to.experience_world_id = from.experience_world_id;
+    to.experience_world_name = std::move(from.experience_world_name);
+    to.creator_id = std::move(from.creator_id);
+    to.target_id = from.target_id;
+    to.scenario_id = std::move(from.scenario_id);
+    to.server_id = std::move(from.server_id);
+    return to;
+}
+
+bp::v2168::ServerConfigurationJoinInfo Transformer<bp::v1001::ServerConfigurationJoinInfo>::transform(
+    bp::v1001::ServerConfigurationJoinInfo &&from)
+{
+    bp::v2168::ServerConfigurationJoinInfo to;
+    to.gatherings_configuration_join_info = ew::transform(from.gatherings_configuration_join_info);
+    to.client_store_entrypoint_configuration = std::move(from.client_store_entrypoint_configuration);
+    to.presence_configuration = ew::transform(from.presence_configuration);
+    return to;
+}
+
 bp::v2168::StartGamePacket Transformer<bp::v1001::StartGamePacket>::transform(bp::v1001::StartGamePacket &&from)
 {
     bp::v2168::StartGamePacket to;
