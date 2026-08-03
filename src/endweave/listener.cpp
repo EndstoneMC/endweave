@@ -2,10 +2,12 @@
 
 #include <protocol/network.h>
 
+namespace bp = bedrock::protocol;
+
 namespace endweave {
 namespace {
 
-constexpr int kDisconnectPacketId = static_cast<int>(bedrock::protocol::MinecraftPacketIds::DISCONNECT);
+constexpr int kDisconnectPacketId = static_cast<int>(bp::MinecraftPacketIds::DISCONNECT);
 
 } // namespace
 

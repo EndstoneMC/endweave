@@ -40,7 +40,9 @@ configure_file(src/endweave/version.h.in src/endweave/version.h)
 endstone_add_plugin(${PROJECT_NAME}
 src/endweave/connection/manager.cpp
         src/endweave/plugin.cpp
-        src/endweave/listener.cpp)
+        src/endweave/listener.cpp
+        src/endweave/protocols/v1001/transform.cpp
+        src/endweave/protocols/v2168/transform.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(${PROJECT_NAME} PRIVATE bedrock::protocol endstone::endstone)
 

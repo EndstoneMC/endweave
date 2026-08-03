@@ -14,7 +14,8 @@ translation semantics.
 
 The translation layer has been removed. What is left is the platform binding: the plugin main, the
 packet listener, and the address-keyed connection table. Nothing is translated, and no protocol,
-pipeline, or version node exists. Rebuilding the translation layer is the work.
+pipeline, or version node exists. Rebuilding the translation layer is the work, and the
+`Transformer` specializations for `SerializedNetworkItemStackDescriptor` are its first piece.
 
 `UserConnection` still carries the type-keyed store that stateful handlers key into, and the
 listener still keeps the connection table warm and evicts on disconnect and quit, so the table is
@@ -78,6 +79,28 @@ These are directives, not descriptions of code that exists today.
   is the analogue of ViaVersion's `Via.getPlatform().getLogger()`. Match ViaVersion's levels: `info`
   for connection and lifecycle lines, `warning` for problems and remap failures.
 
+## Transformers
+
+`Transformer` is the analogue of ViaVersion's `ValueTransformer`, in the shape of `std::formatter`:
+a trait declared undefined in `protocol/transform.h` and specialized per type that changes shape.
+
+- **Keyed on the source type, and the target falls out of the return type.**
+  `Transformer<v1001::Foo>::transform` returns a `v2168::Foo`, so the call site names only what it
+  has. A type that did not change between two eras is one C++ type in both namespaces and needs no
+  specialization.
+- **One file per source version,** `protocols/<version>/transform.{h,cpp}`, holding every
+  specialization whose source type belongs to that version. `protocols/v1001/transform.h` converts
+  a v1001 struct into its v2168 counterpart, and `protocols/v2168/transform.h` the way back.
+- **The specialization is declared in the header, the body defined in the sibling `.cpp`,** which is
+  listed in `endstone_add_plugin`. An out-of-line body rules out a deduced return type, so the
+  declaration spells the returned struct outright. No trailing return types.
+- **Copy every field explicitly, in declaration order.** Only a field whose shape actually changed
+  carries logic, and it reads as the odd one out against the copies around it.
+- **A projection is written out both ways.** v1001's tagged `ItemStackNetIdVariant` reaches v2168 as
+  one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
+  `ItemStackLegacyRequestId`), and v2168's transform reads the case back from sign and parity. The
+  pair round-trips.
+
 ## Correspondence map
 
 | endweave | ViaVersion (api / common), unless noted |
@@ -85,6 +108,7 @@ These are directives, not descriptions of code that exists today.
 | `connection/connection.h` `UserConnection` | `UserConnection` + `UserConnectionImpl` |
 | `connection/manager.h` `ConnectionManager` | `ConnectionManager` + `ConnectionManagerImpl` |
 | `plugin.{h,cpp}`, `listener.{h,cpp}` | platform module (plugin main + netty decode/encode handlers) |
+| `protocol/transform.h` `Transformer` | `ValueTransformer` |
 
 ## Building
 
@@ -115,3 +139,5 @@ The plugin lands at `build/endstone_endweave.so`. Drop it in the server's `plugi
 - Include `<protocol/network.h>` and friends rather than the `<bedrock/protocol.hpp>` umbrella when
   only one module is needed. The umbrella's `protocol/game.h` has an enumerator named `VOID` that
   clashes with `winnt.h` once `<endstone/endstone.hpp>` has pulled in `windows.h`.
+- `namespace bp = bedrock::protocol;`, declared after the includes and above `namespace endweave`.
+  Generated types are spelled through it, so a versioned one reads `bp::v1001::Foo`.
