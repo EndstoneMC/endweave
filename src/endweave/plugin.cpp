@@ -7,12 +7,6 @@
 #include <endstone/endstone.hpp>
 
 namespace endweave {
-namespace {
-
-constexpr std::chrono::seconds kIdleTimeout{120};
-constexpr std::uint64_t kSweepPeriodTicks = 20 * 60;
-
-} // namespace
 
 void Plugin::onEnable()
 {
@@ -23,9 +17,9 @@ void Plugin::onEnable()
     getServer().getScheduler().runTaskTimer(
         *this,
         [this] {
-            connections_.sweep(kIdleTimeout);
+            connections_.sweep(std::chrono::seconds(10));
         },
-        kSweepPeriodTicks, kSweepPeriodTicks);
+        20, 20);
 
     getLogger().info("Endweave enabled.");
 }
