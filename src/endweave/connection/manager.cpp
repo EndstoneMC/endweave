@@ -1,20 +1,12 @@
 #include "endweave/connection/manager.h"
 
-#include <unordered_map>
-
 namespace endweave {
-
-ConnectionManager::ConnectionManager(ProtocolManager &protocol_manager, endstone::Logger &logger,
-                                     int server_protocol_version)
-    : protocol_manager_(&protocol_manager), logger_(&logger), server_protocol_version_(server_protocol_version)
-{
-}
 
 UserConnection &ConnectionManager::getOrCreate(const endstone::SocketAddress &address)
 {
     auto it = connections_.find(address);
     if (it == connections_.end()) {
-        it = connections_.try_emplace(address, *protocol_manager_, *logger_, address, server_protocol_version_).first;
+        it = connections_.try_emplace(address, address).first;
     }
     return it->second;
 }
@@ -34,7 +26,7 @@ void ConnectionManager::sweep(std::chrono::seconds idle_timeout)
 {
     const auto deadline = std::chrono::steady_clock::now() - idle_timeout;
     std::erase_if(connections_, [deadline](auto &entry) {
-        return entry.second.getProtocolInfo().getProtocolVersion() == 0 && entry.second.getLastSeen() < deadline;
+        return entry.second.getLastSeen() < deadline;
     });
 }
 
