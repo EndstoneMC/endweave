@@ -17,10 +17,19 @@ connection table. On top of it sit the `Transformer` specializations, which conv
 struct of one era into the next era's. `InventoryContentPacket` and `StartGamePacket` translate
 both ways between 1001 and 2168, along with every type they reach.
 
-Nothing is wired up yet. No protocol, pipeline, or version node exists, so no packet on the wire
-reaches a transform — building that is the work. `UserConnection` still carries the type-keyed
-store that stateful handlers key into, and the listener still keeps the connection table warm and
-evicts on disconnect and quit, so the table is live for it to hang off.
+`protocol/handler.h` is the dispatch layer. It resolves a (from, to) version pair into a
+`PacketHandlers` table and answers `get(id)` with the function that translates that packet, or null
+where nothing has to happen.
+
+Nothing includes it, so it is absent from the build. That matters: six packets reshape between 1001
+and 2168 with no `Transformer` — ids 30, 32, 123, 315, 347 and 348 — and instantiating the tables
+does not compile until they are written. `cmake --build` passes today only because no translation
+unit reaches `handler.h`.
+
+The remaining work is the wiring: read the client's version off `RequestNetworkSettingsPacket`,
+resolve both tables onto `UserConnection`, and call them from the listener. `UserConnection` still
+carries the type-keyed store that stateful handlers key into, and the listener still keeps the
+connection table warm and evicts on disconnect and quit, so the table is live for it to hang off.
 
 ## The prime directive: endweave is an exact port of ViaVersion
 
@@ -59,19 +68,20 @@ and `com.viaversion.viabackwards`.
 
 These are directives, not descriptions of code that exists today.
 
-- **Node per version, not protocol per pair.** ViaVersion has a protocol per adjacent-version
-  *pair* (`Protocol1_20To1_20_2`), making a protocol an **edge**. endweave has one per *version*, so
-  a protocol is a **node** owning both directions of the wire diff between its version and the one
-  registered before it. A node's handler tables are keyed by an upgrade/downgrade step, not by
-  clientbound and serverbound, and a node fuses a ViaVersion forward protocol with its ViaBackwards
-  backward protocol. Do not reintroduce pair-named classes.
-- **Handlers speak decoded packets, never streams.** A handler is a converter between two eras'
-  structs of one packet, not a reader over a buffer. The packet id comes from the struct rather than
-  an argument, and no handler names `BinaryReader` or `BinaryWriter`.
+- **No protocol classes at all.** ViaVersion has a protocol per adjacent-version *pair*
+  (`Protocol1_20To1_20_2`) that packets are registered into by hand. endweave derives the whole
+  thing instead: `handler.h` generates a handler per (from, to, id) out of bedrock-protocol's
+  `packet_of`, so there is no node, no edge, and nothing to register. Do not reintroduce pair-named
+  classes, and do not add a per-version roster — see **The handler layer**.
+- **Transforms speak decoded packets, never streams.** A `Transformer` is a converter between two
+  eras' structs of one packet, not a reader over a buffer, and none of them names `BinaryReader` or
+  `BinaryWriter`. The generated `handle` is the one exception and is not a transform: it is the
+  codec glue that decodes, calls one transform, and re-encodes. Keep the streams there.
 - **Where ViaVersion throws, endweave returns `std::unexpected`.** Its handlers report everything
   through exceptions, and those land in the error channel here.
-- **Packet ids come from bedrock-protocol.** `bedrock::protocol::MinecraftPacketIds` is the
-  generated mirror of BDS's enum, and endweave keeps no list of its own.
+- **Packets come from bedrock-protocol, ids and types both.** `MinecraftPacketIds` is the generated
+  mirror of BDS's enum and `packet_of<V, Id>` maps an id to the struct that carries it at that
+  version. endweave keeps no list of its own, so a list can never go stale against the schema.
 - **Dropped as Java-Edition-specific, keep them dropped:** the `State` machine (Bedrock has one flat
   id space), the per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable
   and never renumbered, so the id *is* the identity), `AbstractProtocol`'s four generic parameters,
@@ -79,6 +89,61 @@ These are directives, not descriptions of code that exists today.
 - **One logger,** the Endstone plugin logger, threaded through rather than reached as a global. It
   is the analogue of ViaVersion's `Via.getPlatform().getLogger()`. Match ViaVersion's levels: `info`
   for connection and lifecycle lines, `warning` for problems and remap failures.
+
+## The handler layer
+
+`protocol/handler.h` turns a runtime (version, version, packet id) into a typed call, and does the
+whole mapping at compile time. Nothing is registered, so nothing can be forgotten: the packets that
+need work are derived from the schema, and one that needs work but has no `Transformer` fails to
+compile.
+
+- **A handler is generated, not registered.** `handle<From, To, Id>` deserializes `packet_of<From,
+  Id>`, calls one transform, and serializes the result. `handlerFor` returns its address where the
+  packet moves between the two versions and `nullptr` where it does not, and `makeHandlers` lays
+  those out into a `constexpr` array indexed by id. This is the whole of what ViaVersion does with
+  `registerClientbound` calls in a protocol constructor.
+- **A missing `Transformer` is a build error, and that is the release gate.** ViaVersion's
+  registration is a runtime call, so forgetting a packet still compiles, still starts, and quietly
+  hands a client bytes it cannot parse. Here the id sweep reaches every packet the schema models, so
+  a reshaped packet with no transform stops the build. Do not add an escape hatch that lets an
+  unported packet fall through to passthrough — the silence is the failure this design exists to
+  prevent. The build failing *is* the answer to "can we ship yet".
+- **Type identity is the wire diff.** `shouldHandle` is `has_packet` at both ends and
+  `!is_same_v<packet_of<From, Id>, packet_of<To, Id>>`. bedrock-protocol emits one type per distinct
+  shape and propagates versioning transitively — `StartGamePacket` is versioned at 1001 only because
+  `LevelSettings` moved underneath it — so the same type means the same bytes, and an unchanged
+  packet keeps its payload rather than round-tripping through a codec for nothing.
+- **Null means passthrough, and the caller must be able to see it before it builds anything.**
+  `PacketHandler` takes only the two streams, so `PacketHandlers::get(id)` answers without them. A
+  handler that takes the id would force the caller to construct a `BinaryReader` and a
+  `BinaryWriter` just to learn there was nothing to do. Keep the id lookup free of buffers.
+- **Passthrough is the null handler, not a return value.** A handler that runs either succeeds or
+  carries an `error_code`, which is why it returns `std::expected<void, std::error_code>`. Do not
+  reintroduce a result enum with a `Passthrough` case.
+- **Resolve once per connection, never per packet.** `getPacketHandlers(from, to)` is the analogue
+  of Velocity's `getProtocolRegistry`, which the decoder caches rather than re-looking-up. Store both
+  directions on `UserConnection`; per packet it is then a bounds check and an indexed load.
+- **`kHandlers` must keep static storage.** `PacketHandlers` holds a `std::span` into it. Build the
+  array inline in the constructor call instead and the span points at a temporary — constant
+  evaluation catches it, but a runtime resolve would compile and read freed stack.
+- **The runtime-to-compile-time crossing happens twice, and only twice.**
+  `ProtocolVersions::visit` folds a runtime `ProtocolVersion` into a template argument; the id is a
+  plain array index. Everything below is monomorphic.
+- **Two versions is one hop.** `From < To` picks upgrade over downgrade. A chained walk across
+  intermediate nodes is the ViaVersion shape and comes back when a third version does; `next` and
+  `prev` are parked in `version.h` for it and have no callers today.
+- **`ProtocolVersion::UNKNOWN` is the sentinel, not `std::optional`.** It matches Velocity's
+  `getProtocolVersion(int)`, and it composes: an unknown version matches no fold arm, so the table
+  comes back empty and every `get(id)` is null without a presence check at any call site.
+- **Ids 200-299 are skipped** as the vendor extension range, off `MinecraftPacketIds`' own
+  `TITLE_SPECIFIC_PACKETS_START` / `_END` sentinels rather than literals.
+
+One known hole: `is_same_v` over-approximates. The compiler can materialise a snapshot whose
+serializer is byte-identical to the previous one, giving two C++ types that encode the same wire —
+`LevelSoundEventPacket` (123) is the live case, since it stopped carrying the `LevelSoundEvent` enum
+at 1001 and a name-coded string cannot be perturbed by enumerators added at 2168. That belongs in
+bedrock-protocol, which should alias rather than re-emit an identical snapshot, not in a
+`wire_equal_v` workaround here.
 
 ## Transformers
 
@@ -146,6 +211,11 @@ channel above has no bearing on it yet, which is what the last rule here is abou
 | `connection/manager.h` `ConnectionManager` | `ConnectionManager` + `ConnectionManagerImpl` |
 | `plugin.{h,cpp}`, `listener.{h,cpp}` | platform module (plugin main + netty decode/encode handlers) |
 | `protocol/transform.h` `Transformer` | `ValueTransformer` |
+| `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |
+| `protocol/handler.h` `PacketHandlers` | `PacketHandlers` by name, Velocity `ProtocolRegistry` by behaviour |
+| `protocol/handler.h` `getPacketHandlers` | Velocity `StateRegistry.PacketRegistry#getProtocolRegistry` |
+| `protocol/version.h` `ProtocolVersion` | `ProtocolVersion` |
+| `protocol/version.h` `ProtocolVersions` | Velocity `ProtocolVersion#SUPPORTED_VERSIONS` / `#getProtocolVersion(int)` |
 
 ## Building
 
@@ -163,6 +233,10 @@ There is no test suite. `CMakeLists.txt` still guards `tests/` behind `ENDWEAVE_
 nothing defines that option and `tests/CMakeLists.txt` is empty: bedrock-protocol's own goldens
 cover the codec, and a transform is exercised by the packets that run through it.
 
+A green build is not yet evidence that the handlers compile, because no source file includes
+`handler.h`. The gate only fires once a translation unit reaches it — which the listener will do
+when it starts calling `getPacketHandlers`, and which a one-line `#include` would do sooner.
+
 ## Code Style
 
 - C++23, clang-format (see `.clang-format`). Classes/enums `CamelCase`, methods `camelBack`,
@@ -177,7 +251,10 @@ cover the codec, and a transform is exercised by the packets that run through it
   members. Comments already in the tree that a human wrote stay.
 - Include `<protocol/network.h>` and friends rather than the `<bedrock/protocol.hpp>` umbrella when
   only one module is needed. The umbrella's `protocol/game.h` has an enumerator named `VOID` that
-  clashes with `winnt.h` once `<endstone/endstone.hpp>` has pulled in `windows.h`.
+  clashes with `winnt.h` once `<endstone/endstone.hpp>` has pulled in `windows.h`. `handler.h` is
+  the exception and must take the umbrella: `bpc` compiles one module at a time, so a lone module
+  include leaves every other module's packets reading as unmodelled. Keep `handler.h` out of any
+  translation unit that also includes `<endstone/endstone.hpp>`, or that clash lands on Windows.
 - `namespace bp = bedrock::protocol;`, declared after the includes and above `namespace endweave`.
   Generated types are spelled through it, so a versioned one reads `bp::v1001::Foo`. `namespace ew =
   endweave;` follows the same placement, but only in the `.cpp` that calls through it — an alias for
