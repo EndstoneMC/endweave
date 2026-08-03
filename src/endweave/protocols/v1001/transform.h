@@ -12,48 +12,48 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::v1001::SerializedNetworkItemStackDescriptor> {
-    static bp::v2168::SerializedNetworkItemStackDescriptor transform(
+    static bp::v2168::SerializedNetworkItemStackDescriptor upgrade(
         bp::v1001::SerializedNetworkItemStackDescriptor &&from);
 };
 
 template <>
 struct Transformer<bp::v1001::InventoryContentPacket> {
-    static bp::v2168::InventoryContentPacket transform(bp::v1001::InventoryContentPacket &&from);
+    static bp::v2168::InventoryContentPacket upgrade(bp::v1001::InventoryContentPacket &&from);
 };
 
 template <>
 struct Transformer<bp::ExperimentData> {
-    static bp::ExperimentToggle transform(bp::ExperimentData &&from);
+    static bp::ExperimentToggle upgrade(bp::ExperimentData &&from);
 };
 
 template <>
 struct Transformer<bp::v1001::LevelSettings> {
-    static bp::v2168::LevelSettings transform(bp::v1001::LevelSettings &&from);
+    static bp::v2168::LevelSettings upgrade(bp::v1001::LevelSettings &&from);
 };
 
 template <>
 struct Transformer<bp::BlockEntry> {
-    static bp::v2168::ServerBlockProperty transform(bp::BlockEntry &&from);
+    static bp::v2168::ServerBlockProperty upgrade(bp::BlockEntry &&from);
 };
 
 template <>
 struct Transformer<bp::v1001::PresenceConfiguration> {
-    static bp::v2168::PresenceConfiguration transform(bp::v1001::PresenceConfiguration &&from);
+    static bp::v2168::PresenceConfiguration upgrade(bp::v1001::PresenceConfiguration &&from);
 };
 
 template <>
 struct Transformer<bp::v1001::GatheringsConfigurationJoinInfo> {
-    static bp::v2168::GatheringsConfigurationJoinInfo transform(bp::v1001::GatheringsConfigurationJoinInfo &&from);
+    static bp::v2168::GatheringsConfigurationJoinInfo upgrade(bp::v1001::GatheringsConfigurationJoinInfo &&from);
 };
 
 template <>
 struct Transformer<bp::v1001::ServerConfigurationJoinInfo> {
-    static bp::v2168::ServerConfigurationJoinInfo transform(bp::v1001::ServerConfigurationJoinInfo &&from);
+    static bp::v2168::ServerConfigurationJoinInfo upgrade(bp::v1001::ServerConfigurationJoinInfo &&from);
 };
 
 template <>
 struct Transformer<bp::v1001::StartGamePacket> {
-    static bp::v2168::StartGamePacket transform(bp::v1001::StartGamePacket &&from);
+    static bp::v2168::StartGamePacket upgrade(bp::v1001::StartGamePacket &&from);
 };
 
 } // namespace endweave

@@ -12,14 +12,15 @@ translation semantics.
 
 ## Current state
 
-The translation layer has been removed. What is left is the platform binding: the plugin main, the
-packet listener, and the address-keyed connection table. Nothing is translated, and no protocol,
-pipeline, or version node exists. Rebuilding the translation layer is the work, and the
-`Transformer` specializations for `SerializedNetworkItemStackDescriptor` are its first piece.
+The platform binding is in place: the plugin main, the packet listener, and the address-keyed
+connection table. On top of it sit the `Transformer` specializations, which convert a decoded
+struct of one era into the next era's. `InventoryContentPacket` and `StartGamePacket` translate
+both ways between 1001 and 2168, along with every type they reach.
 
-`UserConnection` still carries the type-keyed store that stateful handlers key into, and the
-listener still keeps the connection table warm and evicts on disconnect and quit, so the table is
-live for translation to hang off.
+Nothing is wired up yet. No protocol, pipeline, or version node exists, so no packet on the wire
+reaches a transform — building that is the work. `UserConnection` still carries the type-keyed
+store that stateful handlers key into, and the listener still keeps the connection table warm and
+evicts on disconnect and quit, so the table is live for it to hang off.
 
 ## The prime directive: endweave is an exact port of ViaVersion
 
@@ -83,14 +84,22 @@ These are directives, not descriptions of code that exists today.
 
 `Transformer` is the analogue of ViaVersion's `ValueTransformer`, in the shape of `std::formatter`:
 a trait declared undefined in `protocol/transform.h` and specialized per type that changes shape.
+That header also holds the `ew::upgrade` / `ew::downgrade` call surface and the `std::optional` /
+`std::vector` specializations. A transform returns its result outright — the `std::unexpected`
+channel above has no bearing on it yet, which is what the last rule here is about.
 
-- **Keyed on the source type, and the target falls out of the return type.**
-  `Transformer<v1001::Foo>::transform` returns a `v2168::Foo`, so the call site names only what it
-  has. A type that did not change between two eras is one C++ type in both namespaces and needs no
-  specialization.
+- **Keyed on the source type, with one method per direction.**
+  `Transformer<v1001::Foo>::upgrade` returns a `v2168::Foo` and `::downgrade` returns the previous
+  era's, so the call site names only what it has. Two methods rather than a second template
+  parameter is what keeps the key unique once a third era exists: `v1001::Foo` has exactly one
+  specialization holding both hops, and adding an era below it adds a method rather than a
+  competing key. A type that did not change between two eras is one C++ type in both namespaces and
+  needs no specialization.
 - **One file per source version,** `protocols/<version>/transform.{h,cpp}`, holding every
-  specialization whose source type belongs to that version. `protocols/v1001/transform.h` converts
-  a v1001 struct into its v2168 counterpart, and `protocols/v2168/transform.h` the way back.
+  specialization whose source type belongs to that version — both of its directions, in the same
+  struct. v1001 and v2168 are currently the outermost eras modelled, so v1001 declares only
+  `upgrade` and v2168 only `downgrade`; a missing direction is a "no member named" error rather
+  than a wrong conversion.
 - **The specialization is declared in the header, the body defined in the sibling `.cpp`,** which is
   listed in `endstone_add_plugin`. An out-of-line body rules out a deduced return type, so the
   declaration spells the returned struct outright. No trailing return types.
@@ -101,13 +110,13 @@ a trait declared undefined in `protocol/transform.h` and specialized per type th
   carries logic, and it reads as the odd one out against the plain assignments around it.
 - **A packet delegates to the `Transformer` of each changed field's type,** moving into it. The
   arithmetic of a changed field lives in that field's transform, never restated at the packet.
-- **Call through `ew::transform`,** which deduces the source type off the argument and does the cast
-  to `&&` itself, so a field reads `to.slots = ew::transform(from.slots);` — no versioned type and no
-  `std::move` at the call site. It always consumes what it is handed, so never pass it something the
-  rest of the body still reads. Qualifying is not optional: inside a `Transformer<...>::transform`
-  body the unqualified name finds the member, lookup stops at class scope, and the free function is
-  never a candidate.
-- **`std::optional` and `std::vector` are already specialized** in `protocol/transform.h`. They
+- **Call through `ew::upgrade` and `ew::downgrade`,** which deduce the source type off the argument
+  and do the cast to `&&` themselves, so a field reads `to.slots = ew::upgrade(from.slots);` — no
+  versioned type and no `std::move` at the call site. They always consume what they are handed, so
+  never pass one something the rest of the body still reads. Qualifying is not optional: inside a
+  `Transformer<...>::upgrade` body the unqualified name finds the member, lookup stops at class
+  scope, and the free function is never a candidate.
+- **`std::optional` and `std::vector` are already specialized,** each carrying both directions. They
   unwrap, delegate to the element's `Transformer`, and take their target from its return type, so
   they compose (`optional<vector<T>>`) and a field never spells a loop or a `has_value()` guard.
   An element with no `Transformer` is a compile error, which is what keeps a missing include from
@@ -116,6 +125,18 @@ a trait declared undefined in `protocol/transform.h` and specialized per type th
   one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
   `ItemStackLegacyRequestId`), and v2168's transform reads the case back from sign and parity. The
   pair round-trips.
+- **Establish what changed by static-asserting `is_same_v` on every field pair,** not by reading the
+  two structs side by side. Of `StartGamePacket`'s 26 fields only four move, and one of them,
+  `ServerConfigurationJoinInfo`, is versioned in a module the packet's own namespace gives no sign
+  of. `LevelSettings` changes 2 of 49.
+- **A field can migrate into a nested type rather than be renamed.** v1001's loose
+  `experiments_previously_toggled` is v2168's `experiments.experiments_ever_toggled`, so a name that
+  vanishes from the top level is worth hunting for one level down before treating it as dropped.
+- **A field with no source is invented, and says so.** Downgrading writes `is_chat_logging = false`,
+  and `value_or({})` where 2168 made a field optional that 1001 required, so an absent world id
+  becomes a null UUID. `PresenceConfiguration`'s `experience_name` and `world_name` are simply gone
+  at 2168 and come back `std::nullopt`. Each of these is a candidate to refuse the downgrade once
+  there is an error channel; none should be quietly widened into looking faithful.
 
 ## Correspondence map
 
@@ -138,7 +159,9 @@ cmake --build build
 
 The plugin lands at `build/endstone_endweave.so`. Drop it in the server's `plugins/`.
 
-`ENDWEAVE_BUILD_TESTS` defaults to `ON` for a top-level build and pulls in `tests/`.
+There is no test suite. `CMakeLists.txt` still guards `tests/` behind `ENDWEAVE_BUILD_TESTS`, but
+nothing defines that option and `tests/CMakeLists.txt` is empty: bedrock-protocol's own goldens
+cover the codec, and a transform is exercised by the packets that run through it.
 
 ## Code Style
 

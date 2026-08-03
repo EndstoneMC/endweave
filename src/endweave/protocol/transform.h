@@ -12,18 +12,33 @@ template <class T>
 struct Transformer;
 
 template <class T>
-auto transform(T &&from)
+auto upgrade(T &&from)
 {
-    return Transformer<std::remove_cvref_t<T>>::transform(std::move(from));
+    return Transformer<std::remove_cvref_t<T>>::upgrade(std::move(from));
+}
+
+template <class T>
+auto downgrade(T &&from)
+{
+    return Transformer<std::remove_cvref_t<T>>::downgrade(std::move(from));
 }
 
 template <class T>
 struct Transformer<std::optional<T>> {
-    static auto transform(std::optional<T> &&from)
+    static auto upgrade(std::optional<T> &&from)
     {
-        std::optional<decltype(endweave::transform(std::declval<T>()))> to;
+        std::optional<decltype(endweave::upgrade(std::declval<T>()))> to;
         if (from.has_value()) {
-            to = endweave::transform(from.value());
+            to = endweave::upgrade(from.value());
+        }
+        return to;
+    }
+
+    static auto downgrade(std::optional<T> &&from)
+    {
+        std::optional<decltype(endweave::downgrade(std::declval<T>()))> to;
+        if (from.has_value()) {
+            to = endweave::downgrade(from.value());
         }
         return to;
     }
@@ -31,12 +46,22 @@ struct Transformer<std::optional<T>> {
 
 template <class T>
 struct Transformer<std::vector<T>> {
-    static auto transform(std::vector<T> &&from)
+    static auto upgrade(std::vector<T> &&from)
     {
-        std::vector<decltype(endweave::transform(std::declval<T>()))> to;
+        std::vector<decltype(endweave::upgrade(std::declval<T>()))> to;
         to.reserve(from.size());
         for (auto &item : from) {
-            to.push_back(endweave::transform(item));
+            to.push_back(endweave::upgrade(item));
+        }
+        return to;
+    }
+
+    static auto downgrade(std::vector<T> &&from)
+    {
+        std::vector<decltype(endweave::downgrade(std::declval<T>()))> to;
+        to.reserve(from.size());
+        for (auto &item : from) {
+            to.push_back(endweave::downgrade(item));
         }
         return to;
     }

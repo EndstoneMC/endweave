@@ -7,7 +7,7 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::v2168::SerializedNetworkItemStackDescriptor Transformer<bp::v1001::SerializedNetworkItemStackDescriptor>::transform(
+bp::v2168::SerializedNetworkItemStackDescriptor Transformer<bp::v1001::SerializedNetworkItemStackDescriptor>::upgrade(
     bp::v1001::SerializedNetworkItemStackDescriptor &&from)
 {
     bp::v2168::SerializedNetworkItemStackDescriptor to;
@@ -31,18 +31,18 @@ bp::v2168::SerializedNetworkItemStackDescriptor Transformer<bp::v1001::Serialize
     return to;
 }
 
-bp::v2168::InventoryContentPacket Transformer<bp::v1001::InventoryContentPacket>::transform(
+bp::v2168::InventoryContentPacket Transformer<bp::v1001::InventoryContentPacket>::upgrade(
     bp::v1001::InventoryContentPacket &&from)
 {
     bp::v2168::InventoryContentPacket to;
     to.inventory_id = from.inventory_id;
-    to.slots = ew::transform(from.slots);
+    to.slots = ew::upgrade(from.slots);
     to.full_container_name = std::move(from.full_container_name);
-    to.storage_item = ew::transform(from.storage_item);
+    to.storage_item = ew::upgrade(from.storage_item);
     return to;
 }
 
-bp::ExperimentToggle Transformer<bp::ExperimentData>::transform(bp::ExperimentData &&from)
+bp::ExperimentToggle Transformer<bp::ExperimentData>::upgrade(bp::ExperimentData &&from)
 {
     bp::ExperimentToggle to;
     to.name = std::move(from.name);
@@ -50,7 +50,7 @@ bp::ExperimentToggle Transformer<bp::ExperimentData>::transform(bp::ExperimentDa
     return to;
 }
 
-bp::v2168::LevelSettings Transformer<bp::v1001::LevelSettings>::transform(bp::v1001::LevelSettings &&from)
+bp::v2168::LevelSettings Transformer<bp::v1001::LevelSettings>::upgrade(bp::v1001::LevelSettings &&from)
 {
     bp::v2168::LevelSettings to;
     to.seed = static_cast<std::uint64_t>(from.seed);
@@ -78,7 +78,7 @@ bp::v2168::LevelSettings Transformer<bp::v1001::LevelSettings>::transform(bp::v1
     to.commands_enabled = from.commands_enabled;
     to.texture_packs_required = from.texture_packs_required;
     to.rule_data.rules = std::move(from.game_rules);
-    to.experiments.toggles = ew::transform(from.experiments);
+    to.experiments.toggles = ew::upgrade(from.experiments);
     to.experiments.experiments_ever_toggled = from.experiments_previously_toggled;
     to.bonus_chest_enabled = from.bonus_chest_enabled;
     to.start_with_map_enabled = from.start_with_map_enabled;
@@ -107,7 +107,7 @@ bp::v2168::LevelSettings Transformer<bp::v1001::LevelSettings>::transform(bp::v1
     return to;
 }
 
-bp::v2168::ServerBlockProperty Transformer<bp::BlockEntry>::transform(bp::BlockEntry &&from)
+bp::v2168::ServerBlockProperty Transformer<bp::BlockEntry>::upgrade(bp::BlockEntry &&from)
 {
     bp::v2168::ServerBlockProperty to;
     to.block_name = std::move(from.name);
@@ -115,7 +115,7 @@ bp::v2168::ServerBlockProperty Transformer<bp::BlockEntry>::transform(bp::BlockE
     return to;
 }
 
-bp::v2168::PresenceConfiguration Transformer<bp::v1001::PresenceConfiguration>::transform(
+bp::v2168::PresenceConfiguration Transformer<bp::v1001::PresenceConfiguration>::upgrade(
     bp::v1001::PresenceConfiguration &&from)
 {
     bp::v2168::PresenceConfiguration to;
@@ -123,7 +123,7 @@ bp::v2168::PresenceConfiguration Transformer<bp::v1001::PresenceConfiguration>::
     return to;
 }
 
-bp::v2168::GatheringsConfigurationJoinInfo Transformer<bp::v1001::GatheringsConfigurationJoinInfo>::transform(
+bp::v2168::GatheringsConfigurationJoinInfo Transformer<bp::v1001::GatheringsConfigurationJoinInfo>::upgrade(
     bp::v1001::GatheringsConfigurationJoinInfo &&from)
 {
     bp::v2168::GatheringsConfigurationJoinInfo to;
@@ -138,17 +138,17 @@ bp::v2168::GatheringsConfigurationJoinInfo Transformer<bp::v1001::GatheringsConf
     return to;
 }
 
-bp::v2168::ServerConfigurationJoinInfo Transformer<bp::v1001::ServerConfigurationJoinInfo>::transform(
+bp::v2168::ServerConfigurationJoinInfo Transformer<bp::v1001::ServerConfigurationJoinInfo>::upgrade(
     bp::v1001::ServerConfigurationJoinInfo &&from)
 {
     bp::v2168::ServerConfigurationJoinInfo to;
-    to.gatherings_configuration_join_info = ew::transform(from.gatherings_configuration_join_info);
+    to.gatherings_configuration_join_info = ew::upgrade(from.gatherings_configuration_join_info);
     to.client_store_entrypoint_configuration = std::move(from.client_store_entrypoint_configuration);
-    to.presence_configuration = ew::transform(from.presence_configuration);
+    to.presence_configuration = ew::upgrade(from.presence_configuration);
     return to;
 }
 
-bp::v2168::StartGamePacket Transformer<bp::v1001::StartGamePacket>::transform(bp::v1001::StartGamePacket &&from)
+bp::v2168::StartGamePacket Transformer<bp::v1001::StartGamePacket>::upgrade(bp::v1001::StartGamePacket &&from)
 {
     bp::v2168::StartGamePacket to;
     to.entity_id = from.entity_id;
@@ -156,7 +156,7 @@ bp::v2168::StartGamePacket Transformer<bp::v1001::StartGamePacket>::transform(bp
     to.entity_game_type = from.entity_game_type;
     to.pos = from.pos;
     to.rot = from.rot;
-    to.settings = ew::transform(from.settings);
+    to.settings = ew::upgrade(from.settings);
     to.level_id = std::move(from.level_id);
     to.level_name = std::move(from.level_name);
     to.template_content_identity = std::move(from.template_content_identity);
@@ -164,7 +164,7 @@ bp::v2168::StartGamePacket Transformer<bp::v1001::StartGamePacket>::transform(bp
     to.movement_settings = from.movement_settings;
     to.level_current_time = static_cast<std::uint64_t>(from.level_current_time);
     to.enchantment_seed = from.enchantment_seed;
-    to.block_properties = ew::transform(from.block_properties);
+    to.block_properties = ew::upgrade(from.block_properties);
     to.multiplayer_correlation_id = std::move(from.multiplayer_correlation_id);
     to.enable_item_stack_net_manager = from.enable_item_stack_net_manager;
     to.server_version = std::move(from.server_version);
@@ -174,7 +174,7 @@ bp::v2168::StartGamePacket Transformer<bp::v1001::StartGamePacket>::transform(bp
     to.server_enabled_client_side_generation = from.server_enabled_client_side_generation;
     to.block_network_ids_are_hashes = from.block_network_ids_are_hashes;
     to.network_permissions = from.network_permissions;
-    to.server_configuration_join_info = ew::transform(from.server_configuration_join_info);
+    to.server_configuration_join_info = ew::upgrade(from.server_configuration_join_info);
     to.server_telemetry_data = std::move(from.server_telemetry_data);
     return to;
 }
