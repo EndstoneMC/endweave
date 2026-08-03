@@ -45,10 +45,13 @@ public:
     void onDisconnect(const endstone::SocketAddress &address);
 
     /**
-     * Drops connections that have carried no packet for a while.
+     * Drops connections that never got through the handshake and have gone silent. One past it is
+     * dropped by onDisconnect or onPlayerQuit instead, and is never swept: an established
+     * connection may go a long time without a packet any protocol registered a handler for.
      *
-     * @param idle_timeout How long a connection may stay silent before it is dropped.
-     * @note endweave-specific: ViaVersion evicts on the netty channel-close future.
+     * @param idle_timeout How long such a connection may stay silent before it is dropped.
+     * @note endweave-specific: ViaVersion evicts on the netty channel-close future and sweeps
+     * nothing.
      */
     void sweep(std::chrono::seconds idle_timeout);
 

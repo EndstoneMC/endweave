@@ -57,3 +57,16 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Cl
     endforeach ()
     target_link_options(${PROJECT_NAME} PRIVATE "-Wl,--exclude-libs,ALL")
 endif ()
+
+# Its own switch rather than BUILD_TESTING, which bedrock-protocol has already claimed by the time
+# this runs.
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    option(ENDWEAVE_BUILD_TESTS "Build the test suite" ON)
+else ()
+    option(ENDWEAVE_BUILD_TESTS "Build the test suite" OFF)
+endif ()
+
+if (ENDWEAVE_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif ()

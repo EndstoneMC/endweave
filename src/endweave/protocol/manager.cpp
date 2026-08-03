@@ -52,6 +52,7 @@ void ProtocolManager::registerProtocol(std::unique_ptr<AbstractProtocol> protoco
     nodes_[version].protocol = protocol.get();
     owned_.push_back(std::move(protocol));
     path_cache_.clear();
+    refreshInteresting();
 }
 
 void ProtocolManager::registerBaseProtocol(std::unique_ptr<AbstractProtocol> base_protocol)
@@ -62,6 +63,27 @@ void ProtocolManager::registerBaseProtocol(std::unique_ptr<AbstractProtocol> bas
     base_protocol->initialize();
     base_protocols_.push_back(base_protocol.get());
     owned_base_.push_back(std::move(base_protocol));
+    refreshInteresting();
+}
+
+void ProtocolManager::refreshInteresting()
+{
+    // Slot 0 is Serverbound and Upgrade, slot 1 Clientbound and Downgrade, so both axes are covered.
+    const auto mark = [this](const AbstractProtocol &protocol) {
+        for (int packet_id = 0; packet_id < kPacketIdCount; ++packet_id) {
+            if (protocol.hasMapping(0, packet_id) || protocol.hasMapping(1, packet_id)) {
+                interesting_.set(static_cast<std::size_t>(packet_id));
+            }
+        }
+    };
+
+    interesting_.reset();
+    for (const AbstractProtocol *protocol : base_protocols_) {
+        mark(*protocol);
+    }
+    for (const auto &[version, node] : nodes_) {
+        mark(*node.protocol);
+    }
 }
 
 void ProtocolManager::registerProtocols()

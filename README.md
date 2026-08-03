@@ -11,8 +11,10 @@ between versions.
 
 **No packets are translated across versions yet.** The framework below — the version graph, the
 pipeline, the base protocol — is in place, and the base protocol decodes the handshake, but no
-per-version converters are registered, so every packet crosses a version step untouched. A
-version step's converters live in its node's `registerPackets()` (see *Adding a version*).
+per-version converters are written, so every packet crosses a version step untouched. What has
+changed is that the gaps are no longer invisible: a node must now account for every packet its
+edge reshapes, and the build fails naming any it does not (see *Coverage is checked by the
+compiler*).
 
 ## Design
 
@@ -66,9 +68,44 @@ a `std::error_code`.
 `ProtocolPipeline` decodes once and encodes once. A `PacketHolder` carries the body undecoded
 until the first stage that handles the id asks for it as a type; later stages receive the struct
 the previous one left behind, and the body is written back out only if some stage decoded it, so
-a packet of no interest is forwarded byte for byte. A step that reshapes a packet and registers
-no converter is caught at runtime rather than silently re-encoded, and so is a body the schema
-does not fully read.
+a packet of no interest is forwarded byte for byte. A body the schema does not fully read is
+caught rather than silently re-encoded truncated.
+
+### Coverage is checked by the compiler
+
+In ViaVersion "no remapper" genuinely means "no difference", because a remapper is the only place
+a difference can be written down. Here the codec knows the shapes independently, so a reshaped
+packet nobody converted would be forwarded silently, indistinguishable from one that never
+changed. A node therefore *declares* what it covers, and the compiler checks the declaration:
+
+```cpp
+template <>
+class Protocol<ProtocolVersion::v26_30> final
+    : public VersionNode<ProtocolVersion::v26_30, Protocol<ProtocolVersion::v26_30>> {
+    using Ids = bedrock::protocol::MinecraftPacketIds;
+
+    using Reshaped = Mappings<&upgradeFoo, unconverted<Ids::START_GAME, Ids::BOSS_EVENT>>;
+
+public:
+    using Upgrades   = Reshaped;
+    using Downgrades = Reshaped::And<cancel<Ids::CLIENTBOUND_UPDATE_SOUND_DATA>>;
+};
+```
+
+An entry is a converter (whose id follows from `In::Id`), `cancel<Ids...>` for packets the other
+version cannot carry, or `unconverted<Ids...>` to forward them as they arrived and admit it. A
+reshape needs covering both ways, so both steps start from one list and `And<...>` adds whatever
+is asymmetric. `VersionNode` pairs `Registry<prev>::types` against `Registry<cur>::types` by id and
+demands a declaration wherever `std::is_same_v` fails or a packet exists on only one side, then
+fills the handler tables from the same lists so the two cannot drift. A gap looks like this:
+
+```
+error: implicit instantiation of undefined template
+  'endweave::MissingDowngradeConverterFor<bedrock::protocol::v1001::LevelSoundEventPacket>'
+```
+
+`unconverted<Ids...>` is not a loophole. It is the greppable admission the compiler forces someone
+to write, and turning one into a converter is exactly what the translation work is.
 
 **Dropped as Java-Edition-specific:** the `State` machine (Bedrock has one flat id space), the
 per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable and never
@@ -100,11 +137,13 @@ protocol sits at the head of both and is never reversed.
 
 ### Adding a version
 
-1. Add `src/endweave/protocols/vN/protocol.h` declaring `Protocol<ProtocolVersion::VN>`.
-2. Add `protocol.cpp` with the converters and a `registerPackets()` that registers them.
+1. Add the enumerator to `ProtocolVersion` and append it to `kProtocolVersions`, in ascending order.
+2. Add `src/endweave/protocols/vN/protocol.h` declaring `Protocol<ProtocolVersion::VN>` over
+   `VersionNode`, with empty `Upgrades` and `Downgrades`.
 3. Append one `registerProtocol<ProtocolVersion::VN>()` line to `registerProtocols()`.
-
-No existing file is reopened.
+4. Build. Every packet the new edge reshapes is now a named compile error. Work through them,
+   adding a converter, a `cancel<Id>`, or an `unconverted<Id>` for each. Converters go in a
+   sibling `protocol.cpp`.
 
 ## Layout
 
@@ -115,6 +154,7 @@ No existing file is reopened.
 | `src/endweave/protocols/` | one directory per node, plus `base/` for `InitialBaseProtocol` |
 | `src/endweave/plugin.{h,cpp}` | the Endstone plugin, owning the registry and the connection table |
 | `src/endweave/listener.{h,cpp}` | the packet events |
+| `tests/` | Catch2 tests, plus a fixture under `negative/` that must *not* compile |
 
 ## Building
 
@@ -128,3 +168,7 @@ cmake --build build
 ```
 
 The plugin lands at `build/endstone_endweave.so`. Drop it in the server's `plugins/`.
+
+```shell
+ctest --test-dir build --output-on-failure
+```

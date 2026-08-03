@@ -19,9 +19,13 @@ public:
     /**
      * Constructs the listener.
      *
+     * @param protocols The registry, which must outlive this listener.
      * @param connections The connection table, which must outlive this listener.
      */
-    explicit PacketListener(ConnectionManager &connections) : connections_(&connections) {}
+    PacketListener(ProtocolManager &protocols, ConnectionManager &connections)
+        : protocols_(&protocols), connections_(&connections)
+    {
+    }
 
     /**
      * Translates a packet arriving from a client into the server's version.
@@ -47,8 +51,12 @@ public:
 private:
     // One template serves PacketReceiveEvent and PacketSendEvent, which share no base.
     template <class Event>
-    void translate(Direction direction, Event &event);
+    void handle(Direction direction, Event &event);
 
+    template <class Event>
+    void translate(Direction direction, Event &event, const endstone::SocketAddress &address);
+
+    ProtocolManager *protocols_;
     ConnectionManager *connections_;
 };
 

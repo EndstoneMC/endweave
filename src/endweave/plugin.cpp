@@ -26,7 +26,7 @@ void Plugin::onEnable()
     protocol_manager_.refreshVersions(server_protocol_version);
 
     connections_ = std::make_unique<ConnectionManager>(protocol_manager_, getLogger(), server_protocol_version);
-    listener_ = std::make_unique<PacketListener>(*connections_);
+    listener_ = std::make_unique<PacketListener>(protocol_manager_, *connections_);
     registerEvent(&PacketListener::onPacketReceive, *listener_, endstone::EventPriority::Lowest,
                   /*ignore_cancelled=*/true);
     registerEvent(&PacketListener::onPacketSend, *listener_, endstone::EventPriority::Highest,

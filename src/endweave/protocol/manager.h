@@ -3,6 +3,7 @@
 #include "endweave/protocol/path.h"
 #include "endweave/protocol/protocol.h"
 
+#include <bitset>
 #include <map>
 #include <memory>
 #include <optional>
@@ -101,6 +102,17 @@ public:
         return max_protocol_path_size_;
     }
 
+    /**
+     * @param packet_id The packet id.
+     * @return true if any registered protocol has a handler for it, at any version.
+     * @note endweave-specific. ViaVersion reaches a mapping table only once it holds a connection
+     * and its pipeline, so it has nothing to ask before that.
+     */
+    [[nodiscard]] bool isInteresting(int packet_id) const
+    {
+        return packet_id >= 0 && packet_id < kPacketIdCount && interesting_.test(static_cast<std::size_t>(packet_id));
+    }
+
 private:
     /** One direction of an edge: where it leads, and which table serves it. */
     struct Edge {
@@ -118,6 +130,8 @@ private:
     void registerProtocol(std::unique_ptr<AbstractProtocol> protocol);
     /** @see ViaVersion ProtocolManagerImpl#calculateProtocolPath. */
     [[nodiscard]] std::optional<ProtocolPath> calculateProtocolPath(int from, int to) const;
+    /** @note endweave-specific, alongside isInteresting. */
+    void refreshInteresting();
 
     // ViaVersion owns nodes via its `protocols` map. endweave owns them by unique_ptr.
     std::vector<std::unique_ptr<AbstractProtocol>> owned_;
@@ -127,6 +141,8 @@ private:
     std::unordered_map<ProtocolPathKey, std::optional<ProtocolPath>, ProtocolPathKeyHash> path_cache_; // ViaVersion: pathCache
     std::set<int> supported_versions_; // ViaVersion: supportedVersions
     int max_protocol_path_size_ = 50;  // ViaVersion: maxProtocolPathSize
+    // endweave-specific: the union of every registered protocol's tables, for isInteresting.
+    std::bitset<kPacketIdCount> interesting_;
 };
 
 } // namespace endweave

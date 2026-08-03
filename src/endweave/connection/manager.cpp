@@ -33,8 +33,8 @@ void ConnectionManager::onDisconnect(const endstone::SocketAddress &address)
 void ConnectionManager::sweep(std::chrono::seconds idle_timeout)
 {
     const auto deadline = std::chrono::steady_clock::now() - idle_timeout;
-    std::erase_if(connections_, [deadline](const auto &entry) {
-        return entry.second.getLastSeen() < deadline;
+    std::erase_if(connections_, [deadline](auto &entry) {
+        return entry.second.getProtocolInfo().getProtocolVersion() == 0 && entry.second.getLastSeen() < deadline;
     });
 }
 

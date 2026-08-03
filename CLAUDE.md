@@ -115,8 +115,8 @@ stage decoded it. A packet no stage handles is forwarded byte for byte and never
 Two invariants hold the model up:
 
 - A step whose two versions share a packet's shape needs no converter, because `Packet_<975>` and
-  `Packet_<1001>` are then the same C++ type. A step that reshapes one and registers no converter
-  is `PacketError::NoConverter` at runtime.
+  `Packet_<1001>` are then the same C++ type. A step that reshapes one and covers it nowhere is a
+  **compile error**, not a runtime surprise. See "Coverage is checked at compile time" below.
 - A body that decodes but leaves bytes unread is `PacketError::TrailingBytes`, so a schema that
   has drifted from the wire fails loudly instead of re-encoding a truncated packet.
 
@@ -129,8 +129,44 @@ through.
 **Packet ids come from bedrock-protocol.** `bp::MinecraftPacketIds` is the generated mirror of
 BDS's enum, and endweave keeps no list of its own.
 
-**Only the base protocol translates so far.** A version node registers no converters, so
-`registerPackets()` is empty and every packet crosses a version step untouched.
+### Coverage is checked at compile time
+
+In ViaVersion "no remapper" genuinely means "no difference", because a remapper is the only place
+a difference can be written down. Here the codec knows the shapes independently, so a reshaped
+packet nobody converted would be forwarded silently. A node therefore *declares* its coverage as
+`using Upgrades` / `using Downgrades`, both optional, and `VersionNode` reads it back. The README
+shows the shape.
+
+- An entry is a converter (id from `In::Id`, never written twice), `cancel<Ids...>`, or
+  `unconverted<Ids...>`. `Mappings<...>::And<...>` extends a list, since a reshape needs covering
+  both ways and only the asymmetric packets differ between the two steps.
+- `VersionNode::registerPackets()` is `final`. It pairs `bp::Registry<prev>::types` against
+  `bp::Registry<cur>::types` by id and demands a declaration wherever `std::is_same_v` fails or a
+  packet exists on one side only, then fills the tables from the same lists so the two cannot
+  drift. Anything amending an already-covered id goes in an optional `registerExtras()`.
+- A gap instantiates `MissingUpgradeConverterFor<P>` / `MissingDowngradeConverterFor<P>`, declared
+  and never defined, so the build stops and names the packet type.
+
+`unconverted<Ids...>` is not a loophole. It is the greppable admission the compiler forces someone
+to write, and turning one into a converter is exactly what the translation work is.
+
+**Only the base protocol translates so far.** Every entry in `Protocol<v26_30>` is `unconverted`
+or `cancel`, so every packet still crosses the version step untouched.
+
+### Two filters keep the cost off the hot path
+
+Endstone dispatches every packet in both directions to every listener with no subscription
+mechanism, so the listener is the hot path.
+
+- `ProtocolManager::isInteresting(id)` is a `std::bitset<kPacketIdCount>` union of every registered
+  protocol's tables, tested before the connection is looked up, so an id nothing registered costs
+  no `SocketAddress` copy.
+- `ProtocolPipeline::handles(direction, id)` is the same union over one connection's stages, built
+  in `rebuild()`, replacing the scan over every pipe inside `transform()`.
+
+An uninteresting packet therefore never reaches `UserConnection::touch()`, so the idle sweep only
+evicts connections that never got through the handshake. Established ones go on `onDisconnect` or
+`onPlayerQuit`, which is what ViaVersion does with the netty channel-close future.
 
 ## Correspondence map
 
@@ -138,6 +174,8 @@ BDS's enum, and endweave keeps no list of its own.
 | --- | --- |
 | `protocol/protocol.h` `AbstractProtocol` | `Protocol` + `AbstractProtocol` |
 | `protocol/protocol.h` `Protocol<V>` | a ViaVersion `ProtocolXToY` fused with the ViaBackwards `ProtocolYToX` |
+| `protocol/version_node.h` `VersionNode` | *(none, the compile-time coverage check)* |
+| `protocol/version_node.h` `Mappings` / `cancel` / `unconverted` | the `registerX` / `cancelX` calls in `registerPackets()`, declared rather than run |
 | `protocol/manager.h` `ProtocolManager` | `ProtocolManager` + `ProtocolManagerImpl` |
 | `protocol/pipeline.h` `ProtocolPipeline` | `ProtocolPipeline` + `ProtocolPipelineImpl` |
 | `protocol/path.h` `ProtocolPathEntry` | `ProtocolPathEntry` + `ProtocolPathEntryImpl` |
@@ -160,11 +198,15 @@ and `com.viaversion.viabackwards`.
 
 ## Adding a version
 
-1. Add `src/endweave/protocols/vN/protocol.h` declaring `Protocol<ProtocolVersion::VN>`.
-2. Add `protocol.cpp` with the converters and a `registerPackets()` that registers them (once the
-   translation layer exists).
+1. Add the enumerator to `ProtocolVersion` and append it to `kProtocolVersions`, both in
+   `protocol/version.h`, in ascending order.
+2. Add `src/endweave/protocols/vN/protocol.h` declaring `Protocol<ProtocolVersion::VN>` over
+   `VersionNode`, with empty `Upgrades` and `Downgrades`.
 3. Append one `registerProtocol<ProtocolVersion::VN>()` line to `registerProtocols()`, in ascending
-   version order. No existing file is reopened.
+   version order.
+4. Build. Every packet the new edge reshapes is now a named compile error. Work through them,
+   adding a converter, a `cancel<Id>`, or an `unconverted<Id>` for each. Converters go in a sibling
+   `protocol.cpp`.
 
 ## Building
 

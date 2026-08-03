@@ -3,7 +3,10 @@
 #include "endweave/protocol/direction.h"
 #include "endweave/protocol/error.h"
 #include "endweave/protocol/path.h"
+#include "endweave/protocol/protocol.h"
 
+#include <array>
+#include <bitset>
 #include <cstddef>
 #include <expected>
 #include <optional>
@@ -13,7 +16,6 @@
 
 namespace endweave {
 
-class AbstractProtocol;
 class UserConnection;
 
 /**
@@ -77,6 +79,19 @@ public:
     }
 
     /**
+     * @param direction Which way the packet is travelling.
+     * @param packet_id The packet id.
+     * @return true if some stage in that direction has a handler for the id.
+     * @note endweave-specific. ViaVersion asks each protocol in turn inside transform(), which is
+     * the scan this replaces.
+     */
+    [[nodiscard]] bool handles(Direction direction, int packet_id) const
+    {
+        return packet_id >= 0 && packet_id < kPacketIdCount &&
+               handled_[slotOf(direction)].test(static_cast<std::size_t>(packet_id));
+    }
+
+    /**
      * Threads a packet through every stage that handles the given id. The first such stage
      * decodes the body, the rest hand the decoded packet along, and it is written back out
      * once at the end. A packet no stage handles is never decoded.
@@ -104,6 +119,8 @@ private:
     ProtocolPath path_;
     std::vector<Pipe> pipes_;          // ViaVersion: protocolList
     std::vector<Pipe> reversed_pipes_; // ViaVersion: reversedProtocolList
+    // endweave-specific: the union of every stage's mappings, so transform() skips the scan.
+    std::array<std::bitset<kPacketIdCount>, 2> handled_;
     // endweave-specific encode scratch, written once per packet and reused across packets.
     std::string scratch_;
 };

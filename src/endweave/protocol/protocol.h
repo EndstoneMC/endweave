@@ -19,6 +19,13 @@ class ProtocolManager;
 class UserConnection;
 
 /**
+ * How many packet ids a header can carry. BDS packs the id into bits 0-9 of the header varint.
+ *
+ * @note endweave-specific. ViaVersion sizes its mapping tables from each version's packet enum.
+ */
+inline constexpr int kPacketIdCount = 1024;
+
+/**
  * Two packet-id-keyed handler tables plus the transform that runs a packet body through them.
  *
  * A base protocol addresses the tables as a transport Direction, a version node as a Step.
