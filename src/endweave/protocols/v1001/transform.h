@@ -14,4 +14,9 @@ struct Transformer<bp::v1001::SerializedNetworkItemStackDescriptor> {
         bp::v1001::SerializedNetworkItemStackDescriptor &&from);
 };
 
+template <>
+struct Transformer<bp::v1001::InventoryContentPacket> {
+    static bp::v2168::InventoryContentPacket transform(bp::v1001::InventoryContentPacket &&from);
+};
+
 } // namespace endweave

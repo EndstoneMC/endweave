@@ -99,6 +99,9 @@ a trait declared undefined in `protocol/transform.h` and specialized per type th
   so a copy is never silent.
 - **Assign every field explicitly, in declaration order.** Only a field whose shape actually changed
   carries logic, and it reads as the odd one out against the plain assignments around it.
+- **A packet delegates to the `Transformer` of each changed field's type,** moving into it, and
+  reserves a `std::vector` before moving its elements through one by one. The arithmetic of a
+  changed field lives in that field's transform, never restated at the packet.
 - **A projection is written out both ways.** v1001's tagged `ItemStackNetIdVariant` reaches v2168 as
   one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
   `ItemStackLegacyRequestId`), and v2168's transform reads the case back from sign and parity. The

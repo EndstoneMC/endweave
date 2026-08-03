@@ -29,4 +29,20 @@ bp::v2168::SerializedNetworkItemStackDescriptor Transformer<bp::v1001::Serialize
     return to;
 }
 
+bp::v2168::InventoryContentPacket Transformer<bp::v1001::InventoryContentPacket>::transform(
+    bp::v1001::InventoryContentPacket &&from)
+{
+    using Item = Transformer<bp::v1001::SerializedNetworkItemStackDescriptor>;
+
+    bp::v2168::InventoryContentPacket to;
+    to.inventory_id = from.inventory_id;
+    to.slots.reserve(from.slots.size());
+    for (auto &slot : from.slots) {
+        to.slots.push_back(Item::transform(std::move(slot)));
+    }
+    to.full_container_name = std::move(from.full_container_name);
+    to.storage_item = Item::transform(std::move(from.storage_item));
+    return to;
+}
+
 } // namespace endweave
