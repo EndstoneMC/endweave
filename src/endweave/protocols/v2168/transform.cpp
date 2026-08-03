@@ -1,9 +1,11 @@
 #include "endweave/protocols/v2168/transform.h"
 
+#include <utility>
+
 namespace endweave {
 
 bp::v1001::SerializedNetworkItemStackDescriptor Transformer<bp::v2168::SerializedNetworkItemStackDescriptor>::transform(
-    const bp::v2168::SerializedNetworkItemStackDescriptor &from)
+    bp::v2168::SerializedNetworkItemStackDescriptor &&from)
 {
     bp::v1001::SerializedNetworkItemStackDescriptor to;
     to.id = from.id;
@@ -22,7 +24,7 @@ bp::v1001::SerializedNetworkItemStackDescriptor Transformer<bp::v2168::Serialize
         }
     }
     to.block_runtime_id = from.block_runtime_id;
-    to.user_data_buffer = from.user_data_buffer;
+    to.user_data_buffer = std::move(from.user_data_buffer);
     return to;
 }
 

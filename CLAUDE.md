@@ -94,8 +94,11 @@ a trait declared undefined in `protocol/transform.h` and specialized per type th
 - **The specialization is declared in the header, the body defined in the sibling `.cpp`,** which is
   listed in `endstone_add_plugin`. An out-of-line body rules out a deduced return type, so the
   declaration spells the returned struct outright. No trailing return types.
-- **Copy every field explicitly, in declaration order.** Only a field whose shape actually changed
-  carries logic, and it reads as the odd one out against the copies around it.
+- **A transform consumes its source.** It takes an rvalue reference and moves every field that owns
+  storage, since the packet it came from is on its way out. An lvalue caller has to say `std::move`,
+  so a copy is never silent.
+- **Assign every field explicitly, in declaration order.** Only a field whose shape actually changed
+  carries logic, and it reads as the odd one out against the plain assignments around it.
 - **A projection is written out both ways.** v1001's tagged `ItemStackNetIdVariant` reaches v2168 as
   one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
   `ItemStackLegacyRequestId`), and v2168's transform reads the case back from sign and parity. The
