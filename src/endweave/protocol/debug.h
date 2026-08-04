@@ -5,7 +5,6 @@
 #include <cstddef>
 #include <endstone/endstone.hpp>
 #include <format>
-#include <iterator>
 #include <string>
 #include <string_view>
 
@@ -52,20 +51,6 @@ public:
             return;
         }
         logger_->debug("{}: {} {}: {} [{}] {}b", stage, address, direction, packetLabel(id), client_version, size);
-    }
-
-    /** The bytes of one packet, for when a size says a packet is mistranslated but not
-     * how. Called deliberately for the packet under investigation, not for every one. */
-    void logPayload(std::string_view stage, int id, std::string_view payload) const
-    {
-        if (!enabled_) {
-            return;
-        }
-        std::string hex;
-        for (const char byte : payload) {
-            std::format_to(std::back_inserter(hex), "{:02x} ", static_cast<unsigned char>(byte));
-        }
-        logger_->debug("{}: {} {}", stage, packetLabel(id), hex);
     }
 
 private:

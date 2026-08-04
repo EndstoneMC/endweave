@@ -16,20 +16,30 @@ constexpr int kDisconnectPacketId = static_cast<int>(bp::MinecraftPacketIds::DIS
 constexpr int kRequestNetworkSettingsPacketId = static_cast<int>(bp::MinecraftPacketIds::REQUEST_NETWORK_SETTINGS);
 constexpr int kLoginPacketId = static_cast<int>(bp::MinecraftPacketIds::LOGIN);
 constexpr int kPacketViolationWarningPacketId = static_cast<int>(bp::MinecraftPacketIds::PACKET_VIOLATION_WARNING);
-// Under investigation: the client answers every packet up to the pack handshake and then goes
-// silent, so this is the last one it reads. Its bytes go to the log either side of the upgrade.
-constexpr int kTracedPacketId = static_cast<int>(bp::MinecraftPacketIds::START_GAME);
 
-// Held back because nothing models it, so it crosses as the server wrote it: its game rules
-// carry the integer width 2168 stopped using, the same fault that kept StartGame unreadable.
-// Drop it until the packet is modelled, since a wrong one costs the client its connection.
+// Held because nothing models them at 1001, so they cross as the server wrote them. PlayerList
+// carries skins, and 2168 reads a ProfileHash off the end of each one that 1001 never wrote.
+// LevelEventGeneric is reported changed at 2168 and is untested. Drop them until both are
+// modelled: a wrong one costs the client its connection, where a missing one costs a tab list.
 constexpr auto kHeldBack = std::to_array<bp::MinecraftPacketIds>({
-    bp::MinecraftPacketIds::GAME_RULES_CHANGED,
+    bp::MinecraftPacketIds::LEVEL_EVENT_GENERIC,
+    bp::MinecraftPacketIds::PLAYER_LIST,
 });
 
 bool isHeldBack(int id)
 {
     return std::ranges::contains(kHeldBack, static_cast<bp::MinecraftPacketIds>(id));
+}
+
+// Held on the way in, so the server never sees them. The player stops moving, which is the
+// point: if the connection then survives, what breaks it is our reading of these.
+constexpr auto kHeldBackServerbound = std::to_array<bp::MinecraftPacketIds>({
+    bp::MinecraftPacketIds::PLAYER_AUTH_INPUT_PACKET,
+});
+
+bool isHeldBackServerbound(int id)
+{
+    return std::ranges::contains(kHeldBackServerbound, static_cast<bp::MinecraftPacketIds>(id));
 }
 
 // LoginPacket is one type at every version. The violation warning is not -- it names the
@@ -141,12 +151,8 @@ template <class Event>
 void PacketListener::log(std::string_view stage, Event &event, const UserConnection &connection,
                          std::string_view direction) const
 {
-    const int id = event.getPacketId();
-    debug_.logPacket(stage, connection.getAddress().getHostname(), direction, id,
+    debug_.logPacket(stage, connection.getAddress().getHostname(), direction, event.getPacketId(),
                      static_cast<int>(connection.getClientVersion()), event.getPayload().size());
-    if (id == kTracedPacketId) {
-        debug_.logPayload(stage, id, event.getPayload());
-    }
 }
 
 void PacketListener::receive(endstone::PacketReceiveEvent &event, UserConnection &connection)
@@ -202,6 +208,10 @@ void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
         return;
     }
     log("PRE ", event, *connection, "SERVERBOUND");
+    if (isHeldBackServerbound(event.getPacketId())) {
+        event.setCancelled(true);
+        return;
+    }
     receive(event, *connection);
     log("POST", event, *connection, "SERVERBOUND");
 }
