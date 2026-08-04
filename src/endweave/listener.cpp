@@ -1,5 +1,7 @@
 #include "endweave/listener.h"
 
+#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <protocol/network.h>
 #include <string>
@@ -14,8 +16,21 @@ constexpr int kDisconnectPacketId = static_cast<int>(bp::MinecraftPacketIds::DIS
 constexpr int kRequestNetworkSettingsPacketId = static_cast<int>(bp::MinecraftPacketIds::REQUEST_NETWORK_SETTINGS);
 constexpr int kLoginPacketId = static_cast<int>(bp::MinecraftPacketIds::LOGIN);
 constexpr int kPacketViolationWarningPacketId = static_cast<int>(bp::MinecraftPacketIds::PACKET_VIOLATION_WARNING);
-// Under investigation: the upgrade shrinks it, where 2168 should be the longer form.
-constexpr int kFullChunkDataPacketId = static_cast<int>(bp::MinecraftPacketIds::FULL_CHUNK_DATA);
+// Under investigation: the client answers every packet up to the pack handshake and then goes
+// silent, so this is the last one it reads. Its bytes go to the log either side of the upgrade.
+constexpr int kTracedPacketId = static_cast<int>(bp::MinecraftPacketIds::START_GAME);
+
+// Held back because nothing models it, so it crosses as the server wrote it: its game rules
+// carry the integer width 2168 stopped using, the same fault that kept StartGame unreadable.
+// Drop it until the packet is modelled, since a wrong one costs the client its connection.
+constexpr auto kHeldBack = std::to_array<bp::MinecraftPacketIds>({
+    bp::MinecraftPacketIds::GAME_RULES_CHANGED,
+});
+
+bool isHeldBack(int id)
+{
+    return std::ranges::contains(kHeldBack, static_cast<bp::MinecraftPacketIds>(id));
+}
 
 // LoginPacket is one type at every version. The violation warning is not -- it names the
 // offending packet with MinecraftPacketIds, which gained members -- but it is the same
@@ -129,7 +144,7 @@ void PacketListener::log(std::string_view stage, Event &event, const UserConnect
     const int id = event.getPacketId();
     debug_.logPacket(stage, connection.getAddress().getHostname(), direction, id,
                      static_cast<int>(connection.getClientVersion()), event.getPayload().size());
-    if (id == kFullChunkDataPacketId) {
+    if (id == kTracedPacketId) {
         debug_.logPayload(stage, id, event.getPayload());
     }
 }
@@ -198,6 +213,11 @@ void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
         return;
     }
     log("PRE ", event, *connection, "CLIENTBOUND");
+    if (isHeldBack(event.getPacketId())) {
+        logger_->info("HELD: {}", packetLabel(event.getPacketId()));
+        event.setCancelled(true);
+        return;
+    }
     send(event, *connection);
     log("POST", event, *connection, "CLIENTBOUND");
 }

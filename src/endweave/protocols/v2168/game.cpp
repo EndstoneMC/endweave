@@ -17,6 +17,16 @@ bp::ExperimentData Transformer<bp::ExperimentToggle>::downgrade(bp::ExperimentTo
     return to;
 }
 
+bp::GameRule_<1001> Transformer<bp::GameRule_<2168>>::downgrade(bp::GameRule_<2168> &&from)
+{
+    bp::GameRule_<1001> to;
+    to.name = std::move(from.name);
+    to.can_be_modified_by_player = from.can_be_modified_by_player;
+    // ENDWEAVE: the alternatives match either side; only the integer case's wire width moved.
+    to.value = std::move(from.value);
+    return to;
+}
+
 bp::LevelSettings_<1001> Transformer<bp::LevelSettings_<2168>>::downgrade(bp::LevelSettings_<2168> &&from)
 {
     bp::LevelSettings_<1001> to;
@@ -47,7 +57,7 @@ bp::LevelSettings_<1001> Transformer<bp::LevelSettings_<2168>>::downgrade(bp::Le
     to.texture_packs_required = from.texture_packs_required;
     // ENDWEAVE: 1001 carries the rules and the toggles loose, without 2168's rule_data and experiments
     // wrappers. Nothing about the values moved.
-    to.game_rules = std::move(from.rule_data.rules);
+    to.game_rules = ew::downgrade(from.rule_data.rules);
     to.experiments = ew::downgrade(from.experiments.toggles);
     to.experiments_previously_toggled = from.experiments.experiments_ever_toggled;
     to.bonus_chest_enabled = from.bonus_chest_enabled;

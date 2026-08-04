@@ -14,6 +14,11 @@ struct Transformer<bp::ExperimentData> {
 };
 
 template <>
+struct Transformer<bp::GameRule_<1001>> {
+    static bp::GameRule_<2168> upgrade(bp::GameRule_<1001> &&from);
+};
+
+template <>
 struct Transformer<bp::LevelSettings_<1001>> {
     static bp::LevelSettings_<2168> upgrade(bp::LevelSettings_<1001> &&from);
 };

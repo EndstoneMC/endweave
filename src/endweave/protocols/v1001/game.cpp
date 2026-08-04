@@ -17,6 +17,16 @@ bp::ExperimentToggle Transformer<bp::ExperimentData>::upgrade(bp::ExperimentData
     return to;
 }
 
+bp::GameRule_<2168> Transformer<bp::GameRule_<1001>>::upgrade(bp::GameRule_<1001> &&from)
+{
+    bp::GameRule_<2168> to;
+    to.name = std::move(from.name);
+    to.can_be_modified_by_player = from.can_be_modified_by_player;
+    // ENDWEAVE: the alternatives match either side; only the integer case's wire width moved.
+    to.value = std::move(from.value);
+    return to;
+}
+
 bp::LevelSettings_<2168> Transformer<bp::LevelSettings_<1001>>::upgrade(bp::LevelSettings_<1001> &&from)
 {
     bp::LevelSettings_<2168> to;
@@ -47,7 +57,7 @@ bp::LevelSettings_<2168> Transformer<bp::LevelSettings_<1001>>::upgrade(bp::Leve
     to.texture_packs_required = from.texture_packs_required;
     // ENDWEAVE: 2168 only nests these — the rules under rule_data, the toggles and the ever-toggled flag
     // under experiments. Nothing about the values moved.
-    to.rule_data.rules = std::move(from.game_rules);
+    to.rule_data.rules = ew::upgrade(from.game_rules);
     to.experiments.toggles = ew::upgrade(from.experiments);
     to.experiments.experiments_ever_toggled = from.experiments_previously_toggled;
     to.bonus_chest_enabled = from.bonus_chest_enabled;
