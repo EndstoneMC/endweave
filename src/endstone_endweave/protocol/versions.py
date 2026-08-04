@@ -39,9 +39,10 @@ v1_21_130 = ProtocolVersion(898, "1.21.130", frozenset({"1.21.130", "1.21.131", 
 v1_26_0 = ProtocolVersion(924, "1.26.0", frozenset({"1.26.0", "1.26.1", "1.26.2", "1.26.3"}))
 v1_26_10 = ProtocolVersion(944, "1.26.10", frozenset({"1.26.10", "1.26.11", "1.26.12", "1.26.13"}))
 v1_26_20 = ProtocolVersion(975, "1.26.20", frozenset({"1.26.20"}))
+v1_26_30 = ProtocolVersion(1001, "1.26.30", frozenset({"1.26.30", "1.26.31", "1.26.32"}))
 
 VERSIONS: dict[int, ProtocolVersion] = {
-    v.protocol: v for v in [v1_21_120, v1_21_124, v1_21_130, v1_26_0, v1_26_10, v1_26_20]
+    v.protocol: v for v in [v1_21_120, v1_21_124, v1_21_130, v1_26_0, v1_26_10, v1_26_20, v1_26_30]
 }
 
 # Reverse lookup: MC version string -> ProtocolVersion

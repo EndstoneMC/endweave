@@ -34,6 +34,10 @@ class PacketWriter:
         """Write a single unsigned byte (uint8)."""
         self._buf.append(val & 0xFF)
 
+    def write_signed_byte(self, val: int) -> None:
+        """Write a single signed byte (int8); negatives wrap to two's complement."""
+        self._buf.append(val & 0xFF)
+
     def write_bytes(self, data: bytes) -> None:
         """Write raw bytes directly to the buffer."""
         self._buf.extend(data)
@@ -95,10 +99,16 @@ class PacketWriter:
 
     def write_varint(self, val: int) -> None:
         """Write a signed variable-length integer (zigzag encoded)."""
+        val = val & 0xFFFFFFFF
+        if val & 0x80000000:
+            val -= 0x100000000
         self.write_uvarint((val << 1) ^ (val >> 31))
 
     def write_varint64(self, val: int) -> None:
         """Write a signed variable-length long (zigzag encoded, up to 64 bits)."""
+        val = val & 0xFFFFFFFFFFFFFFFF
+        if val & 0x8000000000000000:
+            val -= 0x10000000000000000
         self.write_uvarint64((val << 1) ^ (val >> 63))
 
     def write_uvarint64(self, val: int) -> None:

@@ -53,6 +53,16 @@ class _Byte(Type[int]):
         writer.write_byte(value)
 
 
+class _Int8(Type[int]):
+    """Signed byte (int8); read sign-extends, write masks to two's complement."""
+
+    def read(self, reader: PacketReader) -> int:
+        return reader.read_signed_byte()
+
+    def write(self, writer: PacketWriter, value: int) -> None:
+        writer.write_signed_byte(value)
+
+
 class _Bool(Type[bool]):
     """Boolean (single byte, nonzero = True)."""
 
@@ -121,6 +131,16 @@ class _Int64LE(Type[int]):
 
     def write(self, writer: PacketWriter, value: int) -> None:
         writer.write_int64_le(value)
+
+
+class _UInt64LE(Type[int]):
+    """Unsigned 64-bit little-endian integer."""
+
+    def read(self, reader: PacketReader) -> int:
+        return reader.read_uint64_le()
+
+    def write(self, writer: PacketWriter, value: int) -> None:
+        writer.write_uint64_le(value)
 
 
 class _FloatLE(Type[float]):
@@ -223,6 +243,7 @@ class _RemainingBytes(Type[bytes]):
 
 # Singleton type instances -- use these in handlers
 BYTE = _Byte()
+INT8 = _Int8()
 BOOL = _Bool()
 SHORT_LE = _ShortLE()
 USHORT_LE = _UShortLE()
@@ -230,6 +251,7 @@ INT_LE = _IntLE()
 INT_BE = _IntBE()
 UINT_LE = _UIntLE()
 INT64_LE = _Int64LE()
+UINT64_LE = _UInt64LE()
 FLOAT_LE = _FloatLE()
 DOUBLE_LE = _DoubleLE()
 VAR_INT = _VarInt()

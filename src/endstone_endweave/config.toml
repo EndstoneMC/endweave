@@ -1,6 +1,17 @@
 # Check for new versions on startup
 check-for-updates = true
 
+[gate]
+# Refuse specific client protocol versions at login with a custom kick message, even
+# though endweave has a translation chain for them -- e.g. to hold back a client
+# version you don't want to allow yet. Protocol numbers (examples): 1001 = 1.26.30,
+# 975 = 1.26.20, 944 = 1.26.12. Empty list ( blocked-protocols = [] ) gates nothing.
+blocked-protocols = []
+# Message shown on the refused client's "Connecting" screen. PLAIN TEXT only -- the
+# disconnect screen does NOT render § colour codes (they appear literally); \n line
+# breaks DO work. Edit freely and restart the server to apply.
+block-message = "This client version is not supported on this server yet.\nPlease join with a supported version."
+
 [debug]
 # Enable verbose debug logging for packet translation
 enabled = false

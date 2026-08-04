@@ -7,6 +7,7 @@ from endstone.event import (
     PacketReceiveEvent,
     PacketSendEvent,
     PlayerJoinEvent,
+    PlayerLoginEvent,
     PlayerQuitEvent,
     ServerListPingEvent,
     event_handler,
@@ -30,8 +31,15 @@ from .protocol.v924_to_v898 import create_protocol as create_v924_to_v898
 from .protocol.v924_to_v944 import create_protocol as create_v924_to_v944
 from .protocol.v944_to_v924 import create_protocol as create_v944_to_v924
 from .protocol.v944_to_v975 import create_protocol as create_v944_to_v975
+from .protocol.v975_to_v1001 import create_protocol as create_v975_to_v1001
 from .protocol.versions import VERSIONS
 from .update import UpdateChecker
+
+# Defaults for the login gate, used when config.toml has no [gate] section. By default
+# nothing is gated; configure which client protocols to refuse via [gate] in config.toml.
+# config.toml values override these when present.
+_DEFAULT_BLOCKED_PROTOCOLS = ()
+_DEFAULT_BLOCK_MESSAGE = "This client version is not supported on this server yet."
 
 
 class EndweavePlugin(Plugin):
@@ -73,6 +81,7 @@ class EndweavePlugin(Plugin):
             create_v924_to_v944,
             create_v944_to_v924,
             create_v944_to_v975,
+            create_v975_to_v1001,
         ):
             self._register_protocol(factory())
 
@@ -98,6 +107,17 @@ class EndweavePlugin(Plugin):
             debug,
             data_dir=Path(self.data_folder),
         )
+
+        # Login gate: client protocols refused at login with a custom kick message
+        # (see [gate] in config.toml). The translation chain stays registered; this just
+        # stops a gated version from joining while its translation is finished.
+        gate_cfg: dict[str, object] = self.config.get("gate", {}) or {}  # type: ignore[assignment]
+        blocked = gate_cfg.get("blocked-protocols", list(_DEFAULT_BLOCKED_PROTOCOLS))
+        self._blocked_protocols = {int(p) for p in (blocked or [])}
+        self._block_message = str(gate_cfg.get("block-message") or _DEFAULT_BLOCK_MESSAGE)
+        if self._blocked_protocols:
+            self.logger.info(f"Gating client protocol(s) {sorted(self._blocked_protocols)} at login")
+
         self.register_events(self)
 
         # bStats metrics (https://bstats.org/plugin/bukkit/Endweave/30345)
@@ -124,6 +144,20 @@ class EndweavePlugin(Plugin):
         ver = VERSIONS.get(self._advertised_protocol)
         if ver:
             event.minecraft_version_network = ver.minecraft_version
+
+    @event_handler
+    def on_player_login(self, event: PlayerLoginEvent) -> None:
+        # Refuse gated client versions (e.g. 1.26.30 / v1001) before any chunk data is
+        # streamed. PlayerLoginEvent fires after login auth but before world spawn, so the
+        # client sees our kick message on the "Connecting" screen, not a broken world.
+        if not self._blocked_protocols:
+            return
+        connection = self._connections.get(str(event.player.address))
+        protocol = connection.client_protocol if connection is not None else 0
+        if protocol in self._blocked_protocols:
+            event.kick_message = self._block_message
+            event.cancel()
+            self.logger.info(f"Refused {event.player.name} at login: gated client protocol {protocol}")
 
     @event_handler
     def on_player_join(self, event: PlayerJoinEvent) -> None:
