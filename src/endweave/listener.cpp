@@ -12,6 +12,16 @@ namespace {
 
 constexpr int kDisconnectPacketId = static_cast<int>(bp::MinecraftPacketIds::DISCONNECT);
 constexpr int kRequestNetworkSettingsPacketId = static_cast<int>(bp::MinecraftPacketIds::REQUEST_NETWORK_SETTINGS);
+constexpr int kLoginPacketId = static_cast<int>(bp::MinecraftPacketIds::LOGIN);
+constexpr int kPacketViolationWarningPacketId = static_cast<int>(bp::MinecraftPacketIds::PACKET_VIOLATION_WARNING);
+
+// LoginPacket is one type at every version. The violation warning is not -- it names the
+// offending packet with MinecraftPacketIds, which gained members -- but it is the same
+// shape across the versions this plugin supports, so one decode serves both directions.
+// The assert fails the build if that stops being true, since then it would have to be
+// decoded at the sender's version rather than the latest.
+static_assert(std::is_same_v<bp::PacketViolationWarningPacket_<static_cast<int>(ProtocolVersion::v26_30)>,
+                             bp::PacketViolationWarningPacket_<static_cast<int>(ProtocolVersion::v26_40)>>);
 
 /** The client announces its protocol before anything else on the connection is
  * readable, which is why this packet carries nothing else. */
@@ -36,6 +46,38 @@ std::string announceServerVersion()
     bp::BinaryWriter out{payload};
     bp::serialize(out, packet);
     return payload;
+}
+
+/** Login repeats the protocol version, and the server checks it a second time, so the
+ * handshake rewrite alone is not enough to get a client past the door. */
+std::string rewriteLoginVersion(std::string_view payload)
+{
+    bp::BinaryReader in{payload};
+    auto packet = bp::deserialize<bp::LoginPacket>(in);
+    if (!packet) {
+        return {};
+    }
+    packet->client_network_version = static_cast<std::int32_t>(ProtocolVersions::SERVER_VERSION);
+    std::string rewritten;
+    bp::BinaryWriter out{rewritten};
+    bp::serialize(out, *packet);
+    return rewritten;
+}
+
+/** Whichever side could not parse a packet says so with this, naming the offending id.
+ * It is the only signal that points at a mistranslation rather than at its symptom, so
+ * it is surfaced rather than forwarded silently. */
+void logViolation(endstone::Logger &logger, std::string_view payload, std::string_view reporter)
+{
+    bp::BinaryReader in{payload};
+    const auto packet = bp::deserialize<bp::PacketViolationWarningPacket>(in);
+    if (!packet) {
+        logger.warning("{} reported a packet violation, but the warning itself did not decode.", reporter);
+        return;
+    }
+    logger.warning("{} reported a packet violation: {}/{} on {}, context={:?}", reporter,
+                   bp::enum_name(packet->violation_type), bp::enum_name(packet->violation_severity),
+                   bp::enum_name(packet->violating_packet_id), packet->violation_context);
 }
 
 } // namespace
@@ -101,6 +143,22 @@ void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
         return;
     }
 
+    if (event.getPacketId() == kLoginPacketId && connection->getClientVersion() != ProtocolVersions::SERVER_VERSION) {
+        std::string rewritten = rewriteLoginVersion(event.getPayload());
+        if (rewritten.empty()) {
+            logger_->warning("{} sent a login that did not decode; leaving it untouched.",
+                             connection->getAddress().getHostname());
+            return;
+        }
+        event.setPayload(rewritten);
+        return;
+    }
+
+    if (event.getPacketId() == kPacketViolationWarningPacketId) {
+        logViolation(*logger_, event.getPayload(), "The client");
+        return;
+    }
+
     translate(event, connection->getServerboundHandlers());
 }
 
@@ -110,6 +168,12 @@ void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
     if (connection == nullptr) {
         return;
     }
+
+    if (event.getPacketId() == kPacketViolationWarningPacketId) {
+        logViolation(*logger_, event.getPayload(), "The server");
+        return;
+    }
+
     translate(event, connection->getClientboundHandlers());
 }
 
