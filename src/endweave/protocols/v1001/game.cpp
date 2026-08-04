@@ -107,7 +107,9 @@ bp::StartGamePacket_<2168> Transformer<bp::StartGamePacket_<1001>>::upgrade(bp::
     to.enable_item_stack_net_manager = from.enable_item_stack_net_manager;
     to.server_version = std::move(from.server_version);
     to.player_property_data = std::move(from.player_property_data);
-    to.server_block_type_registry_checksum = from.server_block_type_registry_checksum;
+    // ENDWEAVE: zeroed to skip validation -- the checksum covers the server's block registry
+    // and a client on another version computes a different one, then drops the connection.
+    to.server_block_type_registry_checksum = 0;
     to.world_template_id = from.world_template_id;
     to.server_enabled_client_side_generation = from.server_enabled_client_side_generation;
     to.block_network_ids_are_hashes = from.block_network_ids_are_hashes;
