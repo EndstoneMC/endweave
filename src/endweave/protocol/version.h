@@ -22,6 +22,12 @@ constexpr std::array SUPPORTED_VERSIONS{
     ProtocolVersion::v26_40,
 };
 
+/** The protocol this server speaks. A plugin runs on one BDS build, so it is fixed for
+ * the life of the process; it is spelled here rather than derived because Endstone
+ * reports the Minecraft version as a string and mapping those back would be a second
+ * table to keep in step with SUPPORTED_VERSIONS. */
+constexpr ProtocolVersion SERVER_VERSION = ProtocolVersion::v26_30;
+
 /** @see Velocity ProtocolVersion#getProtocolVersion(int). */
 constexpr ProtocolVersion getProtocolVersion(int protocol_version)
 {

@@ -4,6 +4,7 @@
 #include "endweave/listener.h"
 
 #include <endstone/endstone.hpp>
+#include <optional>
 
 namespace endweave {
 
@@ -15,7 +16,9 @@ public:
 
 private:
     ConnectionManager connections_;
-    PacketListener listener_{connections_};
+    // The loader binds the plugin's logger after construction, so the listener cannot be
+    // built until onEnable.
+    std::optional<PacketListener> listener_;
 };
 
 } // namespace endweave

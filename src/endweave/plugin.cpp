@@ -10,9 +10,10 @@ namespace endweave {
 
 void Plugin::onEnable()
 {
-    registerEvent(&PacketListener::onPacketReceive, listener_);
-    registerEvent(&PacketListener::onPacketSend, listener_);
-    registerEvent(&PacketListener::onPlayerQuit, listener_);
+    PacketListener &listener = listener_.emplace(connections_, getLogger());
+    registerEvent(&PacketListener::onPacketReceive, listener);
+    registerEvent(&PacketListener::onPacketSend, listener);
+    registerEvent(&PacketListener::onPlayerQuit, listener);
 
     getServer().getScheduler().runTaskTimer(
         *this,

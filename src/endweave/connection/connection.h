@@ -1,5 +1,7 @@
 #pragma once
 
+#include "endweave/protocol/handler.h"
+
 #include <any>
 #include <chrono>
 #include <endstone/endstone.hpp>
@@ -23,6 +25,33 @@ public:
     [[nodiscard]] const endstone::SocketAddress &getAddress() const
     {
         return address_;
+    }
+
+    /** @see ViaVersion UserConnection#getProtocolInfo. */
+    [[nodiscard]] ProtocolVersion getClientVersion() const
+    {
+        return client_version_;
+    }
+
+    /** Resolves both handler tables once, when the client announces itself. Everything
+     * after that is an indexed load. */
+    void setClientVersion(ProtocolVersion version)
+    {
+        client_version_ = version;
+        serverbound_ = getPacketHandlers(version, ProtocolVersions::SERVER_VERSION);
+        clientbound_ = getPacketHandlers(ProtocolVersions::SERVER_VERSION, version);
+    }
+
+    /** @see ViaVersion Protocol#cancelServerbound. */
+    [[nodiscard]] const PacketHandlers &getServerboundHandlers() const
+    {
+        return serverbound_;
+    }
+
+    /** @see ViaVersion Protocol#cancelClientbound. */
+    [[nodiscard]] const PacketHandlers &getClientboundHandlers() const
+    {
+        return clientbound_;
     }
 
     /** @see ViaVersion UserConnection#get(Class). */
@@ -66,6 +95,9 @@ public:
 
 private:
     endstone::SocketAddress address_;
+    ProtocolVersion client_version_ = ProtocolVersion::UNKNOWN;
+    PacketHandlers serverbound_;
+    PacketHandlers clientbound_;
     std::unordered_map<std::type_index, std::any> storage_;
     std::chrono::steady_clock::time_point last_seen_;
 };
