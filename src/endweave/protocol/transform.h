@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <optional>
 #include <type_traits>
 #include <utility>
@@ -39,6 +40,27 @@ struct Transformer<std::optional<T>> {
         std::optional<decltype(endweave::downgrade(std::declval<T>()))> to;
         if (from.has_value()) {
             to = endweave::downgrade(from.value());
+        }
+        return to;
+    }
+};
+
+template <class K, class V>
+struct Transformer<std::map<K, V>> {
+    static auto upgrade(std::map<K, V> &&from)
+    {
+        std::map<K, decltype(endweave::upgrade(std::declval<V>()))> to;
+        for (auto &[key, value] : from) {
+            to.emplace(key, endweave::upgrade(value));
+        }
+        return to;
+    }
+
+    static auto downgrade(std::map<K, V> &&from)
+    {
+        std::map<K, decltype(endweave::downgrade(std::declval<V>()))> to;
+        for (auto &[key, value] : from) {
+            to.emplace(key, endweave::downgrade(value));
         }
         return to;
     }
