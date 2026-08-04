@@ -1,45 +1,13 @@
-#include "endweave/protocols/v2168/transform.h"
+#include "endweave/protocols/v2168/game.h"
 
+#include "endweave/protocols/v2168/presence.h"
+
+#include <cstdint>
 #include <utility>
 
 namespace ew = endweave;
 
 namespace endweave {
-
-bp::v1001::SerializedNetworkItemStackDescriptor Transformer<bp::v2168::SerializedNetworkItemStackDescriptor>::downgrade(
-    bp::v2168::SerializedNetworkItemStackDescriptor &&from)
-{
-    bp::v1001::SerializedNetworkItemStackDescriptor to;
-    to.id = from.id;
-    to.stack_size = from.stack_size;
-    to.aux_value = from.aux_value;
-    if (from.net_id_variant.has_value()) {
-        const auto net_id = from.net_id_variant.value();
-        if (net_id >= 0) {
-            to.net_id_variant = bp::ItemStackNetId{net_id};
-        }
-        else if (net_id % 2 != 0) {
-            to.net_id_variant = bp::ItemStackRequestId{(-net_id - 1) / 2};
-        }
-        else {
-            to.net_id_variant = bp::ItemStackLegacyRequestId{-net_id / 2};
-        }
-    }
-    to.block_runtime_id = from.block_runtime_id;
-    to.user_data_buffer = std::move(from.user_data_buffer);
-    return to;
-}
-
-bp::v1001::InventoryContentPacket Transformer<bp::v2168::InventoryContentPacket>::downgrade(
-    bp::v2168::InventoryContentPacket &&from)
-{
-    bp::v1001::InventoryContentPacket to;
-    to.inventory_id = from.inventory_id;
-    to.slots = ew::downgrade(from.slots);
-    to.full_container_name = std::move(from.full_container_name);
-    to.storage_item = ew::downgrade(from.storage_item);
-    return to;
-}
 
 bp::ExperimentData Transformer<bp::ExperimentToggle>::downgrade(bp::ExperimentToggle &&from)
 {
@@ -49,9 +17,10 @@ bp::ExperimentData Transformer<bp::ExperimentToggle>::downgrade(bp::ExperimentTo
     return to;
 }
 
-bp::v1001::LevelSettings Transformer<bp::v2168::LevelSettings>::downgrade(bp::v2168::LevelSettings &&from)
+bp::LevelSettings_<1001> Transformer<bp::LevelSettings_<2168>>::downgrade(bp::LevelSettings_<2168> &&from)
 {
-    bp::v1001::LevelSettings to;
+    bp::LevelSettings_<1001> to;
+    // ENDWEAVE: 1001 reads the seed signed; the same 64 bits are the same world.
     to.seed = static_cast<std::int64_t>(from.seed);
     to.spawn_settings = std::move(from.spawn_settings);
     to.generator = from.generator;
@@ -76,6 +45,8 @@ bp::v1001::LevelSettings Transformer<bp::v2168::LevelSettings>::downgrade(bp::v2
     to.platform_broadcast_intent = from.platform_broadcast_intent;
     to.commands_enabled = from.commands_enabled;
     to.texture_packs_required = from.texture_packs_required;
+    // ENDWEAVE: 1001 carries the rules and the toggles loose, without 2168's rule_data and experiments
+    // wrappers. Nothing about the values moved.
     to.game_rules = std::move(from.rule_data.rules);
     to.experiments = ew::downgrade(from.experiments.toggles);
     to.experiments_previously_toggled = from.experiments.experiments_ever_toggled;
@@ -106,7 +77,7 @@ bp::v1001::LevelSettings Transformer<bp::v2168::LevelSettings>::downgrade(bp::v2
     return to;
 }
 
-bp::BlockEntry Transformer<bp::v2168::ServerBlockProperty>::downgrade(bp::v2168::ServerBlockProperty &&from)
+bp::BlockEntry Transformer<bp::ServerBlockProperty_<2168>>::downgrade(bp::ServerBlockProperty_<2168> &&from)
 {
     bp::BlockEntry to;
     to.name = std::move(from.block_name);
@@ -114,44 +85,9 @@ bp::BlockEntry Transformer<bp::v2168::ServerBlockProperty>::downgrade(bp::v2168:
     return to;
 }
 
-bp::v1001::PresenceConfiguration Transformer<bp::v2168::PresenceConfiguration>::downgrade(
-    bp::v2168::PresenceConfiguration &&from)
+bp::StartGamePacket_<1001> Transformer<bp::StartGamePacket_<2168>>::downgrade(bp::StartGamePacket_<2168> &&from)
 {
-    bp::v1001::PresenceConfiguration to;
-    to.experience_name = std::nullopt;
-    to.world_name = std::nullopt;
-    to.rich_presence_id = std::move(from.rich_presence_id).value_or(std::string{});
-    return to;
-}
-
-bp::v1001::GatheringsConfigurationJoinInfo Transformer<bp::v2168::GatheringsConfigurationJoinInfo>::downgrade(
-    bp::v2168::GatheringsConfigurationJoinInfo &&from)
-{
-    bp::v1001::GatheringsConfigurationJoinInfo to;
-    to.experience_id = from.experience_id;
-    to.experience_name = std::move(from.experience_name);
-    to.experience_world_id = from.experience_world_id.value_or(bp::UUID{});
-    to.experience_world_name = std::move(from.experience_world_name).value_or(std::string{});
-    to.creator_id = std::move(from.creator_id);
-    to.target_id = from.target_id.value_or(bp::UUID{});
-    to.scenario_id = std::move(from.scenario_id).value_or(std::string{});
-    to.server_id = std::move(from.server_id).value_or(std::string{});
-    return to;
-}
-
-bp::v1001::ServerConfigurationJoinInfo Transformer<bp::v2168::ServerConfigurationJoinInfo>::downgrade(
-    bp::v2168::ServerConfigurationJoinInfo &&from)
-{
-    bp::v1001::ServerConfigurationJoinInfo to;
-    to.gatherings_configuration_join_info = ew::downgrade(from.gatherings_configuration_join_info);
-    to.client_store_entrypoint_configuration = std::move(from.client_store_entrypoint_configuration);
-    to.presence_configuration = ew::downgrade(from.presence_configuration);
-    return to;
-}
-
-bp::v1001::StartGamePacket Transformer<bp::v2168::StartGamePacket>::downgrade(bp::v2168::StartGamePacket &&from)
-{
-    bp::v1001::StartGamePacket to;
+    bp::StartGamePacket_<1001> to;
     to.entity_id = from.entity_id;
     to.runtime_id = from.runtime_id;
     to.entity_game_type = from.entity_game_type;
@@ -163,6 +99,7 @@ bp::v1001::StartGamePacket Transformer<bp::v2168::StartGamePacket>::downgrade(bp
     to.template_content_identity = std::move(from.template_content_identity);
     to.is_trial = from.is_trial;
     to.movement_settings = from.movement_settings;
+    // ENDWEAVE: 1001 reads the tick count signed; same bits, as with the seed.
     to.level_current_time = static_cast<std::int64_t>(from.level_current_time);
     to.enchantment_seed = from.enchantment_seed;
     to.block_properties = ew::downgrade(from.block_properties);
@@ -175,6 +112,8 @@ bp::v1001::StartGamePacket Transformer<bp::v2168::StartGamePacket>::downgrade(bp
     to.server_enabled_client_side_generation = from.server_enabled_client_side_generation;
     to.block_network_ids_are_hashes = from.block_network_ids_are_hashes;
     to.network_permissions = from.network_permissions;
+    // ENDWEAVE: 2168 has no is_chat_logging to read; false, because telling a player chat is logged when
+    // nothing said so is worse than saying nothing.
     to.is_chat_logging = false;
     to.server_configuration_join_info = ew::downgrade(from.server_configuration_join_info);
     to.server_telemetry_data = std::move(from.server_telemetry_data);

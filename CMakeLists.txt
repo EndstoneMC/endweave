@@ -41,8 +41,46 @@ endstone_add_plugin(${PROJECT_NAME}
 src/endweave/connection/manager.cpp
         src/endweave/plugin.cpp
         src/endweave/listener.cpp
-        src/endweave/protocols/v1001/transform.cpp
-        src/endweave/protocols/v2168/transform.cpp)
+        src/endweave/protocols/v1001/actor.cpp
+        src/endweave/protocols/v1001/block.cpp
+        src/endweave/protocols/v1001/chunk.cpp
+        src/endweave/protocols/v1001/crafting.cpp
+        src/endweave/protocols/v1001/diagnostics.cpp
+        src/endweave/protocols/v1001/dimension.cpp
+        src/endweave/protocols/v1001/equipment.cpp
+        src/endweave/protocols/v1001/game.cpp
+        src/endweave/protocols/v1001/input.cpp
+        src/endweave/protocols/v1001/inventory.cpp
+        src/endweave/protocols/v1001/item_stack.cpp
+        src/endweave/protocols/v1001/map.cpp
+        src/endweave/protocols/v1001/movement.cpp
+        src/endweave/protocols/v1001/player_location.cpp
+        src/endweave/protocols/v1001/presence.cpp
+        src/endweave/protocols/v1001/resource_pack.cpp
+        src/endweave/protocols/v1001/scoreboard.cpp
+        src/endweave/protocols/v1001/skin.cpp
+        src/endweave/protocols/v1001/sound.cpp
+        src/endweave/protocols/v1001/structure.cpp
+        src/endweave/protocols/v2168/actor.cpp
+        src/endweave/protocols/v2168/block.cpp
+        src/endweave/protocols/v2168/chunk.cpp
+        src/endweave/protocols/v2168/crafting.cpp
+        src/endweave/protocols/v2168/diagnostics.cpp
+        src/endweave/protocols/v2168/dimension.cpp
+        src/endweave/protocols/v2168/equipment.cpp
+        src/endweave/protocols/v2168/game.cpp
+        src/endweave/protocols/v2168/input.cpp
+        src/endweave/protocols/v2168/inventory.cpp
+        src/endweave/protocols/v2168/item_stack.cpp
+        src/endweave/protocols/v2168/map.cpp
+        src/endweave/protocols/v2168/movement.cpp
+        src/endweave/protocols/v2168/player_location.cpp
+        src/endweave/protocols/v2168/presence.cpp
+        src/endweave/protocols/v2168/resource_pack.cpp
+        src/endweave/protocols/v2168/scoreboard.cpp
+        src/endweave/protocols/v2168/skin.cpp
+        src/endweave/protocols/v2168/sound.cpp
+        src/endweave/protocols/v2168/structure.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(${PROJECT_NAME} PRIVATE bedrock::protocol endstone::endstone)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" OUTPUT_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")

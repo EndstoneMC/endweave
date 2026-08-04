@@ -1,6 +1,26 @@
 #pragma once
 
 #include "endweave/protocol/transform.h"
+#include "endweave/protocols/v1001/actor.h"
+#include "endweave/protocols/v1001/block.h"
+#include "endweave/protocols/v1001/chunk.h"
+#include "endweave/protocols/v1001/crafting.h"
+#include "endweave/protocols/v1001/dimension.h"
+#include "endweave/protocols/v1001/diagnostics.h"
+#include "endweave/protocols/v1001/equipment.h"
+#include "endweave/protocols/v1001/game.h"
+#include "endweave/protocols/v1001/input.h"
+#include "endweave/protocols/v1001/inventory.h"
+#include "endweave/protocols/v1001/item_stack.h"
+#include "endweave/protocols/v1001/map.h"
+#include "endweave/protocols/v1001/movement.h"
+#include "endweave/protocols/v1001/player_location.h"
+#include "endweave/protocols/v1001/presence.h"
+#include "endweave/protocols/v1001/resource_pack.h"
+#include "endweave/protocols/v1001/scoreboard.h"
+#include "endweave/protocols/v1001/skin.h"
+#include "endweave/protocols/v1001/sound.h"
+#include "endweave/protocols/v1001/structure.h"
 
 #include <protocol/game.h>
 #include <protocol/inventory.h>
@@ -9,51 +29,5 @@
 namespace bp = bedrock::protocol;
 
 namespace endweave {
-
-template <>
-struct Transformer<bp::v1001::SerializedNetworkItemStackDescriptor> {
-    static bp::v2168::SerializedNetworkItemStackDescriptor upgrade(
-        bp::v1001::SerializedNetworkItemStackDescriptor &&from);
-};
-
-template <>
-struct Transformer<bp::v1001::InventoryContentPacket> {
-    static bp::v2168::InventoryContentPacket upgrade(bp::v1001::InventoryContentPacket &&from);
-};
-
-template <>
-struct Transformer<bp::ExperimentData> {
-    static bp::ExperimentToggle upgrade(bp::ExperimentData &&from);
-};
-
-template <>
-struct Transformer<bp::v1001::LevelSettings> {
-    static bp::v2168::LevelSettings upgrade(bp::v1001::LevelSettings &&from);
-};
-
-template <>
-struct Transformer<bp::BlockEntry> {
-    static bp::v2168::ServerBlockProperty upgrade(bp::BlockEntry &&from);
-};
-
-template <>
-struct Transformer<bp::v1001::PresenceConfiguration> {
-    static bp::v2168::PresenceConfiguration upgrade(bp::v1001::PresenceConfiguration &&from);
-};
-
-template <>
-struct Transformer<bp::v1001::GatheringsConfigurationJoinInfo> {
-    static bp::v2168::GatheringsConfigurationJoinInfo upgrade(bp::v1001::GatheringsConfigurationJoinInfo &&from);
-};
-
-template <>
-struct Transformer<bp::v1001::ServerConfigurationJoinInfo> {
-    static bp::v2168::ServerConfigurationJoinInfo upgrade(bp::v1001::ServerConfigurationJoinInfo &&from);
-};
-
-template <>
-struct Transformer<bp::v1001::StartGamePacket> {
-    static bp::v2168::StartGamePacket upgrade(bp::v1001::StartGamePacket &&from);
-};
 
 } // namespace endweave
