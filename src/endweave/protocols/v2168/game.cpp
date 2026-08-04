@@ -3,7 +3,9 @@
 #include "endweave/protocols/v2168/presence.h"
 
 #include <cstdint>
+#include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace ew = endweave;
 
@@ -17,13 +19,23 @@ bp::ExperimentData Transformer<bp::ExperimentToggle>::downgrade(bp::ExperimentTo
     return to;
 }
 
-bp::GameRule_<1001> Transformer<bp::GameRule_<2168>>::downgrade(bp::GameRule_<2168> &&from)
+bp::LevelSettings_<1001>::GameRule Transformer<bp::GameRule>::downgrade(bp::GameRule &&from)
 {
-    bp::GameRule_<1001> to;
+    bp::LevelSettings_<1001>::GameRule to;
     to.name = std::move(from.name);
     to.can_be_modified_by_player = from.can_be_modified_by_player;
-    // ENDWEAVE: the alternatives match either side; only the integer case's wire width moved.
-    to.value = std::move(from.value);
+    // ENDWEAVE: 1001 holds the integer alternative unsigned. The same 32 bits reach the wire.
+    std::visit(
+        [&to](auto &&alt) {
+            using Alt = std::decay_t<decltype(alt)>;
+            if constexpr (std::is_same_v<Alt, std::int32_t>) {
+                to.value = static_cast<std::uint32_t>(alt);
+            }
+            else {
+                to.value = alt;
+            }
+        },
+        from.value);
     return to;
 }
 

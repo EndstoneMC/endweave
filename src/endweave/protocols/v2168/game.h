@@ -14,8 +14,8 @@ struct Transformer<bp::ExperimentToggle> {
 };
 
 template <>
-struct Transformer<bp::GameRule_<2168>> {
-    static bp::GameRule_<1001> downgrade(bp::GameRule_<2168> &&from);
+struct Transformer<bp::GameRule> {
+    static bp::LevelSettings_<1001>::GameRule downgrade(bp::GameRule &&from);
 };
 
 template <>
