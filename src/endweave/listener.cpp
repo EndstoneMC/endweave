@@ -14,6 +14,8 @@ constexpr int kDisconnectPacketId = static_cast<int>(bp::MinecraftPacketIds::DIS
 constexpr int kRequestNetworkSettingsPacketId = static_cast<int>(bp::MinecraftPacketIds::REQUEST_NETWORK_SETTINGS);
 constexpr int kLoginPacketId = static_cast<int>(bp::MinecraftPacketIds::LOGIN);
 constexpr int kPacketViolationWarningPacketId = static_cast<int>(bp::MinecraftPacketIds::PACKET_VIOLATION_WARNING);
+// Under investigation: the upgrade shrinks it, where 2168 should be the longer form.
+constexpr int kFullChunkDataPacketId = static_cast<int>(bp::MinecraftPacketIds::FULL_CHUNK_DATA);
 
 // LoginPacket is one type at every version. The violation warning is not -- it names the
 // offending packet with MinecraftPacketIds, which gained members -- but it is the same
@@ -100,7 +102,7 @@ void PacketListener::translate(Event &event, const PacketHandlers &handlers)
     bp::BinaryWriter out{translated};
     bp::BinaryReader in{event.getPayload()};
     if (const auto result = handler(in, out); !result) {
-        logger_->warning("Dropping packet {}: {}.", id, result.error().message());
+        logger_->warning("Dropping {}: {}.", packetLabel(id), result.error().message());
         event.setCancelled(true);
         return;
     }
@@ -124,8 +126,12 @@ template <class Event>
 void PacketListener::log(std::string_view stage, Event &event, const UserConnection &connection,
                          std::string_view direction) const
 {
-    debug_.logPacket(stage, connection.getAddress().getHostname(), direction, event.getPacketId(),
+    const int id = event.getPacketId();
+    debug_.logPacket(stage, connection.getAddress().getHostname(), direction, id,
                      static_cast<int>(connection.getClientVersion()), event.getPayload().size());
+    if (id == kFullChunkDataPacketId) {
+        debug_.logPayload(stage, id, event.getPayload());
+    }
 }
 
 void PacketListener::receive(endstone::PacketReceiveEvent &event, UserConnection &connection)

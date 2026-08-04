@@ -12,6 +12,7 @@
 #include <bedrock/stream.hpp>
 #include <expected>
 #include <span>
+#include <string>
 #include <system_error>
 #include <type_traits>
 #include <utility>
@@ -63,15 +64,36 @@ std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWrit
     if (!result) {
         return std::unexpected(result.error());
     }
+    // A schema that models only part of a packet still deserialises, and the transform then
+    // builds its answer from half a source. The bytes left over are the only sign of it.
+    if (in.getUnreadLength() != 0) {
+        return std::unexpected(std::make_error_code(std::errc::protocol_error));
+    }
+
+    std::string translated;
+    bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
     if constexpr (From < To) {
         static_assert(std::is_same_v<decltype(endweave::upgrade(packet)), packet_of<To, Id>>);
-        bp::serialize(out, endweave::upgrade(packet));
+        bp::serialize(writer, endweave::upgrade(packet));
     }
     else {
         static_assert(std::is_same_v<decltype(endweave::downgrade(packet)), packet_of<To, Id>>);
-        bp::serialize(out, endweave::downgrade(packet));
+        bp::serialize(writer, endweave::downgrade(packet));
     }
+
+    // The destination has to be able to read back what was just written for it. Serialiser
+    // and deserialiser are generated apart, so nothing else holds the pair to each other.
+    bp::BinaryReader back{translated};
+    const auto check = bp::deserialize<packet_of<To, Id>>(back);
+    if (!check) {
+        return std::unexpected(check.error());
+    }
+    if (back.getUnreadLength() != 0) {
+        return std::unexpected(std::make_error_code(std::errc::bad_message));
+    }
+
+    out.writeRawBytes(translated);
     return {};
 }
 
