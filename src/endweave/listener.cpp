@@ -120,34 +120,36 @@ UserConnection *PacketListener::touch(Event &event)
     return &connection;
 }
 
-void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
+template <class Event>
+void PacketListener::log(std::string_view stage, Event &event, const UserConnection &connection,
+                         std::string_view direction) const
 {
-    UserConnection *connection = touch(event);
-    if (connection == nullptr) {
-        return;
-    }
+    debug_.logPacket(stage, connection.getAddress().getHostname(), direction, event.getPacketId(),
+                     static_cast<int>(connection.getClientVersion()), event.getPayload().size());
+}
 
+void PacketListener::receive(endstone::PacketReceiveEvent &event, UserConnection &connection)
+{
     if (event.getPacketId() == kRequestNetworkSettingsPacketId) {
         const ProtocolVersion version = readClientVersion(event.getPayload());
         if (version == ProtocolVersion::UNKNOWN) {
             logger_->info("{} speaks a protocol endweave does not translate; passing it through.",
-                          connection->getAddress().getHostname());
+                          connection.getAddress().getHostname());
             return;
         }
-        connection->setClientVersion(version);
+        connection.setClientVersion(version);
         if (version != ProtocolVersions::SERVER_VERSION) {
             event.setPayload(announceServerVersion());
         }
-        logger_->info("{} connected on protocol {}.", connection->getAddress().getHostname(),
-                      static_cast<int>(version));
+        logger_->info("{} connected on protocol {}.", connection.getAddress().getHostname(), static_cast<int>(version));
         return;
     }
 
-    if (event.getPacketId() == kLoginPacketId && connection->getClientVersion() != ProtocolVersions::SERVER_VERSION) {
+    if (event.getPacketId() == kLoginPacketId && connection.getClientVersion() != ProtocolVersions::SERVER_VERSION) {
         std::string rewritten = rewriteLoginVersion(event.getPayload());
         if (rewritten.empty()) {
             logger_->warning("{} sent a login that did not decode; leaving it untouched.",
-                             connection->getAddress().getHostname());
+                             connection.getAddress().getHostname());
             return;
         }
         event.setPayload(rewritten);
@@ -159,7 +161,28 @@ void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
         return;
     }
 
-    translate(event, connection->getServerboundHandlers());
+    translate(event, connection.getServerboundHandlers());
+}
+
+void PacketListener::send(endstone::PacketSendEvent &event, UserConnection &connection)
+{
+    if (event.getPacketId() == kPacketViolationWarningPacketId) {
+        logViolation(*logger_, event.getPayload(), "The server");
+        return;
+    }
+
+    translate(event, connection.getClientboundHandlers());
+}
+
+void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
+{
+    UserConnection *connection = touch(event);
+    if (connection == nullptr) {
+        return;
+    }
+    log("PRE ", event, *connection, "SERVERBOUND");
+    receive(event, *connection);
+    log("POST", event, *connection, "SERVERBOUND");
 }
 
 void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
@@ -168,13 +191,9 @@ void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
     if (connection == nullptr) {
         return;
     }
-
-    if (event.getPacketId() == kPacketViolationWarningPacketId) {
-        logViolation(*logger_, event.getPayload(), "The server");
-        return;
-    }
-
-    translate(event, connection->getClientboundHandlers());
+    log("PRE ", event, *connection, "CLIENTBOUND");
+    send(event, *connection);
+    log("POST", event, *connection, "CLIENTBOUND");
 }
 
 void PacketListener::onPlayerQuit(endstone::PlayerQuitEvent &event)

@@ -1,16 +1,18 @@
 #pragma once
 
 #include "endweave/connection/manager.h"
+#include "endweave/protocol/debug.h"
 #include "endweave/protocol/handler.h"
 
 #include <endstone/endstone.hpp>
+#include <string_view>
 
 namespace endweave {
 
 class PacketListener {
 public:
     PacketListener(ConnectionManager &connections, endstone::Logger &logger)
-        : connections_(&connections), logger_(&logger)
+        : connections_(&connections), logger_(&logger), debug_(logger)
     {
     }
 
@@ -30,8 +32,16 @@ private:
     template <class Event>
     void translate(Event &event, const PacketHandlers &handlers);
 
+    template <class Event>
+    void log(std::string_view stage, Event &event, const UserConnection &connection, std::string_view direction) const;
+
+    void receive(endstone::PacketReceiveEvent &event, UserConnection &connection);
+
+    void send(endstone::PacketSendEvent &event, UserConnection &connection);
+
     ConnectionManager *connections_;
     endstone::Logger *logger_;
+    DebugHandler debug_;
 };
 
 } // namespace endweave

@@ -10,6 +10,10 @@ namespace endweave {
 
 void Plugin::onEnable()
 {
+    // The debug handler is on while this version pair is being brought up, and its lines
+    // go to the debug channel, which the default level discards.
+    getLogger().setLevel(endstone::Logger::Debug);
+
     PacketListener &listener = listener_.emplace(connections_, getLogger());
     registerEvent(&PacketListener::onPacketReceive, listener);
     registerEvent(&PacketListener::onPacketSend, listener);
