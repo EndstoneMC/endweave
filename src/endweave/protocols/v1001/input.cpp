@@ -22,19 +22,16 @@ bp::PlayerAuthInputPacket_<2168> Transformer<bp::PlayerAuthInputPacket_<1001>>::
     bp::PlayerAuthInputPacket_<1001> &&from)
 {
     using From = bp::PlayerAuthInputPacket_<1001>;
-    using To = bp::PlayerAuthInputPacket_<2168>;
 
     bp::PlayerAuthInputPacket_<2168> to;
     to.rot = from.rot;
     to.pos = from.pos;
     to.move = from.move;
     to.y_head_rot = from.y_head_rot;
-    // ENDWEAVE: The bitset has no order of its own; ascending bit index is the order BDS walks it
-    // in, and the two enums agree on values 0 to 64.
+    // ENDWEAVE: 2168 only appends INTERNAL_UPDATE at 65, so every bit 1001 can set keeps its index
+    // and the widening leaves the new one clear.
     for (std::size_t bit = 0; bit < from.input_data.size(); ++bit) {
-        if (from.input_data.test(bit)) {
-            to.input_data.push_back(static_cast<To::InputData>(bit));
-        }
+        to.input_data.set(bit, from.input_data.test(bit));
     }
     to.input_mode = from.input_mode;
     to.play_mode = from.play_mode;
