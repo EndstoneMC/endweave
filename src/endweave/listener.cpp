@@ -19,10 +19,9 @@ constexpr int kPacketViolationWarningPacketId = static_cast<int>(bp::MinecraftPa
 
 // Held because nothing models them at 1001, so they cross as the server wrote them. PlayerList
 // carries skins, and 2168 reads a ProfileHash off the end of each one that 1001 never wrote.
-// LevelEventGeneric is reported changed at 2168 and is untested. Drop them until both are
-// modelled: a wrong one costs the client its connection, where a missing one costs a tab list.
+// Drop them until they are modelled: a wrong one costs the client its connection, where a
+// missing one costs a tab list.
 constexpr auto kHeldBack = std::to_array<bp::MinecraftPacketIds>({
-    bp::MinecraftPacketIds::LEVEL_EVENT_GENERIC,
     bp::MinecraftPacketIds::PLAYER_LIST,
 });
 
