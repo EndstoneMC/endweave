@@ -1,6 +1,6 @@
 #include "endweave/protocols/v2168/player_list.h"
 
-#include "endweave/protocols/v1001/skin_pre_cereal.h"
+#include "endweave/protocols/v1001/skin.h"
 #include "endweave/protocols/v2168/skin.h"
 
 #include <utility>
@@ -23,8 +23,8 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>>::downgrade(
         return to;
     }
     to.action = std::holds_alternative<bp::PlayerListPacketPayload_<2168>::AddEntry>(from.entries.front())
-                    ? bp::PlayerListPacketType::ADD
-                    : bp::PlayerListPacketType::REMOVE;
+                  ? bp::PlayerListPacketType::ADD
+                  : bp::PlayerListPacketType::REMOVE;
 
     for (auto &entry : from.entries) {
         if (auto *add = std::get_if<bp::PlayerListPacketPayload_<2168>::AddEntry>(&entry)) {
@@ -39,8 +39,10 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>>::downgrade(
             out.xuid = std::move(add->xuid);
             out.platform_online_id = std::move(add->platform_online_id);
             out.build_platform = add->build_platform;
-            to.trusted_skins.push_back(isTrusted(skin));
-            out.skin = decerealize(std::move(skin));
+            // ENDWEAVE: 2168 carries the trusted flag inside the skin; 1001 wants it in a run of one
+            // bool per entry trailing the list, so it comes back out before the skin is converted.
+            to.trusted_skins.push_back(skin.trusted_skin_flag == bp::TrustedSkinFlag::TRUE);
+            out.skin = ew::toLegacy(skin);
             out.is_teacher = add->is_teacher;
             out.is_host = add->is_host;
             out.is_sub_client = add->is_sub_client;

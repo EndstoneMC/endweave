@@ -199,6 +199,17 @@ channel above has no bearing on it yet, which is what the last rule here is abou
   struct. v1001 and v2168 are currently the outermost eras modelled, so v1001 declares only
   `upgrade` and v2168 only `downgrade`; a missing direction is a "no member named" error rather
   than a wrong conversion.
+- **A type with two wire shapes at one version takes a second axis, not a second key.** BDS writes
+  `SerializedSkinRef` two ways at 1001: cerealised for `PlayerSkinPacket`, and through
+  `SerializedSkinImpl::write` for a `PlayerListPacket` entry, which bedrock-protocol emits as
+  `bp::legacy::SerializedSkinRef`. That is not a version hop, and `downgrade` on the 2168 skin
+  already means the cerealised 1001 one, so the pre-cereal form cannot be a second target for it.
+  `toCereal` and `toLegacy` are that hop — same era, keyed on the source type like every other
+  method, called through `ew::toCereal` / `ew::toLegacy` and composing over `std::vector` the same
+  way. A packet chains the two: `ew::upgrade(ew::toCereal(entry.skin))` one way and
+  `ew::toLegacy(ew::downgrade(add.skin))` the other. Both keys are 1001-era, so both live in
+  `protocols/v1001/skin.{h,cpp}` — the module that owns the types. A conversion never earns a file
+  or a free function of its own.
 - **The specialization is declared in the header, the body defined in the sibling `.cpp`,** which is
   listed in `endstone_add_plugin`. An out-of-line body rules out a deduced return type, so the
   declaration spells the returned struct outright. No trailing return types.

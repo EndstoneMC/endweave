@@ -60,7 +60,6 @@ src/endweave/connection/manager.cpp
         src/endweave/protocols/v1001/resource_pack.cpp
         src/endweave/protocols/v1001/scoreboard.cpp
         src/endweave/protocols/v1001/skin.cpp
-        src/endweave/protocols/v1001/skin_pre_cereal.cpp
         src/endweave/protocols/v1001/sound.cpp
         src/endweave/protocols/v1001/structure.cpp
         src/endweave/protocols/v2168/actor.cpp

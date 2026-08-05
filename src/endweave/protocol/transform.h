@@ -25,6 +25,18 @@ auto downgrade(T &&from)
 }
 
 template <class T>
+auto toCereal(T &&from)
+{
+    return Transformer<std::remove_cvref_t<T>>::toCereal(std::move(from));
+}
+
+template <class T>
+auto toLegacy(T &&from)
+{
+    return Transformer<std::remove_cvref_t<T>>::toLegacy(std::move(from));
+}
+
+template <class T>
 struct Transformer<std::optional<T>> {
     static auto upgrade(std::optional<T> &&from)
     {
@@ -84,6 +96,26 @@ struct Transformer<std::vector<T>> {
         to.reserve(from.size());
         for (auto &item : from) {
             to.push_back(endweave::downgrade(item));
+        }
+        return to;
+    }
+
+    static auto toCereal(std::vector<T> &&from)
+    {
+        std::vector<decltype(endweave::toCereal(std::declval<T>()))> to;
+        to.reserve(from.size());
+        for (auto &item : from) {
+            to.push_back(endweave::toCereal(item));
+        }
+        return to;
+    }
+
+    static auto toLegacy(std::vector<T> &&from)
+    {
+        std::vector<decltype(endweave::toLegacy(std::declval<T>()))> to;
+        to.reserve(from.size());
+        for (auto &item : from) {
+            to.push_back(endweave::toLegacy(item));
         }
         return to;
     }
