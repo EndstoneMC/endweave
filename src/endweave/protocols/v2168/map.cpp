@@ -7,8 +7,9 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::MapItemTrackedActor_<1001>::UniqueId Transformer<bp::MapItemTrackedActor_<2168>::UniqueId>::downgrade(
-    bp::MapItemTrackedActor_<2168>::UniqueId &&from)
+bp::MapItemTrackedActor_<1001>::UniqueId Transformer<
+    bp::MapItemTrackedActor_<2168>::UniqueId,
+    bp::MapItemTrackedActor_<1001>::UniqueId>::transform(bp::MapItemTrackedActor_<2168>::UniqueId &&from)
 {
     bp::MapItemTrackedActor_<1001>::UniqueId to;
     to.type = static_cast<bp::MapItemTrackedActor_<1001>::Type>(from.type);
@@ -18,7 +19,8 @@ bp::MapItemTrackedActor_<1001>::UniqueId Transformer<bp::MapItemTrackedActor_<21
     return to;
 }
 
-bp::MapDecoration_<1001> Transformer<bp::MapDecoration_<2168>>::downgrade(bp::MapDecoration_<2168> &&from)
+bp::MapDecoration_<1001> Transformer<bp::MapDecoration_<2168>, bp::MapDecoration_<1001>>::transform(
+    bp::MapDecoration_<2168> &&from)
 {
     bp::MapDecoration_<1001> to;
     to.image = from.image;
@@ -30,8 +32,9 @@ bp::MapDecoration_<1001> Transformer<bp::MapDecoration_<2168>>::downgrade(bp::Ma
     return to;
 }
 
-bp::ClientboundMapItemDataPacket_<1001> Transformer<bp::ClientboundMapItemDataPacket_<2168>>::downgrade(
-    bp::ClientboundMapItemDataPacket_<2168> &&from)
+bp::ClientboundMapItemDataPacket_<1001> Transformer<
+    bp::ClientboundMapItemDataPacket_<2168>,
+    bp::ClientboundMapItemDataPacket_<1001>>::transform(bp::ClientboundMapItemDataPacket_<2168> &&from)
 {
     using Type = bp::ClientboundMapItemDataPacket_<1001>::Type;
     // ENDWEAVE: 1001's flag word is rebuilt from which optionals arrived, one bit per group with any field engaged.
@@ -53,10 +56,10 @@ bp::ClientboundMapItemDataPacket_<1001> Transformer<bp::ClientboundMapItemDataPa
     // ENDWEAVE: 1001 has no bit for the scale alone, so a scale sent without any of the three groups is lost.
     to.scale = from.scale.value_or(0);
     if (from.unique_ids.has_value()) {
-        to.unique_ids = ew::downgrade(from.unique_ids.value());
+        to.unique_ids = ew::transform(std::move(from.unique_ids.value()));
     }
     if (from.decorations.has_value()) {
-        to.decorations = ew::downgrade(from.decorations.value());
+        to.decorations = ew::transform(std::move(from.decorations.value()));
     }
     // ENDWEAVE: 1001 writes the five texture fields together, so one present drags the other four out at zero.
     to.width = from.width.value_or(0);

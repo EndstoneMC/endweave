@@ -68,7 +68,8 @@ bp::SerializedNetworkItemInstanceDescriptor_<1001> downgradeItemInstance(
 
 namespace endweave {
 
-bp::RedactableString_<1001> Transformer<bp::RedactableString_<2168>>::downgrade(bp::RedactableString_<2168> &&from)
+bp::RedactableString_<1001> Transformer<bp::RedactableString_<2168>, bp::RedactableString_<1001>>::transform(
+    bp::RedactableString_<2168> &&from)
 {
     bp::RedactableString_<1001> to;
     to.unredacted = std::move(from.unredacted);
@@ -78,8 +79,9 @@ bp::RedactableString_<1001> Transformer<bp::RedactableString_<2168>>::downgrade(
     return to;
 }
 
-bp::ItemStackResponseSlotInfo_<1001> Transformer<bp::ItemStackResponseSlotInfo_<2168>>::downgrade(
-    bp::ItemStackResponseSlotInfo_<2168> &&from)
+bp::ItemStackResponseSlotInfo_<1001> Transformer<
+    bp::ItemStackResponseSlotInfo_<2168>,
+    bp::ItemStackResponseSlotInfo_<1001>>::transform(bp::ItemStackResponseSlotInfo_<2168> &&from)
 {
     bp::ItemStackResponseSlotInfo_<1001> to;
     to.requested_slot = from.requested_slot;
@@ -87,42 +89,46 @@ bp::ItemStackResponseSlotInfo_<1001> Transformer<bp::ItemStackResponseSlotInfo_<
     to.amount = from.amount;
     // ENDWEAVE: an absent net id becomes zero, which is BDS's own "no net id".
     to.item_stack_net_id = from.item_stack_net_id.value_or(bp::ItemStackNetId{});
-    to.custom_name = ew::downgrade(from.custom_name);
+    to.custom_name = ew::transform(std::move(from.custom_name));
     to.durability_correction = from.durability_correction;
     return to;
 }
 
-bp::ItemStackResponseContainerInfo_<1001> Transformer<bp::ItemStackResponseContainerInfo_<2168>>::downgrade(
-    bp::ItemStackResponseContainerInfo_<2168> &&from)
+bp::ItemStackResponseContainerInfo_<1001> Transformer<
+    bp::ItemStackResponseContainerInfo_<2168>,
+    bp::ItemStackResponseContainerInfo_<1001>>::transform(bp::ItemStackResponseContainerInfo_<2168> &&from)
 {
     bp::ItemStackResponseContainerInfo_<1001> to;
     to.full_container_name = std::move(from.full_container_name);
-    to.slots = ew::downgrade(from.slots);
+    to.slots = ew::transform(std::move(from.slots));
     return to;
 }
 
-bp::ItemStackResponseInfo_<1001> Transformer<bp::ItemStackResponseInfo_<2168>>::downgrade(
-    bp::ItemStackResponseInfo_<2168> &&from)
+bp::ItemStackResponseInfo_<1001> Transformer<bp::ItemStackResponseInfo_<2168>, bp::ItemStackResponseInfo_<1001>>::
+    transform(bp::ItemStackResponseInfo_<2168> &&from)
 {
     bp::ItemStackResponseInfo_<1001> to;
     to.result = from.result;
     to.client_request_id = from.client_request_id;
     // ENDWEAVE: 1001 writes containers only on success, so a failing response that carries them
     // loses them -- there is no framing to put them in.
-    to.containers = ew::downgrade(from.containers).value_or(std::vector<bp::ItemStackResponseContainerInfo_<1001>>{});
+    to.containers = ew::transform_to<std::optional<std::vector<bp::ItemStackResponseContainerInfo_<1001>>>>(
+                        std::move(from.containers))
+                        .value_or(std::vector<bp::ItemStackResponseContainerInfo_<1001>>{});
     return to;
 }
 
-bp::ItemStackResponsePacket_<1001> Transformer<bp::ItemStackResponsePacket_<2168>>::downgrade(
-    bp::ItemStackResponsePacket_<2168> &&from)
+bp::ItemStackResponsePacket_<1001> Transformer<bp::ItemStackResponsePacket_<2168>, bp::ItemStackResponsePacket_<1001>>::
+    transform(bp::ItemStackResponsePacket_<2168> &&from)
 {
     bp::ItemStackResponsePacket_<1001> to;
-    to.responses = ew::downgrade(from.responses);
+    to.responses = ew::transform(std::move(from.responses));
     return to;
 }
 
-bp::ItemStackRequestSlotInfo_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::SlotInfoData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::SlotInfoData &&from)
+bp::ItemStackRequestSlotInfo_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::SlotInfoData,
+    bp::ItemStackRequestSlotInfo_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::SlotInfoData &&from)
 {
     bp::ItemStackRequestSlotInfo_<1001> to;
     to.full_container_name = std::move(from.full_container_name);
@@ -131,80 +137,89 @@ bp::ItemStackRequestSlotInfo_<1001> Transformer<bp::ItemStackRequestCereal_<2168
     return to;
 }
 
-bp::ItemStackRequestActionTake_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::TakeActionData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::TakeActionData &&from)
+bp::ItemStackRequestActionTake_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::TakeActionData,
+    bp::ItemStackRequestActionTake_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::TakeActionData &&from)
 {
     bp::ItemStackRequestActionTake_<1001> to;
     // ENDWEAVE: the restated action type is dropped; 1001 carries it in the list tag alone.
     to.amount = from.amount;
-    to.src = ew::downgrade(from.source);
-    to.dst = ew::downgrade(from.destination);
+    to.src = ew::transform(std::move(from.source));
+    to.dst = ew::transform(std::move(from.destination));
     return to;
 }
 
-bp::ItemStackRequestActionPlace_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::PlaceActionData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::PlaceActionData &&from)
+bp::ItemStackRequestActionPlace_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::PlaceActionData,
+    bp::ItemStackRequestActionPlace_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::PlaceActionData &&from)
 {
     bp::ItemStackRequestActionPlace_<1001> to;
     to.amount = from.amount;
-    to.src = ew::downgrade(from.source);
-    to.dst = ew::downgrade(from.destination);
+    to.src = ew::transform(std::move(from.source));
+    to.dst = ew::transform(std::move(from.destination));
     return to;
 }
 
-bp::ItemStackRequestActionSwap_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::SwapActionData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::SwapActionData &&from)
+bp::ItemStackRequestActionSwap_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::SwapActionData,
+    bp::ItemStackRequestActionSwap_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::SwapActionData &&from)
 {
     bp::ItemStackRequestActionSwap_<1001> to;
-    to.src = ew::downgrade(from.source);
-    to.dst = ew::downgrade(from.destination);
+    to.src = ew::transform(std::move(from.source));
+    to.dst = ew::transform(std::move(from.destination));
     return to;
 }
 
-bp::ItemStackRequestActionDrop_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::DropActionData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::DropActionData &&from)
+bp::ItemStackRequestActionDrop_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::DropActionData,
+    bp::ItemStackRequestActionDrop_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::DropActionData &&from)
 {
     bp::ItemStackRequestActionDrop_<1001> to;
     to.amount = from.amount;
-    to.src = ew::downgrade(from.source);
+    to.src = ew::transform(std::move(from.source));
     to.randomly = from.randomly;
     return to;
 }
 
-bp::ItemStackRequestActionDestroy_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::DestroyActionData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::DestroyActionData &&from)
+bp::ItemStackRequestActionDestroy_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::DestroyActionData,
+    bp::ItemStackRequestActionDestroy_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::DestroyActionData &&from)
 {
     bp::ItemStackRequestActionDestroy_<1001> to;
     to.amount = from.amount;
-    to.src = ew::downgrade(from.source);
+    to.src = ew::transform(std::move(from.source));
     return to;
 }
 
-bp::ItemStackRequestActionConsume_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::ConsumeActionData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::ConsumeActionData &&from)
+bp::ItemStackRequestActionConsume_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::ConsumeActionData,
+    bp::ItemStackRequestActionConsume_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::ConsumeActionData &&from)
 {
     bp::ItemStackRequestActionConsume_<1001> to;
     to.amount = from.amount;
-    to.src = ew::downgrade(from.source);
+    to.src = ew::transform(std::move(from.source));
     return to;
 }
 
-bp::ItemStackRequestActionCreate_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::CreateActionData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::CreateActionData &&from)
+bp::ItemStackRequestActionCreate_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::CreateActionData,
+    bp::ItemStackRequestActionCreate_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::CreateActionData &&from)
 {
     bp::ItemStackRequestActionCreate_<1001> to;
     to.results_index = from.results_index;
     return to;
 }
 
-bp::ItemStackRequestActionLabTableCombine_<1001> Transformer<bp::ItemStackRequestCereal_<
-    2168>::LabTableCombineActionData>::downgrade(bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData &&from)
+bp::ItemStackRequestActionLabTableCombine_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData, bp::ItemStackRequestActionLabTableCombine_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData &&from)
 {
     return bp::ItemStackRequestActionLabTableCombine_<1001>{};
 }
 
-bp::ItemStackRequestActionBeaconPayment_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData>::
-    downgrade(bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData &&from)
+bp::ItemStackRequestActionBeaconPayment_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData,
+                                                           bp::ItemStackRequestActionBeaconPayment_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData &&from)
 {
     bp::ItemStackRequestActionBeaconPayment_<1001> to;
     to.primary_effect_id = from.primary_effect_id;
@@ -212,8 +227,9 @@ bp::ItemStackRequestActionBeaconPayment_<1001> Transformer<bp::ItemStackRequestC
     return to;
 }
 
-bp::ItemStackRequestActionMineBlock_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::MineBlockActionData>::
-    downgrade(bp::ItemStackRequestCereal_<2168>::MineBlockActionData &&from)
+bp::ItemStackRequestActionMineBlock_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::MineBlockActionData,
+                                                       bp::ItemStackRequestActionMineBlock_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::MineBlockActionData &&from)
 {
     bp::ItemStackRequestActionMineBlock_<1001> to;
     to.slot = from.slot;
@@ -222,8 +238,9 @@ bp::ItemStackRequestActionMineBlock_<1001> Transformer<bp::ItemStackRequestCerea
     return to;
 }
 
-bp::ItemStackRequestActionCraftRecipe_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData>::
-    downgrade(bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData &&from)
+bp::ItemStackRequestActionCraftRecipe_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData,
+                                                         bp::ItemStackRequestActionCraftRecipe_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData &&from)
 {
     bp::ItemStackRequestActionCraftRecipe_<1001> to;
     to.recipe_net_id = from.recipe_net_id;
@@ -231,8 +248,9 @@ bp::ItemStackRequestActionCraftRecipe_<1001> Transformer<bp::ItemStackRequestCer
     return to;
 }
 
-bp::ItemStackRequestActionCraftRecipeAuto_<1001> Transformer<bp::ItemStackRequestCereal_<
-    2168>::CraftRecipeAutoActionData>::downgrade(bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData &&from)
+bp::ItemStackRequestActionCraftRecipeAuto_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData, bp::ItemStackRequestActionCraftRecipeAuto_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData &&from)
 {
     bp::ItemStackRequestActionCraftRecipeAuto_<1001> to;
     to.recipe_net_id = from.recipe_net_id;
@@ -246,8 +264,9 @@ bp::ItemStackRequestActionCraftRecipeAuto_<1001> Transformer<bp::ItemStackReques
     return to;
 }
 
-bp::ItemStackRequestActionCraftCreative_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData>::
-    downgrade(bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData &&from)
+bp::ItemStackRequestActionCraftCreative_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData,
+                                                           bp::ItemStackRequestActionCraftCreative_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData &&from)
 {
     bp::ItemStackRequestActionCraftCreative_<1001> to;
     // ENDWEAVE: 1001 wraps the creative net id in CreativeItemNetId where 2168 sends it bare.
@@ -256,9 +275,10 @@ bp::ItemStackRequestActionCraftCreative_<1001> Transformer<bp::ItemStackRequestC
     return to;
 }
 
-bp::ItemStackRequestActionCraftRecipeOptional_<1001> Transformer<bp::ItemStackRequestCereal_<
-    2168>::CraftRecipeOptionalActionData>::downgrade(bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData
-                                                         &&from)
+bp::ItemStackRequestActionCraftRecipeOptional_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData,
+    bp::ItemStackRequestActionCraftRecipeOptional_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData &&from)
 {
     bp::ItemStackRequestActionCraftRecipeOptional_<1001> to;
     to.recipe_net_id = from.recipe_net_id;
@@ -267,8 +287,9 @@ bp::ItemStackRequestActionCraftRecipeOptional_<1001> Transformer<bp::ItemStackRe
 }
 
 bp::ItemStackRequestActionCraftGrindstone_<1001> Transformer<
-    bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData>::
-    downgrade(bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData &&from)
+    bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData,
+    bp::ItemStackRequestActionCraftGrindstone_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData &&from)
 {
     // ENDWEAVE: same action under two names -- 2168's repair-and-disenchant is 1001's grindstone
     // recipe, both at action type 16.
@@ -280,8 +301,9 @@ bp::ItemStackRequestActionCraftGrindstone_<1001> Transformer<
     return to;
 }
 
-bp::ItemStackRequestActionCraftLoom_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::CraftLoomActionData>::
-    downgrade(bp::ItemStackRequestCereal_<2168>::CraftLoomActionData &&from)
+bp::ItemStackRequestActionCraftLoom_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::CraftLoomActionData,
+                                                       bp::ItemStackRequestActionCraftLoom_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::CraftLoomActionData &&from)
 {
     bp::ItemStackRequestActionCraftLoom_<1001> to;
     to.pattern_name_id = std::move(from.pattern_name_id);
@@ -289,15 +311,18 @@ bp::ItemStackRequestActionCraftLoom_<1001> Transformer<bp::ItemStackRequestCerea
     return to;
 }
 
-bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001> Transformer<bp::ItemStackRequestCereal_<
-    2168>::CraftNonImplementedActionData>::downgrade(bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData
-                                                         &&from)
+bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData,
+    bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData &&from)
 {
     return bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001>{};
 }
 
-bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001> Transformer<bp::ItemStackRequestCereal_<
-    2168>::CraftResultsActionData>::downgrade(bp::ItemStackRequestCereal_<2168>::CraftResultsActionData &&from)
+bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::CraftResultsActionData,
+    bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001>>::
+    transform(bp::ItemStackRequestCereal_<2168>::CraftResultsActionData &&from)
 {
     bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001> to;
     to.craft_results.reserve(from.craft_results.size());
@@ -308,8 +333,9 @@ bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001> Transformer<b
     return to;
 }
 
-bp::ItemStackRequestData_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::RequestData>::downgrade(
-    bp::ItemStackRequestCereal_<2168>::RequestData &&from)
+bp::ItemStackRequestData_<1001> Transformer<
+    bp::ItemStackRequestCereal_<2168>::RequestData,
+    bp::ItemStackRequestData_<1001>>::transform(bp::ItemStackRequestCereal_<2168>::RequestData &&from)
 {
     bp::ItemStackRequestData_<1001> to;
     to.client_request_id = from.client_request_id;
@@ -319,7 +345,7 @@ bp::ItemStackRequestData_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::R
     for (auto &action : from.actions) {
         std::visit(
             [&to](auto &data) {
-                to.actions.push_back(ew::downgrade(data));
+                to.actions.push_back(ew::transform(std::move(data)));
             },
             action);
     }
@@ -328,11 +354,11 @@ bp::ItemStackRequestData_<1001> Transformer<bp::ItemStackRequestCereal_<2168>::R
     return to;
 }
 
-bp::ItemStackRequestPacket_<1001> Transformer<bp::ItemStackRequestPacket_<2168>>::downgrade(
-    bp::ItemStackRequestPacket_<2168> &&from)
+bp::ItemStackRequestPacket_<1001> Transformer<bp::ItemStackRequestPacket_<2168>, bp::ItemStackRequestPacket_<1001>>::
+    transform(bp::ItemStackRequestPacket_<2168> &&from)
 {
     bp::ItemStackRequestPacket_<1001> to;
-    to.requests = ew::downgrade(from.requests);
+    to.requests = ew::transform(std::move(from.requests));
     return to;
 }
 

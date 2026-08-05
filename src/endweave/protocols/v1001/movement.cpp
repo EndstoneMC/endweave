@@ -6,7 +6,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::MoveActorDeltaData_<2168> Transformer<bp::MoveActorDeltaData_<1001>>::upgrade(bp::MoveActorDeltaData_<1001> &&from)
+bp::MoveActorDeltaData_<2168> Transformer<bp::MoveActorDeltaData_<1001>, bp::MoveActorDeltaData_<2168>>::transform(
+    bp::MoveActorDeltaData_<1001> &&from)
 {
     bp::MoveActorDeltaData_<2168> to;
     to.runtime_id = from.runtime_id;
@@ -37,7 +38,8 @@ bp::MoveActorDeltaData_<2168> Transformer<bp::MoveActorDeltaData_<1001>>::upgrad
     return to;
 }
 
-bp::AddPlayerPacket_<2168> Transformer<bp::AddPlayerPacket_<1001>>::upgrade(bp::AddPlayerPacket_<1001> &&from)
+bp::AddPlayerPacket_<2168> Transformer<bp::AddPlayerPacket_<1001>, bp::AddPlayerPacket_<2168>>::transform(
+    bp::AddPlayerPacket_<1001> &&from)
 {
     bp::AddPlayerPacket_<2168> to;
     to.uuid = from.uuid;
@@ -48,9 +50,9 @@ bp::AddPlayerPacket_<2168> Transformer<bp::AddPlayerPacket_<1001>>::upgrade(bp::
     to.velocity = from.velocity;
     to.rot = from.rot;
     to.y_head_rot = from.y_head_rot;
-    to.carried_item = ew::upgrade(from.carried_item);
+    to.carried_item = ew::transform(std::move(from.carried_item));
     to.player_game_type = from.player_game_type;
-    to.unpack = ew::upgrade(from.unpack);
+    to.unpack = ew::transform(std::move(from.unpack));
     to.synched_properties = std::move(from.synched_properties);
     to.abilities = std::move(from.abilities);
     to.links = std::move(from.links);
@@ -59,20 +61,22 @@ bp::AddPlayerPacket_<2168> Transformer<bp::AddPlayerPacket_<1001>>::upgrade(bp::
     return to;
 }
 
-bp::AddItemActorPacket_<2168> Transformer<bp::AddItemActorPacket_<1001>>::upgrade(bp::AddItemActorPacket_<1001> &&from)
+bp::AddItemActorPacket_<2168> Transformer<bp::AddItemActorPacket_<1001>, bp::AddItemActorPacket_<2168>>::transform(
+    bp::AddItemActorPacket_<1001> &&from)
 {
     bp::AddItemActorPacket_<2168> to;
     to.id = from.id;
     to.runtime_id = from.runtime_id;
-    to.item = ew::upgrade(from.item);
+    to.item = ew::transform(std::move(from.item));
     to.pos = from.pos;
     to.velocity = from.velocity;
-    to.data = ew::upgrade(from.data);
+    to.data = ew::transform(std::move(from.data));
     to.is_from_fishing = from.is_from_fishing;
     return to;
 }
 
-bp::MovePlayerPacket_<2168> Transformer<bp::MovePlayerPacket_<1001>>::upgrade(bp::MovePlayerPacket_<1001> &&from)
+bp::MovePlayerPacket_<2168> Transformer<bp::MovePlayerPacket_<1001>, bp::MovePlayerPacket_<2168>>::transform(
+    bp::MovePlayerPacket_<1001> &&from)
 {
     bp::MovePlayerPacket_<2168> to;
     to.player_id = from.player_id;
@@ -91,11 +95,11 @@ bp::MovePlayerPacket_<2168> Transformer<bp::MovePlayerPacket_<1001>>::upgrade(bp
     return to;
 }
 
-bp::MoveActorDeltaPacket_<2168> Transformer<bp::MoveActorDeltaPacket_<1001>>::upgrade(
-    bp::MoveActorDeltaPacket_<1001> &&from)
+bp::MoveActorDeltaPacket_<2168> Transformer<
+    bp::MoveActorDeltaPacket_<1001>, bp::MoveActorDeltaPacket_<2168>>::transform(bp::MoveActorDeltaPacket_<1001> &&from)
 {
     bp::MoveActorDeltaPacket_<2168> to;
-    to.move_data = ew::upgrade(from.move_data);
+    to.move_data = ew::transform(std::move(from.move_data));
     return to;
 }
 

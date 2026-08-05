@@ -73,14 +73,7 @@ std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWrit
     std::string translated;
     bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
-    if constexpr (From < To) {
-        static_assert(std::is_same_v<decltype(endweave::upgrade(packet)), packet_of<To, Id>>);
-        bp::serialize(writer, endweave::upgrade(packet));
-    }
-    else {
-        static_assert(std::is_same_v<decltype(endweave::downgrade(packet)), packet_of<To, Id>>);
-        bp::serialize(writer, endweave::downgrade(packet));
-    }
+    bp::serialize(writer, endweave::transform_to<packet_of<To, Id>>(std::move(packet)));
 
     // The destination has to be able to read back what was just written for it. Serialiser
     // and deserialiser are generated apart, so nothing else holds the pair to each other.

@@ -6,7 +6,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::SerializedSkinRef_<1001> Transformer<bp::SerializedSkinRef_<2168>>::downgrade(bp::SerializedSkinRef_<2168> &&from)
+bp::SerializedSkinRef_<1001> Transformer<bp::SerializedSkinRef_<2168>, bp::SerializedSkinRef_<1001>>::transform(
+    bp::SerializedSkinRef_<2168> &&from)
 {
     bp::SerializedSkinRef_<1001> to;
     to.id = std::move(from.id);
@@ -34,11 +35,12 @@ bp::SerializedSkinRef_<1001> Transformer<bp::SerializedSkinRef_<2168>>::downgrad
     return to;
 }
 
-bp::PlayerSkinPacket_<1001> Transformer<bp::PlayerSkinPacket_<2168>>::downgrade(bp::PlayerSkinPacket_<2168> &&from)
+bp::PlayerSkinPacket_<1001> Transformer<bp::PlayerSkinPacket_<2168>, bp::PlayerSkinPacket_<1001>>::transform(
+    bp::PlayerSkinPacket_<2168> &&from)
 {
     bp::PlayerSkinPacket_<1001> to;
     to.uuid = from.uuid;
-    to.skin = ew::downgrade(from.skin);
+    to.skin = ew::transform(std::move(from.skin));
     to.localized_new_skin_name = std::move(from.localized_new_skin_name);
     to.localized_old_skin_name = std::move(from.localized_old_skin_name);
     return to;

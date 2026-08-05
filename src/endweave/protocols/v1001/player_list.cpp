@@ -9,7 +9,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>>::upgrade(bp::PlayerListPacket_<1001> &&from)
+bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>, bp::PlayerListPacket_<2168>>::transform(
+    bp::PlayerListPacket_<1001> &&from)
 {
     bp::PlayerListPacket_<2168> to;
     if (from.action == bp::PlayerListPacketType::ADD) {
@@ -24,7 +25,7 @@ bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>>::upgrade(bp
             add.xuid = std::move(entry.xuid);
             add.platform_online_id = std::move(entry.platform_online_id);
             add.build_platform = entry.build_platform;
-            add.skin = ew::upgrade(ew::toCereal(entry.skin));
+            add.skin = ew::transform(ew::transform_to<bp::SerializedSkinRef_<1001>>(std::move(entry.skin)));
             // ENDWEAVE: 1001 keeps the trusted flag out of the skin, in a run of one bool per entry
             // trailing the list; 2168 carries it inside.
             add.skin.trusted_skin_flag = i < from.trusted_skins.size() && from.trusted_skins[i]

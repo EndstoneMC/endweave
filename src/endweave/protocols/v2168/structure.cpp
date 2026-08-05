@@ -8,11 +8,11 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::StructureEditorData_<1001> Transformer<bp::StructureEditorData_<2168>>::downgrade(
+bp::StructureEditorData_<1001> Transformer<bp::StructureEditorData_<2168>, bp::StructureEditorData_<1001>>::transform(
     bp::StructureEditorData_<2168> &&from)
 {
     bp::StructureEditorData_<1001> to;
-    to.structure_name = ew::downgrade(from.structure_name);
+    to.structure_name = ew::transform(std::move(from.structure_name));
     to.data_field = std::move(from.data_field);
     to.include_players = from.include_players;
     to.show_bounding_box = from.show_bounding_box;
@@ -22,12 +22,13 @@ bp::StructureEditorData_<1001> Transformer<bp::StructureEditorData_<2168>>::down
     return to;
 }
 
-bp::StructureBlockUpdatePacket_<1001> Transformer<bp::StructureBlockUpdatePacket_<2168>>::downgrade(
-    bp::StructureBlockUpdatePacket_<2168> &&from)
+bp::StructureBlockUpdatePacket_<1001> Transformer<
+    bp::StructureBlockUpdatePacket_<2168>,
+    bp::StructureBlockUpdatePacket_<1001>>::transform(bp::StructureBlockUpdatePacket_<2168> &&from)
 {
     bp::StructureBlockUpdatePacket_<1001> to;
     to.block_pos = from.block_pos;
-    to.data = ew::downgrade(from.data);
+    to.data = ew::transform(std::move(from.data));
     to.trigger = from.trigger;
     to.is_waterlogged = from.is_waterlogged;
     return to;

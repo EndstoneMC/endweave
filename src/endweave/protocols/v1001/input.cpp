@@ -7,8 +7,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::PlayerBlockActionData_<2168> Transformer<bp::PlayerBlockActionData_<1001>>::upgrade(
-    bp::PlayerBlockActionData_<1001> &&from)
+bp::PlayerBlockActionData_<2168> Transformer<bp::PlayerBlockActionData_<1001>, bp::PlayerBlockActionData_<2168>>::
+    transform(bp::PlayerBlockActionData_<1001> &&from)
 {
     bp::PlayerBlockActionData_<2168> to;
     // ENDWEAVE: 2168 only appends INTERNAL_UPDATE, so every action 1001 can name keeps its value.
@@ -18,8 +18,8 @@ bp::PlayerBlockActionData_<2168> Transformer<bp::PlayerBlockActionData_<1001>>::
     return to;
 }
 
-bp::PlayerAuthInputPacket_<2168> Transformer<bp::PlayerAuthInputPacket_<1001>>::upgrade(
-    bp::PlayerAuthInputPacket_<1001> &&from)
+bp::PlayerAuthInputPacket_<2168> Transformer<bp::PlayerAuthInputPacket_<1001>, bp::PlayerAuthInputPacket_<2168>>::
+    transform(bp::PlayerAuthInputPacket_<1001> &&from)
 {
     using From = bp::PlayerAuthInputPacket_<1001>;
 
@@ -45,10 +45,10 @@ bp::PlayerAuthInputPacket_<2168> Transformer<bp::PlayerAuthInputPacket_<1001>>::
     // ENDWEAVE: The 1001 flag is the presence marker, not emptiness; a client can set a gate and
     // send an empty list.
     if (from.input_data.test(static_cast<std::size_t>(From::InputData::PERFORM_ITEM_STACK_REQUEST))) {
-        to.item_stack_request = ew::upgrade(from.item_stack_request);
+        to.item_stack_request = ew::transform(std::move(from.item_stack_request));
     }
     if (from.input_data.test(static_cast<std::size_t>(From::InputData::PERFORM_BLOCK_ACTIONS))) {
-        to.player_block_actions = ew::upgrade(from.player_block_actions);
+        to.player_block_actions = ew::transform(std::move(from.player_block_actions));
     }
     if (from.input_data.test(static_cast<std::size_t>(From::InputData::IS_IN_CLIENT_PREDICTED_VEHICLE))) {
         to.vehicle_rot = from.vehicle_rot;

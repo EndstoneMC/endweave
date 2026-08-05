@@ -74,7 +74,8 @@ bp::SkinImage imageOf(std::uint32_t width, std::uint32_t height, std::string &&b
 
 } // namespace
 
-bp::AnimatedImageData Transformer<bp::legacy::AnimatedImageData>::toCereal(bp::legacy::AnimatedImageData &&from)
+bp::AnimatedImageData Transformer<bp::legacy::AnimatedImageData, bp::AnimatedImageData>::transform(
+    bp::legacy::AnimatedImageData &&from)
 {
     bp::AnimatedImageData to;
     to.image = imageOf(from.image_width, from.image_height, std::move(from.image_bytes));
@@ -84,7 +85,8 @@ bp::AnimatedImageData Transformer<bp::legacy::AnimatedImageData>::toCereal(bp::l
     return to;
 }
 
-bp::legacy::AnimatedImageData Transformer<bp::AnimatedImageData>::toLegacy(bp::AnimatedImageData &&from)
+bp::legacy::AnimatedImageData Transformer<bp::AnimatedImageData, bp::legacy::AnimatedImageData>::transform(
+    bp::AnimatedImageData &&from)
 {
     bp::legacy::AnimatedImageData to;
     to.image_width = from.image.width;
@@ -96,8 +98,9 @@ bp::legacy::AnimatedImageData Transformer<bp::AnimatedImageData>::toLegacy(bp::A
     return to;
 }
 
-bp::SerializedPersonaPieceHandle Transformer<bp::legacy::SerializedPersonaPieceHandle>::toCereal(
-    bp::legacy::SerializedPersonaPieceHandle &&from)
+bp::SerializedPersonaPieceHandle Transformer<
+    bp::legacy::SerializedPersonaPieceHandle,
+    bp::SerializedPersonaPieceHandle>::transform(bp::legacy::SerializedPersonaPieceHandle &&from)
 {
     bp::SerializedPersonaPieceHandle to;
     to.piece_id = std::move(from.piece_id);
@@ -108,8 +111,9 @@ bp::SerializedPersonaPieceHandle Transformer<bp::legacy::SerializedPersonaPieceH
     return to;
 }
 
-bp::legacy::SerializedPersonaPieceHandle Transformer<bp::SerializedPersonaPieceHandle>::toLegacy(
-    bp::SerializedPersonaPieceHandle &&from)
+bp::legacy::SerializedPersonaPieceHandle Transformer<
+    bp::SerializedPersonaPieceHandle,
+    bp::legacy::SerializedPersonaPieceHandle>::transform(bp::SerializedPersonaPieceHandle &&from)
 {
     bp::legacy::SerializedPersonaPieceHandle to;
     to.piece_id = std::move(from.piece_id);
@@ -120,7 +124,7 @@ bp::legacy::SerializedPersonaPieceHandle Transformer<bp::SerializedPersonaPieceH
     return to;
 }
 
-bp::TintMapColor Transformer<bp::legacy::TintMapColor>::toCereal(bp::legacy::TintMapColor &&from)
+bp::TintMapColor Transformer<bp::legacy::TintMapColor, bp::TintMapColor>::transform(bp::legacy::TintMapColor &&from)
 {
     bp::TintMapColor to;
     for (const auto &hex : from.colors) {
@@ -132,7 +136,7 @@ bp::TintMapColor Transformer<bp::legacy::TintMapColor>::toCereal(bp::legacy::Tin
     return to;
 }
 
-bp::legacy::TintMapColor Transformer<bp::TintMapColor>::toLegacy(bp::TintMapColor &&from)
+bp::legacy::TintMapColor Transformer<bp::TintMapColor, bp::legacy::TintMapColor>::transform(bp::TintMapColor &&from)
 {
     bp::legacy::TintMapColor to;
     // ENDWEAVE: the piece type is the map key at the cerealised form, so the skin fills it in.
@@ -143,14 +147,15 @@ bp::legacy::TintMapColor Transformer<bp::TintMapColor>::toLegacy(bp::TintMapColo
     return to;
 }
 
-bp::SerializedSkinRef_<1001> Transformer<bp::legacy::SerializedSkinRef>::toCereal(bp::legacy::SerializedSkinRef &&from)
+bp::SerializedSkinRef_<1001> Transformer<bp::legacy::SerializedSkinRef, bp::SerializedSkinRef_<1001>>::transform(
+    bp::legacy::SerializedSkinRef &&from)
 {
     bp::SerializedSkinRef_<1001> to;
     to.id = std::move(from.id);
     to.play_fab_id = std::move(from.play_fab_id);
     to.resource_patch = std::move(from.resource_patch);
     to.image_data = imageOf(from.image_width, from.image_height, std::move(from.image_bytes));
-    to.animated_image_data = ew::toCereal(from.animated_image_data);
+    to.animated_image_data = ew::transform(std::move(from.animated_image_data));
     to.cape_image_data = imageOf(from.cape_image_width, from.cape_image_height, std::move(from.cape_image_bytes));
     to.geometry_data = std::move(from.geometry_data);
     to.geometry_data_min_engine_version = std::move(from.geometry_data_min_engine_version);
@@ -159,10 +164,11 @@ bp::SerializedSkinRef_<1001> Transformer<bp::legacy::SerializedSkinRef>::toCerea
     to.full_id = std::move(from.full_id);
     to.arm_size = from.arm_size;
     to.skin_color = colorFromHex(from.skin_color);
-    to.persona_pieces = ew::toCereal(from.persona_pieces);
+    to.persona_pieces = ew::transform(std::move(from.persona_pieces));
     // The pre-cereal write walks the map as a list, so each entry carries its own key back.
     for (auto &tint : from.piece_tint_colors) {
-        to.piece_tint_colors.emplace(tint.piece_type, ew::toCereal(tint));
+        const auto piece_type = tint.piece_type;
+        to.piece_tint_colors.emplace(piece_type, ew::transform(std::move(tint)));
     }
     to.is_premium = from.is_premium;
     to.is_persona = from.is_persona;
@@ -175,7 +181,8 @@ bp::SerializedSkinRef_<1001> Transformer<bp::legacy::SerializedSkinRef>::toCerea
     return to;
 }
 
-bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>>::toLegacy(bp::SerializedSkinRef_<1001> &&from)
+bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>, bp::legacy::SerializedSkinRef>::transform(
+    bp::SerializedSkinRef_<1001> &&from)
 {
     bp::legacy::SerializedSkinRef to;
     to.id = std::move(from.id);
@@ -184,7 +191,7 @@ bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>>::toLegac
     to.image_width = from.image_data.width;
     to.image_height = from.image_data.height;
     to.image_bytes = std::move(from.image_data.image_bytes);
-    to.animated_image_data = ew::toLegacy(from.animated_image_data);
+    to.animated_image_data = ew::transform(std::move(from.animated_image_data));
     to.cape_image_width = from.cape_image_data.width;
     to.cape_image_height = from.cape_image_data.height;
     to.cape_image_bytes = std::move(from.cape_image_data.image_bytes);
@@ -195,9 +202,9 @@ bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>>::toLegac
     to.full_id = std::move(from.full_id);
     to.arm_size = from.arm_size;
     to.skin_color = colorToHex(from.skin_color);
-    to.persona_pieces = ew::toLegacy(from.persona_pieces);
+    to.persona_pieces = ew::transform(std::move(from.persona_pieces));
     for (auto &[piece_type, colors] : from.piece_tint_colors) {
-        auto tint = ew::toLegacy(colors);
+        auto tint = ew::transform_to<bp::legacy::TintMapColor>(std::move(colors));
         tint.piece_type = piece_type;
         to.piece_tint_colors.push_back(std::move(tint));
     }
@@ -211,7 +218,8 @@ bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>>::toLegac
     return to;
 }
 
-bp::SerializedSkinRef_<2168> Transformer<bp::SerializedSkinRef_<1001>>::upgrade(bp::SerializedSkinRef_<1001> &&from)
+bp::SerializedSkinRef_<2168> Transformer<bp::SerializedSkinRef_<1001>, bp::SerializedSkinRef_<2168>>::transform(
+    bp::SerializedSkinRef_<1001> &&from)
 {
     bp::SerializedSkinRef_<2168> to;
     to.id = std::move(from.id);
@@ -241,11 +249,12 @@ bp::SerializedSkinRef_<2168> Transformer<bp::SerializedSkinRef_<1001>>::upgrade(
     return to;
 }
 
-bp::PlayerSkinPacket_<2168> Transformer<bp::PlayerSkinPacket_<1001>>::upgrade(bp::PlayerSkinPacket_<1001> &&from)
+bp::PlayerSkinPacket_<2168> Transformer<bp::PlayerSkinPacket_<1001>, bp::PlayerSkinPacket_<2168>>::transform(
+    bp::PlayerSkinPacket_<1001> &&from)
 {
     bp::PlayerSkinPacket_<2168> to;
     to.uuid = from.uuid;
-    to.skin = ew::upgrade(from.skin);
+    to.skin = ew::transform(std::move(from.skin));
     to.localized_new_skin_name = std::move(from.localized_new_skin_name);
     to.localized_old_skin_name = std::move(from.localized_old_skin_name);
     return to;

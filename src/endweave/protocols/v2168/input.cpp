@@ -7,8 +7,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::PlayerBlockActionData_<1001> Transformer<bp::PlayerBlockActionData_<2168>>::downgrade(
-    bp::PlayerBlockActionData_<2168> &&from)
+bp::PlayerBlockActionData_<1001> Transformer<bp::PlayerBlockActionData_<2168>, bp::PlayerBlockActionData_<1001>>::
+    transform(bp::PlayerBlockActionData_<2168> &&from)
 {
     bp::PlayerBlockActionData_<1001> to;
     // ENDWEAVE: TODO INTERNAL_UPDATE collides with 1001's COUNT sentinel, so it maps to UNKNOWN,
@@ -21,8 +21,8 @@ bp::PlayerBlockActionData_<1001> Transformer<bp::PlayerBlockActionData_<2168>>::
     return to;
 }
 
-bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>>::downgrade(
-    bp::PlayerAuthInputPacket_<2168> &&from)
+bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>, bp::PlayerAuthInputPacket_<1001>>::
+    transform(bp::PlayerAuthInputPacket_<2168> &&from)
 {
     using To = bp::PlayerAuthInputPacket_<1001>;
 
@@ -52,10 +52,10 @@ bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>>::
     // ENDWEAVE: TODO item_use_transaction is dropped -- 1001 has no field for it -- so a client's
     // block placements and item uses never reach the server.
     if (from.item_stack_request.has_value()) {
-        to.item_stack_request = ew::downgrade(from.item_stack_request.value());
+        to.item_stack_request = ew::transform(std::move(from.item_stack_request.value()));
     }
     if (from.player_block_actions.has_value()) {
-        to.player_block_actions = ew::downgrade(from.player_block_actions.value());
+        to.player_block_actions = ew::transform(std::move(from.player_block_actions.value()));
     }
     // ENDWEAVE: 1001 cannot say "absent" here, but the gate flag is clear, so the zeroes never
     // reach the wire.

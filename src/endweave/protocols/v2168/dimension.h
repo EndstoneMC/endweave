@@ -9,14 +9,15 @@ namespace bp = bedrock::protocol;
 namespace endweave {
 
 template <>
-struct Transformer<bp::DimensionDefinitionGroup_<2168>::DimensionDefinition> {
-    static bp::DimensionDefinitionGroup_<1001>::DimensionDefinition downgrade(
+struct Transformer<bp::DimensionDefinitionGroup_<2168>::DimensionDefinition,
+                   bp::DimensionDefinitionGroup_<1001>::DimensionDefinition> {
+    static bp::DimensionDefinitionGroup_<1001>::DimensionDefinition transform(
         bp::DimensionDefinitionGroup_<2168>::DimensionDefinition &&from);
 };
 
 template <>
-struct Transformer<bp::DimensionDataPacket_<2168>> {
-    static bp::DimensionDataPacket_<1001> downgrade(bp::DimensionDataPacket_<2168> &&from);
+struct Transformer<bp::DimensionDataPacket_<2168>, bp::DimensionDataPacket_<1001>> {
+    static bp::DimensionDataPacket_<1001> transform(bp::DimensionDataPacket_<2168> &&from);
 };
 
 } // namespace endweave

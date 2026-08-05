@@ -16,7 +16,8 @@ namespace endweave {
 // from one action, so the mixed form is something the 2168 shape permits rather than
 // something the wire carries; refusing the downgrade needs the error channel a transform
 // does not have yet.
-bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>>::downgrade(bp::PlayerListPacket_<2168> &&from)
+bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>, bp::PlayerListPacket_<1001>>::transform(
+    bp::PlayerListPacket_<2168> &&from)
 {
     bp::PlayerListPacket_<1001> to;
     if (from.entries.empty()) {
@@ -31,7 +32,7 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>>::downgrade(
             if (to.action != bp::PlayerListPacketType::ADD) {
                 continue;
             }
-            auto skin = ew::downgrade(std::move(add->skin));
+            auto skin = ew::transform_to<bp::SerializedSkinRef_<1001>>(std::move(add->skin));
             bp::PlayerListEntry_<1001> out;
             out.uuid = add->uuid;
             out.id = add->actor_unique_id;
@@ -42,7 +43,7 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>>::downgrade(
             // ENDWEAVE: 2168 carries the trusted flag inside the skin; 1001 wants it in a run of one
             // bool per entry trailing the list, so it comes back out before the skin is converted.
             to.trusted_skins.push_back(skin.trusted_skin_flag == bp::TrustedSkinFlag::TRUE);
-            out.skin = ew::toLegacy(skin);
+            out.skin = ew::transform(std::move(skin));
             out.is_teacher = add->is_teacher;
             out.is_host = add->is_host;
             out.is_sub_client = add->is_sub_client;

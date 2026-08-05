@@ -2,7 +2,8 @@
 
 namespace endweave {
 
-bp::AnvilDamagePacket_<1001> Transformer<bp::AnvilDamagePacket_<2168>>::downgrade(bp::AnvilDamagePacket_<2168> &&from)
+bp::AnvilDamagePacket_<1001> Transformer<bp::AnvilDamagePacket_<2168>, bp::AnvilDamagePacket_<1001>>::transform(
+    bp::AnvilDamagePacket_<2168> &&from)
 {
     bp::AnvilDamagePacket_<1001> to;
     // ENDWEAVE: TODO 2168 sends no damage and it cannot be recovered. Undamaged is the one value that

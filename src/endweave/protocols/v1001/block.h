@@ -9,8 +9,8 @@ namespace bp = bedrock::protocol;
 namespace endweave {
 
 template <>
-struct Transformer<bp::AnvilDamagePacket_<1001>> {
-    static bp::AnvilDamagePacket_<2168> upgrade(bp::AnvilDamagePacket_<1001> &&from);
+struct Transformer<bp::AnvilDamagePacket_<1001>, bp::AnvilDamagePacket_<2168>> {
+    static bp::AnvilDamagePacket_<2168> transform(bp::AnvilDamagePacket_<1001> &&from);
 };
 
 } // namespace endweave

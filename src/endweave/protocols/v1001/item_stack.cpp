@@ -67,7 +67,8 @@ Cereal::NetworkItemInstanceDescriptorData upgradeItemInstance(bp::SerializedNetw
 
 namespace endweave {
 
-bp::RedactableString_<2168> Transformer<bp::RedactableString_<1001>>::upgrade(bp::RedactableString_<1001> &&from)
+bp::RedactableString_<2168> Transformer<bp::RedactableString_<1001>, bp::RedactableString_<2168>>::transform(
+    bp::RedactableString_<1001> &&from)
 {
     bp::RedactableString_<2168> to;
     to.unredacted = std::move(from.unredacted);
@@ -78,8 +79,9 @@ bp::RedactableString_<2168> Transformer<bp::RedactableString_<1001>>::upgrade(bp
     return to;
 }
 
-bp::ItemStackResponseSlotInfo_<2168> Transformer<bp::ItemStackResponseSlotInfo_<1001>>::upgrade(
-    bp::ItemStackResponseSlotInfo_<1001> &&from)
+bp::ItemStackResponseSlotInfo_<2168> Transformer<
+    bp::ItemStackResponseSlotInfo_<1001>,
+    bp::ItemStackResponseSlotInfo_<2168>>::transform(bp::ItemStackResponseSlotInfo_<1001> &&from)
 {
     bp::ItemStackResponseSlotInfo_<2168> to;
     to.requested_slot = from.requested_slot;
@@ -87,22 +89,23 @@ bp::ItemStackResponseSlotInfo_<2168> Transformer<bp::ItemStackResponseSlotInfo_<
     to.amount = from.amount;
     // ENDWEAVE: 1001 always carries a net id, so it is always present at 2168, zero included.
     to.item_stack_net_id = from.item_stack_net_id;
-    to.custom_name = ew::upgrade(from.custom_name);
+    to.custom_name = ew::transform(std::move(from.custom_name));
     to.durability_correction = from.durability_correction;
     return to;
 }
 
-bp::ItemStackResponseContainerInfo_<2168> Transformer<bp::ItemStackResponseContainerInfo_<1001>>::upgrade(
-    bp::ItemStackResponseContainerInfo_<1001> &&from)
+bp::ItemStackResponseContainerInfo_<2168> Transformer<
+    bp::ItemStackResponseContainerInfo_<1001>,
+    bp::ItemStackResponseContainerInfo_<2168>>::transform(bp::ItemStackResponseContainerInfo_<1001> &&from)
 {
     bp::ItemStackResponseContainerInfo_<2168> to;
     to.full_container_name = std::move(from.full_container_name);
-    to.slots = ew::upgrade(from.slots);
+    to.slots = ew::transform(std::move(from.slots));
     return to;
 }
 
-bp::ItemStackResponseInfo_<2168> Transformer<bp::ItemStackResponseInfo_<1001>>::upgrade(
-    bp::ItemStackResponseInfo_<1001> &&from)
+bp::ItemStackResponseInfo_<2168> Transformer<bp::ItemStackResponseInfo_<1001>, bp::ItemStackResponseInfo_<2168>>::
+    transform(bp::ItemStackResponseInfo_<1001> &&from)
 {
     bp::ItemStackResponseInfo_<2168> to;
     to.result = from.result;
@@ -110,21 +113,22 @@ bp::ItemStackResponseInfo_<2168> Transformer<bp::ItemStackResponseInfo_<1001>>::
     // ENDWEAVE: 1001's result gate becomes 2168's presence flag, so a failed response goes up
     // absent rather than empty.
     if (from.result == bp::ItemStackNetResult::SUCCESS) {
-        to.containers = ew::upgrade(from.containers);
+        to.containers = ew::transform(std::move(from.containers));
     }
     return to;
 }
 
-bp::ItemStackResponsePacket_<2168> Transformer<bp::ItemStackResponsePacket_<1001>>::upgrade(
-    bp::ItemStackResponsePacket_<1001> &&from)
+bp::ItemStackResponsePacket_<2168> Transformer<bp::ItemStackResponsePacket_<1001>, bp::ItemStackResponsePacket_<2168>>::
+    transform(bp::ItemStackResponsePacket_<1001> &&from)
 {
     bp::ItemStackResponsePacket_<2168> to;
-    to.responses = ew::upgrade(from.responses);
+    to.responses = ew::transform(std::move(from.responses));
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::SlotInfoData Transformer<bp::ItemStackRequestSlotInfo_<1001>>::upgrade(
-    bp::ItemStackRequestSlotInfo_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::SlotInfoData Transformer<
+    bp::ItemStackRequestSlotInfo_<1001>,
+    bp::ItemStackRequestCereal_<2168>::SlotInfoData>::transform(bp::ItemStackRequestSlotInfo_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::SlotInfoData to;
     to.full_container_name = std::move(from.full_container_name);
@@ -133,73 +137,80 @@ bp::ItemStackRequestCereal_<2168>::SlotInfoData Transformer<bp::ItemStackRequest
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::TakeActionData Transformer<bp::ItemStackRequestActionTake_<1001>>::upgrade(
-    bp::ItemStackRequestActionTake_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::TakeActionData Transformer<
+    bp::ItemStackRequestActionTake_<1001>,
+    bp::ItemStackRequestCereal_<2168>::TakeActionData>::transform(bp::ItemStackRequestActionTake_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::TakeActionData to;
     // ENDWEAVE: 2168 restates the action type in every payload, where 1001 carried it in the list
     // tag alone, so each action names its own here.
     to.action_type = bp::ItemStackRequestActionType::TAKE;
     to.amount = from.amount;
-    to.source = ew::upgrade(from.src);
-    to.destination = ew::upgrade(from.dst);
+    to.source = ew::transform(std::move(from.src));
+    to.destination = ew::transform(std::move(from.dst));
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::PlaceActionData Transformer<bp::ItemStackRequestActionPlace_<1001>>::upgrade(
-    bp::ItemStackRequestActionPlace_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::PlaceActionData Transformer<
+    bp::ItemStackRequestActionPlace_<1001>,
+    bp::ItemStackRequestCereal_<2168>::PlaceActionData>::transform(bp::ItemStackRequestActionPlace_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::PlaceActionData to;
     to.action_type = bp::ItemStackRequestActionType::PLACE;
     to.amount = from.amount;
-    to.source = ew::upgrade(from.src);
-    to.destination = ew::upgrade(from.dst);
+    to.source = ew::transform(std::move(from.src));
+    to.destination = ew::transform(std::move(from.dst));
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::SwapActionData Transformer<bp::ItemStackRequestActionSwap_<1001>>::upgrade(
-    bp::ItemStackRequestActionSwap_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::SwapActionData Transformer<
+    bp::ItemStackRequestActionSwap_<1001>,
+    bp::ItemStackRequestCereal_<2168>::SwapActionData>::transform(bp::ItemStackRequestActionSwap_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::SwapActionData to;
     to.action_type = bp::ItemStackRequestActionType::SWAP;
-    to.source = ew::upgrade(from.src);
-    to.destination = ew::upgrade(from.dst);
+    to.source = ew::transform(std::move(from.src));
+    to.destination = ew::transform(std::move(from.dst));
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::DropActionData Transformer<bp::ItemStackRequestActionDrop_<1001>>::upgrade(
-    bp::ItemStackRequestActionDrop_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::DropActionData Transformer<
+    bp::ItemStackRequestActionDrop_<1001>,
+    bp::ItemStackRequestCereal_<2168>::DropActionData>::transform(bp::ItemStackRequestActionDrop_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::DropActionData to;
     to.action_type = bp::ItemStackRequestActionType::DROP;
     to.amount = from.amount;
-    to.source = ew::upgrade(from.src);
+    to.source = ew::transform(std::move(from.src));
     to.randomly = from.randomly;
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::DestroyActionData Transformer<bp::ItemStackRequestActionDestroy_<1001>>::upgrade(
-    bp::ItemStackRequestActionDestroy_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::DestroyActionData Transformer<
+    bp::ItemStackRequestActionDestroy_<1001>,
+    bp::ItemStackRequestCereal_<2168>::DestroyActionData>::transform(bp::ItemStackRequestActionDestroy_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::DestroyActionData to;
     to.action_type = bp::ItemStackRequestActionType::DESTROY;
     to.amount = from.amount;
-    to.source = ew::upgrade(from.src);
+    to.source = ew::transform(std::move(from.src));
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::ConsumeActionData Transformer<bp::ItemStackRequestActionConsume_<1001>>::upgrade(
-    bp::ItemStackRequestActionConsume_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::ConsumeActionData Transformer<
+    bp::ItemStackRequestActionConsume_<1001>,
+    bp::ItemStackRequestCereal_<2168>::ConsumeActionData>::transform(bp::ItemStackRequestActionConsume_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::ConsumeActionData to;
     to.action_type = bp::ItemStackRequestActionType::CONSUME;
     to.amount = from.amount;
-    to.source = ew::upgrade(from.src);
+    to.source = ew::transform(std::move(from.src));
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CreateActionData Transformer<bp::ItemStackRequestActionCreate_<1001>>::upgrade(
-    bp::ItemStackRequestActionCreate_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::CreateActionData Transformer<
+    bp::ItemStackRequestActionCreate_<1001>,
+    bp::ItemStackRequestCereal_<2168>::CreateActionData>::transform(bp::ItemStackRequestActionCreate_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CreateActionData to;
     to.action_type = bp::ItemStackRequestActionType::CREATE;
@@ -208,7 +219,8 @@ bp::ItemStackRequestCereal_<2168>::CreateActionData Transformer<bp::ItemStackReq
 }
 
 bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData Transformer<
-    bp::ItemStackRequestActionLabTableCombine_<1001>>::upgrade(bp::ItemStackRequestActionLabTableCombine_<1001> &&from)
+    bp::ItemStackRequestActionLabTableCombine_<1001>, bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData>::
+    transform(bp::ItemStackRequestActionLabTableCombine_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData to;
     to.action_type = bp::ItemStackRequestActionType::SCREEN_LAB_TABLE_COMBINE;
@@ -216,7 +228,8 @@ bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData Transformer<
 }
 
 bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData Transformer<
-    bp::ItemStackRequestActionBeaconPayment_<1001>>::upgrade(bp::ItemStackRequestActionBeaconPayment_<1001> &&from)
+    bp::ItemStackRequestActionBeaconPayment_<1001>, bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData>::
+    transform(bp::ItemStackRequestActionBeaconPayment_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData to;
     to.action_type = bp::ItemStackRequestActionType::SCREEN_BEACON_PAYMENT;
@@ -225,8 +238,10 @@ bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData Transformer<
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::MineBlockActionData Transformer<bp::ItemStackRequestActionMineBlock_<1001>>::upgrade(
-    bp::ItemStackRequestActionMineBlock_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::MineBlockActionData Transformer<
+    bp::ItemStackRequestActionMineBlock_<1001>,
+    bp::ItemStackRequestCereal_<2168>::MineBlockActionData>::transform(bp::ItemStackRequestActionMineBlock_<1001>
+                                                                           &&from)
 {
     bp::ItemStackRequestCereal_<2168>::MineBlockActionData to;
     to.action_type = bp::ItemStackRequestActionType::SCREEN_HUD_MINE_BLOCK;
@@ -237,7 +252,9 @@ bp::ItemStackRequestCereal_<2168>::MineBlockActionData Transformer<bp::ItemStack
 }
 
 bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData Transformer<
-    bp::ItemStackRequestActionCraftRecipe_<1001>>::upgrade(bp::ItemStackRequestActionCraftRecipe_<1001> &&from)
+    bp::ItemStackRequestActionCraftRecipe_<1001>,
+    bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData>::transform(bp::ItemStackRequestActionCraftRecipe_<1001>
+                                                                             &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData to;
     to.action_type = bp::ItemStackRequestActionType::CRAFT_RECIPE;
@@ -247,7 +264,8 @@ bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData Transformer<
 }
 
 bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData Transformer<
-    bp::ItemStackRequestActionCraftRecipeAuto_<1001>>::upgrade(bp::ItemStackRequestActionCraftRecipeAuto_<1001> &&from)
+    bp::ItemStackRequestActionCraftRecipeAuto_<1001>, bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData>::
+    transform(bp::ItemStackRequestActionCraftRecipeAuto_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData to;
     to.action_type = bp::ItemStackRequestActionType::CRAFT_RECIPE_AUTO;
@@ -262,7 +280,8 @@ bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData Transformer<
 }
 
 bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData Transformer<
-    bp::ItemStackRequestActionCraftCreative_<1001>>::upgrade(bp::ItemStackRequestActionCraftCreative_<1001> &&from)
+    bp::ItemStackRequestActionCraftCreative_<1001>, bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData>::
+    transform(bp::ItemStackRequestActionCraftCreative_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData to;
     to.action_type = bp::ItemStackRequestActionType::CRAFT_CREATIVE;
@@ -273,8 +292,9 @@ bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData Transformer<
 }
 
 bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData Transformer<
-    bp::ItemStackRequestActionCraftRecipeOptional_<1001>>::upgrade(bp::ItemStackRequestActionCraftRecipeOptional_<1001>
-                                                                       &&from)
+    bp::ItemStackRequestActionCraftRecipeOptional_<1001>,
+    bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData>::
+    transform(bp::ItemStackRequestActionCraftRecipeOptional_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData to;
     to.action_type = bp::ItemStackRequestActionType::CRAFT_RECIPE_OPTIONAL;
@@ -284,7 +304,9 @@ bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData Transformer<
 }
 
 bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData Transformer<
-    bp::ItemStackRequestActionCraftGrindstone_<1001>>::upgrade(bp::ItemStackRequestActionCraftGrindstone_<1001> &&from)
+    bp::ItemStackRequestActionCraftGrindstone_<1001>,
+    bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData>::
+    transform(bp::ItemStackRequestActionCraftGrindstone_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData to;
     // ENDWEAVE: same action under two names -- 1001's grindstone recipe is 2168's
@@ -297,8 +319,10 @@ bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData Transforme
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftLoomActionData Transformer<bp::ItemStackRequestActionCraftLoom_<1001>>::upgrade(
-    bp::ItemStackRequestActionCraftLoom_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::CraftLoomActionData Transformer<
+    bp::ItemStackRequestActionCraftLoom_<1001>,
+    bp::ItemStackRequestCereal_<2168>::CraftLoomActionData>::transform(bp::ItemStackRequestActionCraftLoom_<1001>
+                                                                           &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CraftLoomActionData to;
     to.action_type = bp::ItemStackRequestActionType::CRAFT_LOOM;
@@ -308,8 +332,9 @@ bp::ItemStackRequestCereal_<2168>::CraftLoomActionData Transformer<bp::ItemStack
 }
 
 bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData Transformer<
-    bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001>>::
-    upgrade(bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001> &&from)
+    bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001>,
+    bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData>::
+    transform(bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData to;
     to.action_type = bp::ItemStackRequestActionType::CRAFT_NON_IMPLEMENTED_DEPRECATEDASKTYLAING;
@@ -317,8 +342,9 @@ bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData Transformer<
 }
 
 bp::ItemStackRequestCereal_<2168>::CraftResultsActionData Transformer<
-    bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001>>::
-    upgrade(bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001> &&from)
+    bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001>,
+    bp::ItemStackRequestCereal_<2168>::CraftResultsActionData>::
+    transform(bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::CraftResultsActionData to;
     to.action_type = bp::ItemStackRequestActionType::CRAFT_RESULTS_DEPRECATEDASKTYLAING;
@@ -330,8 +356,9 @@ bp::ItemStackRequestCereal_<2168>::CraftResultsActionData Transformer<
     return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::RequestData Transformer<bp::ItemStackRequestData_<1001>>::upgrade(
-    bp::ItemStackRequestData_<1001> &&from)
+bp::ItemStackRequestCereal_<2168>::RequestData Transformer<
+    bp::ItemStackRequestData_<1001>,
+    bp::ItemStackRequestCereal_<2168>::RequestData>::transform(bp::ItemStackRequestData_<1001> &&from)
 {
     bp::ItemStackRequestCereal_<2168>::RequestData to;
     to.client_request_id = from.client_request_id;
@@ -344,7 +371,7 @@ bp::ItemStackRequestCereal_<2168>::RequestData Transformer<bp::ItemStackRequestD
                 // ENDWEAVE: the two deprecated slots have no 2168 class, so an action in one is
                 // dropped -- they are payload-less placeholders at 1001 too.
                 if constexpr (!std::is_same_v<std::remove_cvref_t<decltype(data)>, std::monostate>) {
-                    to.actions.push_back(ew::upgrade(data));
+                    to.actions.push_back(ew::transform(std::move(data)));
                 }
             },
             action);
@@ -354,11 +381,11 @@ bp::ItemStackRequestCereal_<2168>::RequestData Transformer<bp::ItemStackRequestD
     return to;
 }
 
-bp::ItemStackRequestPacket_<2168> Transformer<bp::ItemStackRequestPacket_<1001>>::upgrade(
-    bp::ItemStackRequestPacket_<1001> &&from)
+bp::ItemStackRequestPacket_<2168> Transformer<bp::ItemStackRequestPacket_<1001>, bp::ItemStackRequestPacket_<2168>>::
+    transform(bp::ItemStackRequestPacket_<1001> &&from)
 {
     bp::ItemStackRequestPacket_<2168> to;
-    to.requests = ew::upgrade(from.requests);
+    to.requests = ew::transform(std::move(from.requests));
     return to;
 }
 

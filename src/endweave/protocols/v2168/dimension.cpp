@@ -10,7 +10,8 @@ using DimensionDefinitionV2168 = bp::DimensionDefinitionGroup_<2168>::DimensionD
 
 } // namespace
 
-DimensionDefinitionV1001 Transformer<DimensionDefinitionV2168>::downgrade(DimensionDefinitionV2168 &&from)
+DimensionDefinitionV1001 Transformer<DimensionDefinitionV2168, DimensionDefinitionV1001>::transform(
+    DimensionDefinitionV2168 &&from)
 {
     DimensionDefinitionV1001 to;
     to.height_maximum = from.height_maximum;
@@ -21,11 +22,11 @@ DimensionDefinitionV1001 Transformer<DimensionDefinitionV2168>::downgrade(Dimens
     return to;
 }
 
-bp::DimensionDataPacket_<1001> Transformer<bp::DimensionDataPacket_<2168>>::downgrade(
+bp::DimensionDataPacket_<1001> Transformer<bp::DimensionDataPacket_<2168>, bp::DimensionDataPacket_<1001>>::transform(
     bp::DimensionDataPacket_<2168> &&from)
 {
     bp::DimensionDataPacket_<1001> to;
-    to.dimension_definitions = ew::downgrade(from.dimension_definitions);
+    to.dimension_definitions = ew::transform(std::move(from.dimension_definitions));
     return to;
 }
 

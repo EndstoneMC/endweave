@@ -15,7 +15,8 @@ constexpr std::uint32_t kPartialSubChunkCountWhenClientRequesting = 0xfffffffe;
 
 } // namespace
 
-bp::LevelChunkPacket_<1001> Transformer<bp::LevelChunkPacket_<2168>>::downgrade(bp::LevelChunkPacket_<2168> &&from)
+bp::LevelChunkPacket_<1001> Transformer<bp::LevelChunkPacket_<2168>, bp::LevelChunkPacket_<1001>>::transform(
+    bp::LevelChunkPacket_<2168> &&from)
 {
     bp::LevelChunkPacket_<1001> to;
     to.pos = from.pos;
@@ -39,8 +40,9 @@ bp::LevelChunkPacket_<1001> Transformer<bp::LevelChunkPacket_<2168>>::downgrade(
     return to;
 }
 
-bp::SubChunkPacket_<1001>::SubChunkPosOffset Transformer<bp::SubChunkPacket_<2168>::SubChunkPosOffset>::downgrade(
-    bp::SubChunkPacket_<2168>::SubChunkPosOffset &&from)
+bp::SubChunkPacket_<1001>::SubChunkPosOffset Transformer<
+    bp::SubChunkPacket_<2168>::SubChunkPosOffset,
+    bp::SubChunkPacket_<1001>::SubChunkPosOffset>::transform(bp::SubChunkPacket_<2168>::SubChunkPosOffset &&from)
 {
     bp::SubChunkPacket_<1001>::SubChunkPosOffset to;
     to.x = from.x;
@@ -49,8 +51,9 @@ bp::SubChunkPacket_<1001>::SubChunkPosOffset Transformer<bp::SubChunkPacket_<216
     return to;
 }
 
-bp::SubChunkPacket_<1001>::HeightmapData Transformer<bp::SubChunkPacket_<2168>::HeightmapData>::downgrade(
-    bp::SubChunkPacket_<2168>::HeightmapData &&from)
+bp::SubChunkPacket_<1001>::HeightmapData Transformer<
+    bp::SubChunkPacket_<2168>::HeightmapData,
+    bp::SubChunkPacket_<1001>::HeightmapData>::transform(bp::SubChunkPacket_<2168>::HeightmapData &&from)
 {
     bp::SubChunkPacket_<1001>::HeightmapData to;
     to.height_map_type = static_cast<bp::SubChunkPacket_<1001>::HeightMapDataType>(from.height_map_type);
@@ -61,21 +64,23 @@ bp::SubChunkPacket_<1001>::HeightmapData Transformer<bp::SubChunkPacket_<2168>::
     return to;
 }
 
-bp::SubChunkPacket_<1001>::SubChunkPacketData Transformer<bp::SubChunkPacket_<2168>::SubChunkPacketData>::downgrade(
-    bp::SubChunkPacket_<2168>::SubChunkPacketData &&from)
+bp::SubChunkPacket_<1001>::SubChunkPacketData Transformer<
+    bp::SubChunkPacket_<2168>::SubChunkPacketData,
+    bp::SubChunkPacket_<1001>::SubChunkPacketData>::transform(bp::SubChunkPacket_<2168>::SubChunkPacketData &&from)
 {
     bp::SubChunkPacket_<1001>::SubChunkPacketData to;
-    to.sub_chunk_pos_offset = ew::downgrade(from.sub_chunk_pos_offset);
+    to.sub_chunk_pos_offset = ew::transform(std::move(from.sub_chunk_pos_offset));
     to.result = static_cast<bp::SubChunkPacket_<1001>::SubChunkRequestResult>(from.result);
     // ENDWEAVE: 1001 demands a payload unless the result is all-air, so an absent one becomes zero-length.
     to.serialized_sub_chunk = std::move(from.serialized_sub_chunk).value_or(std::string{});
-    to.height_map_data = ew::downgrade(from.height_map_data);
+    to.height_map_data = ew::transform(std::move(from.height_map_data));
     // ENDWEAVE: 1001's cached entry always carries a blob id, and zero is what BDS uses when there is none.
     to.blob_id = from.blob_id.value_or(0);
     return to;
 }
 
-bp::SubChunkPacket_<1001> Transformer<bp::SubChunkPacket_<2168>>::downgrade(bp::SubChunkPacket_<2168> &&from)
+bp::SubChunkPacket_<1001> Transformer<bp::SubChunkPacket_<2168>, bp::SubChunkPacket_<1001>>::transform(
+    bp::SubChunkPacket_<2168> &&from)
 {
     bp::SubChunkPacket_<1001> to;
     to.cache_enabled = from.cache_enabled;
@@ -85,7 +90,8 @@ bp::SubChunkPacket_<1001> Transformer<bp::SubChunkPacket_<2168>>::downgrade(bp::
     to.center_pos_z = from.center_pos.z;
     // ENDWEAVE: the cache flag picks which of 1001's two entry lists is written. The uncached entry is
     // the cached one with its blob id dropped.
-    auto entries = ew::downgrade(from.sub_chunk_data);
+    auto entries =
+        ew::transform_to<std::vector<bp::SubChunkPacket_<1001>::SubChunkPacketData>>(std::move(from.sub_chunk_data));
     if (from.cache_enabled) {
         to.sub_chunk_data = std::move(entries);
     }
@@ -101,12 +107,12 @@ bp::SubChunkPacket_<1001> Transformer<bp::SubChunkPacket_<2168>>::downgrade(bp::
     return to;
 }
 
-bp::SubChunkRequestPacket_<1001> Transformer<bp::SubChunkRequestPacket_<2168>>::downgrade(
-    bp::SubChunkRequestPacket_<2168> &&from)
+bp::SubChunkRequestPacket_<1001> Transformer<bp::SubChunkRequestPacket_<2168>, bp::SubChunkRequestPacket_<1001>>::
+    transform(bp::SubChunkRequestPacket_<2168> &&from)
 {
     bp::SubChunkRequestPacket_<1001> to;
     to.dimension_type = from.dimension_type;
-    to.sub_chunk_pos_offsets = ew::downgrade(from.sub_chunk_pos_offsets);
+    to.sub_chunk_pos_offsets = ew::transform(std::move(from.sub_chunk_pos_offsets));
     to.center_pos = from.center_pos;
     return to;
 }

@@ -9,13 +9,13 @@ namespace bp = bedrock::protocol;
 namespace endweave {
 
 template <>
-struct Transformer<bp::PlayerUpdateEntityOverridesPacket_<1001>> {
-    static bp::PlayerUpdateEntityOverridesPacket_<2168> upgrade(bp::PlayerUpdateEntityOverridesPacket_<1001> &&from);
+struct Transformer<bp::PlayerUpdateEntityOverridesPacket_<1001>, bp::PlayerUpdateEntityOverridesPacket_<2168>> {
+    static bp::PlayerUpdateEntityOverridesPacket_<2168> transform(bp::PlayerUpdateEntityOverridesPacket_<1001> &&from);
 };
 
 template <>
-struct Transformer<bp::PlayerLocationPacket_<1001>> {
-    static bp::PlayerLocationPacket_<2168> upgrade(bp::PlayerLocationPacket_<1001> &&from);
+struct Transformer<bp::PlayerLocationPacket_<1001>, bp::PlayerLocationPacket_<2168>> {
+    static bp::PlayerLocationPacket_<2168> transform(bp::PlayerLocationPacket_<1001> &&from);
 };
 
 } // namespace endweave

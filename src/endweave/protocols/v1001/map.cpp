@@ -7,8 +7,9 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::MapItemTrackedActor_<2168>::UniqueId Transformer<bp::MapItemTrackedActor_<1001>::UniqueId>::upgrade(
-    bp::MapItemTrackedActor_<1001>::UniqueId &&from)
+bp::MapItemTrackedActor_<2168>::UniqueId Transformer<
+    bp::MapItemTrackedActor_<1001>::UniqueId,
+    bp::MapItemTrackedActor_<2168>::UniqueId>::transform(bp::MapItemTrackedActor_<1001>::UniqueId &&from)
 {
     using Type = bp::MapItemTrackedActor_<1001>::Type;
     bp::MapItemTrackedActor_<2168>::UniqueId to;
@@ -23,7 +24,8 @@ bp::MapItemTrackedActor_<2168>::UniqueId Transformer<bp::MapItemTrackedActor_<10
     return to;
 }
 
-bp::MapDecoration_<2168> Transformer<bp::MapDecoration_<1001>>::upgrade(bp::MapDecoration_<1001> &&from)
+bp::MapDecoration_<2168> Transformer<bp::MapDecoration_<1001>, bp::MapDecoration_<2168>>::transform(
+    bp::MapDecoration_<1001> &&from)
 {
     bp::MapDecoration_<2168> to;
     to.image = from.image;
@@ -35,8 +37,9 @@ bp::MapDecoration_<2168> Transformer<bp::MapDecoration_<1001>>::upgrade(bp::MapD
     return to;
 }
 
-bp::ClientboundMapItemDataPacket_<2168> Transformer<bp::ClientboundMapItemDataPacket_<1001>>::upgrade(
-    bp::ClientboundMapItemDataPacket_<1001> &&from)
+bp::ClientboundMapItemDataPacket_<2168> Transformer<
+    bp::ClientboundMapItemDataPacket_<1001>,
+    bp::ClientboundMapItemDataPacket_<2168>>::transform(bp::ClientboundMapItemDataPacket_<1001> &&from)
 {
     using Type = bp::ClientboundMapItemDataPacket_<1001>::Type;
     // ENDWEAVE: 2168 replaced 1001's bitflag word with optionals, so the bits are read here and go no further.
@@ -57,8 +60,8 @@ bp::ClientboundMapItemDataPacket_<2168> Transformer<bp::ClientboundMapItemDataPa
         to.scale = from.scale;
     }
     if (decoration) {
-        to.unique_ids = ew::upgrade(from.unique_ids);
-        to.decorations = ew::upgrade(from.decorations);
+        to.unique_ids = ew::transform(std::move(from.unique_ids));
+        to.decorations = ew::transform(std::move(from.decorations));
     }
     if (texture) {
         to.width = from.width;

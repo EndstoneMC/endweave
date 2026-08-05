@@ -8,8 +8,9 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::SerializedNetworkItemStackDescriptor_<2168> Transformer<bp::NetworkItemStackDescriptor>::upgrade(
-    bp::NetworkItemStackDescriptor &&from)
+bp::SerializedNetworkItemStackDescriptor_<2168> Transformer<
+    bp::NetworkItemStackDescriptor,
+    bp::SerializedNetworkItemStackDescriptor_<2168>>::transform(bp::NetworkItemStackDescriptor &&from)
 {
     bp::SerializedNetworkItemStackDescriptor_<2168> to;
     // ENDWEAVE: BDS cerealised its packets one at a time, so 12, 15 and 32 still send this
@@ -27,8 +28,9 @@ bp::SerializedNetworkItemStackDescriptor_<2168> Transformer<bp::NetworkItemStack
     return to;
 }
 
-bp::SerializedNetworkItemStackDescriptor_<2168> Transformer<bp::SerializedNetworkItemStackDescriptor_<1001>>::upgrade(
-    bp::SerializedNetworkItemStackDescriptor_<1001> &&from)
+bp::SerializedNetworkItemStackDescriptor_<2168> Transformer<
+    bp::SerializedNetworkItemStackDescriptor_<1001>,
+    bp::SerializedNetworkItemStackDescriptor_<2168>>::transform(bp::SerializedNetworkItemStackDescriptor_<1001> &&from)
 {
     bp::SerializedNetworkItemStackDescriptor_<2168> to;
     to.id = from.id;
@@ -53,51 +55,53 @@ bp::SerializedNetworkItemStackDescriptor_<2168> Transformer<bp::SerializedNetwor
     return to;
 }
 
-bp::InventoryAction_<2168> Transformer<bp::InventoryAction_<1001>>::upgrade(bp::InventoryAction_<1001> &&from)
+bp::InventoryAction_<2168> Transformer<bp::InventoryAction_<1001>, bp::InventoryAction_<2168>>::transform(
+    bp::InventoryAction_<1001> &&from)
 {
     bp::InventoryAction_<2168> to;
     to.source = from.source;
     to.slot = from.slot;
-    to.from_item = ew::upgrade(from.from_item);
-    to.to_item = ew::upgrade(from.to_item);
+    to.from_item = ew::transform(std::move(from.from_item));
+    to.to_item = ew::transform(std::move(from.to_item));
     return to;
 }
 
-bp::InventoryTransaction_<2168> Transformer<bp::InventoryTransaction_<1001>>::upgrade(
-    bp::InventoryTransaction_<1001> &&from)
+bp::InventoryTransaction_<2168> Transformer<
+    bp::InventoryTransaction_<1001>, bp::InventoryTransaction_<2168>>::transform(bp::InventoryTransaction_<1001> &&from)
 {
     bp::InventoryTransaction_<2168> to;
-    to.actions = ew::upgrade(from.actions);
+    to.actions = ew::transform(std::move(from.actions));
     return to;
 }
 
-bp::NormalTransactionData_<2168> Transformer<bp::NormalTransactionData_<1001>>::upgrade(
-    bp::NormalTransactionData_<1001> &&from)
+bp::NormalTransactionData_<2168> Transformer<bp::NormalTransactionData_<1001>, bp::NormalTransactionData_<2168>>::
+    transform(bp::NormalTransactionData_<1001> &&from)
 {
     bp::NormalTransactionData_<2168> to;
-    to.actions = ew::upgrade(from.actions);
+    to.actions = ew::transform(std::move(from.actions));
     return to;
 }
 
-bp::InventoryMismatchData_<2168> Transformer<bp::InventoryMismatchData_<1001>>::upgrade(
-    bp::InventoryMismatchData_<1001> &&from)
+bp::InventoryMismatchData_<2168> Transformer<bp::InventoryMismatchData_<1001>, bp::InventoryMismatchData_<2168>>::
+    transform(bp::InventoryMismatchData_<1001> &&from)
 {
     bp::InventoryMismatchData_<2168> to;
-    to.actions = ew::upgrade(from.actions);
+    to.actions = ew::transform(std::move(from.actions));
     return to;
 }
 
-bp::ItemUseInventoryTransaction_<2168> Transformer<bp::ItemUseInventoryTransaction_<1001>>::upgrade(
-    bp::ItemUseInventoryTransaction_<1001> &&from)
+bp::ItemUseInventoryTransaction_<2168> Transformer<
+    bp::ItemUseInventoryTransaction_<1001>,
+    bp::ItemUseInventoryTransaction_<2168>>::transform(bp::ItemUseInventoryTransaction_<1001> &&from)
 {
     bp::ItemUseInventoryTransaction_<2168> to;
-    to.actions = ew::upgrade(from.actions);
+    to.actions = ew::transform(std::move(from.actions));
     to.action_type = from.action_type;
     to.trigger_type = from.trigger_type;
     to.pos = from.pos;
     to.face = from.face;
     to.slot = from.slot;
-    to.item = ew::upgrade(from.item);
+    to.item = ew::transform(std::move(from.item));
     to.from_pos = from.from_pos;
     to.click_pos = from.click_pos;
     to.target_block_id = from.target_block_id;
@@ -106,73 +110,77 @@ bp::ItemUseInventoryTransaction_<2168> Transformer<bp::ItemUseInventoryTransacti
     return to;
 }
 
-bp::ItemUseOnActorInventoryTransaction_<2168> Transformer<bp::ItemUseOnActorInventoryTransaction_<1001>>::upgrade(
-    bp::ItemUseOnActorInventoryTransaction_<1001> &&from)
+bp::ItemUseOnActorInventoryTransaction_<2168> Transformer<
+    bp::ItemUseOnActorInventoryTransaction_<1001>,
+    bp::ItemUseOnActorInventoryTransaction_<2168>>::transform(bp::ItemUseOnActorInventoryTransaction_<1001> &&from)
 {
     bp::ItemUseOnActorInventoryTransaction_<2168> to;
-    to.actions = ew::upgrade(from.actions);
+    to.actions = ew::transform(std::move(from.actions));
     to.target_runtime_id = from.target_runtime_id;
     to.action_type = from.action_type;
     to.slot = from.slot;
-    to.item = ew::upgrade(from.item);
+    to.item = ew::transform(std::move(from.item));
     to.from_pos = from.from_pos;
     to.hit_pos = from.hit_pos;
     return to;
 }
 
-bp::ItemReleaseInventoryTransaction_<2168> Transformer<bp::ItemReleaseInventoryTransaction_<1001>>::upgrade(
-    bp::ItemReleaseInventoryTransaction_<1001> &&from)
+bp::ItemReleaseInventoryTransaction_<2168> Transformer<
+    bp::ItemReleaseInventoryTransaction_<1001>,
+    bp::ItemReleaseInventoryTransaction_<2168>>::transform(bp::ItemReleaseInventoryTransaction_<1001> &&from)
 {
     bp::ItemReleaseInventoryTransaction_<2168> to;
-    to.actions = ew::upgrade(from.actions);
+    to.actions = ew::transform(std::move(from.actions));
     to.action_type = from.action_type;
     to.slot = from.slot;
-    to.item = ew::upgrade(from.item);
+    to.item = ew::transform(std::move(from.item));
     to.from_pos = from.from_pos;
     return to;
 }
 
-bp::TransactionData_<2168> Transformer<bp::TransactionData_<1001>>::upgrade(bp::TransactionData_<1001> &&from)
+bp::TransactionData_<2168> Transformer<bp::TransactionData_<1001>, bp::TransactionData_<2168>>::transform(
+    bp::TransactionData_<1001> &&from)
 {
     bp::TransactionData_<2168> to;
     std::visit(
         [&to](auto &data) {
-            to = ew::upgrade(data);
+            to = ew::transform(std::move(data));
         },
         from);
     return to;
 }
 
-bp::InventoryTransactionPacket_<2168> Transformer<bp::InventoryTransactionPacket_<1001>>::upgrade(
-    bp::InventoryTransactionPacket_<1001> &&from)
+bp::InventoryTransactionPacket_<2168> Transformer<
+    bp::InventoryTransactionPacket_<1001>,
+    bp::InventoryTransactionPacket_<2168>>::transform(bp::InventoryTransactionPacket_<1001> &&from)
 {
     bp::InventoryTransactionPacket_<2168> to;
     to.legacy_request_id = from.legacy_request_id;
     to.legacy_set_item_slots = std::move(from.legacy_set_item_slots);
-    to.transaction = ew::upgrade(from.transaction);
+    to.transaction = ew::transform(std::move(from.transaction));
     return to;
 }
 
-bp::InventoryContentPacket_<2168> Transformer<bp::InventoryContentPacket_<1001>>::upgrade(
-    bp::InventoryContentPacket_<1001> &&from)
+bp::InventoryContentPacket_<2168> Transformer<bp::InventoryContentPacket_<1001>, bp::InventoryContentPacket_<2168>>::
+    transform(bp::InventoryContentPacket_<1001> &&from)
 {
     bp::InventoryContentPacket_<2168> to;
     to.inventory_id = from.inventory_id;
-    to.slots = ew::upgrade(from.slots);
+    to.slots = ew::transform(std::move(from.slots));
     to.full_container_name = std::move(from.full_container_name);
-    to.storage_item = ew::upgrade(from.storage_item);
+    to.storage_item = ew::transform(std::move(from.storage_item));
     return to;
 }
 
-bp::InventorySlotPacket_<2168> Transformer<bp::InventorySlotPacket_<1001>>::upgrade(
+bp::InventorySlotPacket_<2168> Transformer<bp::InventorySlotPacket_<1001>, bp::InventorySlotPacket_<2168>>::transform(
     bp::InventorySlotPacket_<1001> &&from)
 {
     bp::InventorySlotPacket_<2168> to;
     to.inventory_id = from.inventory_id;
     to.slot = from.slot;
     to.full_container_name = std::move(from.full_container_name);
-    to.storage_item = ew::upgrade(from.storage_item);
-    to.item = ew::upgrade(from.item);
+    to.storage_item = ew::transform(std::move(from.storage_item));
+    to.item = ew::transform(std::move(from.item));
     return to;
 }
 

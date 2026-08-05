@@ -4,8 +4,8 @@
 
 namespace endweave {
 
-bp::ResourcePacksInfoPacket_<2168> Transformer<bp::ResourcePacksInfoPacket_<1001>>::upgrade(
-    bp::ResourcePacksInfoPacket_<1001> &&from)
+bp::ResourcePacksInfoPacket_<2168> Transformer<bp::ResourcePacksInfoPacket_<1001>, bp::ResourcePacksInfoPacket_<2168>>::
+    transform(bp::ResourcePacksInfoPacket_<1001> &&from)
 {
     bp::ResourcePacksInfoPacket_<2168> to;
     to.resource_pack_required = from.resource_pack_required;
@@ -18,8 +18,9 @@ bp::ResourcePacksInfoPacket_<2168> Transformer<bp::ResourcePacksInfoPacket_<1001
     return to;
 }
 
-bp::ResourcePackClientResponsePacket_<2168> Transformer<bp::ResourcePackClientResponsePacket_<1001>>::upgrade(
-    bp::ResourcePackClientResponsePacket_<1001> &&from)
+bp::ResourcePackClientResponsePacket_<2168> Transformer<
+    bp::ResourcePackClientResponsePacket_<1001>,
+    bp::ResourcePackClientResponsePacket_<2168>>::transform(bp::ResourcePackClientResponsePacket_<1001> &&from)
 {
     using Response = bp::ResourcePackClientResponsePacket_<2168>;
     bp::ResourcePackClientResponsePacket_<2168> to;

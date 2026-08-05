@@ -4,7 +4,8 @@
 
 namespace endweave {
 
-bp::PlaySoundPacket_<1001> Transformer<bp::PlaySoundPacket_<2168>>::downgrade(bp::PlaySoundPacket_<2168> &&from)
+bp::PlaySoundPacket_<1001> Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<1001>>::transform(
+    bp::PlaySoundPacket_<2168> &&from)
 {
     bp::PlaySoundPacket_<1001> to;
     to.name = std::move(from.name);
@@ -17,8 +18,8 @@ bp::PlaySoundPacket_<1001> Transformer<bp::PlaySoundPacket_<2168>>::downgrade(bp
     return to;
 }
 
-bp::LevelSoundEventPacket_<1001> Transformer<bp::LevelSoundEventPacket_<2168>>::downgrade(
-    bp::LevelSoundEventPacket_<2168> &&from)
+bp::LevelSoundEventPacket_<1001> Transformer<bp::LevelSoundEventPacket_<2168>, bp::LevelSoundEventPacket_<1001>>::
+    transform(bp::LevelSoundEventPacket_<2168> &&from)
 {
     bp::LevelSoundEventPacket_<1001> to;
     // ENDWEAVE: TODO the name passes through, but 2168's Mount, Dismount and StrawBedBreakLeave resolve to
@@ -34,8 +35,9 @@ bp::LevelSoundEventPacket_<1001> Transformer<bp::LevelSoundEventPacket_<2168>>::
     return to;
 }
 
-bp::ClientboundUpdateSoundDataPacket_<1001> Transformer<bp::ClientboundUpdateSoundDataPacket_<2168>>::downgrade(
-    bp::ClientboundUpdateSoundDataPacket_<2168> &&from)
+bp::ClientboundUpdateSoundDataPacket_<1001> Transformer<
+    bp::ClientboundUpdateSoundDataPacket_<2168>,
+    bp::ClientboundUpdateSoundDataPacket_<1001>>::transform(bp::ClientboundUpdateSoundDataPacket_<2168> &&from)
 {
     bp::ClientboundUpdateSoundDataPacket_<1001> to;
     to.server_sound_handle = from.server_sound_handle;

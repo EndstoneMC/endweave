@@ -163,7 +163,8 @@ compile.
 - **The runtime-to-compile-time crossing happens twice, and only twice.**
   `ProtocolVersions::visit` folds a runtime `ProtocolVersion` into a template argument; the id is a
   plain array index. Everything below is monomorphic.
-- **Two versions is one hop.** `From < To` picks upgrade over downgrade. A chained walk across
+- **Two versions is one hop.** The `Transformer<From, To>` key carries the direction, so `handle`
+  names the destination outright and nothing branches on `From < To`. A chained walk across
   intermediate nodes is the ViaVersion shape and comes back when a third version does; `next` and
   `prev` are parked in `version.h` for it and have no callers today.
 - **`ProtocolVersion::UNKNOWN` is the sentinel, not `std::optional`.** It matches Velocity's
@@ -182,37 +183,46 @@ bedrock-protocol, which should alias rather than re-emit an identical snapshot, 
 ## Transformers
 
 `Transformer` is the analogue of ViaVersion's `ValueTransformer`, in the shape of `std::formatter`:
-a trait declared undefined in `protocol/transform.h` and specialized per type that changes shape.
-That header also holds the `ew::upgrade` / `ew::downgrade` call surface and the `std::optional` /
-`std::vector` specializations. A transform returns its result outright — the `std::unexpected`
-channel above has no bearing on it yet, which is what the last rule here is about.
+a trait declared undefined in `protocol/transform.h` and specialized per source/destination pair
+that changes shape. That header also holds the `ew::transform` / `ew::transform_to` call surface and
+the `std::optional` / `std::vector` / `std::map` specializations. A transform returns its result
+outright — the `std::unexpected` channel above has no bearing on it yet, which is what the last rule
+here is about.
 
-- **Keyed on the source type, with one method per direction.**
-  `Transformer<v1001::Foo>::upgrade` returns a `v2168::Foo` and `::downgrade` returns the previous
-  era's, so the call site names only what it has. Two methods rather than a second template
-  parameter is what keeps the key unique once a third era exists: `v1001::Foo` has exactly one
-  specialization holding both hops, and adding an era below it adds a method rather than a
-  competing key. A type that did not change between two eras is one C++ type in both namespaces and
-  needs no specialization.
-- **One file per source version,** `protocols/<version>/transform.{h,cpp}`, holding every
-  specialization whose source type belongs to that version — both of its directions, in the same
-  struct. v1001 and v2168 are currently the outermost eras modelled, so v1001 declares only
-  `upgrade` and v2168 only `downgrade`; a missing direction is a "no member named" error rather
-  than a wrong conversion.
-- **A type with two wire shapes at one version takes a second axis, not a second key.** BDS writes
+- **Keyed on the source and destination pair, with one method.**
+  `Transformer<v1001::Foo, v2168::Foo>::transform` returns a `v2168::Foo` and the opposite pair
+  returns the 1001 one, so the key names both ends and the method never has to. The pair is what
+  keeps the key unique once a third era exists: an era below adds
+  `Transformer<v1001::Foo, v975::Foo>`, a distinct specialization rather than a competing one. One
+  source reaching several destinations is the ordinary case here, not a special one. A type that
+  did not change between two eras is one C++ type in both namespaces and needs no specialization.
+- **One file per source version,** `protocols/<version>/`, holding every specialization whose source
+  type belongs to that version. v1001 and v2168 are currently the outermost eras modelled, so v1001
+  holds the pairs leaving 1001 and v2168 the pairs leaving 2168; a missing pair is a "no
+  `Transformer<From, To>`" error rather than a wrong conversion.
+- **`Transformable<From, To>` is the availability test,** and it asks whether a call to
+  `Transformer<From, To>::transform` is well-formed and returns exactly `To` — not whether the
+  specialization exists. A declaration alone never reads as a supported edge, and a container pair
+  whose elements have no transform reports as untransformable rather than as a body that happens to
+  fail later.
+- **A type with two wire shapes at one version is just another pair.** BDS writes
   `SerializedSkinRef` two ways at 1001: cerealised for `PlayerSkinPacket`, and through
   `SerializedSkinImpl::write` for a `PlayerListPacket` entry, which bedrock-protocol emits as
-  `bp::legacy::SerializedSkinRef`. That is not a version hop, and `downgrade` on the 2168 skin
-  already means the cerealised 1001 one, so the pre-cereal form cannot be a second target for it.
-  `toCereal` and `toLegacy` are that hop — same era, keyed on the source type like every other
-  method, called through `ew::toCereal` / `ew::toLegacy` and composing over `std::vector` the same
-  way. A packet chains the two: `ew::upgrade(ew::toCereal(entry.skin))` one way and
-  `ew::toLegacy(ew::downgrade(add.skin))` the other. Both keys are 1001-era, so both live in
-  `protocols/v1001/skin.{h,cpp}` — the module that owns the types. A conversion never earns a file
-  or a free function of its own.
+  `bp::legacy::SerializedSkinRef`. That is not a version hop, and it needs no second axis either:
+  `bp::legacy::SerializedSkinRef` is a distinct C++ type, so
+  `Transformer<bp::SerializedSkinRef_<1001>, bp::legacy::SerializedSkinRef>` sits beside
+  `Transformer<bp::SerializedSkinRef_<1001>, bp::SerializedSkinRef_<2168>>` without colliding. Both
+  keys are 1001-era, so both live in `protocols/v1001/skin.{h,cpp}` — the module that owns the
+  types. A conversion never earns a file or a free function of its own. A chain has to name its
+  middle type, since a proxy cannot feed another `transform`:
+  `ew::transform(ew::transform_to<bp::SerializedSkinRef_<1001>>(std::move(entry.skin)))`.
 - **The specialization is declared in the header, the body defined in the sibling `.cpp`,** which is
   listed in `endstone_add_plugin`. An out-of-line body rules out a deduced return type, so the
-  declaration spells the returned struct outright. No trailing return types.
+  declaration spells the returned struct outright. No trailing return types. The destination now
+  also appears in the key, which makes the return type on the definition look redundant — it is not
+  droppable: an out-of-line definition must repeat the declared return type, and `auto` on both ends
+  would only deduce within the defining `.cpp`, leaving every other translation unit unable to call
+  it.
 - **A transform consumes its source.** It takes an rvalue reference and moves every field that owns
   storage, since the packet it came from is on its way out. A `const` source is a compile error
   rather than a copy.
@@ -220,17 +230,21 @@ channel above has no bearing on it yet, which is what the last rule here is abou
   carries logic, and it reads as the odd one out against the plain assignments around it.
 - **A packet delegates to the `Transformer` of each changed field's type,** moving into it. The
   arithmetic of a changed field lives in that field's transform, never restated at the packet.
-- **Call through `ew::upgrade` and `ew::downgrade`,** which deduce the source type off the argument
-  and do the cast to `&&` themselves, so a field reads `to.slots = ew::upgrade(from.slots);` — no
-  versioned type and no `std::move` at the call site. They always consume what they are handed, so
-  never pass one something the rest of the body still reads. Qualifying is not optional: inside a
-  `Transformer<...>::upgrade` body the unqualified name finds the member, lookup stops at class
-  scope, and the free function is never a candidate.
-- **`std::optional` and `std::vector` are already specialized,** each carrying both directions. They
-  unwrap, delegate to the element's `Transformer`, and take their target from its return type, so
-  they compose (`optional<vector<T>>`) and a field never spells a loop or a `has_value()` guard.
-  An element with no `Transformer` is a compile error, which is what keeps a missing include from
-  passing the value through untranslated.
+- **Call through `ew::transform`,** which returns a proxy that takes its destination from the
+  assignment target, so a field reads `to.slots = ew::transform(std::move(from.slots));` — no
+  versioned type at the call site. The `std::move` is not optional: `transform` preserves the value
+  category it is handed and every body takes `&&`, so an lvalue is a compile error rather than a
+  silent copy. It always consumes what it is handed, so never pass it something the rest of the body
+  still reads, and hoist any member read out of an argument list that also moves the object.
+  Where there is no destination context — an `auto` local, the inner half of a chain — use
+  `ew::transform_to<Dest>(std::move(x))` and spell the destination. Qualifying is not optional:
+  inside a `Transformer<...>::transform` body the unqualified name finds the member, lookup stops at
+  class scope, and the free function is never a candidate.
+- **`std::optional`, `std::vector` and `std::map` are already specialized,** each pairing the
+  container of the source element with the container of the destination one. They unwrap, delegate
+  to the element's `Transformer`, and compose (`optional<vector<T>>`), so a field never spells a
+  loop or a `has_value()` guard. An element with no `Transformer` is a compile error, which is what
+  keeps a missing include from passing the value through untranslated.
 - **A projection is written out both ways.** v1001's tagged `ItemStackNetIdVariant` reaches v2168 as
   one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
   `ItemStackLegacyRequestId`), and v2168's transform reads the case back from sign and parity. The

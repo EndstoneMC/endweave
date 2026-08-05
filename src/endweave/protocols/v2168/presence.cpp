@@ -8,8 +8,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::PresenceConfiguration_<1001> Transformer<bp::PresenceConfiguration_<2168>>::downgrade(
-    bp::PresenceConfiguration_<2168> &&from)
+bp::PresenceConfiguration_<1001> Transformer<bp::PresenceConfiguration_<2168>, bp::PresenceConfiguration_<1001>>::
+    transform(bp::PresenceConfiguration_<2168> &&from)
 {
     bp::PresenceConfiguration_<1001> to;
     // ENDWEAVE: 2168 dropped both names; 1001 has them optional, so absent beats an invented label.
@@ -20,8 +20,9 @@ bp::PresenceConfiguration_<1001> Transformer<bp::PresenceConfiguration_<2168>>::
     return to;
 }
 
-bp::GatheringsConfigurationJoinInfo_<1001> Transformer<bp::GatheringsConfigurationJoinInfo_<2168>>::downgrade(
-    bp::GatheringsConfigurationJoinInfo_<2168> &&from)
+bp::GatheringsConfigurationJoinInfo_<1001> Transformer<
+    bp::GatheringsConfigurationJoinInfo_<2168>,
+    bp::GatheringsConfigurationJoinInfo_<1001>>::transform(bp::GatheringsConfigurationJoinInfo_<2168> &&from)
 {
     bp::GatheringsConfigurationJoinInfo_<1001> to;
     to.experience_id = from.experience_id;
@@ -37,17 +38,19 @@ bp::GatheringsConfigurationJoinInfo_<1001> Transformer<bp::GatheringsConfigurati
     return to;
 }
 
-bp::ServerConfigurationJoinInfo_<1001> Transformer<bp::ServerConfigurationJoinInfo_<2168>>::downgrade(
-    bp::ServerConfigurationJoinInfo_<2168> &&from)
+bp::ServerConfigurationJoinInfo_<1001> Transformer<
+    bp::ServerConfigurationJoinInfo_<2168>,
+    bp::ServerConfigurationJoinInfo_<1001>>::transform(bp::ServerConfigurationJoinInfo_<2168> &&from)
 {
     bp::ServerConfigurationJoinInfo_<1001> to;
-    to.gatherings_configuration_join_info = ew::downgrade(from.gatherings_configuration_join_info);
+    to.gatherings_configuration_join_info = ew::transform(std::move(from.gatherings_configuration_join_info));
     to.client_store_entrypoint_configuration = std::move(from.client_store_entrypoint_configuration);
-    to.presence_configuration = ew::downgrade(from.presence_configuration);
+    to.presence_configuration = ew::transform(std::move(from.presence_configuration));
     return to;
 }
 
-bp::TransferPacket_<1001> Transformer<bp::TransferPacket_<2168>>::downgrade(bp::TransferPacket_<2168> &&from)
+bp::TransferPacket_<1001> Transformer<bp::TransferPacket_<2168>, bp::TransferPacket_<1001>>::transform(
+    bp::TransferPacket_<2168> &&from)
 {
     bp::TransferPacket_<1001> to;
     to.destination = std::move(from.destination);
@@ -58,11 +61,12 @@ bp::TransferPacket_<1001> Transformer<bp::TransferPacket_<2168>>::downgrade(bp::
     return to;
 }
 
-bp::ServerPresenceInfoPacket_<1001> Transformer<bp::ServerPresenceInfoPacket_<2168>>::downgrade(
-    bp::ServerPresenceInfoPacket_<2168> &&from)
+bp::ServerPresenceInfoPacket_<1001> Transformer<
+    bp::ServerPresenceInfoPacket_<2168>,
+    bp::ServerPresenceInfoPacket_<1001>>::transform(bp::ServerPresenceInfoPacket_<2168> &&from)
 {
     bp::ServerPresenceInfoPacket_<1001> to;
-    to.presence_configuration = ew::downgrade(from.presence_configuration);
+    to.presence_configuration = ew::transform(std::move(from.presence_configuration));
     return to;
 }
 

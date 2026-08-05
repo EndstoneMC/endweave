@@ -11,7 +11,7 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::ExperimentToggle Transformer<bp::ExperimentData>::upgrade(bp::ExperimentData &&from)
+bp::ExperimentToggle Transformer<bp::ExperimentData, bp::ExperimentToggle>::transform(bp::ExperimentData &&from)
 {
     bp::ExperimentToggle to;
     to.name = std::move(from.name);
@@ -19,7 +19,7 @@ bp::ExperimentToggle Transformer<bp::ExperimentData>::upgrade(bp::ExperimentData
     return to;
 }
 
-bp::GameRule Transformer<bp::legacy::GameRule_<1001>>::upgrade(bp::legacy::GameRule_<1001> &&from)
+bp::GameRule Transformer<bp::legacy::GameRule_<1001>, bp::GameRule>::transform(bp::legacy::GameRule_<1001> &&from)
 {
     bp::GameRule to;
     to.name = std::move(from.name);
@@ -39,7 +39,8 @@ bp::GameRule Transformer<bp::legacy::GameRule_<1001>>::upgrade(bp::legacy::GameR
     return to;
 }
 
-bp::LevelSettings_<2168> Transformer<bp::LevelSettings_<1001>>::upgrade(bp::LevelSettings_<1001> &&from)
+bp::LevelSettings_<2168> Transformer<bp::LevelSettings_<1001>, bp::LevelSettings_<2168>>::transform(
+    bp::LevelSettings_<1001> &&from)
 {
     bp::LevelSettings_<2168> to;
     // ENDWEAVE: 2168 reads the seed unsigned; the same 64 bits are the same world.
@@ -69,8 +70,8 @@ bp::LevelSettings_<2168> Transformer<bp::LevelSettings_<1001>>::upgrade(bp::Leve
     to.texture_packs_required = from.texture_packs_required;
     // ENDWEAVE: 2168 only nests these — the rules under rule_data, the toggles and the ever-toggled flag
     // under experiments. Nothing about the values moved.
-    to.rule_data.rules = ew::upgrade(from.game_rules);
-    to.experiments.toggles = ew::upgrade(from.experiments);
+    to.rule_data.rules = ew::transform(std::move(from.game_rules));
+    to.experiments.toggles = ew::transform(std::move(from.experiments));
     to.experiments.experiments_ever_toggled = from.experiments_previously_toggled;
     to.bonus_chest_enabled = from.bonus_chest_enabled;
     to.start_with_map_enabled = from.start_with_map_enabled;
@@ -99,7 +100,8 @@ bp::LevelSettings_<2168> Transformer<bp::LevelSettings_<1001>>::upgrade(bp::Leve
     return to;
 }
 
-bp::ServerBlockProperty_<2168> Transformer<bp::BlockEntry>::upgrade(bp::BlockEntry &&from)
+bp::ServerBlockProperty_<2168> Transformer<bp::BlockEntry, bp::ServerBlockProperty_<2168>>::transform(
+    bp::BlockEntry &&from)
 {
     bp::ServerBlockProperty_<2168> to;
     to.block_name = std::move(from.name);
@@ -107,7 +109,8 @@ bp::ServerBlockProperty_<2168> Transformer<bp::BlockEntry>::upgrade(bp::BlockEnt
     return to;
 }
 
-bp::StartGamePacket_<2168> Transformer<bp::StartGamePacket_<1001>>::upgrade(bp::StartGamePacket_<1001> &&from)
+bp::StartGamePacket_<2168> Transformer<bp::StartGamePacket_<1001>, bp::StartGamePacket_<2168>>::transform(
+    bp::StartGamePacket_<1001> &&from)
 {
     bp::StartGamePacket_<2168> to;
     to.entity_id = from.entity_id;
@@ -115,7 +118,7 @@ bp::StartGamePacket_<2168> Transformer<bp::StartGamePacket_<1001>>::upgrade(bp::
     to.entity_game_type = from.entity_game_type;
     to.pos = from.pos;
     to.rot = from.rot;
-    to.settings = ew::upgrade(from.settings);
+    to.settings = ew::transform(std::move(from.settings));
     to.level_id = std::move(from.level_id);
     to.level_name = std::move(from.level_name);
     to.template_content_identity = std::move(from.template_content_identity);
@@ -124,7 +127,7 @@ bp::StartGamePacket_<2168> Transformer<bp::StartGamePacket_<1001>>::upgrade(bp::
     // ENDWEAVE: 2168 reads the tick count unsigned; same bits, as with the seed.
     to.level_current_time = static_cast<std::uint64_t>(from.level_current_time);
     to.enchantment_seed = from.enchantment_seed;
-    to.block_properties = ew::upgrade(from.block_properties);
+    to.block_properties = ew::transform(std::move(from.block_properties));
     to.multiplayer_correlation_id = std::move(from.multiplayer_correlation_id);
     to.enable_item_stack_net_manager = from.enable_item_stack_net_manager;
     to.server_version = std::move(from.server_version);
@@ -137,7 +140,7 @@ bp::StartGamePacket_<2168> Transformer<bp::StartGamePacket_<1001>>::upgrade(bp::
     to.block_network_ids_are_hashes = from.block_network_ids_are_hashes;
     to.network_permissions = from.network_permissions;
     // ENDWEAVE: is_chat_logging is dropped; 2168 no longer tells the client the server logs chat.
-    to.server_configuration_join_info = ew::upgrade(from.server_configuration_join_info);
+    to.server_configuration_join_info = ew::transform(std::move(from.server_configuration_join_info));
     to.server_telemetry_data = std::move(from.server_telemetry_data);
     return to;
 }

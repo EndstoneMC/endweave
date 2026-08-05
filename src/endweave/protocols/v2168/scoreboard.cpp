@@ -8,8 +8,9 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::ScoreboardIdentityPacketInfo_<1001> Transformer<bp::ScoreboardIdentityPacketInfo_<2168>>::downgrade(
-    bp::ScoreboardIdentityPacketInfo_<2168> &&from)
+bp::ScoreboardIdentityPacketInfo_<1001> Transformer<
+    bp::ScoreboardIdentityPacketInfo_<2168>,
+    bp::ScoreboardIdentityPacketInfo_<1001>>::transform(bp::ScoreboardIdentityPacketInfo_<2168> &&from)
 {
     bp::ScoreboardIdentityPacketInfo_<1001> to;
     to.scoreboard_id = from.scoreboard_id;
@@ -19,7 +20,8 @@ bp::ScoreboardIdentityPacketInfo_<1001> Transformer<bp::ScoreboardIdentityPacket
     return to;
 }
 
-bp::SetScorePacket_<1001> Transformer<bp::SetScorePacket_<2168>>::downgrade(bp::SetScorePacket_<2168> &&from)
+bp::SetScorePacket_<1001> Transformer<bp::SetScorePacket_<2168>, bp::SetScorePacket_<1001>>::transform(
+    bp::SetScorePacket_<2168> &&from)
 {
     bp::SetScorePacket_<1001> to;
     // ENDWEAVE: 1001 has one action per packet and BDS never mixes them, so the first entry
@@ -75,8 +77,9 @@ bp::SetScorePacket_<1001> Transformer<bp::SetScorePacket_<2168>>::downgrade(bp::
     return to;
 }
 
-bp::SetScoreboardIdentityPacket_<1001> Transformer<bp::SetScoreboardIdentityPacket_<2168>>::downgrade(
-    bp::SetScoreboardIdentityPacket_<2168> &&from)
+bp::SetScoreboardIdentityPacket_<1001> Transformer<
+    bp::SetScoreboardIdentityPacket_<2168>,
+    bp::SetScoreboardIdentityPacket_<1001>>::transform(bp::SetScoreboardIdentityPacket_<2168> &&from)
 {
     bp::SetScoreboardIdentityPacket_<1001> to;
     to.type = from.type;
@@ -88,7 +91,7 @@ bp::SetScoreboardIdentityPacket_<1001> Transformer<bp::SetScoreboardIdentityPack
         }
     }
     else {
-        to.identity_info = ew::downgrade(from.identity_info);
+        to.identity_info = ew::transform(std::move(from.identity_info));
     }
     return to;
 }

@@ -6,8 +6,9 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::ScoreboardIdentityPacketInfo_<2168> Transformer<bp::ScoreboardIdentityPacketInfo_<1001>>::upgrade(
-    bp::ScoreboardIdentityPacketInfo_<1001> &&from)
+bp::ScoreboardIdentityPacketInfo_<2168> Transformer<
+    bp::ScoreboardIdentityPacketInfo_<1001>,
+    bp::ScoreboardIdentityPacketInfo_<2168>>::transform(bp::ScoreboardIdentityPacketInfo_<1001> &&from)
 {
     bp::ScoreboardIdentityPacketInfo_<2168> to;
     to.scoreboard_id = from.scoreboard_id;
@@ -16,7 +17,8 @@ bp::ScoreboardIdentityPacketInfo_<2168> Transformer<bp::ScoreboardIdentityPacket
     return to;
 }
 
-bp::SetScorePacket_<2168> Transformer<bp::SetScorePacket_<1001>>::upgrade(bp::SetScorePacket_<1001> &&from)
+bp::SetScorePacket_<2168> Transformer<bp::SetScorePacket_<1001>, bp::SetScorePacket_<2168>>::transform(
+    bp::SetScorePacket_<1001> &&from)
 {
     bp::SetScorePacket_<2168> to;
     // ENDWEAVE: the packet action that gated 1001's two lists picks the 2168 variant arm.
@@ -78,8 +80,9 @@ bp::SetScorePacket_<2168> Transformer<bp::SetScorePacket_<1001>>::upgrade(bp::Se
     return to;
 }
 
-bp::SetScoreboardIdentityPacket_<2168> Transformer<bp::SetScoreboardIdentityPacket_<1001>>::upgrade(
-    bp::SetScoreboardIdentityPacket_<1001> &&from)
+bp::SetScoreboardIdentityPacket_<2168> Transformer<
+    bp::SetScoreboardIdentityPacket_<1001>,
+    bp::SetScoreboardIdentityPacket_<2168>>::transform(bp::SetScoreboardIdentityPacket_<1001> &&from)
 {
     bp::SetScoreboardIdentityPacket_<2168> to;
     to.type = from.type;
@@ -93,7 +96,7 @@ bp::SetScoreboardIdentityPacket_<2168> Transformer<bp::SetScoreboardIdentityPack
         }
     }
     else {
-        to.identity_info = ew::upgrade(from.identity_info);
+        to.identity_info = ew::transform(std::move(from.identity_info));
     }
     return to;
 }

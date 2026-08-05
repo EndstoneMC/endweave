@@ -7,8 +7,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::MemoryCategoryCounter_<1001> Transformer<bp::MemoryCategoryCounter_<2168>>::downgrade(
-    bp::MemoryCategoryCounter_<2168> &&from)
+bp::MemoryCategoryCounter_<1001> Transformer<bp::MemoryCategoryCounter_<2168>, bp::MemoryCategoryCounter_<1001>>::
+    transform(bp::MemoryCategoryCounter_<2168> &&from)
 {
     bp::MemoryCategoryCounter_<1001> to;
     // ENDWEAVE: 2168 renumbered MemoryCategory, so the name carries the meaning, not the byte. Its twenty
@@ -19,8 +19,9 @@ bp::MemoryCategoryCounter_<1001> Transformer<bp::MemoryCategoryCounter_<2168>>::
     return to;
 }
 
-bp::ServerboundDiagnosticsPacket_<1001> Transformer<bp::ServerboundDiagnosticsPacket_<2168>>::downgrade(
-    bp::ServerboundDiagnosticsPacket_<2168> &&from)
+bp::ServerboundDiagnosticsPacket_<1001> Transformer<
+    bp::ServerboundDiagnosticsPacket_<2168>,
+    bp::ServerboundDiagnosticsPacket_<1001>>::transform(bp::ServerboundDiagnosticsPacket_<2168> &&from)
 {
     bp::ServerboundDiagnosticsPacket_<1001> to;
     to.avg_fps = from.avg_fps;
@@ -32,7 +33,7 @@ bp::ServerboundDiagnosticsPacket_<1001> Transformer<bp::ServerboundDiagnosticsPa
     to.avg_end_frame_time_ms = from.avg_end_frame_time_ms;
     to.avg_remainder_time_percent = from.avg_remainder_time_percent;
     to.avg_unaccounted_time_percent = from.avg_unaccounted_time_percent;
-    to.memory_category_values = ew::downgrade(from.memory_category_values);
+    to.memory_category_values = ew::transform(std::move(from.memory_category_values));
     to.entity_diagnostics = std::move(from.entity_diagnostics);
     // ENDWEAVE: system_categories is dropped; 1001 reads these timings by index alone.
     to.system_diagnostics = std::move(from.system_diagnostics);

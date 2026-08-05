@@ -4,8 +4,9 @@
 
 namespace endweave {
 
-bp::PlayerUpdateEntityOverridesPacket_<1001> Transformer<bp::PlayerUpdateEntityOverridesPacket_<2168>>::downgrade(
-    bp::PlayerUpdateEntityOverridesPacket_<2168> &&from)
+bp::PlayerUpdateEntityOverridesPacket_<1001> Transformer<
+    bp::PlayerUpdateEntityOverridesPacket_<2168>,
+    bp::PlayerUpdateEntityOverridesPacket_<1001>>::transform(bp::PlayerUpdateEntityOverridesPacket_<2168> &&from)
 {
     using Update = bp::PlayerUpdateEntityOverridesPacket_<2168>;
     bp::PlayerUpdateEntityOverridesPacket_<1001> to;
@@ -28,8 +29,8 @@ bp::PlayerUpdateEntityOverridesPacket_<1001> Transformer<bp::PlayerUpdateEntityO
     return to;
 }
 
-bp::PlayerLocationPacket_<1001> Transformer<bp::PlayerLocationPacket_<2168>>::downgrade(
-    bp::PlayerLocationPacket_<2168> &&from)
+bp::PlayerLocationPacket_<1001> Transformer<
+    bp::PlayerLocationPacket_<2168>, bp::PlayerLocationPacket_<1001>>::transform(bp::PlayerLocationPacket_<2168> &&from)
 {
     using Location = bp::PlayerLocationPacket_<2168>;
     bp::PlayerLocationPacket_<1001> to;

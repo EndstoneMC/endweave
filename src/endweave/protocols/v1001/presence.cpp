@@ -7,8 +7,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::PresenceConfiguration_<2168> Transformer<bp::PresenceConfiguration_<1001>>::upgrade(
-    bp::PresenceConfiguration_<1001> &&from)
+bp::PresenceConfiguration_<2168> Transformer<bp::PresenceConfiguration_<1001>, bp::PresenceConfiguration_<2168>>::
+    transform(bp::PresenceConfiguration_<1001> &&from)
 {
     bp::PresenceConfiguration_<2168> to;
     // ENDWEAVE: 2168 keeps only the rich presence id; experience_name and world_name are dropped.
@@ -16,8 +16,9 @@ bp::PresenceConfiguration_<2168> Transformer<bp::PresenceConfiguration_<1001>>::
     return to;
 }
 
-bp::GatheringsConfigurationJoinInfo_<2168> Transformer<bp::GatheringsConfigurationJoinInfo_<1001>>::upgrade(
-    bp::GatheringsConfigurationJoinInfo_<1001> &&from)
+bp::GatheringsConfigurationJoinInfo_<2168> Transformer<
+    bp::GatheringsConfigurationJoinInfo_<1001>,
+    bp::GatheringsConfigurationJoinInfo_<2168>>::transform(bp::GatheringsConfigurationJoinInfo_<1001> &&from)
 {
     bp::GatheringsConfigurationJoinInfo_<2168> to;
     // ENDWEAVE: 2168 made four of these optional; a 1001 packet always carries them, so all go across present.
@@ -32,17 +33,19 @@ bp::GatheringsConfigurationJoinInfo_<2168> Transformer<bp::GatheringsConfigurati
     return to;
 }
 
-bp::ServerConfigurationJoinInfo_<2168> Transformer<bp::ServerConfigurationJoinInfo_<1001>>::upgrade(
-    bp::ServerConfigurationJoinInfo_<1001> &&from)
+bp::ServerConfigurationJoinInfo_<2168> Transformer<
+    bp::ServerConfigurationJoinInfo_<1001>,
+    bp::ServerConfigurationJoinInfo_<2168>>::transform(bp::ServerConfigurationJoinInfo_<1001> &&from)
 {
     bp::ServerConfigurationJoinInfo_<2168> to;
-    to.gatherings_configuration_join_info = ew::upgrade(from.gatherings_configuration_join_info);
+    to.gatherings_configuration_join_info = ew::transform(std::move(from.gatherings_configuration_join_info));
     to.client_store_entrypoint_configuration = std::move(from.client_store_entrypoint_configuration);
-    to.presence_configuration = ew::upgrade(from.presence_configuration);
+    to.presence_configuration = ew::transform(std::move(from.presence_configuration));
     return to;
 }
 
-bp::TransferPacket_<2168> Transformer<bp::TransferPacket_<1001>>::upgrade(bp::TransferPacket_<1001> &&from)
+bp::TransferPacket_<2168> Transformer<bp::TransferPacket_<1001>, bp::TransferPacket_<2168>>::transform(
+    bp::TransferPacket_<1001> &&from)
 {
     bp::TransferPacket_<2168> to;
     to.destination = std::move(from.destination);
@@ -53,11 +56,12 @@ bp::TransferPacket_<2168> Transformer<bp::TransferPacket_<1001>>::upgrade(bp::Tr
     return to;
 }
 
-bp::ServerPresenceInfoPacket_<2168> Transformer<bp::ServerPresenceInfoPacket_<1001>>::upgrade(
-    bp::ServerPresenceInfoPacket_<1001> &&from)
+bp::ServerPresenceInfoPacket_<2168> Transformer<
+    bp::ServerPresenceInfoPacket_<1001>,
+    bp::ServerPresenceInfoPacket_<2168>>::transform(bp::ServerPresenceInfoPacket_<1001> &&from)
 {
     bp::ServerPresenceInfoPacket_<2168> to;
-    to.presence_configuration = ew::upgrade(from.presence_configuration);
+    to.presence_configuration = ew::transform(std::move(from.presence_configuration));
     return to;
 }
 
