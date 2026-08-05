@@ -19,6 +19,11 @@ if (NOT EXISTS "${BEDROCK_PROTOCOL_SOURCE_DIR}/CMakeLists.txt")
             "or pass -DBEDROCK_PROTOCOL_SOURCE_DIR=<path>.")
 endif ()
 add_subdirectory(${BEDROCK_PROTOCOL_SOURCE_DIR} bedrock-protocol EXCLUDE_FROM_ALL)
+# endstone_add_plugin hides our own symbols, but bedrock_protocol is a target of its own and
+# would otherwise link its serialisers into the plugin at default visibility.
+set_target_properties(bedrock_protocol PROPERTIES
+        CXX_VISIBILITY_PRESET hidden
+        VISIBILITY_INLINES_HIDDEN ON)
 if (UNIX)
     target_compile_options(bedrock_protocol PUBLIC -stdlib=libc++)
     target_link_options(bedrock_protocol PUBLIC -stdlib=libc++)
@@ -86,6 +91,11 @@ src/endweave/connection/manager.cpp
 target_include_directories(${PROJECT_NAME} PRIVATE src ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(${PROJECT_NAME} PRIVATE bedrock::protocol endstone::endstone)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" OUTPUT_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
+if (UNIX)
+    # bedrock_protocol and the static libc++ endstone_add_plugin links arrive as archives, whose
+    # symbols stay exported even with hidden visibility on every target.
+    target_link_options(${PROJECT_NAME} PRIVATE -Wl,--exclude-libs,ALL)
+endif ()
 
 # Install into a server: the plugin endstone loads.
 install(TARGETS ${PROJECT_NAME} COMPONENT plugin
