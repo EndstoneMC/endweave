@@ -73,14 +73,15 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: endweave
         run: |
-          nm -D --defined-only build/endstone_endweave.so
-          test "$(nm -D --defined-only build/endstone_endweave.so | wc -l)" -lt 20
+          plugin=$(ls build/endweave-*.so)
+          nm -D --defined-only "$plugin"
+          test "$(nm -D --defined-only "$plugin" | wc -l)" -lt 20
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ runner.os }}
           path: |
-            endweave/build/endstone_endweave.so
-            endweave/build/endstone_endweave.dll
-            endweave/build/endstone_endweave.pdb
-          if-no-files-found: ignore
+            endweave/build/endweave-*.so
+            endweave/build/endweave-*.dll
+            endweave/build/endweave-*.pdb
+          if-no-files-found: error
