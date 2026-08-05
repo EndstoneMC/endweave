@@ -14,6 +14,7 @@
 #include "endweave/protocols/v2168/item_stack.h"
 #include "endweave/protocols/v2168/map.h"
 #include "endweave/protocols/v2168/movement.h"
+#include "endweave/protocols/v2168/player_list.h"
 #include "endweave/protocols/v2168/player_location.h"
 #include "endweave/protocols/v2168/presence.h"
 #include "endweave/protocols/v2168/resource_pack.h"

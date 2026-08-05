@@ -54,11 +54,13 @@ src/endweave/connection/manager.cpp
         src/endweave/protocols/v1001/item_stack.cpp
         src/endweave/protocols/v1001/map.cpp
         src/endweave/protocols/v1001/movement.cpp
+        src/endweave/protocols/v1001/player_list.cpp
         src/endweave/protocols/v1001/player_location.cpp
         src/endweave/protocols/v1001/presence.cpp
         src/endweave/protocols/v1001/resource_pack.cpp
         src/endweave/protocols/v1001/scoreboard.cpp
         src/endweave/protocols/v1001/skin.cpp
+        src/endweave/protocols/v1001/skin_pre_cereal.cpp
         src/endweave/protocols/v1001/sound.cpp
         src/endweave/protocols/v1001/structure.cpp
         src/endweave/protocols/v2168/actor.cpp
@@ -74,6 +76,7 @@ src/endweave/connection/manager.cpp
         src/endweave/protocols/v2168/item_stack.cpp
         src/endweave/protocols/v2168/map.cpp
         src/endweave/protocols/v2168/movement.cpp
+        src/endweave/protocols/v2168/player_list.cpp
         src/endweave/protocols/v2168/player_location.cpp
         src/endweave/protocols/v2168/presence.cpp
         src/endweave/protocols/v2168/resource_pack.cpp

@@ -19,9 +19,9 @@ bp::ExperimentData Transformer<bp::ExperimentToggle>::downgrade(bp::ExperimentTo
     return to;
 }
 
-bp::LevelSettings_<1001>::GameRule Transformer<bp::GameRule>::downgrade(bp::GameRule &&from)
+bp::legacy::GameRule_<1001> Transformer<bp::GameRule>::downgrade(bp::GameRule &&from)
 {
-    bp::LevelSettings_<1001>::GameRule to;
+    bp::legacy::GameRule_<1001> to;
     to.name = std::move(from.name);
     to.can_be_modified_by_player = from.can_be_modified_by_player;
     // ENDWEAVE: 1001 holds the integer alternative unsigned. The same 32 bits reach the wire.

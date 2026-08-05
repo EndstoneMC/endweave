@@ -19,7 +19,7 @@ bp::ExperimentToggle Transformer<bp::ExperimentData>::upgrade(bp::ExperimentData
     return to;
 }
 
-bp::GameRule Transformer<bp::LevelSettings_<1001>::GameRule>::upgrade(bp::LevelSettings_<1001>::GameRule &&from)
+bp::GameRule Transformer<bp::legacy::GameRule_<1001>>::upgrade(bp::legacy::GameRule_<1001> &&from)
 {
     bp::GameRule to;
     to.name = std::move(from.name);

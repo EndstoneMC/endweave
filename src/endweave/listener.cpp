@@ -17,19 +17,6 @@ constexpr int kRequestNetworkSettingsPacketId = static_cast<int>(bp::MinecraftPa
 constexpr int kLoginPacketId = static_cast<int>(bp::MinecraftPacketIds::LOGIN);
 constexpr int kPacketViolationWarningPacketId = static_cast<int>(bp::MinecraftPacketIds::PACKET_VIOLATION_WARNING);
 
-// Held because nothing models them at 1001, so they cross as the server wrote them. PlayerList
-// carries skins, and 2168 reads a ProfileHash off the end of each one that 1001 never wrote.
-// Drop them until they are modelled: a wrong one costs the client its connection, where a
-// missing one costs a tab list.
-constexpr auto kHeldBack = std::to_array<bp::MinecraftPacketIds>({
-    bp::MinecraftPacketIds::PLAYER_LIST,
-});
-
-bool isHeldBack(int id)
-{
-    return std::ranges::contains(kHeldBack, static_cast<bp::MinecraftPacketIds>(id));
-}
-
 // Held on the way in, so the server never sees them. The player stops moving, which is the
 // point: if the connection then survives, what breaks it is our reading of these.
 constexpr auto kHeldBackServerbound = std::to_array<bp::MinecraftPacketIds>({
@@ -222,11 +209,6 @@ void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
         return;
     }
     log("PRE ", event, *connection, "CLIENTBOUND");
-    if (isHeldBack(event.getPacketId())) {
-        logger_->info("HELD: {}", packetLabel(event.getPacketId()));
-        event.setCancelled(true);
-        return;
-    }
     send(event, *connection);
     log("POST", event, *connection, "CLIENTBOUND");
 }
