@@ -45,6 +45,16 @@ struct Transformer<bp::ItemUseInventoryTransaction_<1001>, bp::ItemUseInventoryT
 };
 
 template <>
+struct Transformer<bp::legacy::ItemUseInventoryTransaction_<1001>, bp::ItemUseInventoryTransaction_<1001>> {
+    static bp::ItemUseInventoryTransaction_<1001> transform(bp::legacy::ItemUseInventoryTransaction_<1001> &&from);
+};
+
+template <>
+struct Transformer<bp::ItemUseInventoryTransaction_<1001>, bp::legacy::ItemUseInventoryTransaction_<1001>> {
+    static bp::legacy::ItemUseInventoryTransaction_<1001> transform(bp::ItemUseInventoryTransaction_<1001> &&from);
+};
+
+template <>
 struct Transformer<bp::ItemUseOnActorInventoryTransaction_<1001>, bp::ItemUseOnActorInventoryTransaction_<2168>> {
     static bp::ItemUseOnActorInventoryTransaction_<2168> transform(
         bp::ItemUseOnActorInventoryTransaction_<1001> &&from);

@@ -1,5 +1,8 @@
 #include "endweave/protocols/v2168/input.h"
 
+#include "endweave/protocols/v1001/inventory.h"
+#include "endweave/protocols/v2168/inventory.h"
+
 #include <cstddef>
 #include <utility>
 
@@ -21,6 +24,38 @@ bp::PlayerBlockActionData_<1001> Transformer<bp::PlayerBlockActionData_<2168>, b
     return to;
 }
 
+bp::PlayerActionPacket_<1001> Transformer<bp::PlayerActionPacket_<2168>, bp::PlayerActionPacket_<1001>>::transform(
+    bp::PlayerActionPacket_<2168> &&from)
+{
+    bp::PlayerActionPacket_<1001> to;
+    to.runtime_id = from.runtime_id;
+    // ENDWEAVE: INTERNAL_UPDATE is 38, which is 1001's COUNT sentinel, so passing it through would
+    // hand the server an action off the end of its enum. UNKNOWN is the one value BDS ignores.
+    to.action = from.action == bp::PlayerActionType_<2168>::INTERNAL_UPDATE
+                  ? bp::PlayerActionType_<1001>::UNKNOWN
+                  : static_cast<bp::PlayerActionType_<1001>>(from.action);
+    to.pos = from.pos;
+    to.result_pos = from.result_pos;
+    to.face = from.face;
+    return to;
+}
+
+bp::PackedItemUseLegacyInventoryTransaction_<1001> Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2168>,
+                                                               bp::PackedItemUseLegacyInventoryTransaction_<1001>>::
+    transform(bp::PackedItemUseLegacyInventoryTransaction_<2168> &&from)
+{
+    bp::PackedItemUseLegacyInventoryTransaction_<1001> to;
+    to.id = from.id.id;
+    // ENDWEAVE: 1001 reads the slots off the id rather than a flag, so a list the id does not gate
+    // is one the server would never read back.
+    if (from.slots.has_value()) {
+        to.slots = std::move(from.slots).value();
+    }
+    to.transaction =
+        ew::transform(ew::transform_to<bp::ItemUseInventoryTransaction_<1001>>(std::move(from.transaction)));
+    return to;
+}
+
 bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>, bp::PlayerAuthInputPacket_<1001>>::
     transform(bp::PlayerAuthInputPacket_<2168> &&from)
 {
@@ -37,6 +72,8 @@ bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>, b
     }
     // ENDWEAVE: The gate flags are recomputed from the engaged payloads; at 1001 the flag drives
     // the reader, and one that disagrees eats the rest of the packet.
+    to.input_data.set(static_cast<std::size_t>(To::InputData::PERFORM_ITEM_INTERACTION),
+                      from.item_use_transaction.has_value());
     to.input_data.set(static_cast<std::size_t>(To::InputData::PERFORM_ITEM_STACK_REQUEST),
                       from.item_stack_request.has_value());
     to.input_data.set(static_cast<std::size_t>(To::InputData::PERFORM_BLOCK_ACTIONS),
@@ -49,8 +86,9 @@ bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>, b
     to.interact_rotation = from.interact_rotation;
     to.client_tick = from.client_tick;
     to.pos_delta = from.pos_delta;
-    // ENDWEAVE: TODO item_use_transaction is dropped -- 1001 has no field for it -- so a client's
-    // block placements and item uses never reach the server.
+    if (from.item_use_transaction.has_value()) {
+        to.item_use_transaction = ew::transform(std::move(from.item_use_transaction.value()));
+    }
     if (from.item_stack_request.has_value()) {
         to.item_stack_request = ew::transform(std::move(from.item_stack_request.value()));
     }

@@ -29,4 +29,9 @@ struct Transformer<bp::SetActorDataPacket_<1001>, bp::SetActorDataPacket_<2168>>
     static bp::SetActorDataPacket_<2168> transform(bp::SetActorDataPacket_<1001> &&from);
 };
 
+template <>
+struct Transformer<bp::SetLastHurtByPacket_<1001>, bp::SetLastHurtByPacket_<2168>> {
+    static bp::SetLastHurtByPacket_<2168> transform(bp::SetLastHurtByPacket_<1001> &&from);
+};
+
 } // namespace endweave

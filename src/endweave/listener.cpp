@@ -1,7 +1,5 @@
 #include "endweave/listener.h"
 
-#include <algorithm>
-#include <array>
 #include <cstdint>
 #include <protocol/network.h>
 #include <string>
@@ -16,17 +14,6 @@ constexpr int kDisconnectPacketId = static_cast<int>(bp::MinecraftPacketIds::DIS
 constexpr int kRequestNetworkSettingsPacketId = static_cast<int>(bp::MinecraftPacketIds::REQUEST_NETWORK_SETTINGS);
 constexpr int kLoginPacketId = static_cast<int>(bp::MinecraftPacketIds::LOGIN);
 constexpr int kPacketViolationWarningPacketId = static_cast<int>(bp::MinecraftPacketIds::PACKET_VIOLATION_WARNING);
-
-// Held on the way in, so the server never sees them. The player stops moving, which is the
-// point: if the connection then survives, what breaks it is our reading of these.
-constexpr auto kHeldBackServerbound = std::to_array<bp::MinecraftPacketIds>({
-    bp::MinecraftPacketIds::PLAYER_AUTH_INPUT_PACKET,
-});
-
-bool isHeldBackServerbound(int id)
-{
-    return std::ranges::contains(kHeldBackServerbound, static_cast<bp::MinecraftPacketIds>(id));
-}
 
 // LoginPacket is one type at every version. The violation warning is not -- it names the
 // offending packet with MinecraftPacketIds, which gained members -- but it is the same
@@ -194,10 +181,6 @@ void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
         return;
     }
     log("PRE ", event, *connection, "SERVERBOUND");
-    if (isHeldBackServerbound(event.getPacketId())) {
-        event.setCancelled(true);
-        return;
-    }
     receive(event, *connection);
     log("POST", event, *connection, "SERVERBOUND");
 }

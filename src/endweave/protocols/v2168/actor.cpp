@@ -73,4 +73,24 @@ bp::SetActorDataPacket_<1001> Transformer<bp::SetActorDataPacket_<2168>, bp::Set
     return to;
 }
 
+bp::SetLastHurtByPacket_<1001> Transformer<bp::SetLastHurtByPacket_<2168>, bp::SetLastHurtByPacket_<1001>>::transform(
+    bp::SetLastHurtByPacket_<2168> &&from)
+{
+    bp::SetLastHurtByPacket_<1001> to;
+    // ENDWEAVE: the sulfur cube moves back to its MONSTER-composed number, and the cushion has no
+    // 1001 counterpart at all, so it lands on UNDEFINED rather than naming another actor.
+    switch (from.last_hurt_by) {
+    case bp::ActorType_<2168>::SULFUR_CUBE:
+        to.last_hurt_by = bp::ActorType_<1001>::SULFUR_CUBE;
+        break;
+    case bp::ActorType_<2168>::CUSHION:
+        to.last_hurt_by = bp::ActorType_<1001>::UNDEFINED;
+        break;
+    default:
+        to.last_hurt_by = static_cast<bp::ActorType_<1001>>(from.last_hurt_by);
+        break;
+    }
+    return to;
+}
+
 } // namespace endweave

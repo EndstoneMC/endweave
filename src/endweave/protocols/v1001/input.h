@@ -15,6 +15,18 @@ struct Transformer<bp::PlayerBlockActionData_<1001>, bp::PlayerBlockActionData_<
 };
 
 template <>
+struct Transformer<bp::PlayerActionPacket_<1001>, bp::PlayerActionPacket_<2168>> {
+    static bp::PlayerActionPacket_<2168> transform(bp::PlayerActionPacket_<1001> &&from);
+};
+
+template <>
+struct Transformer<bp::PackedItemUseLegacyInventoryTransaction_<1001>,
+                   bp::PackedItemUseLegacyInventoryTransaction_<2168>> {
+    static bp::PackedItemUseLegacyInventoryTransaction_<2168> transform(
+        bp::PackedItemUseLegacyInventoryTransaction_<1001> &&from);
+};
+
+template <>
 struct Transformer<bp::PlayerAuthInputPacket_<1001>, bp::PlayerAuthInputPacket_<2168>> {
     static bp::PlayerAuthInputPacket_<2168> transform(bp::PlayerAuthInputPacket_<1001> &&from);
 };

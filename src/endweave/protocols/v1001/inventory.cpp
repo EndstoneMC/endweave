@@ -110,6 +110,54 @@ bp::ItemUseInventoryTransaction_<2168> Transformer<
     return to;
 }
 
+bp::ItemUseInventoryTransaction_<1001> Transformer<
+    bp::legacy::ItemUseInventoryTransaction_<1001>,
+    bp::ItemUseInventoryTransaction_<1001>>::transform(bp::legacy::ItemUseInventoryTransaction_<1001> &&from)
+{
+    bp::ItemUseInventoryTransaction_<1001> to;
+    // ENDWEAVE: packet 144 did not cerealise until 2168, so its transaction writes the action list
+    // bare where the cerealised one puts a member-present marker in front of it.
+    to.actions.actions = std::move(from.actions);
+    to.action_type = from.action_type;
+    to.trigger_type = from.trigger_type;
+    to.pos = from.pos;
+    // ENDWEAVE: BDS holds the face as a FacingID, which is a byte; only the pre-cereal write
+    // widened it to a varint.
+    to.face = static_cast<std::uint8_t>(from.face);
+    to.slot = from.slot;
+    to.item = std::move(from.item);
+    to.from_pos = from.from_pos;
+    to.click_pos = from.click_pos;
+    to.target_block_id = from.target_block_id;
+    to.client_predicted_result = from.client_predicted_result;
+    to.client_cooldown_state = from.client_cooldown_state;
+    return to;
+}
+
+bp::legacy::ItemUseInventoryTransaction_<1001> Transformer<
+    bp::ItemUseInventoryTransaction_<1001>,
+    bp::legacy::ItemUseInventoryTransaction_<1001>>::transform(bp::ItemUseInventoryTransaction_<1001> &&from)
+{
+    bp::legacy::ItemUseInventoryTransaction_<1001> to;
+    // ENDWEAVE: the pre-cereal form has no marker to carry an absent list, and an empty one is what
+    // BDS builds for a transaction that changed no slot.
+    if (from.actions.actions.has_value()) {
+        to.actions = std::move(from.actions.actions).value();
+    }
+    to.action_type = from.action_type;
+    to.trigger_type = from.trigger_type;
+    to.pos = from.pos;
+    to.face = from.face;
+    to.slot = from.slot;
+    to.item = std::move(from.item);
+    to.from_pos = from.from_pos;
+    to.click_pos = from.click_pos;
+    to.target_block_id = from.target_block_id;
+    to.client_predicted_result = from.client_predicted_result;
+    to.client_cooldown_state = from.client_cooldown_state;
+    return to;
+}
+
 bp::ItemUseOnActorInventoryTransaction_<2168> Transformer<
     bp::ItemUseOnActorInventoryTransaction_<1001>,
     bp::ItemUseOnActorInventoryTransaction_<2168>>::transform(bp::ItemUseOnActorInventoryTransaction_<1001> &&from)

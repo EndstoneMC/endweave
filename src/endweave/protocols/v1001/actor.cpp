@@ -74,4 +74,16 @@ bp::SetActorDataPacket_<2168> Transformer<bp::SetActorDataPacket_<1001>, bp::Set
     return to;
 }
 
+bp::SetLastHurtByPacket_<2168> Transformer<bp::SetLastHurtByPacket_<1001>, bp::SetLastHurtByPacket_<2168>>::transform(
+    bp::SetLastHurtByPacket_<1001> &&from)
+{
+    bp::SetLastHurtByPacket_<2168> to;
+    // ENDWEAVE: ActorType composes a category with a type index, and 2168 recategorised the sulfur
+    // cube from MONSTER to PATHFINDER_MOB. It is the only member whose number moved.
+    to.last_hurt_by = from.last_hurt_by == bp::ActorType_<1001>::SULFUR_CUBE
+                        ? bp::ActorType_<2168>::SULFUR_CUBE
+                        : static_cast<bp::ActorType_<2168>>(from.last_hurt_by);
+    return to;
+}
+
 } // namespace endweave
