@@ -111,21 +111,6 @@ consteval bool shouldHandle()
     }
 }
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
-packet_of<To, Id> reshape(packet_of<From, Id> &&from)
-{
-    if constexpr (std::is_same_v<packet_of<From, Id>, packet_of<To, Id>>) {
-        return std::move(from);
-    }
-    else {
-        static_assert(!WireCompatible<packet_of<From, Id>, packet_of<To, Id>>::value,
-                      "endweave: this hop is declared wire-compatible, yet the chain has to hold the packet as an "
-                      "object across it -- a Rewriter on the path, or a hop further along that reshapes, forces "
-                      "that. Write the Transformer for this pair and drop the WireCompatible.");
-        return endweave::transform_to<packet_of<To, Id>>(std::move(from));
-    }
-}
-
 template <ProtocolVersion Cur, ProtocolVersion To, int Id>
 packet_of<To, Id> chain(packet_of<Cur, Id> &&from)
 {
@@ -135,8 +120,15 @@ packet_of<To, Id> chain(packet_of<Cur, Id> &&from)
     if constexpr (Cur == To) {
         return std::move(from);
     }
+    else if constexpr (std::is_same_v<packet_of<Cur, Id>, packet_of<step(Cur, To), Id>>) {
+        return chain<step(Cur, To), To, Id>(std::move(from));
+    }
     else {
-        return chain<step(Cur, To), To, Id>(reshape<Cur, step(Cur, To), Id>(std::move(from)));
+        static_assert(!WireCompatible<packet_of<Cur, Id>, packet_of<step(Cur, To), Id>>::value,
+                      "endweave: this hop is declared wire-compatible, yet the chain has to hold the packet as an "
+                      "object across it -- a Rewriter on the path, or a hop further along that reshapes, forces "
+                      "that. Write the Transformer for this pair and drop the WireCompatible.");
+        return chain<step(Cur, To), To, Id>(endweave::transform_to<packet_of<step(Cur, To), Id>>(std::move(from)));
     }
 }
 

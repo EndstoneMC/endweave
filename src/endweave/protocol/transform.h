@@ -29,9 +29,6 @@ concept TransformableFrom = requires(Source &&source) {
 } // namespace detail
 
 template <class From, class To>
-concept TransformableFromLvalue = detail::TransformableFrom<const From &, To>;
-
-template <class From, class To>
 concept Transformable = detail::TransformableFrom<From, To>;
 
 template <class To, class From>
@@ -79,16 +76,6 @@ template <class From>
 
 template <class From, class To>
 struct Transformer<std::optional<From>, std::optional<To>> {
-    static std::optional<To> transform(const std::optional<From> &from)
-        requires TransformableFromLvalue<From, To>
-    {
-        std::optional<To> to;
-        if (from.has_value()) {
-            to = transform_to<To>(from.value());
-        }
-        return to;
-    }
-
     static std::optional<To> transform(std::optional<From> &&from)
         requires Transformable<From, To>
     {
@@ -102,17 +89,6 @@ struct Transformer<std::optional<From>, std::optional<To>> {
 
 template <class From, class To>
 struct Transformer<std::vector<From>, std::vector<To>> {
-    static std::vector<To> transform(const std::vector<From> &from)
-        requires TransformableFromLvalue<From, To>
-    {
-        std::vector<To> to;
-        to.reserve(from.size());
-        for (const auto &item : from) {
-            to.push_back(transform_to<To>(item));
-        }
-        return to;
-    }
-
     static std::vector<To> transform(std::vector<From> &&from)
         requires Transformable<From, To>
     {
@@ -127,16 +103,6 @@ struct Transformer<std::vector<From>, std::vector<To>> {
 
 template <class K, class From, class To>
 struct Transformer<std::map<K, From>, std::map<K, To>> {
-    static std::map<K, To> transform(const std::map<K, From> &from)
-        requires TransformableFromLvalue<From, To>
-    {
-        std::map<K, To> to;
-        for (const auto &[key, value] : from) {
-            to.emplace(key, transform_to<To>(value));
-        }
-        return to;
-    }
-
     static std::map<K, To> transform(std::map<K, From> &&from)
         requires Transformable<From, To>
     {

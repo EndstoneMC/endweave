@@ -329,7 +329,8 @@ here is about.
 - **`std::optional`, `std::vector` and `std::map` are already specialized,** each pairing the
   container of the source element with the container of the destination one. They unwrap, delegate
   to the element's `Transformer`, and compose (`optional<vector<T>>`), so a field never spells a
-  loop or a `has_value()` guard. An element with no `Transformer` is a compile error, which is what
+  loop or a `has_value()` guard. They take an rvalue and nothing else, so a forgotten `std::move`
+  is the compile error the rule above promises rather than a silently copied container. An element with no `Transformer` is a compile error, which is what
   keeps a missing include from passing the value through untranslated.
 - **A projection is written out both ways.** v1001's tagged `ItemStackNetIdVariant` reaches v2168 as
   one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
