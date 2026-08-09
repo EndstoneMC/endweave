@@ -38,7 +38,7 @@ bp::PlayerLocationPacket_<1001> Transformer<
     // payload is what the handler reads, so the type comes from there.
     std::visit(
         [&to](const auto &location) {
-            to.type = location.packet_type;
+            to.type = location.type;
         },
         from.location);
     to.id = from.id;

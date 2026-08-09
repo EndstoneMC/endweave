@@ -105,7 +105,7 @@ bp::ShapedRecipePayload_<1001> Transformer<bp::ShapedRecipePayload_<2168>, bp::S
     // length desynchronises the packet. Short pads with the empty cell, long truncates.
     to.ingredients.resize(gridCells(to.width, to.height));
     to.results = ew::transform(std::move(from.results));
-    to.recipe_uuid = from.recipe_uuid;
+    to.uuid = from.uuid;
     to.tag = std::move(from.tag);
     to.priority = from.priority;
     to.assume_symmetry = from.assume_symmetry;
@@ -125,7 +125,7 @@ bp::ShapelessRecipePayload_<1001> Transformer<bp::ShapelessRecipePayload_<2168>,
     to.recipe_id = std::move(from.recipe_id);
     to.ingredients = ew::transform(std::move(from.ingredients));
     to.results = ew::transform(std::move(from.results));
-    to.recipe_uuid = from.recipe_uuid;
+    to.uuid = from.uuid;
     to.tag = std::move(from.tag);
     to.priority = from.priority;
     // ENDWEAVE: default-constructed is the NONE context with no ingredients, which is what
@@ -208,9 +208,9 @@ bp::CraftingDataPacket_<1001> Transformer<bp::CraftingDataPacket_<2168>, bp::Cra
         entry.smithing_trim_recipe = ew::transform(std::move(recipe));
         to.crafting_entries.push_back(std::move(entry));
     }
-    to.potion_mix_entries = std::move(from.potion_mixes);
-    to.container_mix_entries = std::move(from.container_mixes);
-    to.material_reducer_entries = std::move(from.material_reducers);
+    to.potion_mix_entries = std::move(from.potion_mix_entries);
+    to.container_mix_entries = std::move(from.container_mix_entries);
+    to.material_reducer_entries = std::move(from.material_reducer_entries);
     to.clear_recipes = from.clear_recipes;
     return to;
 }
@@ -221,9 +221,9 @@ bp::CreativeGroupInfoPayload_<1001> Transformer<
 {
     bp::CreativeGroupInfoPayload_<1001> to;
     // ENDWEAVE: one enum in both eras. 1001 writes the wider field, so nothing narrows.
-    to.creative_category = from.creative_category;
+    to.creative_item_category = from.creative_item_category;
     to.name = std::move(from.name);
-    to.group_icon_item = ew::transform(std::move(from.group_icon_item));
+    to.icon = ew::transform(std::move(from.icon));
     return to;
 }
 
@@ -232,8 +232,8 @@ bp::CreativeItemEntryPayload_<1001> Transformer<
     bp::CreativeItemEntryPayload_<1001>>::transform(bp::CreativeItemEntryPayload_<2168> &&from)
 {
     bp::CreativeItemEntryPayload_<1001> to;
-    to.creative_net_id = from.creative_net_id;
-    to.item_instance = ew::transform(std::move(from.item_instance));
+    to.creative_item_net_id = from.creative_item_net_id;
+    to.item_descriptor = ew::transform(std::move(from.item_descriptor));
     to.group_index = from.group_index;
     return to;
 }

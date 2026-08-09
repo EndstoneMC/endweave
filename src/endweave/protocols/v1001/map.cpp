@@ -53,7 +53,7 @@ bp::ClientboundMapItemDataPacket_<2168> Transformer<
     to.locked = from.locked;
     to.map_origin = from.map_origin;
     if (creation) {
-        to.map_ids = std::move(from.map_ids);
+        to.creation_map_ids = std::move(from.map_ids);
     }
     // ENDWEAVE: 1001 writes the scale for any of the three groups, so it is not a group of its own.
     if (creation || decoration || texture) {

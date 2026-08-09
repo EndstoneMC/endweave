@@ -71,10 +71,10 @@ bp::RedactableString_<2168> Transformer<bp::RedactableString_<1001>, bp::Redacta
     bp::RedactableString_<1001> &&from)
 {
     bp::RedactableString_<2168> to;
-    to.unredacted = std::move(from.unredacted);
+    to.unredacted_string = std::move(from.unredacted_string);
     // ENDWEAVE: an empty redaction goes up absent, not present-and-empty -- same one zero byte.
-    if (!from.redacted.empty()) {
-        to.redacted = std::move(from.redacted);
+    if (!from.redacted_string.empty()) {
+        to.redacted_string = std::move(from.redacted_string);
     }
     return to;
 }

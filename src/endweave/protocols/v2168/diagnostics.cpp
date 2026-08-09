@@ -33,11 +33,11 @@ bp::ServerboundDiagnosticsPacket_<1001> Transformer<
     to.avg_end_frame_time_ms = from.avg_end_frame_time_ms;
     to.avg_remainder_time_percent = from.avg_remainder_time_percent;
     to.avg_unaccounted_time_percent = from.avg_unaccounted_time_percent;
-    to.memory_category_values = ew::transform(std::move(from.memory_category_values));
-    to.entity_diagnostics = std::move(from.entity_diagnostics);
+    to.category_counters = ew::transform(std::move(from.category_counters));
+    to.entity_timings = std::move(from.entity_timings);
     // ENDWEAVE: system_categories is dropped; 1001 reads these timings by index alone.
-    to.system_diagnostics = std::move(from.system_diagnostics);
-    to.whisker_scopes = std::move(from.whisker_scopes);
+    to.system_timings = std::move(from.system_timings);
+    to.whisker_data = std::move(from.whisker_data);
     return to;
 }
 

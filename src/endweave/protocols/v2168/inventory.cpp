@@ -39,8 +39,8 @@ bp::InventoryAction_<1001> Transformer<bp::InventoryAction_<2168>, bp::Inventory
     bp::InventoryAction_<1001> to;
     to.source = from.source;
     to.slot = from.slot;
-    to.from_item = ew::transform(std::move(from.from_item));
-    to.to_item = ew::transform(std::move(from.to_item));
+    to.from_item_descriptor = ew::transform(std::move(from.from_item_descriptor));
+    to.to_item_descriptor = ew::transform(std::move(from.to_item_descriptor));
     return to;
 }
 
@@ -56,7 +56,7 @@ bp::NormalTransactionData_<1001> Transformer<bp::NormalTransactionData_<2168>, b
     transform(bp::NormalTransactionData_<2168> &&from)
 {
     bp::NormalTransactionData_<1001> to;
-    to.actions = ew::transform(std::move(from.actions));
+    to.transaction = ew::transform(std::move(from.transaction));
     return to;
 }
 
@@ -64,7 +64,7 @@ bp::InventoryMismatchData_<1001> Transformer<bp::InventoryMismatchData_<2168>, b
     transform(bp::InventoryMismatchData_<2168> &&from)
 {
     bp::InventoryMismatchData_<1001> to;
-    to.actions = ew::transform(std::move(from.actions));
+    to.transaction = ew::transform(std::move(from.transaction));
     return to;
 }
 
@@ -73,7 +73,7 @@ bp::ItemUseInventoryTransaction_<1001> Transformer<
     bp::ItemUseInventoryTransaction_<1001>>::transform(bp::ItemUseInventoryTransaction_<2168> &&from)
 {
     bp::ItemUseInventoryTransaction_<1001> to;
-    to.actions = ew::transform(std::move(from.actions));
+    to.transaction = ew::transform(std::move(from.transaction));
     to.action_type = from.action_type;
     to.trigger_type = from.trigger_type;
     to.pos = from.pos;
@@ -93,8 +93,8 @@ bp::ItemUseOnActorInventoryTransaction_<1001> Transformer<
     bp::ItemUseOnActorInventoryTransaction_<1001>>::transform(bp::ItemUseOnActorInventoryTransaction_<2168> &&from)
 {
     bp::ItemUseOnActorInventoryTransaction_<1001> to;
-    to.actions = ew::transform(std::move(from.actions));
-    to.target_runtime_id = from.target_runtime_id;
+    to.transaction = ew::transform(std::move(from.transaction));
+    to.runtime_id = from.runtime_id;
     to.action_type = from.action_type;
     to.slot = from.slot;
     to.item = ew::transform(std::move(from.item));
@@ -108,7 +108,7 @@ bp::ItemReleaseInventoryTransaction_<1001> Transformer<
     bp::ItemReleaseInventoryTransaction_<1001>>::transform(bp::ItemReleaseInventoryTransaction_<2168> &&from)
 {
     bp::ItemReleaseInventoryTransaction_<1001> to;
-    to.actions = ew::transform(std::move(from.actions));
+    to.transaction = ew::transform(std::move(from.transaction));
     to.action_type = from.action_type;
     to.slot = from.slot;
     to.item = ew::transform(std::move(from.item));

@@ -35,7 +35,7 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>, bp::PlayerL
             auto skin = ew::transform_to<bp::SerializedSkinRef_<1001>>(std::move(add->skin));
             bp::PlayerListEntry_<1001> out;
             out.uuid = add->uuid;
-            out.id = add->actor_unique_id;
+            out.id = add->id;
             out.name = std::move(add->name);
             out.xuid = std::move(add->xuid);
             out.platform_online_id = std::move(add->platform_online_id);

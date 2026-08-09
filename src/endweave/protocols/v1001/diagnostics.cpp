@@ -34,13 +34,13 @@ bp::ServerboundDiagnosticsPacket_<2168> Transformer<
     to.avg_end_frame_time_ms = from.avg_end_frame_time_ms;
     to.avg_remainder_time_percent = from.avg_remainder_time_percent;
     to.avg_unaccounted_time_percent = from.avg_unaccounted_time_percent;
-    to.memory_category_values = ew::transform(std::move(from.memory_category_values));
-    to.entity_diagnostics = std::move(from.entity_diagnostics);
-    to.system_diagnostics = std::move(from.system_diagnostics);
+    to.category_counters = ew::transform(std::move(from.category_counters));
+    to.entity_timings = std::move(from.entity_timings);
+    to.system_timings = std::move(from.system_timings);
     // ENDWEAVE: 1001 sends no list naming the systems system_diagnostics indexes, and absent is what 2168
     // writes when the client has none to offer.
     to.system_categories = std::nullopt;
-    to.whisker_scopes = std::move(from.whisker_scopes);
+    to.whisker_data = std::move(from.whisker_data);
     return to;
 }
 

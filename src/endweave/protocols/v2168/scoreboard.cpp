@@ -55,14 +55,14 @@ bp::SetScorePacket_<1001> Transformer<bp::SetScorePacket_<2168>, bp::SetScorePac
             info.objective_name = std::move(player->objective_name);
             info.score_value = player->score_value;
             info.identity_type = bp::IdentityDefinition::Type::PLAYER;
-            info.player_id = player->player_unique_id;
+            info.player_id = player->player_id;
         }
         else if (auto *actor = std::get_if<bp::ChangeEntityScore_<2168>>(&entry)) {
             info.scoreboard_id = actor->scoreboard_id;
             info.objective_name = std::move(actor->objective_name);
             info.score_value = actor->score_value;
             info.identity_type = bp::IdentityDefinition::Type::ENTITY;
-            info.entity_id = actor->actor_id;
+            info.entity_id = actor->entity_id;
         }
         else {
             auto &fake = std::get<bp::ChangeFakePlayerScore_<2168>>(entry);

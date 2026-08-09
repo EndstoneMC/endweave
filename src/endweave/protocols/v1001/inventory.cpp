@@ -21,7 +21,7 @@ bp::SerializedNetworkItemStackDescriptor_<2168> Transformer<
     // ENDWEAVE: a bare net id is the non-negative case of 2168's signed variant -- the pre-cereal
     // form has no request or legacy-request id to encode.
     if (from.net_id.has_value()) {
-        to.net_id_variant = from.net_id.value().id;
+        to.net_id_variant = from.net_id.value().raw_id;
     }
     to.block_runtime_id = static_cast<std::uint32_t>(from.block_runtime_id);
     to.user_data_buffer = std::move(from.user_data_buffer);
@@ -41,13 +41,13 @@ bp::SerializedNetworkItemStackDescriptor_<2168> Transformer<
     if (from.net_id_variant.has_value()) {
         const auto &net_id = from.net_id_variant.value();
         if (const auto *request_id = std::get_if<bp::ItemStackRequestId>(&net_id)) {
-            to.net_id_variant = -2 * request_id->id - 1;
+            to.net_id_variant = -2 * request_id->raw_id - 1;
         }
         else if (const auto *legacy_id = std::get_if<bp::ItemStackLegacyRequestId>(&net_id)) {
-            to.net_id_variant = -2 * legacy_id->id;
+            to.net_id_variant = -2 * legacy_id->raw_id;
         }
         else {
-            to.net_id_variant = std::get<bp::ItemStackNetId>(net_id).id;
+            to.net_id_variant = std::get<bp::ItemStackNetId>(net_id).raw_id;
         }
     }
     to.block_runtime_id = from.block_runtime_id;
@@ -61,8 +61,8 @@ bp::InventoryAction_<2168> Transformer<bp::InventoryAction_<1001>, bp::Inventory
     bp::InventoryAction_<2168> to;
     to.source = from.source;
     to.slot = from.slot;
-    to.from_item = ew::transform(std::move(from.from_item));
-    to.to_item = ew::transform(std::move(from.to_item));
+    to.from_item_descriptor = ew::transform(std::move(from.from_item_descriptor));
+    to.to_item_descriptor = ew::transform(std::move(from.to_item_descriptor));
     return to;
 }
 
@@ -78,7 +78,7 @@ bp::NormalTransactionData_<2168> Transformer<bp::NormalTransactionData_<1001>, b
     transform(bp::NormalTransactionData_<1001> &&from)
 {
     bp::NormalTransactionData_<2168> to;
-    to.actions = ew::transform(std::move(from.actions));
+    to.transaction = ew::transform(std::move(from.transaction));
     return to;
 }
 
@@ -86,7 +86,7 @@ bp::InventoryMismatchData_<2168> Transformer<bp::InventoryMismatchData_<1001>, b
     transform(bp::InventoryMismatchData_<1001> &&from)
 {
     bp::InventoryMismatchData_<2168> to;
-    to.actions = ew::transform(std::move(from.actions));
+    to.transaction = ew::transform(std::move(from.transaction));
     return to;
 }
 
@@ -95,7 +95,7 @@ bp::ItemUseInventoryTransaction_<2168> Transformer<
     bp::ItemUseInventoryTransaction_<2168>>::transform(bp::ItemUseInventoryTransaction_<1001> &&from)
 {
     bp::ItemUseInventoryTransaction_<2168> to;
-    to.actions = ew::transform(std::move(from.actions));
+    to.transaction = ew::transform(std::move(from.transaction));
     to.action_type = from.action_type;
     to.trigger_type = from.trigger_type;
     to.pos = from.pos;
@@ -117,7 +117,7 @@ bp::ItemUseInventoryTransaction_<1001> Transformer<
     bp::ItemUseInventoryTransaction_<1001> to;
     // ENDWEAVE: packet 144 did not cerealise until 2168, so its transaction writes the action list
     // bare where the cerealised one puts a member-present marker in front of it.
-    to.actions.actions = std::move(from.actions);
+    to.transaction.actions = std::move(from.actions);
     to.action_type = from.action_type;
     to.trigger_type = from.trigger_type;
     to.pos = from.pos;
@@ -141,8 +141,8 @@ bp::legacy::ItemUseInventoryTransaction_<1001> Transformer<
     bp::legacy::ItemUseInventoryTransaction_<1001> to;
     // ENDWEAVE: the pre-cereal form has no marker to carry an absent list, and an empty one is what
     // BDS builds for a transaction that changed no slot.
-    if (from.actions.actions.has_value()) {
-        to.actions = std::move(from.actions.actions).value();
+    if (from.transaction.actions.has_value()) {
+        to.actions = std::move(from.transaction.actions).value();
     }
     to.action_type = from.action_type;
     to.trigger_type = from.trigger_type;
@@ -163,8 +163,8 @@ bp::ItemUseOnActorInventoryTransaction_<2168> Transformer<
     bp::ItemUseOnActorInventoryTransaction_<2168>>::transform(bp::ItemUseOnActorInventoryTransaction_<1001> &&from)
 {
     bp::ItemUseOnActorInventoryTransaction_<2168> to;
-    to.actions = ew::transform(std::move(from.actions));
-    to.target_runtime_id = from.target_runtime_id;
+    to.transaction = ew::transform(std::move(from.transaction));
+    to.runtime_id = from.runtime_id;
     to.action_type = from.action_type;
     to.slot = from.slot;
     to.item = ew::transform(std::move(from.item));
@@ -178,7 +178,7 @@ bp::ItemReleaseInventoryTransaction_<2168> Transformer<
     bp::ItemReleaseInventoryTransaction_<2168>>::transform(bp::ItemReleaseInventoryTransaction_<1001> &&from)
 {
     bp::ItemReleaseInventoryTransaction_<2168> to;
-    to.actions = ew::transform(std::move(from.actions));
+    to.transaction = ew::transform(std::move(from.transaction));
     to.action_type = from.action_type;
     to.slot = from.slot;
     to.item = ew::transform(std::move(from.item));

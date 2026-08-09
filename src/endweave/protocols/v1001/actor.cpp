@@ -50,7 +50,7 @@ bp::AddActorPacket_<2168> Transformer<bp::AddActorPacket_<1001>, bp::AddActorPac
     bp::AddActorPacket_<2168> to;
     to.entity_id = from.entity_id;
     to.runtime_id = from.runtime_id;
-    to.type = std::move(from.type);
+    to.actor_type = std::move(from.actor_type);
     to.pos = from.pos;
     to.velocity = from.velocity;
     to.rot = from.rot;

@@ -93,7 +93,7 @@ bp::AddPlayerPacket_<1001> Transformer<bp::AddPlayerPacket_<2168>, bp::AddPlayer
     to.player_game_type = from.player_game_type;
     to.unpack = ew::transform(std::move(from.unpack));
     to.synched_properties = std::move(from.synched_properties);
-    to.abilities = std::move(from.abilities);
+    to.abilities_data = std::move(from.abilities_data);
     to.links = std::move(from.links);
     to.device_id = std::move(from.device_id);
     to.build_platform = from.build_platform;
@@ -127,8 +127,8 @@ bp::MovePlayerPacket_<1001> Transformer<bp::MovePlayerPacket_<2168>, bp::MovePla
     to.riding_id = from.riding_id;
     // ENDWEAVE: TODO teleport_data under a non-TELEPORT mode is dropped; forcing the mode would
     // carry it but make the client snap instead of move. TELEPORT with no data invents 0/0.
-    to.cause = from.teleport_data.has_value() ? from.teleport_data.value().teleportation_cause : 0;
-    to.source_entity_type = from.teleport_data.has_value() ? from.teleport_data.value().source_actor_type : 0;
+    to.cause = from.teleport_data.has_value() ? from.teleport_data.value().cause : 0;
+    to.source_entity_type = from.teleport_data.has_value() ? from.teleport_data.value().source_entity_type : 0;
     to.tick = from.tick;
     return to;
 }

@@ -54,7 +54,7 @@ bp::AddPlayerPacket_<2168> Transformer<bp::AddPlayerPacket_<1001>, bp::AddPlayer
     to.player_game_type = from.player_game_type;
     to.unpack = ew::transform(std::move(from.unpack));
     to.synched_properties = std::move(from.synched_properties);
-    to.abilities = std::move(from.abilities);
+    to.abilities_data = std::move(from.abilities_data);
     to.links = std::move(from.links);
     to.device_id = std::move(from.device_id);
     to.build_platform = from.build_platform;

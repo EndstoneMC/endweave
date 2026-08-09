@@ -44,14 +44,14 @@ bp::ClientboundMapItemDataPacket_<1001> Transformer<
 
     bp::ClientboundMapItemDataPacket_<1001> to;
     to.map_id = from.map_id;
-    to.type = (from.map_ids.has_value() ? static_cast<std::uint32_t>(Type::CREATION) : 0) |
+    to.type = (from.creation_map_ids.has_value() ? static_cast<std::uint32_t>(Type::CREATION) : 0) |
               (decoration ? static_cast<std::uint32_t>(Type::DECORATION_UPDATE) : 0) |
               (texture ? static_cast<std::uint32_t>(Type::TEXTURE_UPDATE) : 0);
     to.dimension = from.dimension;
     to.locked = from.locked;
     to.map_origin = from.map_origin;
-    if (from.map_ids.has_value()) {
-        to.map_ids = std::move(from.map_ids).value();
+    if (from.creation_map_ids.has_value()) {
+        to.map_ids = std::move(from.creation_map_ids).value();
     }
     // ENDWEAVE: 1001 has no bit for the scale alone, so a scale sent without any of the three groups is lost.
     to.scale = from.scale.value_or(0);

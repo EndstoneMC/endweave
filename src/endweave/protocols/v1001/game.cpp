@@ -72,7 +72,7 @@ bp::LevelSettings_<2168> Transformer<bp::LevelSettings_<1001>, bp::LevelSettings
     // under experiments. Nothing about the values moved.
     to.rule_data.rules = ew::transform(std::move(from.game_rules));
     to.experiments.toggles = ew::transform(std::move(from.experiments));
-    to.experiments.experiments_ever_toggled = from.experiments_previously_toggled;
+    to.experiments.experiments_ever_toggled = from.experiments_ever_toggled;
     to.bonus_chest_enabled = from.bonus_chest_enabled;
     to.start_with_map_enabled = from.start_with_map_enabled;
     to.default_permissions = from.default_permissions;
@@ -104,8 +104,8 @@ bp::ServerBlockProperty_<2168> Transformer<bp::BlockEntry, bp::ServerBlockProper
     bp::BlockEntry &&from)
 {
     bp::ServerBlockProperty_<2168> to;
-    to.block_name = std::move(from.name);
-    to.block_definition = std::move(from.properties);
+    to.name = std::move(from.name);
+    to.tag = std::move(from.properties);
     return to;
 }
 

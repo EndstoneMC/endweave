@@ -33,7 +33,7 @@ bp::GatheringsConfigurationJoinInfo_<1001> Transformer<
     to.experience_world_name = std::move(from.experience_world_name).value_or(std::string{});
     to.creator_id = std::move(from.creator_id);
     to.target_id = from.target_id.value_or(bp::UUID{});
-    to.scenario_id = std::move(from.scenario_id).value_or(std::string{});
+    to.scenario_id = std::move(from.mpsas_scenario_id).value_or(std::string{});
     to.server_id = std::move(from.server_id).value_or(std::string{});
     return to;
 }
@@ -43,8 +43,8 @@ bp::ServerConfigurationJoinInfo_<1001> Transformer<
     bp::ServerConfigurationJoinInfo_<1001>>::transform(bp::ServerConfigurationJoinInfo_<2168> &&from)
 {
     bp::ServerConfigurationJoinInfo_<1001> to;
-    to.gatherings_configuration_join_info = ew::transform(std::move(from.gatherings_configuration_join_info));
-    to.client_store_entrypoint_configuration = std::move(from.client_store_entrypoint_configuration);
+    to.gatherings_configuration = ew::transform(std::move(from.gatherings_configuration));
+    to.client_store_entry_point_configuration = std::move(from.client_store_entry_point_configuration);
     to.presence_configuration = ew::transform(std::move(from.presence_configuration));
     return to;
 }

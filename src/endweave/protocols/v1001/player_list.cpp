@@ -20,7 +20,7 @@ bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>, bp::PlayerL
             bp::PlayerListPacketPayload_<2168>::AddEntry add;
             add.action = bp::PlayerListPacketType::ADD;
             add.uuid = entry.uuid;
-            add.actor_unique_id = entry.id;
+            add.id = entry.id;
             add.name = std::move(entry.name);
             add.xuid = std::move(entry.xuid);
             add.platform_online_id = std::move(entry.platform_online_id);

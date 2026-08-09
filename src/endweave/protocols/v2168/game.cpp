@@ -72,7 +72,7 @@ bp::LevelSettings_<1001> Transformer<bp::LevelSettings_<2168>, bp::LevelSettings
     // wrappers. Nothing about the values moved.
     to.game_rules = ew::transform(std::move(from.rule_data.rules));
     to.experiments = ew::transform(std::move(from.experiments.toggles));
-    to.experiments_previously_toggled = from.experiments.experiments_ever_toggled;
+    to.experiments_ever_toggled = from.experiments.experiments_ever_toggled;
     to.bonus_chest_enabled = from.bonus_chest_enabled;
     to.start_with_map_enabled = from.start_with_map_enabled;
     to.default_permissions = from.default_permissions;
@@ -104,8 +104,8 @@ bp::BlockEntry Transformer<bp::ServerBlockProperty_<2168>, bp::BlockEntry>::tran
     bp::ServerBlockProperty_<2168> &&from)
 {
     bp::BlockEntry to;
-    to.name = std::move(from.block_name);
-    to.properties = std::move(from.block_definition);
+    to.name = std::move(from.name);
+    to.properties = std::move(from.tag);
     return to;
 }
 
@@ -141,7 +141,7 @@ bp::StartGamePacket_<1001> Transformer<bp::StartGamePacket_<2168>, bp::StartGame
     to.network_permissions = from.network_permissions;
     // ENDWEAVE: 2168 has no is_chat_logging to read; false, because telling a player chat is logged when
     // nothing said so is worse than saying nothing.
-    to.is_chat_logging = false;
+    to.is_logging_chat = false;
     to.server_configuration_join_info = ew::transform(std::move(from.server_configuration_join_info));
     to.server_telemetry_data = std::move(from.server_telemetry_data);
     return to;

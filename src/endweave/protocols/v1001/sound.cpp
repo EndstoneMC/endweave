@@ -27,7 +27,7 @@ bp::ClientboundUpdateSoundDataPacket_<2168> Transformer<
     to.server_sound_handle = from.server_sound_handle;
     // ENDWEAVE: Stop is the only value 1001's SoundDataEvent has, so it is the only one of 2168's seven
     // cases a 1001 packet can select; the other six only ever come the other way.
-    to.sound_event = bp::Stop_<2168>{};
+    to.event = bp::Stop_<2168>{};
     return to;
 }
 

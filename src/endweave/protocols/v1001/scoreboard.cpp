@@ -47,7 +47,7 @@ bp::SetScorePacket_<2168> Transformer<bp::SetScorePacket_<1001>, bp::SetScorePac
             changed.scoreboard_id = entry.scoreboard_id;
             changed.objective_name = std::move(entry.objective_name);
             changed.score_value = entry.score_value;
-            changed.player_unique_id = entry.player_id;
+            changed.player_id = entry.player_id;
             to.score_info.emplace_back(std::move(changed));
             break;
         }
@@ -57,7 +57,7 @@ bp::SetScorePacket_<2168> Transformer<bp::SetScorePacket_<1001>, bp::SetScorePac
             changed.scoreboard_id = entry.scoreboard_id;
             changed.objective_name = std::move(entry.objective_name);
             changed.score_value = entry.score_value;
-            changed.actor_id = entry.entity_id;
+            changed.entity_id = entry.entity_id;
             to.score_info.emplace_back(std::move(changed));
             break;
         }

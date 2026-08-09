@@ -45,7 +45,7 @@ bp::PackedItemUseLegacyInventoryTransaction_<1001> Transformer<bp::PackedItemUse
     transform(bp::PackedItemUseLegacyInventoryTransaction_<2168> &&from)
 {
     bp::PackedItemUseLegacyInventoryTransaction_<1001> to;
-    to.id = from.id.id;
+    to.id = from.id.raw_id;
     // ENDWEAVE: 1001 reads the slots off the id rather than a flag, so a list the id does not gate
     // is one the server would never read back.
     if (from.slots.has_value()) {
