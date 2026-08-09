@@ -1,6 +1,9 @@
 #include "endweave/protocols/v1001/actor.h"
 
+#include "endweave/protocols/v1001/sound.h"
+
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <variant>
 
@@ -32,6 +35,15 @@ bp::DataItemEntry_<2168> Transformer<bp::DataItemEntry_<1001>, bp::DataItemEntry
     to.id = from.id;
     to.payload = upgradePayload<decltype(to.payload)>(
         from.payload, std::make_index_sequence<std::variant_size_v<decltype(from.payload)>>{});
+    // ENDWEAVE: this key holds a LevelSoundEvent, whose Undefined sentinel is renumbered every
+    // version. Left alone, an actor meaning "no heartbeat sound" names a real one at the other
+    // end and plays it every HEARTBEAT_INTERVAL_TICKS.
+    if (to.id == static_cast<std::uint32_t>(bp::ActorDataIDs::HEARTBEAT_SOUND_EVENT)) {
+        if (auto *const sound = std::get_if<bp::DataItemIntPayload_<2168>>(&to.payload)) {
+            sound->value = static_cast<std::int32_t>(
+                ew::transform_to<bp::LevelSoundEvent_<2168>>(static_cast<bp::LevelSoundEvent_<1001>>(sound->value)));
+        }
+    }
     return to;
 }
 

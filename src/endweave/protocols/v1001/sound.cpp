@@ -1,8 +1,16 @@
 #include "endweave/protocols/v1001/sound.h"
 
+#include "endweave/protocol/enum.h"
+
 #include <utility>
 
 namespace endweave {
+
+bp::LevelSoundEvent_<2168> Transformer<bp::LevelSoundEvent_<1001>, bp::LevelSoundEvent_<2168>>::transform(
+    bp::LevelSoundEvent_<1001> &&from)
+{
+    return byName<bp::LevelSoundEvent_<2168>, bp::LevelSoundEvent_<2168>::UNDEFINED>(from);
+}
 
 bp::PlaySoundPacket_<2168> Transformer<bp::PlaySoundPacket_<1001>, bp::PlaySoundPacket_<2168>>::transform(
     bp::PlaySoundPacket_<1001> &&from)

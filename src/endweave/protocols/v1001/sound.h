@@ -8,6 +8,15 @@ namespace bp = bedrock::protocol;
 
 namespace endweave {
 
+// ENDWEAVE: new sounds are appended before the Undefined sentinel, so its number moves every
+// version -- 611 at 1001, 614 at 2168 -- and a number passed through lands on whatever sound
+// took its place. Matching on the generated name instead is exact, and the sentinel comes out
+// as the sentinel.
+template <>
+struct Transformer<bp::LevelSoundEvent_<1001>, bp::LevelSoundEvent_<2168>> {
+    static bp::LevelSoundEvent_<2168> transform(bp::LevelSoundEvent_<1001> &&from);
+};
+
 template <>
 struct Transformer<bp::PlaySoundPacket_<1001>, bp::PlaySoundPacket_<2168>> {
     static bp::PlaySoundPacket_<2168> transform(bp::PlaySoundPacket_<1001> &&from);

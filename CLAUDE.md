@@ -332,6 +332,17 @@ here is about.
   loop or a `has_value()` guard. They take an rvalue and nothing else, so a forgotten `std::move`
   is the compile error the rule above promises rather than a silently copied container. An element with no `Transformer` is a compile error, which is what
   keeps a missing include from passing the value through untranslated.
+- **A renumbered enum is mapped by name, never by a shift.** New enumerators are appended before
+  a trailing sentinel, so the sentinel's number moves every version: `LevelSoundEvent::UNDEFINED`
+  is 601 at 975, 611 at 1001 and 614 at 2168, and 611 is `MOUNT` at 2168. Passing the number
+  through means an actor that meant "no sound" names a real one at the other end and plays it on
+  the interval `HEARTBEAT_INTERVAL_TICKS` sets — the bug that motivated this. `byName` in
+  `protocol/enum.h` matches the generated `names_v` of one era against `enum_cast` of the other and
+  falls back to the destination's own sentinel, so the mapping is derived rather than a
+  hand-maintained shift table, and it survives removals and insertions anywhere rather than only
+  before the sentinel. The table is folded on first use, not at compile time: 600 names against 600
+  names costs seconds a translation unit and a raised `-fconstexpr-steps`, and buys nothing.
+  ViaVersion's `MappingData` is the shift table this replaces; do not reintroduce one.
 - **A projection is written out both ways.** v1001's tagged `ItemStackNetIdVariant` reaches v2168 as
   one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
   `ItemStackLegacyRequestId`), and v2168's transform reads the case back from sign and parity. The
