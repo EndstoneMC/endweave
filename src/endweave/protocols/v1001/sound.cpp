@@ -19,23 +19,6 @@ bp::PlaySoundPacket_<2168> Transformer<bp::PlaySoundPacket_<1001>, bp::PlaySound
     return to;
 }
 
-bp::LevelSoundEventPacket_<2168> Transformer<bp::LevelSoundEventPacket_<1001>, bp::LevelSoundEventPacket_<2168>>::
-    transform(bp::LevelSoundEventPacket_<1001> &&from)
-{
-    bp::LevelSoundEventPacket_<2168> to;
-    // ENDWEAVE: the event is a name at both versions, so 2168's added enumerators and its moved Undefined
-    // sentinel never reach the wire; every 1001 name is still a 2168 name.
-    to.sound_event = std::move(from.sound_event);
-    to.pos = from.pos;
-    to.data = from.data;
-    to.actor_identifier = std::move(from.actor_identifier);
-    to.is_baby = from.is_baby;
-    to.is_global = from.is_global;
-    to.actor = from.actor;
-    to.fire_at_position = from.fire_at_position;
-    return to;
-}
-
 bp::ClientboundUpdateSoundDataPacket_<2168> Transformer<
     bp::ClientboundUpdateSoundDataPacket_<1001>,
     bp::ClientboundUpdateSoundDataPacket_<2168>>::transform(bp::ClientboundUpdateSoundDataPacket_<1001> &&from)

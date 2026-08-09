@@ -13,6 +13,12 @@ namespace endweave {
 template <class From, class To>
 struct Transformer;
 
+template <class From, class To>
+struct WireCompatible : std::false_type {};
+
+template <class From, class To>
+inline constexpr bool wire_equal_v = std::is_same_v<From, To> || WireCompatible<From, To>::value;
+
 namespace detail {
 
 template <class Source, class To>

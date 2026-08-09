@@ -28,6 +28,16 @@ constexpr std::array SUPPORTED_VERSIONS{
  * table to keep in step with SUPPORTED_VERSIONS. */
 constexpr ProtocolVersion SERVER_VERSION = ProtocolVersion::v26_30;
 
+constexpr std::size_t indexOf(ProtocolVersion version)
+{
+    for (std::size_t i = 0; i < SUPPORTED_VERSIONS.size(); ++i) {
+        if (SUPPORTED_VERSIONS[i] == version) {
+            return i;
+        }
+    }
+    return SUPPORTED_VERSIONS.size();
+}
+
 /** @see Velocity ProtocolVersion#getProtocolVersion(int). */
 constexpr ProtocolVersion getProtocolVersion(int protocol_version)
 {
@@ -51,24 +61,15 @@ constexpr bool visit(ProtocolVersion version, F &&visitor)
 
 } // namespace ProtocolVersions
 
-consteval ProtocolVersion next(ProtocolVersion version)
+consteval ProtocolVersion step(ProtocolVersion from, ProtocolVersion to)
 {
-    for (std::size_t i = 0; i + 1 < ProtocolVersions::SUPPORTED_VERSIONS.size(); ++i) {
-        if (ProtocolVersions::SUPPORTED_VERSIONS[i] == version) {
-            return ProtocolVersions::SUPPORTED_VERSIONS[i + 1];
-        }
+    const std::size_t here = ProtocolVersions::indexOf(from);
+    const std::size_t there = ProtocolVersions::indexOf(to);
+    if (here == ProtocolVersions::SUPPORTED_VERSIONS.size() || there == ProtocolVersions::SUPPORTED_VERSIONS.size() ||
+        here == there) {
+        return from;
     }
-    return version;
-}
-
-consteval ProtocolVersion prev(ProtocolVersion version)
-{
-    for (std::size_t i = 1; i < ProtocolVersions::SUPPORTED_VERSIONS.size(); ++i) {
-        if (ProtocolVersions::SUPPORTED_VERSIONS[i] == version) {
-            return ProtocolVersions::SUPPORTED_VERSIONS[i - 1];
-        }
-    }
-    return version;
+    return ProtocolVersions::SUPPORTED_VERSIONS[there > here ? here + 1 : here - 1];
 }
 
 } // namespace endweave

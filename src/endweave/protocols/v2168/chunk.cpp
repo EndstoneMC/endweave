@@ -107,14 +107,4 @@ bp::SubChunkPacket_<1001> Transformer<bp::SubChunkPacket_<2168>, bp::SubChunkPac
     return to;
 }
 
-bp::SubChunkRequestPacket_<1001> Transformer<bp::SubChunkRequestPacket_<2168>, bp::SubChunkRequestPacket_<1001>>::
-    transform(bp::SubChunkRequestPacket_<2168> &&from)
-{
-    bp::SubChunkRequestPacket_<1001> to;
-    to.dimension_type = from.dimension_type;
-    to.sub_chunk_pos_offsets = ew::transform(std::move(from.sub_chunk_pos_offsets));
-    to.center_pos = from.center_pos;
-    return to;
-}
-
 } // namespace endweave

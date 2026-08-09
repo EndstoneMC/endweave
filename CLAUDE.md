@@ -12,24 +12,29 @@ translation semantics.
 
 ## Current state
 
-The platform binding is in place: the plugin main, the packet listener, and the address-keyed
-connection table. On top of it sit the `Transformer` specializations, which convert a decoded
-struct of one era into the next era's. `InventoryContentPacket` and `StartGamePacket` translate
-both ways between 1001 and 2168, along with every type they reach.
+The whole path is wired. The listener reads the client's protocol off
+`RequestNetworkSettingsPacket`, `UserConnection::setClientVersion` resolves both handler tables
+once, and `PacketListener::translate` queries them per packet. `connection.h` includes `handler.h`,
+so every translation unit that reaches the listener instantiates the tables — the missing-transform
+build gate is live, and a green `cmake --build` means every packet that needs work between 1001 and
+2168 has it.
 
 `protocol/handler.h` is the dispatch layer. It resolves a (from, to) version pair into a
 `PacketHandlers` table and answers `get(id)` with the function that translates that packet, or null
 where nothing has to happen.
 
-Nothing includes it, so it is absent from the build. That matters: six packets reshape between 1001
-and 2168 with no `Transformer` — ids 30, 32, 123, 315, 347 and 348 — and instantiating the tables
-does not compile until they are written. `cmake --build` passes today only because no translation
-unit reaches `handler.h`.
+Four things decide what a packet costs, and each has its own header so the mechanism and the
+per-packet claims stay apart:
 
-The remaining work is the wiring: read the client's version off `RequestNetworkSettingsPacket`,
-resolve both tables onto `UserConnection`, and call them from the listener. `UserConnection` still
-carries the type-keyed store that stateful handlers key into, and the listener still keeps the
-connection table warm and evicts on disconnect and quit, so the table is live for it to hang off.
+| header | trait | says |
+| --- | --- | --- |
+| `protocol/transform.h` | `Transformer<FromType, ToType>` | how a shape change is carried across one hop |
+| `protocol/transform.h` | `WireCompatible<FromType, ToType>` | two eras' snapshots encode the same bytes, so relay them untouched |
+| `protocol/rewrite.h` | `Rewriter<Version, Id>` | this packet needs fixing up at this version whatever else happens |
+| `protocol/cancel.h` | `Cancel<From, To, Id>` | drop this packet on this edge rather than translate it |
+
+`UserConnection` still carries the type-keyed store that stateful handlers key into, and the
+listener keeps the connection table warm and evicts on disconnect and quit.
 
 ## What endweave takes from ViaVersion, and what it does not
 
@@ -128,19 +133,31 @@ compile.
   a reshaped packet with no transform stops the build. Do not add an escape hatch that lets an
   unported packet fall through to passthrough — the silence is the failure this design exists to
   prevent. The build failing *is* the answer to "can we ship yet".
-- **Type identity is the wire diff.** `shouldHandle` is `has_packet` at both ends and
-  `!is_same_v<packet_of<From, Id>, packet_of<To, Id>>`. bedrock-protocol emits one type per distinct
-  shape and propagates versioning transitively — `StartGamePacket` is versioned at 1001 only because
-  `LevelSettings` moved underneath it — so the same type means the same bytes, and an unchanged
-  packet keeps its payload rather than round-tripping through a codec for nothing.
+- **Type identity is the wire diff, and two traits correct it where it lies.** `shouldHandle` is
+  the packet modelled at every version on the path, not cancelled, and then either a `Rewriter`
+  somewhere on that path or `!wire_equal_v<packet_of<From, Id>, packet_of<To, Id>>`.
+  bedrock-protocol emits one type per distinct shape and propagates versioning transitively —
+  `StartGamePacket` is versioned at 1001 only because `LevelSettings` moved underneath it — so the
+  same type means the same bytes, and an unchanged packet keeps its payload rather than
+  round-tripping through a codec for nothing. `wire_equal_v` widens that to `WireCompatible`, and a
+  `Rewriter` overrides it in the other direction.
 - **A packet the destination does not have is cancelled, never forwarded.** `shouldCancel` is
-  `has_packet<From, Id> && !has_packet<To, Id>`, and that one predicate covers every case: a newer
+  `has_packet<From, Id>` and then either a gap anywhere on the path or an explicit `Cancel`; the
+  schema half of it covers every case: a newer
   client sending something an older server never knew, a newer server sending something an older
   client cannot parse, and either direction across a version that removed a packet. `isCancelled(id)`
   is a second `constexpr` table beside the handlers, queried before them, so a cancelled packet costs
   one indexed load and builds no buffer either. Cancelling and handling are disjoint by
-  construction, since `shouldHandle` demands the packet at both ends. Forwarding an id the peer does
+  construction, since `shouldHandle` gives way to `shouldCancel`. Forwarding an id the peer does
   not know is worse than dropping it — it desynchronises or disconnects.
+- **An explicit `Cancel` is the one sanctioned way not to port a packet.** `Cancel<From, To, Id>`
+  defaults to false and a specialization drops that id on that edge: no handler, no `Transformer`
+  demanded, no decode and no re-encode. It is checked on the endpoint pair and on every hop of the
+  path, so `Cancel<v26_30, v26_40, Id>` keeps holding once a chain runs through that boundary, and a
+  partial specialization that leaves `From` and `To` free cancels the id everywhere. This is not the
+  passthrough escape hatch the section above forbids — the packet is dropped, loudly and on purpose,
+  rather than handed to a peer as bytes it cannot read. Reach for it when dropping is the honest
+  answer, never to get a build green.
 - **Cancellation reaches only as far as the schema does.** `has_packet` means "bedrock-protocol
   models this", not "this exists on the wire", so an id modelled at neither version reads false on
   both sides and still passes through: nothing in the schema says whether the destination has it.
@@ -163,22 +180,90 @@ compile.
 - **The runtime-to-compile-time crossing happens twice, and only twice.**
   `ProtocolVersions::visit` folds a runtime `ProtocolVersion` into a template argument; the id is a
   plain array index. Everything below is monomorphic.
-- **Two versions is one hop.** The `Transformer<From, To>` key carries the direction, so `handle`
-  names the destination outright and nothing branches on `From < To`. A chained walk across
-  intermediate nodes is the ViaVersion shape and comes back when a third version does; `next` and
-  `prev` are parked in `version.h` for it and have no callers today.
+- **One handler per endpoint pair, a chain of transforms inside it.** `handle<From, To, Id>` is
+  generated for the two ends the connection actually has, and `chain` walks the versions between
+  them one hop at a time: decode once at `From`, hand the struct through
+  `Transformer<packet_of<Cur, Id>, packet_of<next, Id>>` for each hop that reshapes, encode once at
+  `To`. There is no intermediate serialization and no per-pair handler table. `Transformer` stays
+  keyed on adjacent eras, so adding a version costs its own neighbours' transforms and nothing
+  quadratic. `step(from, to)` is the whole of the routing: `SUPPORTED_VERSIONS` is a sorted line, so
+  a pair of endpoints names its own route and there is no path search — this is where ViaVersion
+  would reach for a protocol graph.
+- **A client already on the server's protocol is left alone.** `shouldHandle` is false whenever
+  `From == To`, so a same-version connection resolves to empty tables and endweave is transparent to
+  it. That guard is load-bearing now that a `Rewriter` can force handling on its own: without it,
+  `StartGamePacket` would be decoded and its checksum zeroed for players who need no translation.
+- **A hop whose type did not change is skipped, not transformed.** `reshape` returns the struct
+  untouched when `packet_of<Cur, Id>` and `packet_of<next, Id>` are one type, so an unchanged packet
+  costs nothing mid-chain and needs no `Transformer<T, T>`. Do not add one: it would collide with
+  the container partial specializations in `transform.h`.
 - **`ProtocolVersion::UNKNOWN` is the sentinel, not `std::optional`.** It matches Velocity's
   `getProtocolVersion(int)`, and it composes: an unknown version matches no fold arm, so the table
   comes back empty and every `get(id)` is null without a presence check at any call site.
 - **Ids 200-299 are skipped** as the vendor extension range, off `MinecraftPacketIds`' own
   `TITLE_SPECIFIC_PACKETS_START` / `_END` sentinels rather than literals.
 
-One known hole: `is_same_v` over-approximates. The compiler can materialise a snapshot whose
-serializer is byte-identical to the previous one, giving two C++ types that encode the same wire —
-`LevelSoundEventPacket` (123) is the live case, since it stopped carrying the `LevelSoundEvent` enum
-at 1001 and a name-coded string cannot be perturbed by enumerators added at 2168. That belongs in
-bedrock-protocol, which should alias rather than re-emit an identical snapshot, not in a
-`wire_equal_v` workaround here.
+## `WireCompatible`: the fast path
+
+`is_same_v` over-approximates. bedrock-protocol emits a snapshot per version range rather than per
+wire shape, so a change that leaves the encoding alone still arrives as two C++ types, and the
+handler layer would decode, transform and re-encode a packet into the bytes it already had.
+`WireCompatible<FromType, ToType>` says those bytes are the same, and `wire_equal_v` — `is_same_v`
+or a declaration — is what `shouldHandle` actually asks. Declared, the packet is forwarded
+untouched: no reader, no struct, no `Transformer`, nothing in either table.
+
+- **Directional, and that is not pedantry.** `WireCompatible<A, B>` means "bytes written for an `A`
+  are a valid `B` meaning the same thing". Widening is common and one-way:
+  `PlayerActionPacket` (36) relays 1001 → 2168 untouched, but 2168 → 1001 has to rewrite
+  `INTERNAL_UPDATE`, which is 1001's `COUNT` sentinel, so only the upward pair is declared and the
+  downward one keeps its `Transformer`. A genuinely symmetric pair writes both, one in each era's
+  file.
+- **Declared beside the `Transformer` it replaces,** in `protocols/<source version>/<module>.h`, so
+  the file a reader opens looking for the missing transform tells them why there is none. The
+  evidence goes with it as a comment, because nothing derives this claim and a wrong one corrupts
+  traffic silently.
+- **Only ever from the two generated serializers.** Read `Serializer<v1001::Foo>::serialize` against
+  `Serializer<v2168::Foo>::serialize` in the generated `.cpp`, transitively through every nested
+  type, and check the deserializers too. Never declare one to silence a missing `Transformer`. The
+  live cases are `LevelSoundEventPacket` (123), whose two snapshots are field-for-field identical,
+  `SubChunkRequestPacket` (175), and `PlayerActionPacket` (36) upward. `SetLastHurtByPacket` (96) is
+  the near miss that shows why the reading has to be semantic: the two serializers are
+  byte-identical, but `ActorType::SULFUR_CUBE` moved from 2969 to 921, so the same bytes name a
+  different actor and it stays a `Transformer`.
+- **A declaration only reaches the endpoints.** `handle` decodes at `From` and encodes at `To`, so a
+  wire-compatible pair that ends up mid-chain has to be held as an object and needs its
+  `Transformer` back. `reshape` static-asserts exactly that, by name. Adding a third version will
+  fire it for 123 and 175: either restore those transforms, or teach `handle` to decode and encode
+  at the far end of a leading and trailing run of free hops, which is roughly twenty lines and makes
+  the declarations compose through chains. That is a deliberate omission, not an oversight — it buys
+  nothing while there are two versions.
+- **The real fix is upstream.** bedrock-protocol should alias rather than re-emit an identical
+  snapshot; every pair that stops being two types stops needing a declaration here.
+
+## `Rewriter`: work that the wire diff cannot see
+
+Some packets need attention at a version whether or not their shape moved — a checksum the other
+side cannot reproduce, an enumerator with no counterpart, a field that means something else. That is
+a semantic change, not a shape change, and it is not `Transformer`'s job.
+
+- **Keyed on one version and one id, never a pair.** `Rewriter<V, Id>::rewrite(packet_of<V, Id> &)`
+  normalizes the packet *at* `V`. It takes and returns the one struct, so there is no direction in
+  the key and nothing to write twice.
+- **It runs wherever the chain holds the packet at that version,** which answers "before or after
+  the transform" without a flag: attach it to the source version and it runs first, to the
+  destination version and it runs last, to a version in the middle and it runs there.
+- **It forces handling.** A `Rewriter` anywhere on the path makes `shouldHandle` true even when the
+  two ends are one type, so the packet is decoded, rewritten and re-encoded rather than relayed.
+  This is the one thing that outranks the wire diff.
+- **Version-agnostic is a partial specialization,** not a second mechanism. `StartGamePacket`'s
+  `server_block_type_registry_checksum` is taken over the server's block registry, which no
+  translation reproduces, and zero means "do not check" at every version — so it is one
+  `Rewriter<V, START_GAME>` over all `V`, in `protocols/rewriters.h`. Version-agnostic rewriters
+  live there because they belong to no era's file; a rewriter for a single version goes in that
+  version's module header like everything else.
+- **`WireCompatible` and a `Rewriter` on the same hop contradict each other.** A rewrite has to hold
+  the destination struct, which a wire-compatible pair never builds. `reshape` says so by name.
+  Write the `Transformer`.
 
 ## Transformers
 
@@ -197,7 +282,8 @@ here is about.
   source reaching several destinations is the ordinary case here, not a special one. A type that
   did not change between two eras is one C++ type in both namespaces and needs no specialization.
 - **One file per source version,** `protocols/<version>/`, holding every specialization whose source
-  type belongs to that version. v1001 and v2168 are currently the outermost eras modelled, so v1001
+  type belongs to that version — `WireCompatible` and single-version `Rewriter` specializations
+  included, so one file answers everything about that era's packets. v1001 and v2168 are currently the outermost eras modelled, so v1001
   holds the pairs leaving 1001 and v2168 the pairs leaving 2168; a missing pair is a "no
   `Transformer<From, To>`" error rather than a wrong conversion.
 - **`Transformable<From, To>` is the availability test,** and it asks whether a call to
@@ -270,6 +356,9 @@ here is about.
 | `connection/manager.h` `ConnectionManager` | `ConnectionManager` + `ConnectionManagerImpl` |
 | `plugin.{h,cpp}`, `listener.{h,cpp}` | platform module (plugin main + netty decode/encode handlers) |
 | `protocol/transform.h` `Transformer` | `ValueTransformer` |
+| `protocol/transform.h` `WireCompatible` | none — the schema-derived design has no upstream counterpart |
+| `protocol/rewrite.h` `Rewriter` | none by name; the job is ViaVersion's per-packet `PacketHandler` lambda |
+| `protocol/cancel.h` `Cancel` | `Protocol#cancelServerbound`, `Protocol#cancelClientbound` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |
 | `protocol/handler.h` `PacketHandlers` | `PacketHandlers` by name, Velocity `ProtocolRegistry` by behaviour |
 | `protocol/handler.h` `getPacketHandlers` | Velocity `StateRegistry.PacketRegistry#getProtocolRegistry` |
@@ -292,9 +381,9 @@ There is no test suite. `CMakeLists.txt` still guards `tests/` behind `ENDWEAVE_
 nothing defines that option and `tests/CMakeLists.txt` is empty: bedrock-protocol's own goldens
 cover the codec, and a transform is exercised by the packets that run through it.
 
-A green build is not yet evidence that the handlers compile, because no source file includes
-`handler.h`. The gate only fires once a translation unit reaches it — which the listener will do
-when it starts calling `getPacketHandlers`, and which a one-line `#include` would do sooner.
+A green build is the gate. `listener.cpp` reaches `handler.h` through `connection.h`, so building
+instantiates every handler table and a packet that needs work without a `Transformer` stops the
+build.
 
 ## Code Style
 

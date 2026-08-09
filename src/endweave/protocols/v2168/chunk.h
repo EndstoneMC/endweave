@@ -35,8 +35,6 @@ struct Transformer<bp::SubChunkPacket_<2168>, bp::SubChunkPacket_<1001>> {
 };
 
 template <>
-struct Transformer<bp::SubChunkRequestPacket_<2168>, bp::SubChunkRequestPacket_<1001>> {
-    static bp::SubChunkRequestPacket_<1001> transform(bp::SubChunkRequestPacket_<2168> &&from);
-};
+struct WireCompatible<bp::SubChunkRequestPacket_<2168>, bp::SubChunkRequestPacket_<1001>> : std::true_type {};
 
 } // namespace endweave

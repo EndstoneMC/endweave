@@ -14,10 +14,10 @@ struct Transformer<bp::PlayerBlockActionData_<1001>, bp::PlayerBlockActionData_<
     static bp::PlayerBlockActionData_<2168> transform(bp::PlayerBlockActionData_<1001> &&from);
 };
 
+// ENDWEAVE: 2168 only appends INTERNAL_UPDATE, so every action 1001 can name keeps its value. The
+// other direction has to rewrite that one and stays a Transformer.
 template <>
-struct Transformer<bp::PlayerActionPacket_<1001>, bp::PlayerActionPacket_<2168>> {
-    static bp::PlayerActionPacket_<2168> transform(bp::PlayerActionPacket_<1001> &&from);
-};
+struct WireCompatible<bp::PlayerActionPacket_<1001>, bp::PlayerActionPacket_<2168>> : std::true_type {};
 
 template <>
 struct Transformer<bp::PackedItemUseLegacyInventoryTransaction_<1001>,

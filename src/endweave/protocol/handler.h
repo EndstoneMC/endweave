@@ -1,7 +1,10 @@
 #pragma once
 
+#include "endweave/protocol/cancel.h"
+#include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/transform.h"
 #include "endweave/protocol/version.h"
+#include "endweave/protocols/rewriters.h"
 #include "endweave/protocols/v1001/transform.h"
 #include "endweave/protocols/v2168/transform.h"
 
@@ -10,6 +13,7 @@
 #include <bedrock/protocol.hpp>
 #include <bedrock/serializer.hpp>
 #include <bedrock/stream.hpp>
+#include <concepts>
 #include <expected>
 #include <span>
 #include <string>
@@ -27,6 +31,11 @@ using packet_of = bp::packet_of_t<static_cast<int>(V), Id>;
 template <ProtocolVersion V, int Id>
 inline constexpr bool has_packet = bp::has_packet_v<static_cast<int>(V), Id>;
 
+template <ProtocolVersion V, int Id>
+concept Rewritable = requires(packet_of<V, Id> &packet) {
+    { Rewriter<V, Id>::rewrite(packet) } -> std::same_as<void>;
+};
+
 namespace detail {
 
 inline constexpr int kSkipBegin = static_cast<int>(bp::MinecraftPacketIds::TITLE_SPECIFIC_PACKETS_START);
@@ -36,13 +45,27 @@ template <ProtocolVersion V>
 inline constexpr int kPacketIdCount = static_cast<int>(bp::MinecraftPacketIds_<static_cast<int>(V)>::END_ID);
 
 template <ProtocolVersion From, ProtocolVersion To, int Id>
-consteval bool shouldHandle()
+consteval bool pathHasPacket()
 {
-    if constexpr (Id >= kSkipBegin && Id <= kSkipEnd) {
+    if constexpr (!has_packet<From, Id>) {
+        return false;
+    }
+    else if constexpr (From == To) {
+        return true;
+    }
+    else {
+        return pathHasPacket<step(From, To), To, Id>();
+    }
+}
+
+template <ProtocolVersion From, ProtocolVersion To, int Id>
+consteval bool cancelledOnPath()
+{
+    if constexpr (From == To) {
         return false;
     }
     else {
-        return has_packet<From, Id> && has_packet<To, Id> && !std::is_same_v<packet_of<From, Id>, packet_of<To, Id>>;
+        return cancel_v<From, step(From, To), Id> || cancelledOnPath<step(From, To), To, Id>();
     }
 }
 
@@ -52,8 +75,68 @@ consteval bool shouldCancel()
     if constexpr (Id >= kSkipBegin && Id <= kSkipEnd) {
         return false;
     }
+    else if constexpr (!has_packet<From, Id>) {
+        return false;
+    }
     else {
-        return has_packet<From, Id> && !has_packet<To, Id>;
+        return !pathHasPacket<From, To, Id>() || cancel_v<From, To, Id> || cancelledOnPath<From, To, Id>();
+    }
+}
+
+template <ProtocolVersion From, ProtocolVersion To, int Id>
+consteval bool rewritesOnPath()
+{
+    if constexpr (Rewritable<From, Id>) {
+        return true;
+    }
+    else if constexpr (From == To) {
+        return false;
+    }
+    else {
+        return rewritesOnPath<step(From, To), To, Id>();
+    }
+}
+
+template <ProtocolVersion From, ProtocolVersion To, int Id>
+consteval bool shouldHandle()
+{
+    if constexpr (From == To || (Id >= kSkipBegin && Id <= kSkipEnd)) {
+        return false;
+    }
+    else if constexpr (!pathHasPacket<From, To, Id>() || shouldCancel<From, To, Id>()) {
+        return false;
+    }
+    else {
+        return rewritesOnPath<From, To, Id>() || !wire_equal_v<packet_of<From, Id>, packet_of<To, Id>>;
+    }
+}
+
+template <ProtocolVersion From, ProtocolVersion To, int Id>
+packet_of<To, Id> reshape(packet_of<From, Id> &&from)
+{
+    if constexpr (std::is_same_v<packet_of<From, Id>, packet_of<To, Id>>) {
+        return std::move(from);
+    }
+    else {
+        static_assert(!WireCompatible<packet_of<From, Id>, packet_of<To, Id>>::value,
+                      "endweave: this hop is declared wire-compatible, yet the chain has to hold the packet as an "
+                      "object across it -- a Rewriter on the path, or a hop further along that reshapes, forces "
+                      "that. Write the Transformer for this pair and drop the WireCompatible.");
+        return endweave::transform_to<packet_of<To, Id>>(std::move(from));
+    }
+}
+
+template <ProtocolVersion Cur, ProtocolVersion To, int Id>
+packet_of<To, Id> chain(packet_of<Cur, Id> &&from)
+{
+    if constexpr (Rewritable<Cur, Id>) {
+        Rewriter<Cur, Id>::rewrite(from);
+    }
+    if constexpr (Cur == To) {
+        return std::move(from);
+    }
+    else {
+        return chain<step(Cur, To), To, Id>(reshape<Cur, step(Cur, To), Id>(std::move(from)));
     }
 }
 
@@ -73,7 +156,7 @@ std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWrit
     std::string translated;
     bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
-    bp::serialize(writer, endweave::transform_to<packet_of<To, Id>>(std::move(packet)));
+    bp::serialize(writer, chain<From, To, Id>(std::move(packet)));
 
     // The destination has to be able to read back what was just written for it. Serialiser
     // and deserialiser are generated apart, so nothing else holds the pair to each other.

@@ -18,23 +18,6 @@ bp::PlaySoundPacket_<1001> Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySound
     return to;
 }
 
-bp::LevelSoundEventPacket_<1001> Transformer<bp::LevelSoundEventPacket_<2168>, bp::LevelSoundEventPacket_<1001>>::
-    transform(bp::LevelSoundEventPacket_<2168> &&from)
-{
-    bp::LevelSoundEventPacket_<1001> to;
-    // ENDWEAVE: TODO the name passes through, but 2168's Mount, Dismount and StrawBedBreakLeave resolve to
-    // nothing at 1001; substituting an old sound would need a hand-kept table and still be a guess.
-    to.sound_event = std::move(from.sound_event);
-    to.pos = from.pos;
-    to.data = from.data;
-    to.actor_identifier = std::move(from.actor_identifier);
-    to.is_baby = from.is_baby;
-    to.is_global = from.is_global;
-    to.actor = from.actor;
-    to.fire_at_position = from.fire_at_position;
-    return to;
-}
-
 bp::ClientboundUpdateSoundDataPacket_<1001> Transformer<
     bp::ClientboundUpdateSoundDataPacket_<2168>,
     bp::ClientboundUpdateSoundDataPacket_<1001>>::transform(bp::ClientboundUpdateSoundDataPacket_<2168> &&from)

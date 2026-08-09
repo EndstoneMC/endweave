@@ -41,9 +41,10 @@ struct Transformer<bp::SubChunkPacket_<1001>, bp::SubChunkPacket_<2168>> {
     static bp::SubChunkPacket_<2168> transform(bp::SubChunkPacket_<1001> &&from);
 };
 
+// ENDWEAVE: only the offsets' enclosing packet changed shape; SubChunkPosOffset is three int8_t at
+// both versions and center_pos is 1001's SubChunkPos in both, so the request is already the bytes
+// the other side expects.
 template <>
-struct Transformer<bp::SubChunkRequestPacket_<1001>, bp::SubChunkRequestPacket_<2168>> {
-    static bp::SubChunkRequestPacket_<2168> transform(bp::SubChunkRequestPacket_<1001> &&from);
-};
+struct WireCompatible<bp::SubChunkRequestPacket_<1001>, bp::SubChunkRequestPacket_<2168>> : std::true_type {};
 
 } // namespace endweave

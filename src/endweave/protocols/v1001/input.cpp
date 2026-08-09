@@ -20,19 +20,6 @@ bp::PlayerBlockActionData_<2168> Transformer<bp::PlayerBlockActionData_<1001>, b
     return to;
 }
 
-bp::PlayerActionPacket_<2168> Transformer<bp::PlayerActionPacket_<1001>, bp::PlayerActionPacket_<2168>>::transform(
-    bp::PlayerActionPacket_<1001> &&from)
-{
-    bp::PlayerActionPacket_<2168> to;
-    to.runtime_id = from.runtime_id;
-    // ENDWEAVE: 2168 only appends INTERNAL_UPDATE, so every action 1001 can name keeps its value.
-    to.action = static_cast<bp::PlayerActionType_<2168>>(from.action);
-    to.pos = from.pos;
-    to.result_pos = from.result_pos;
-    to.face = from.face;
-    return to;
-}
-
 bp::PackedItemUseLegacyInventoryTransaction_<2168> Transformer<bp::PackedItemUseLegacyInventoryTransaction_<1001>,
                                                                bp::PackedItemUseLegacyInventoryTransaction_<2168>>::
     transform(bp::PackedItemUseLegacyInventoryTransaction_<1001> &&from)
