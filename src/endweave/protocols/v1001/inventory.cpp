@@ -139,11 +139,7 @@ bp::legacy::ItemUseInventoryTransaction_<1001> Transformer<
     bp::legacy::ItemUseInventoryTransaction_<1001>>::transform(bp::ItemUseInventoryTransaction_<1001> &&from)
 {
     bp::legacy::ItemUseInventoryTransaction_<1001> to;
-    // ENDWEAVE: the pre-cereal form has no marker to carry an absent list, and an empty one is what
-    // BDS builds for a transaction that changed no slot.
-    if (from.transaction.actions.has_value()) {
-        to.actions = std::move(from.transaction.actions).value();
-    }
+    to.actions = std::move(from.transaction.actions);
     to.action_type = from.action_type;
     to.trigger_type = from.trigger_type;
     to.pos = from.pos;
