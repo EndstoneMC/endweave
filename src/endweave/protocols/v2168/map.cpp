@@ -2,6 +2,7 @@
 
 #include "protocol/map.h"
 
+#include <bedrock/enum.hpp>
 #include <cstdint>
 #include <utility>
 
@@ -72,6 +73,43 @@ bp::ClientboundMapItemDataPacket_<1001> Transformer<
     if (from.map_pixels.has_value()) {
         to.map_pixels = std::move(from.map_pixels).value();
     }
+    return to;
+}
+
+bp::MapDecoration_<2181> Transformer<bp::MapDecoration_<2168>, bp::MapDecoration_<2181>>::transform(
+    bp::MapDecoration_<2168> &&from)
+{
+    using Type = bp::MapDecoration_<2181>::Type;
+    bp::MapDecoration_<2181> to;
+    // ENDWEAVE: 2181 appended five structure markers ahead of Count, so Count itself is renumbered and
+    // passing the byte through would turn it into AbandonedCamp.
+    to.image = bp::enum_cast<Type>(bp::enum_name(from.image)).value_or(Type::NO_DRAW);
+    to.rotation = from.rotation;
+    to.x = from.x;
+    to.y = from.y;
+    to.label = std::move(from.label);
+    to.color = from.color;
+    return to;
+}
+
+bp::ClientboundMapItemDataPacket_<2181> Transformer<
+    bp::ClientboundMapItemDataPacket_<2168>,
+    bp::ClientboundMapItemDataPacket_<2181>>::transform(bp::ClientboundMapItemDataPacket_<2168> &&from)
+{
+    bp::ClientboundMapItemDataPacket_<2181> to;
+    to.map_id = from.map_id;
+    to.dimension = from.dimension;
+    to.locked = from.locked;
+    to.map_origin = from.map_origin;
+    to.creation_map_ids = std::move(from.creation_map_ids);
+    to.scale = from.scale;
+    to.unique_ids = std::move(from.unique_ids);
+    to.decorations = ew::transform(std::move(from.decorations));
+    to.width = from.width;
+    to.height = from.height;
+    to.start_x = from.start_x;
+    to.start_y = from.start_y;
+    to.map_pixels = std::move(from.map_pixels);
     return to;
 }
 

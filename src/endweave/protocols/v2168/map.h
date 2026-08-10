@@ -23,4 +23,14 @@ struct Transformer<bp::ClientboundMapItemDataPacket_<2168>, bp::ClientboundMapIt
     static bp::ClientboundMapItemDataPacket_<1001> transform(bp::ClientboundMapItemDataPacket_<2168> &&from);
 };
 
+template <>
+struct Transformer<bp::MapDecoration_<2168>, bp::MapDecoration_<2181>> {
+    static bp::MapDecoration_<2181> transform(bp::MapDecoration_<2168> &&from);
+};
+
+template <>
+struct Transformer<bp::ClientboundMapItemDataPacket_<2168>, bp::ClientboundMapItemDataPacket_<2181>> {
+    static bp::ClientboundMapItemDataPacket_<2181> transform(bp::ClientboundMapItemDataPacket_<2168> &&from);
+};
+
 } // namespace endweave

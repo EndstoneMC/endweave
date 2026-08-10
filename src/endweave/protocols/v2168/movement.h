@@ -36,4 +36,14 @@ struct Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<10
     static bp::MoveActorDeltaPacket_<1001> transform(bp::MoveActorDeltaPacket_<2168> &&from);
 };
 
+template <>
+struct Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2181>> {
+    static bp::MoveActorDeltaData_<2181> transform(bp::MoveActorDeltaData_<2168> &&from);
+};
+
+template <>
+struct Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<2181>> {
+    static bp::MoveActorDeltaPacket_<2181> transform(bp::MoveActorDeltaPacket_<2168> &&from);
+};
+
 } // namespace endweave

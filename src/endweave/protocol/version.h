@@ -12,6 +12,7 @@ enum class ProtocolVersion : int {
     v26_20 = 975,
     v26_30 = 1001,
     v26_40 = 2168,
+    v26_50 = 2181,
 };
 
 namespace ProtocolVersions {

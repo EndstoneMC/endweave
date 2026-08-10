@@ -7,6 +7,7 @@
 #include "endweave/protocols/rewriters.h"
 #include "endweave/protocols/v1001/transform.h"
 #include "endweave/protocols/v2168/transform.h"
+#include "endweave/protocols/v2181/transform.h"
 
 #include <array>
 #include <bedrock/packet.hpp>
