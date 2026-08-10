@@ -1,7 +1,6 @@
 #include "endweave/protocols/v1001/sound.h"
 
-#include "endweave/protocol/enum.h"
-
+#include <bedrock/enum.hpp>
 #include <utility>
 
 namespace endweave {
@@ -9,7 +8,8 @@ namespace endweave {
 bp::LevelSoundEvent_<2168> Transformer<bp::LevelSoundEvent_<1001>, bp::LevelSoundEvent_<2168>>::transform(
     bp::LevelSoundEvent_<1001> &&from)
 {
-    return byName<bp::LevelSoundEvent_<2168>, bp::LevelSoundEvent_<2168>::UNDEFINED>(from);
+    using To = bp::LevelSoundEvent_<2168>;
+    return bp::enum_cast<To>(bp::enum_name(from)).value_or(To::UNDEFINED);
 }
 
 bp::PlaySoundPacket_<2168> Transformer<bp::PlaySoundPacket_<1001>, bp::PlaySoundPacket_<2168>>::transform(
