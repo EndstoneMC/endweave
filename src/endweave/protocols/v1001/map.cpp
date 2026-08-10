@@ -28,7 +28,7 @@ bp::MapDecoration_<2168> Transformer<bp::MapDecoration_<1001>, bp::MapDecoration
     bp::MapDecoration_<1001> &&from)
 {
     bp::MapDecoration_<2168> to;
-    to.image = from.image;
+    to.image = static_cast<bp::MapDecoration_<2168>::Type>(from.image);
     to.rotation = from.rotation;
     to.x = from.x;
     to.y = from.y;

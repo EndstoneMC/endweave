@@ -1,7 +1,10 @@
 #include "endweave/protocols/v2168/map.h"
 
+#include "protocol/map.h"
+
 #include <cstdint>
 #include <utility>
+
 
 namespace ew = endweave;
 
@@ -23,7 +26,7 @@ bp::MapDecoration_<1001> Transformer<bp::MapDecoration_<2168>, bp::MapDecoration
     bp::MapDecoration_<2168> &&from)
 {
     bp::MapDecoration_<1001> to;
-    to.image = from.image;
+    to.image = static_cast<bp::MapDecoration_<1001>::Type>(from.image);
     to.rotation = from.rotation;
     to.x = from.x;
     to.y = from.y;
