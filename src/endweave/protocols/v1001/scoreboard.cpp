@@ -13,7 +13,7 @@ bp::ScoreboardIdentityPacketInfo_<2168> Transformer<
     bp::ScoreboardIdentityPacketInfo_<2168> to;
     to.scoreboard_id = from.scoreboard_id;
     // ENDWEAVE: absent means removal at 2168, and this entry came off 1001's update list.
-    to.player_id = from.player_id;
+    to.player_id = from.player_id.actor_unique_id;
     return to;
 }
 

@@ -104,7 +104,9 @@ bp::SerializedPersonaPieceHandle Transformer<
 {
     bp::SerializedPersonaPieceHandle to;
     to.piece_id = std::move(from.piece_id);
-    to.piece_type = from.piece_type;
+    // ENDWEAVE: the cerealised and pre-cereal enums carry BDS's same PieceType numbering and
+    // differ only in the name table they encode through, so the value crosses unchanged.
+    to.piece_type = static_cast<bp::PieceType>(from.piece_type);
     to.pack_id = uuidFromString(from.pack_id);
     to.is_default_piece = from.is_default_piece;
     to.product_id = std::move(from.product_id);
@@ -117,7 +119,7 @@ bp::legacy::SerializedPersonaPieceHandle Transformer<
 {
     bp::legacy::SerializedPersonaPieceHandle to;
     to.piece_id = std::move(from.piece_id);
-    to.piece_type = from.piece_type;
+    to.piece_type = static_cast<bp::legacy::PieceType>(from.piece_type);
     to.pack_id = uuidToString(from.pack_id);
     to.is_default_piece = from.is_default_piece;
     to.product_id = std::move(from.product_id);
@@ -167,7 +169,7 @@ bp::SerializedSkinRef_<1001> Transformer<bp::legacy::SerializedSkinRef, bp::Seri
     to.persona_pieces = ew::transform(std::move(from.persona_pieces));
     // The pre-cereal write walks the map as a list, so each entry carries its own key back.
     for (auto &tint : from.piece_tint_colors) {
-        const auto piece_type = tint.piece_type;
+        const auto piece_type = static_cast<bp::PieceType>(tint.piece_type);
         to.piece_tint_colors.emplace(piece_type, ew::transform(std::move(tint)));
     }
     to.is_premium = from.is_premium;
@@ -205,7 +207,7 @@ bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>, bp::lega
     to.persona_pieces = ew::transform(std::move(from.persona_pieces));
     for (auto &[piece_type, colors] : from.piece_tint_colors) {
         auto tint = ew::transform_to<bp::legacy::TintMapColor>(std::move(colors));
-        tint.piece_type = piece_type;
+        tint.piece_type = static_cast<bp::legacy::PieceType>(piece_type);
         to.piece_tint_colors.push_back(std::move(tint));
     }
     to.is_premium = from.is_premium;

@@ -23,12 +23,12 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>, bp::PlayerL
     if (from.entries.empty()) {
         return to;
     }
-    to.action = std::holds_alternative<bp::PlayerListPacketPayload_<2168>::AddEntry>(from.entries.front())
+    to.action = std::holds_alternative<bp::PlayerListPacket_<2168>::AddEntry>(from.entries.front())
                   ? bp::PlayerListPacketType::ADD
                   : bp::PlayerListPacketType::REMOVE;
 
     for (auto &entry : from.entries) {
-        if (auto *add = std::get_if<bp::PlayerListPacketPayload_<2168>::AddEntry>(&entry)) {
+        if (auto *add = std::get_if<bp::PlayerListPacket_<2168>::AddEntry>(&entry)) {
             if (to.action != bp::PlayerListPacketType::ADD) {
                 continue;
             }
@@ -54,7 +54,7 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>, bp::PlayerL
         if (to.action != bp::PlayerListPacketType::REMOVE) {
             continue;
         }
-        to.removed_entries.push_back(std::get<bp::PlayerListPacketPayload_<2168>::RemoveEntry>(entry).uuid);
+        to.removed_entries.push_back(std::get<bp::PlayerListPacket_<2168>::RemoveEntry>(entry).uuid);
     }
     return to;
 }

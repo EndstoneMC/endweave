@@ -17,7 +17,7 @@ bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>, bp::PlayerL
         to.entries.reserve(from.entries.size());
         for (std::size_t i = 0; i < from.entries.size(); ++i) {
             auto &entry = from.entries[i];
-            bp::PlayerListPacketPayload_<2168>::AddEntry add;
+            bp::PlayerListPacket_<2168>::AddEntry add;
             add.action = bp::PlayerListPacketType::ADD;
             add.uuid = entry.uuid;
             add.id = entry.id;
@@ -41,7 +41,7 @@ bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>, bp::PlayerL
     }
     to.entries.reserve(from.removed_entries.size());
     for (const auto &uuid : from.removed_entries) {
-        bp::PlayerListPacketPayload_<2168>::RemoveEntry remove;
+        bp::PlayerListPacket_<2168>::RemoveEntry remove;
         remove.action = bp::PlayerListPacketType::REMOVE;
         remove.uuid = uuid;
         to.entries.emplace_back(std::move(remove));

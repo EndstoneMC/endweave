@@ -16,7 +16,7 @@ bp::ScoreboardIdentityPacketInfo_<1001> Transformer<
     to.scoreboard_id = from.scoreboard_id;
     // ENDWEAVE: an absent id is 2168's removal, which routes to 1001's other list, so the
     // null id here never reaches a client.
-    to.player_id = from.player_id.value_or(bp::PlayerScoreboardId{});
+    to.player_id.actor_unique_id = from.player_id.value_or(0);
     return to;
 }
 

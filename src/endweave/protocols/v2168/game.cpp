@@ -11,14 +11,6 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::ExperimentData Transformer<bp::ExperimentToggle, bp::ExperimentData>::transform(bp::ExperimentToggle &&from)
-{
-    bp::ExperimentData to;
-    to.name = std::move(from.name);
-    to.enabled = from.enabled;
-    return to;
-}
-
 bp::legacy::GameRule_<1001> Transformer<bp::GameRule, bp::legacy::GameRule_<1001>>::transform(bp::GameRule &&from)
 {
     bp::legacy::GameRule_<1001> to;
@@ -71,7 +63,7 @@ bp::LevelSettings_<1001> Transformer<bp::LevelSettings_<2168>, bp::LevelSettings
     // ENDWEAVE: 1001 carries the rules and the toggles loose, without 2168's rule_data and experiments
     // wrappers. Nothing about the values moved.
     to.game_rules = ew::transform(std::move(from.rule_data.rules));
-    to.experiments = ew::transform(std::move(from.experiments.toggles));
+    to.experiments = std::move(from.experiments.toggles);
     to.experiments_ever_toggled = from.experiments.experiments_ever_toggled;
     to.bonus_chest_enabled = from.bonus_chest_enabled;
     to.start_with_map_enabled = from.start_with_map_enabled;

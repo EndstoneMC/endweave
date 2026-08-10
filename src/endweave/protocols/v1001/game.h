@@ -9,11 +9,6 @@ namespace bp = bedrock::protocol;
 namespace endweave {
 
 template <>
-struct Transformer<bp::ExperimentData, bp::ExperimentToggle> {
-    static bp::ExperimentToggle transform(bp::ExperimentData &&from);
-};
-
-template <>
 struct Transformer<bp::legacy::GameRule_<1001>, bp::GameRule> {
     static bp::GameRule transform(bp::legacy::GameRule_<1001> &&from);
 };
