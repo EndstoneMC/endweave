@@ -80,7 +80,11 @@ bp::SubChunkPacket_<2168>::SubChunkPacketData Transformer<
         to.serialized_sub_chunk = std::move(from.serialized_sub_chunk);
     }
     to.height_map_data = ew::transform(std::move(from.height_map_data));
-    to.blob_id = from.blob_id;
+    // ENDWEAVE: zero is 1001's "no blob", which every all-air sub-chunk carries, and 2168 says
+    // that with an absent optional rather than a sentinel.
+    if (from.blob_id != 0) {
+        to.blob_id = from.blob_id;
+    }
     return to;
 }
 
