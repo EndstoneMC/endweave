@@ -31,9 +31,9 @@ using packet_of = bp::packet_of_t<static_cast<int>(V), Id>;
 template <ProtocolVersion V, int Id>
 inline constexpr bool has_packet = bp::has_packet_v<static_cast<int>(V), Id>;
 
-template <ProtocolVersion V, int Id>
-concept Rewritable = requires(packet_of<V, Id> &packet) {
-    { Rewriter<V, Id>::rewrite(packet) } -> std::same_as<void>;
+template <ProtocolVersion From, ProtocolVersion To, int Id>
+concept Rewritable = requires(packet_of<From, Id> &packet) {
+    { Rewriter<From, To, Id>::rewrite(packet) } -> std::same_as<void>;
 };
 
 namespace detail {
@@ -84,17 +84,9 @@ consteval bool shouldCancel()
 }
 
 template <ProtocolVersion From, ProtocolVersion To, int Id>
-consteval bool rewritesOnPath()
+consteval bool rewrites()
 {
-    if constexpr (Rewritable<From, Id>) {
-        return true;
-    }
-    else if constexpr (From == To) {
-        return false;
-    }
-    else {
-        return rewritesOnPath<step(From, To), To, Id>();
-    }
+    return Rewritable<From, To, Id>;
 }
 
 template <ProtocolVersion From, ProtocolVersion To, int Id>
@@ -107,16 +99,13 @@ consteval bool shouldHandle()
         return false;
     }
     else {
-        return rewritesOnPath<From, To, Id>() || !wire_equal_v<packet_of<From, Id>, packet_of<To, Id>>;
+        return rewrites<From, To, Id>() || !wire_equal_v<packet_of<From, Id>, packet_of<To, Id>>;
     }
 }
 
 template <ProtocolVersion Cur, ProtocolVersion To, int Id>
 packet_of<To, Id> chain(packet_of<Cur, Id> &&from)
 {
-    if constexpr (Rewritable<Cur, Id>) {
-        Rewriter<Cur, Id>::rewrite(from);
-    }
     if constexpr (Cur == To) {
         return std::move(from);
     }
@@ -126,8 +115,8 @@ packet_of<To, Id> chain(packet_of<Cur, Id> &&from)
     else {
         static_assert(!WireCompatible<packet_of<Cur, Id>, packet_of<step(Cur, To), Id>>::value,
                       "endweave: this hop is declared wire-compatible, yet the chain has to hold the packet as an "
-                      "object across it -- a Rewriter on the path, or a hop further along that reshapes, forces "
-                      "that. Write the Transformer for this pair and drop the WireCompatible.");
+                      "object across it -- a hop further along that reshapes forces that. Write the Transformer for "
+                      "this pair and drop the WireCompatible.");
         return chain<step(Cur, To), To, Id>(endweave::transform_to<packet_of<step(Cur, To), Id>>(std::move(from)));
     }
 }
@@ -148,7 +137,17 @@ std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWrit
     std::string translated;
     bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
-    bp::serialize(writer, chain<From, To, Id>(std::move(packet)));
+    if constexpr (Rewritable<From, To, Id>) {
+        Rewriter<From, To, Id>::rewrite(packet);
+    }
+    // The rewrite already made the packet mean what To expects, so a pair that encodes the
+    // same bytes needs no destination struct and no Transformer.
+    if constexpr (wire_equal_v<packet_of<From, Id>, packet_of<To, Id>>) {
+        bp::serialize(writer, packet);
+    }
+    else {
+        bp::serialize(writer, chain<From, To, Id>(std::move(packet)));
+    }
 
     // The destination has to be able to read back what was just written for it. Serialiser
     // and deserialiser are generated apart, so nothing else holds the pair to each other.
