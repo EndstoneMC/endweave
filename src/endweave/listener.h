@@ -1,18 +1,20 @@
 #pragma once
 
+#include "endweave/config.h"
 #include "endweave/connection/manager.h"
 #include "endweave/protocol/debug.h"
 #include "endweave/protocol/handler.h"
 
 #include <endstone/endstone.hpp>
 #include <string_view>
+#include <utility>
 
 namespace endweave {
 
 class PacketListener {
 public:
-    PacketListener(ConnectionManager &connections, endstone::Logger &logger)
-        : connections_(&connections), logger_(&logger), debug_(logger)
+    PacketListener(ConnectionManager &connections, endstone::Logger &logger, Config::Debug debug)
+        : connections_(&connections), logger_(&logger), debug_(logger, std::move(debug))
     {
     }
 

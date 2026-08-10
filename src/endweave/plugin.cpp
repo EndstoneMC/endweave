@@ -1,5 +1,6 @@
 #include "endweave/plugin.h"
 
+#include "endweave/config.h"
 #include "endweave/version.h"
 
 #include <chrono>
@@ -10,11 +11,13 @@ namespace endweave {
 
 void Plugin::onEnable()
 {
-    // The debug handler is on while this version pair is being brought up, and its lines
-    // go to the debug channel, which the default level discards.
-    getLogger().setLevel(endstone::Logger::Debug);
+    const Config config = Config::load(getDataFolder(), getLogger());
+    if (config.debug.enabled) {
+        // The handler's lines go to the debug channel, which the default level discards.
+        getLogger().setLevel(endstone::Logger::Debug);
+    }
 
-    PacketListener &listener = listener_.emplace(connections_, getLogger());
+    PacketListener &listener = listener_.emplace(connections_, getLogger(), config.debug);
     registerEvent(&PacketListener::onPacketReceive, listener);
     registerEvent(&PacketListener::onPacketSend, listener);
     registerEvent(&PacketListener::onPlayerQuit, listener);

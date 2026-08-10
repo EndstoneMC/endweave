@@ -182,7 +182,9 @@ void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)
     }
     log("PRE ", event, *connection, "SERVERBOUND");
     receive(event, *connection);
-    log("POST", event, *connection, "SERVERBOUND");
+    if (debug_.logsPostTransform()) {
+        log("POST", event, *connection, "SERVERBOUND");
+    }
 }
 
 void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
@@ -193,7 +195,9 @@ void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
     }
     log("PRE ", event, *connection, "CLIENTBOUND");
     send(event, *connection);
-    log("POST", event, *connection, "CLIENTBOUND");
+    if (debug_.logsPostTransform()) {
+        log("POST", event, *connection, "CLIENTBOUND");
+    }
 }
 
 void PacketListener::onPlayerQuit(endstone::PlayerQuitEvent &event)

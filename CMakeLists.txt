@@ -30,6 +30,17 @@ if (UNIX)
 endif ()
 
 include(FetchContent)
+find_package(tomlplusplus QUIET)
+if (NOT tomlplusplus_FOUND)
+    FetchContent_Declare(
+            tomlplusplus
+            GIT_REPOSITORY https://github.com/marzer/tomlplusplus.git
+            GIT_TAG v3.3.0
+            GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(tomlplusplus)
+endif ()
+
 set(ENDSTONE_API_VERSION "0.11" CACHE STRING "Endstone API version")
 FetchContent_Declare(
         endstone
@@ -43,7 +54,8 @@ string(TOUPPER ${PROJECT_NAME} PROJECT_NAME_UPPER)
 configure_file(src/endweave/version.h.in src/endweave/version.h)
 
 endstone_add_plugin(${PROJECT_NAME}
-src/endweave/connection/manager.cpp
+src/endweave/config.cpp
+        src/endweave/connection/manager.cpp
         src/endweave/plugin.cpp
         src/endweave/listener.cpp
         src/endweave/protocols/v1001/actor.cpp
@@ -89,7 +101,9 @@ src/endweave/connection/manager.cpp
         src/endweave/protocols/v2168/sound.cpp
         src/endweave/protocols/v2168/structure.cpp)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${CMAKE_CURRENT_BINARY_DIR}/src)
-target_link_libraries(${PROJECT_NAME} PRIVATE bedrock::protocol endstone::endstone)
+target_link_libraries(${PROJECT_NAME} PRIVATE bedrock::protocol endstone::endstone tomlplusplus::tomlplusplus)
+# Report a malformed config through the return value rather than over the plugin boundary.
+target_compile_definitions(${PROJECT_NAME} PRIVATE TOML_EXCEPTIONS=0)
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "" OUTPUT_NAME "${PROJECT_NAME}-${PROJECT_VERSION}")
 if (UNIX)
     # bedrock_protocol and the static libc++ endstone_add_plugin links arrive as archives, whose
