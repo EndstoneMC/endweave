@@ -10,17 +10,17 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2181>> {
-    static bp::CameraPreset_<2181> transform(bp::CameraPreset_<2168> &&from);
+    static void transform(Context<bp::CameraPreset_<2181>> &ctx, bp::CameraPreset_<2168> &&from);
 };
 
 template <>
 struct Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2181>> {
-    static bp::CameraPresets_<2181> transform(bp::CameraPresets_<2168> &&from);
+    static void transform(Context<bp::CameraPresets_<2181>> &ctx, bp::CameraPresets_<2168> &&from);
 };
 
 template <>
 struct Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2181>> {
-    static bp::CameraPresetsPacket_<2181> transform(bp::CameraPresetsPacket_<2168> &&from);
+    static void transform(Context<bp::CameraPresetsPacket_<2181>> &ctx, bp::CameraPresetsPacket_<2168> &&from);
 };
 
 } // namespace endweave

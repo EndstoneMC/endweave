@@ -26,27 +26,27 @@ enum MoveActorDeltaHeader : std::uint16_t {
 
 template <>
 struct Transformer<bp::MoveActorDeltaData_<1001>, bp::MoveActorDeltaData_<2168>> {
-    static bp::MoveActorDeltaData_<2168> transform(bp::MoveActorDeltaData_<1001> &&from);
+    static void transform(Context<bp::MoveActorDeltaData_<2168>> &ctx, bp::MoveActorDeltaData_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::AddPlayerPacket_<1001>, bp::AddPlayerPacket_<2168>> {
-    static bp::AddPlayerPacket_<2168> transform(bp::AddPlayerPacket_<1001> &&from);
+    static void transform(Context<bp::AddPlayerPacket_<2168>> &ctx, bp::AddPlayerPacket_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::AddItemActorPacket_<1001>, bp::AddItemActorPacket_<2168>> {
-    static bp::AddItemActorPacket_<2168> transform(bp::AddItemActorPacket_<1001> &&from);
+    static void transform(Context<bp::AddItemActorPacket_<2168>> &ctx, bp::AddItemActorPacket_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::MovePlayerPacket_<1001>, bp::MovePlayerPacket_<2168>> {
-    static bp::MovePlayerPacket_<2168> transform(bp::MovePlayerPacket_<1001> &&from);
+    static void transform(Context<bp::MovePlayerPacket_<2168>> &ctx, bp::MovePlayerPacket_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::MoveActorDeltaPacket_<1001>, bp::MoveActorDeltaPacket_<2168>> {
-    static bp::MoveActorDeltaPacket_<2168> transform(bp::MoveActorDeltaPacket_<1001> &&from);
+    static void transform(Context<bp::MoveActorDeltaPacket_<2168>> &ctx, bp::MoveActorDeltaPacket_<1001> &&from);
 };
 
 } // namespace endweave

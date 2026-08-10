@@ -34,7 +34,7 @@ private:
     /** Rewrites the payload where the two versions disagree on the packet's shape, and
      * cancels it where the destination has no such packet at all. */
     template <class Event>
-    void translate(Event &event, const PacketHandlers &handlers);
+    void translate(Event &event, UserConnection &connection, const PacketHandlers &handlers);
 
     template <class Event>
     void log(std::string_view stage, Event &event, const UserConnection &connection, std::string_view direction) const;

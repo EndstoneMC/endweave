@@ -9,10 +9,10 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>, bp::PlayerListPacket_<2168>>::transform(
-    bp::PlayerListPacket_<1001> &&from)
+void Transformer<bp::PlayerListPacket_<1001>, bp::PlayerListPacket_<2168>>::transform(
+    Context<bp::PlayerListPacket_<2168>> &ctx, bp::PlayerListPacket_<1001> &&from)
 {
-    bp::PlayerListPacket_<2168> to;
+    auto &to = ctx.out();
     if (from.action == bp::PlayerListPacketType::ADD) {
         to.entries.reserve(from.entries.size());
         for (std::size_t i = 0; i < from.entries.size(); ++i) {
@@ -25,7 +25,7 @@ bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>, bp::PlayerL
             add.xuid = std::move(entry.xuid);
             add.platform_online_id = std::move(entry.platform_online_id);
             add.build_platform = entry.build_platform;
-            add.skin = ew::transform(ew::transform_to<bp::SerializedSkinRef_<1001>>(std::move(entry.skin)));
+            add.skin = ew::transform(ctx, ew::transform_to<bp::SerializedSkinRef_<1001>>(ctx, std::move(entry.skin)));
             // ENDWEAVE: 1001 keeps the trusted flag out of the skin, in a run of one bool per entry
             // trailing the list; 2168 carries it inside.
             add.skin.trusted_skin_flag = i < from.trusted_skins.size() && from.trusted_skins[i]
@@ -37,7 +37,6 @@ bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>, bp::PlayerL
             add.color = entry.color;
             to.entries.emplace_back(std::move(add));
         }
-        return to;
     }
     to.entries.reserve(from.removed_entries.size());
     for (const auto &uuid : from.removed_entries) {
@@ -46,7 +45,6 @@ bp::PlayerListPacket_<2168> Transformer<bp::PlayerListPacket_<1001>, bp::PlayerL
         remove.uuid = uuid;
         to.entries.emplace_back(std::move(remove));
     }
-    return to;
 }
 
 } // namespace endweave

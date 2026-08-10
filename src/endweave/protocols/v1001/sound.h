@@ -14,12 +14,12 @@ namespace endweave {
 // as the sentinel.
 template <>
 struct Transformer<bp::LevelSoundEvent_<1001>, bp::LevelSoundEvent_<2168>> {
-    static bp::LevelSoundEvent_<2168> transform(bp::LevelSoundEvent_<1001> &&from);
+    static void transform(Context<bp::LevelSoundEvent_<2168>> &ctx, bp::LevelSoundEvent_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::PlaySoundPacket_<1001>, bp::PlaySoundPacket_<2168>> {
-    static bp::PlaySoundPacket_<2168> transform(bp::PlaySoundPacket_<1001> &&from);
+    static void transform(Context<bp::PlaySoundPacket_<2168>> &ctx, bp::PlaySoundPacket_<1001> &&from);
 };
 
 // ENDWEAVE: the event is a name at both versions, so 2168's added enumerators and its moved Undefined
@@ -29,7 +29,8 @@ struct WireCompatible<bp::LevelSoundEventPacket_<1001>, bp::LevelSoundEventPacke
 
 template <>
 struct Transformer<bp::ClientboundUpdateSoundDataPacket_<1001>, bp::ClientboundUpdateSoundDataPacket_<2168>> {
-    static bp::ClientboundUpdateSoundDataPacket_<2168> transform(bp::ClientboundUpdateSoundDataPacket_<1001> &&from);
+    static void transform(Context<bp::ClientboundUpdateSoundDataPacket_<2168>> &ctx,
+                          bp::ClientboundUpdateSoundDataPacket_<1001> &&from);
 };
 
 } // namespace endweave

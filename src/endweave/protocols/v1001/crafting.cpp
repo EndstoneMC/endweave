@@ -6,26 +6,25 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::SerializedNetworkItemInstanceDescriptor_<2168> Transformer<bp::SerializedNetworkItemInstanceDescriptor_<1001>,
-                                                               bp::SerializedNetworkItemInstanceDescriptor_<2168>>::
-    transform(bp::SerializedNetworkItemInstanceDescriptor_<1001> &&from)
+void Transformer<bp::SerializedNetworkItemInstanceDescriptor_<1001>,
+                 bp::SerializedNetworkItemInstanceDescriptor_<2168>>::
+    transform(Context<bp::SerializedNetworkItemInstanceDescriptor_<2168>> &ctx,
+              bp::SerializedNetworkItemInstanceDescriptor_<1001> &&from)
 {
-    bp::SerializedNetworkItemInstanceDescriptor_<2168> to;
+    auto &to = ctx.out();
     to.id = from.id;
     to.stack_size = from.stack_size;
     to.aux_value = from.aux_value;
     to.block_runtime_id = from.block_runtime_id;
     to.user_data_buffer = std::move(from.user_data_buffer);
-    return to;
 }
 
-bp::SerializedRecipeIngredient_<2168> Transformer<
-    bp::SerializedRecipeIngredient_<1001>,
-    bp::SerializedRecipeIngredient_<2168>>::transform(bp::SerializedRecipeIngredient_<1001> &&from)
+void Transformer<bp::SerializedRecipeIngredient_<1001>, bp::SerializedRecipeIngredient_<2168>>::transform(
+    Context<bp::SerializedRecipeIngredient_<2168>> &ctx, bp::SerializedRecipeIngredient_<1001> &&from)
 {
     using InternalType = bp::ItemDescriptor_<1001>::InternalType;
 
-    bp::SerializedRecipeIngredient_<2168> to;
+    auto &to = ctx.out();
     // ENDWEAVE: 2168 codes the descriptor as a one-key map, spelled as BDS's own toMap does.
     switch (from.descriptor.internal_type) {
     case InternalType::MOLANG:
@@ -48,117 +47,109 @@ bp::SerializedRecipeIngredient_<2168> Transformer<
     }
     to.aux_value = from.descriptor.aux_value;
     to.stack_size = from.stack_size;
-    return to;
 }
 
-bp::SerializedRecipeUnlockingRequirement_<2168> Transformer<
-    bp::SerializedRecipeUnlockingRequirement_<1001>,
-    bp::SerializedRecipeUnlockingRequirement_<2168>>::transform(bp::SerializedRecipeUnlockingRequirement_<1001> &&from)
+void Transformer<bp::SerializedRecipeUnlockingRequirement_<1001>, bp::SerializedRecipeUnlockingRequirement_<2168>>::
+    transform(Context<bp::SerializedRecipeUnlockingRequirement_<2168>> &ctx,
+              bp::SerializedRecipeUnlockingRequirement_<1001> &&from)
 {
-    bp::SerializedRecipeUnlockingRequirement_<2168> to;
+    auto &to = ctx.out();
     to.context = from.context;
     // ENDWEAVE: 1001 only writes the list under NONE, so that is when 2168's optional is set.
     if (from.context == bp::SerializedRecipeUnlockingRequirement_<1001>::UnlockingContext::NONE) {
-        to.ingredients = ew::transform(std::move(from.ingredients));
+        to.ingredients = ew::transform(ctx, std::move(from.ingredients));
     }
-    return to;
 }
 
-bp::ShapedRecipePayload_<2168> Transformer<bp::ShapedRecipePayload_<1001>, bp::ShapedRecipePayload_<2168>>::transform(
-    bp::ShapedRecipePayload_<1001> &&from)
+void Transformer<bp::ShapedRecipePayload_<1001>, bp::ShapedRecipePayload_<2168>>::transform(
+    Context<bp::ShapedRecipePayload_<2168>> &ctx, bp::ShapedRecipePayload_<1001> &&from)
 {
-    bp::ShapedRecipePayload_<2168> to;
+    auto &to = ctx.out();
     to.recipe_id = std::move(from.recipe_id);
     to.width = from.width;
     to.height = from.height;
-    to.ingredients = ew::transform(std::move(from.ingredients));
-    to.results = ew::transform(std::move(from.results));
+    to.ingredients = ew::transform(ctx, std::move(from.ingredients));
+    to.results = ew::transform(ctx, std::move(from.results));
     to.uuid = from.uuid;
     to.tag = std::move(from.tag);
     to.priority = from.priority;
     to.assume_symmetry = from.assume_symmetry;
     // ENDWEAVE: 1001 wrote the requirement unconditionally, so the optional is always set.
-    to.unlocking_requirement = ew::transform(std::move(from.unlocking_requirement));
+    to.unlocking_requirement = ew::transform(ctx, std::move(from.unlocking_requirement));
     to.net_id = from.net_id;
-    return to;
 }
 
-bp::ShapelessRecipePayload_<2168> Transformer<bp::ShapelessRecipePayload_<1001>, bp::ShapelessRecipePayload_<2168>>::
-    transform(bp::ShapelessRecipePayload_<1001> &&from)
+void Transformer<bp::ShapelessRecipePayload_<1001>, bp::ShapelessRecipePayload_<2168>>::transform(
+    Context<bp::ShapelessRecipePayload_<2168>> &ctx, bp::ShapelessRecipePayload_<1001> &&from)
 {
-    bp::ShapelessRecipePayload_<2168> to;
+    auto &to = ctx.out();
     to.recipe_id = std::move(from.recipe_id);
-    to.ingredients = ew::transform(std::move(from.ingredients));
-    to.results = ew::transform(std::move(from.results));
+    to.ingredients = ew::transform(ctx, std::move(from.ingredients));
+    to.results = ew::transform(ctx, std::move(from.results));
     to.uuid = from.uuid;
     to.tag = std::move(from.tag);
     to.priority = from.priority;
     // ENDWEAVE: 1001 wrote the requirement unconditionally, so the optional is always set.
-    to.unlocking_requirement = ew::transform(std::move(from.unlocking_requirement));
+    to.unlocking_requirement = ew::transform(ctx, std::move(from.unlocking_requirement));
     to.net_id = from.net_id;
-    return to;
 }
 
-bp::SmithingTransformRecipePayload_<2168> Transformer<
-    bp::SmithingTransformRecipePayload_<1001>,
-    bp::SmithingTransformRecipePayload_<2168>>::transform(bp::SmithingTransformRecipePayload_<1001> &&from)
+void Transformer<bp::SmithingTransformRecipePayload_<1001>, bp::SmithingTransformRecipePayload_<2168>>::transform(
+    Context<bp::SmithingTransformRecipePayload_<2168>> &ctx, bp::SmithingTransformRecipePayload_<1001> &&from)
 {
-    bp::SmithingTransformRecipePayload_<2168> to;
+    auto &to = ctx.out();
     to.recipe_id = std::move(from.recipe_id);
-    to.template_ingredient = ew::transform(std::move(from.template_ingredient));
-    to.base_ingredient = ew::transform(std::move(from.base_ingredient));
-    to.addition_ingredient = ew::transform(std::move(from.addition_ingredient));
-    to.result = ew::transform(std::move(from.result));
+    to.template_ingredient = ew::transform(ctx, std::move(from.template_ingredient));
+    to.base_ingredient = ew::transform(ctx, std::move(from.base_ingredient));
+    to.addition_ingredient = ew::transform(ctx, std::move(from.addition_ingredient));
+    to.result = ew::transform(ctx, std::move(from.result));
     to.tag = std::move(from.tag);
     to.net_id = from.net_id;
-    return to;
 }
 
-bp::SmithingTrimRecipePayload_<2168> Transformer<
-    bp::SmithingTrimRecipePayload_<1001>,
-    bp::SmithingTrimRecipePayload_<2168>>::transform(bp::SmithingTrimRecipePayload_<1001> &&from)
+void Transformer<bp::SmithingTrimRecipePayload_<1001>, bp::SmithingTrimRecipePayload_<2168>>::transform(
+    Context<bp::SmithingTrimRecipePayload_<2168>> &ctx, bp::SmithingTrimRecipePayload_<1001> &&from)
 {
-    bp::SmithingTrimRecipePayload_<2168> to;
+    auto &to = ctx.out();
     to.recipe_id = std::move(from.recipe_id);
-    to.template_ingredient = ew::transform(std::move(from.template_ingredient));
-    to.base_ingredient = ew::transform(std::move(from.base_ingredient));
-    to.addition_ingredient = ew::transform(std::move(from.addition_ingredient));
+    to.template_ingredient = ew::transform(ctx, std::move(from.template_ingredient));
+    to.base_ingredient = ew::transform(ctx, std::move(from.base_ingredient));
+    to.addition_ingredient = ew::transform(ctx, std::move(from.addition_ingredient));
     to.tag = std::move(from.tag);
     to.net_id = from.net_id;
-    return to;
 }
 
-bp::CraftingDataPacket_<2168> Transformer<bp::CraftingDataPacket_<1001>, bp::CraftingDataPacket_<2168>>::transform(
-    bp::CraftingDataPacket_<1001> &&from)
+void Transformer<bp::CraftingDataPacket_<1001>, bp::CraftingDataPacket_<2168>>::transform(
+    Context<bp::CraftingDataPacket_<2168>> &ctx, bp::CraftingDataPacket_<1001> &&from)
 {
-    bp::CraftingDataPacket_<2168> to;
+    auto &to = ctx.out();
     // ENDWEAVE: the entry tag is the only thing saying which of 2168's eleven lists a recipe
     // belongs in. Each list keeps the tagged sequence's relative order, so the pair round-trips.
     for (auto &entry : from.crafting_entries) {
         switch (entry.entry_type) {
         case bp::CraftingDataEntryType::SHAPELESS_RECIPE:
-            to.shapeless_recipes.push_back(ew::transform(std::move(entry.shapeless_recipe)));
+            to.shapeless_recipes.push_back(ew::transform(ctx, std::move(entry.shapeless_recipe)));
             break;
         case bp::CraftingDataEntryType::SHAPED_RECIPE:
-            to.shaped_recipes.push_back(ew::transform(std::move(entry.shaped_recipe)));
+            to.shaped_recipes.push_back(ew::transform(ctx, std::move(entry.shaped_recipe)));
             break;
         case bp::CraftingDataEntryType::MULTI_RECIPE:
             to.multi_recipes.push_back(entry.multi_recipe);
             break;
         case bp::CraftingDataEntryType::USER_DATA_SHAPELESS_RECIPE:
-            to.user_data_shapeless_recipes.push_back(ew::transform(std::move(entry.shapeless_recipe)));
+            to.user_data_shapeless_recipes.push_back(ew::transform(ctx, std::move(entry.shapeless_recipe)));
             break;
         case bp::CraftingDataEntryType::SHAPELESS_CHEMISTRY_RECIPE:
-            to.shapeless_chemistry_recipes.push_back(ew::transform(std::move(entry.shapeless_recipe)));
+            to.shapeless_chemistry_recipes.push_back(ew::transform(ctx, std::move(entry.shapeless_recipe)));
             break;
         case bp::CraftingDataEntryType::SHAPED_CHEMISTRY_RECIPE:
-            to.shaped_chemistry_recipes.push_back(ew::transform(std::move(entry.shaped_recipe)));
+            to.shaped_chemistry_recipes.push_back(ew::transform(ctx, std::move(entry.shaped_recipe)));
             break;
         case bp::CraftingDataEntryType::SMITHING_TRANSFORM_RECIPE:
-            to.smithing_transform_recipes.push_back(ew::transform(std::move(entry.smithing_transform_recipe)));
+            to.smithing_transform_recipes.push_back(ew::transform(ctx, std::move(entry.smithing_transform_recipe)));
             break;
         case bp::CraftingDataEntryType::SMITHING_TRIM_RECIPE:
-            to.smithing_trim_recipes.push_back(ew::transform(std::move(entry.smithing_trim_recipe)));
+            to.smithing_trim_recipes.push_back(ew::transform(ctx, std::move(entry.smithing_trim_recipe)));
             break;
         // ENDWEAVE: COUNT terminates the enum rather than naming a recipe, so it carries nothing.
         case bp::CraftingDataEntryType::COUNT:
@@ -169,39 +160,33 @@ bp::CraftingDataPacket_<2168> Transformer<bp::CraftingDataPacket_<1001>, bp::Cra
     to.container_mix_entries = std::move(from.container_mix_entries);
     to.material_reducer_entries = std::move(from.material_reducer_entries);
     to.clear_recipes = from.clear_recipes;
-    return to;
 }
 
-bp::CreativeGroupInfoPayload_<2168> Transformer<
-    bp::CreativeGroupInfoPayload_<1001>,
-    bp::CreativeGroupInfoPayload_<2168>>::transform(bp::CreativeGroupInfoPayload_<1001> &&from)
+void Transformer<bp::CreativeGroupInfoPayload_<1001>, bp::CreativeGroupInfoPayload_<2168>>::transform(
+    Context<bp::CreativeGroupInfoPayload_<2168>> &ctx, bp::CreativeGroupInfoPayload_<1001> &&from)
 {
-    bp::CreativeGroupInfoPayload_<2168> to;
+    auto &to = ctx.out();
     // ENDWEAVE: one enum in both eras. Only the wire width moved, so the copy loses nothing.
     to.creative_item_category = from.creative_item_category;
     to.name = std::move(from.name);
-    to.icon = ew::transform(std::move(from.icon));
-    return to;
+    to.icon = ew::transform(ctx, std::move(from.icon));
 }
 
-bp::CreativeItemEntryPayload_<2168> Transformer<
-    bp::CreativeItemEntryPayload_<1001>,
-    bp::CreativeItemEntryPayload_<2168>>::transform(bp::CreativeItemEntryPayload_<1001> &&from)
+void Transformer<bp::CreativeItemEntryPayload_<1001>, bp::CreativeItemEntryPayload_<2168>>::transform(
+    Context<bp::CreativeItemEntryPayload_<2168>> &ctx, bp::CreativeItemEntryPayload_<1001> &&from)
 {
-    bp::CreativeItemEntryPayload_<2168> to;
+    auto &to = ctx.out();
     to.creative_item_net_id = from.creative_item_net_id;
-    to.item_descriptor = ew::transform(std::move(from.item_descriptor));
+    to.item_descriptor = ew::transform(ctx, std::move(from.item_descriptor));
     to.group_index = from.group_index;
-    return to;
 }
 
-bp::CreativeContentPacket_<2168> Transformer<bp::CreativeContentPacket_<1001>, bp::CreativeContentPacket_<2168>>::
-    transform(bp::CreativeContentPacket_<1001> &&from)
+void Transformer<bp::CreativeContentPacket_<1001>, bp::CreativeContentPacket_<2168>>::transform(
+    Context<bp::CreativeContentPacket_<2168>> &ctx, bp::CreativeContentPacket_<1001> &&from)
 {
-    bp::CreativeContentPacket_<2168> to;
-    to.groups = ew::transform(std::move(from.groups));
-    to.entries = ew::transform(std::move(from.entries));
-    return to;
+    auto &to = ctx.out();
+    to.groups = ew::transform(ctx, std::move(from.groups));
+    to.entries = ew::transform(ctx, std::move(from.entries));
 }
 
 } // namespace endweave

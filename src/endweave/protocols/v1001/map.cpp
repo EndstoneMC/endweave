@@ -7,12 +7,11 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::MapItemTrackedActor_<2168>::UniqueId Transformer<
-    bp::MapItemTrackedActor_<1001>::UniqueId,
-    bp::MapItemTrackedActor_<2168>::UniqueId>::transform(bp::MapItemTrackedActor_<1001>::UniqueId &&from)
+void Transformer<bp::MapItemTrackedActor_<1001>::UniqueId, bp::MapItemTrackedActor_<2168>::UniqueId>::transform(
+    Context<bp::MapItemTrackedActor_<2168>::UniqueId> &ctx, bp::MapItemTrackedActor_<1001>::UniqueId &&from)
 {
     using Type = bp::MapItemTrackedActor_<1001>::Type;
-    bp::MapItemTrackedActor_<2168>::UniqueId to;
+    auto &to = ctx.out();
     to.type = static_cast<bp::MapItemTrackedActor_<2168>::Type>(from.type);
     // ENDWEAVE: 1001's type decides which id it writes, so an OTHER actor reaches 2168 with neither engaged.
     if (from.type == Type::ENTITY) {
@@ -21,25 +20,22 @@ bp::MapItemTrackedActor_<2168>::UniqueId Transformer<
     if (from.type == Type::BLOCK_ENTITY) {
         to.key_block_pos = from.key_block_pos;
     }
-    return to;
 }
 
-bp::MapDecoration_<2168> Transformer<bp::MapDecoration_<1001>, bp::MapDecoration_<2168>>::transform(
-    bp::MapDecoration_<1001> &&from)
+void Transformer<bp::MapDecoration_<1001>, bp::MapDecoration_<2168>>::transform(Context<bp::MapDecoration_<2168>> &ctx,
+                                                                                bp::MapDecoration_<1001> &&from)
 {
-    bp::MapDecoration_<2168> to;
+    auto &to = ctx.out();
     to.image = static_cast<bp::MapDecoration_<2168>::Type>(from.image);
     to.rotation = from.rotation;
     to.x = from.x;
     to.y = from.y;
     to.label = std::move(from.label);
     to.color = from.color;
-    return to;
 }
 
-bp::ClientboundMapItemDataPacket_<2168> Transformer<
-    bp::ClientboundMapItemDataPacket_<1001>,
-    bp::ClientboundMapItemDataPacket_<2168>>::transform(bp::ClientboundMapItemDataPacket_<1001> &&from)
+void Transformer<bp::ClientboundMapItemDataPacket_<1001>, bp::ClientboundMapItemDataPacket_<2168>>::transform(
+    Context<bp::ClientboundMapItemDataPacket_<2168>> &ctx, bp::ClientboundMapItemDataPacket_<1001> &&from)
 {
     using Type = bp::ClientboundMapItemDataPacket_<1001>::Type;
     // ENDWEAVE: 2168 replaced 1001's bitflag word with optionals, so the bits are read here and go no further.
@@ -47,7 +43,7 @@ bp::ClientboundMapItemDataPacket_<2168> Transformer<
     const bool decoration = (from.type & static_cast<std::uint32_t>(Type::DECORATION_UPDATE)) != 0;
     const bool texture = (from.type & static_cast<std::uint32_t>(Type::TEXTURE_UPDATE)) != 0;
 
-    bp::ClientboundMapItemDataPacket_<2168> to;
+    auto &to = ctx.out();
     to.map_id = from.map_id;
     to.dimension = from.dimension;
     to.locked = from.locked;
@@ -60,8 +56,8 @@ bp::ClientboundMapItemDataPacket_<2168> Transformer<
         to.scale = from.scale;
     }
     if (decoration) {
-        to.unique_ids = ew::transform(std::move(from.unique_ids));
-        to.decorations = ew::transform(std::move(from.decorations));
+        to.unique_ids = ew::transform(ctx, std::move(from.unique_ids));
+        to.decorations = ew::transform(ctx, std::move(from.decorations));
     }
     if (texture) {
         to.width = from.width;
@@ -70,7 +66,6 @@ bp::ClientboundMapItemDataPacket_<2168> Transformer<
         to.start_y = from.start_y;
         to.map_pixels = std::move(from.map_pixels);
     }
-    return to;
 }
 
 } // namespace endweave

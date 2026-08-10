@@ -67,207 +67,185 @@ Cereal::NetworkItemInstanceDescriptorData upgradeItemInstance(bp::SerializedNetw
 
 namespace endweave {
 
-bp::RedactableString_<2168> Transformer<bp::RedactableString_<1001>, bp::RedactableString_<2168>>::transform(
-    bp::RedactableString_<1001> &&from)
+void Transformer<bp::RedactableString_<1001>, bp::RedactableString_<2168>>::transform(
+    Context<bp::RedactableString_<2168>> &ctx, bp::RedactableString_<1001> &&from)
 {
-    bp::RedactableString_<2168> to;
+    auto &to = ctx.out();
     to.unredacted_string = std::move(from.unredacted_string);
     // ENDWEAVE: an empty redaction goes up absent, not present-and-empty -- same one zero byte.
     if (!from.redacted_string.empty()) {
         to.redacted_string = std::move(from.redacted_string);
     }
-    return to;
 }
 
-bp::ItemStackResponseSlotInfo_<2168> Transformer<
-    bp::ItemStackResponseSlotInfo_<1001>,
-    bp::ItemStackResponseSlotInfo_<2168>>::transform(bp::ItemStackResponseSlotInfo_<1001> &&from)
+void Transformer<bp::ItemStackResponseSlotInfo_<1001>, bp::ItemStackResponseSlotInfo_<2168>>::transform(
+    Context<bp::ItemStackResponseSlotInfo_<2168>> &ctx, bp::ItemStackResponseSlotInfo_<1001> &&from)
 {
-    bp::ItemStackResponseSlotInfo_<2168> to;
+    auto &to = ctx.out();
     to.requested_slot = from.requested_slot;
     to.slot = from.slot;
     to.amount = from.amount;
     // ENDWEAVE: 1001 always carries a net id, so it is always present at 2168, zero included.
     to.item_stack_net_id = from.item_stack_net_id;
-    to.custom_name = ew::transform(std::move(from.custom_name));
+    to.custom_name = ew::transform(ctx, std::move(from.custom_name));
     to.durability_correction = from.durability_correction;
-    return to;
 }
 
-bp::ItemStackResponseContainerInfo_<2168> Transformer<
-    bp::ItemStackResponseContainerInfo_<1001>,
-    bp::ItemStackResponseContainerInfo_<2168>>::transform(bp::ItemStackResponseContainerInfo_<1001> &&from)
+void Transformer<bp::ItemStackResponseContainerInfo_<1001>, bp::ItemStackResponseContainerInfo_<2168>>::transform(
+    Context<bp::ItemStackResponseContainerInfo_<2168>> &ctx, bp::ItemStackResponseContainerInfo_<1001> &&from)
 {
-    bp::ItemStackResponseContainerInfo_<2168> to;
+    auto &to = ctx.out();
     to.full_container_name = std::move(from.full_container_name);
-    to.slots = ew::transform(std::move(from.slots));
-    return to;
+    to.slots = ew::transform(ctx, std::move(from.slots));
 }
 
-bp::ItemStackResponseInfo_<2168> Transformer<bp::ItemStackResponseInfo_<1001>, bp::ItemStackResponseInfo_<2168>>::
-    transform(bp::ItemStackResponseInfo_<1001> &&from)
+void Transformer<bp::ItemStackResponseInfo_<1001>, bp::ItemStackResponseInfo_<2168>>::transform(
+    Context<bp::ItemStackResponseInfo_<2168>> &ctx, bp::ItemStackResponseInfo_<1001> &&from)
 {
-    bp::ItemStackResponseInfo_<2168> to;
+    auto &to = ctx.out();
     to.result = from.result;
     to.client_request_id = from.client_request_id;
     // ENDWEAVE: 1001's result gate becomes 2168's presence flag, so a failed response goes up
     // absent rather than empty.
     if (from.result == bp::ItemStackNetResult::SUCCESS) {
-        to.containers = ew::transform(std::move(from.containers));
+        to.containers = ew::transform(ctx, std::move(from.containers));
     }
-    return to;
 }
 
-bp::ItemStackResponsePacket_<2168> Transformer<bp::ItemStackResponsePacket_<1001>, bp::ItemStackResponsePacket_<2168>>::
-    transform(bp::ItemStackResponsePacket_<1001> &&from)
+void Transformer<bp::ItemStackResponsePacket_<1001>, bp::ItemStackResponsePacket_<2168>>::transform(
+    Context<bp::ItemStackResponsePacket_<2168>> &ctx, bp::ItemStackResponsePacket_<1001> &&from)
 {
-    bp::ItemStackResponsePacket_<2168> to;
-    to.responses = ew::transform(std::move(from.responses));
-    return to;
+    auto &to = ctx.out();
+    to.responses = ew::transform(ctx, std::move(from.responses));
 }
 
-bp::ItemStackRequestCereal_<2168>::SlotInfoData Transformer<
-    bp::ItemStackRequestSlotInfo_<1001>,
-    bp::ItemStackRequestCereal_<2168>::SlotInfoData>::transform(bp::ItemStackRequestSlotInfo_<1001> &&from)
+void Transformer<bp::ItemStackRequestSlotInfo_<1001>, bp::ItemStackRequestCereal_<2168>::SlotInfoData>::transform(
+    Context<bp::ItemStackRequestCereal_<2168>::SlotInfoData> &ctx, bp::ItemStackRequestSlotInfo_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::SlotInfoData to;
+    auto &to = ctx.out();
     to.full_container_name = std::move(from.full_container_name);
     to.slot = from.slot;
     to.net_id_variant = from.net_id_variant;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::TakeActionData Transformer<
-    bp::ItemStackRequestActionTake_<1001>,
-    bp::ItemStackRequestCereal_<2168>::TakeActionData>::transform(bp::ItemStackRequestActionTake_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionTake_<1001>, bp::ItemStackRequestCereal_<2168>::TakeActionData>::transform(
+    Context<bp::ItemStackRequestCereal_<2168>::TakeActionData> &ctx, bp::ItemStackRequestActionTake_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::TakeActionData to;
+    auto &to = ctx.out();
     // ENDWEAVE: 2168 restates the action type in every payload, where 1001 carried it in the list
     // tag alone, so each action names its own here.
     to.action_type = bp::ItemStackRequestActionType::TAKE;
     to.amount = from.amount;
-    to.source = ew::transform(std::move(from.src));
-    to.destination = ew::transform(std::move(from.dst));
-    return to;
+    to.source = ew::transform(ctx, std::move(from.src));
+    to.destination = ew::transform(ctx, std::move(from.dst));
 }
 
-bp::ItemStackRequestCereal_<2168>::PlaceActionData Transformer<
-    bp::ItemStackRequestActionPlace_<1001>,
-    bp::ItemStackRequestCereal_<2168>::PlaceActionData>::transform(bp::ItemStackRequestActionPlace_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionPlace_<1001>, bp::ItemStackRequestCereal_<2168>::PlaceActionData>::transform(
+    Context<bp::ItemStackRequestCereal_<2168>::PlaceActionData> &ctx, bp::ItemStackRequestActionPlace_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::PlaceActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::PLACE;
     to.amount = from.amount;
-    to.source = ew::transform(std::move(from.src));
-    to.destination = ew::transform(std::move(from.dst));
-    return to;
+    to.source = ew::transform(ctx, std::move(from.src));
+    to.destination = ew::transform(ctx, std::move(from.dst));
 }
 
-bp::ItemStackRequestCereal_<2168>::SwapActionData Transformer<
-    bp::ItemStackRequestActionSwap_<1001>,
-    bp::ItemStackRequestCereal_<2168>::SwapActionData>::transform(bp::ItemStackRequestActionSwap_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionSwap_<1001>, bp::ItemStackRequestCereal_<2168>::SwapActionData>::transform(
+    Context<bp::ItemStackRequestCereal_<2168>::SwapActionData> &ctx, bp::ItemStackRequestActionSwap_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::SwapActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::SWAP;
-    to.source = ew::transform(std::move(from.src));
-    to.destination = ew::transform(std::move(from.dst));
-    return to;
+    to.source = ew::transform(ctx, std::move(from.src));
+    to.destination = ew::transform(ctx, std::move(from.dst));
 }
 
-bp::ItemStackRequestCereal_<2168>::DropActionData Transformer<
-    bp::ItemStackRequestActionDrop_<1001>,
-    bp::ItemStackRequestCereal_<2168>::DropActionData>::transform(bp::ItemStackRequestActionDrop_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionDrop_<1001>, bp::ItemStackRequestCereal_<2168>::DropActionData>::transform(
+    Context<bp::ItemStackRequestCereal_<2168>::DropActionData> &ctx, bp::ItemStackRequestActionDrop_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::DropActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::DROP;
     to.amount = from.amount;
-    to.source = ew::transform(std::move(from.src));
+    to.source = ew::transform(ctx, std::move(from.src));
     to.randomly = from.randomly;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::DestroyActionData Transformer<
-    bp::ItemStackRequestActionDestroy_<1001>,
-    bp::ItemStackRequestCereal_<2168>::DestroyActionData>::transform(bp::ItemStackRequestActionDestroy_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionDestroy_<1001>, bp::ItemStackRequestCereal_<2168>::DestroyActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::DestroyActionData> &ctx,
+              bp::ItemStackRequestActionDestroy_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::DestroyActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::DESTROY;
     to.amount = from.amount;
-    to.source = ew::transform(std::move(from.src));
-    return to;
+    to.source = ew::transform(ctx, std::move(from.src));
 }
 
-bp::ItemStackRequestCereal_<2168>::ConsumeActionData Transformer<
-    bp::ItemStackRequestActionConsume_<1001>,
-    bp::ItemStackRequestCereal_<2168>::ConsumeActionData>::transform(bp::ItemStackRequestActionConsume_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionConsume_<1001>, bp::ItemStackRequestCereal_<2168>::ConsumeActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::ConsumeActionData> &ctx,
+              bp::ItemStackRequestActionConsume_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::ConsumeActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CONSUME;
     to.amount = from.amount;
-    to.source = ew::transform(std::move(from.src));
-    return to;
+    to.source = ew::transform(ctx, std::move(from.src));
 }
 
-bp::ItemStackRequestCereal_<2168>::CreateActionData Transformer<
-    bp::ItemStackRequestActionCreate_<1001>,
-    bp::ItemStackRequestCereal_<2168>::CreateActionData>::transform(bp::ItemStackRequestActionCreate_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionCreate_<1001>, bp::ItemStackRequestCereal_<2168>::CreateActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CreateActionData> &ctx,
+              bp::ItemStackRequestActionCreate_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CreateActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CREATE;
     to.results_index = from.results_index;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData Transformer<
-    bp::ItemStackRequestActionLabTableCombine_<1001>, bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData>::
-    transform(bp::ItemStackRequestActionLabTableCombine_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionLabTableCombine_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData> &ctx,
+              bp::ItemStackRequestActionLabTableCombine_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::LabTableCombineActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::SCREEN_LAB_TABLE_COMBINE;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData Transformer<
-    bp::ItemStackRequestActionBeaconPayment_<1001>, bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData>::
-    transform(bp::ItemStackRequestActionBeaconPayment_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionBeaconPayment_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData> &ctx,
+              bp::ItemStackRequestActionBeaconPayment_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::BeaconPaymentActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::SCREEN_BEACON_PAYMENT;
     to.primary_effect_id = from.primary_effect_id;
     to.secondary_effect_id = from.secondary_effect_id;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::MineBlockActionData Transformer<
-    bp::ItemStackRequestActionMineBlock_<1001>,
-    bp::ItemStackRequestCereal_<2168>::MineBlockActionData>::transform(bp::ItemStackRequestActionMineBlock_<1001>
-                                                                           &&from)
+void Transformer<bp::ItemStackRequestActionMineBlock_<1001>, bp::ItemStackRequestCereal_<2168>::MineBlockActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::MineBlockActionData> &ctx,
+              bp::ItemStackRequestActionMineBlock_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::MineBlockActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::SCREEN_HUD_MINE_BLOCK;
     to.slot = from.slot;
     to.predicted_durability = from.predicted_durability;
     to.net_id_variant = from.net_id_variant;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData Transformer<
-    bp::ItemStackRequestActionCraftRecipe_<1001>,
-    bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData>::transform(bp::ItemStackRequestActionCraftRecipe_<1001>
-                                                                             &&from)
+void Transformer<bp::ItemStackRequestActionCraftRecipe_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData> &ctx,
+              bp::ItemStackRequestActionCraftRecipe_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CraftRecipeActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CRAFT_RECIPE;
     to.recipe_net_id = from.recipe_net_id;
     to.num_crafts = from.num_crafts;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData Transformer<
-    bp::ItemStackRequestActionCraftRecipeAuto_<1001>, bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData>::
-    transform(bp::ItemStackRequestActionCraftRecipeAuto_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionCraftRecipeAuto_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData> &ctx,
+              bp::ItemStackRequestActionCraftRecipeAuto_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CRAFT_RECIPE_AUTO;
     to.recipe_net_id = from.recipe_net_id;
     to.num_crafts = from.num_crafts;
@@ -276,39 +254,37 @@ bp::ItemStackRequestCereal_<2168>::CraftRecipeAutoActionData Transformer<
     for (auto &ingredient : from.ingredients) {
         to.ingredients.push_back(upgradeRecipeIngredient(std::move(ingredient)));
     }
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData Transformer<
-    bp::ItemStackRequestActionCraftCreative_<1001>, bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData>::
-    transform(bp::ItemStackRequestActionCraftCreative_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionCraftCreative_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData> &ctx,
+              bp::ItemStackRequestActionCraftCreative_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CraftCreativeActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CRAFT_CREATIVE;
     // ENDWEAVE: 2168 sends the creative net id bare, without the CreativeItemNetId wrapper.
     to.creative_item_net_id = from.creative_item_net_id.raw_id;
     to.num_crafts = from.num_crafts;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData Transformer<
-    bp::ItemStackRequestActionCraftRecipeOptional_<1001>,
-    bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData>::
-    transform(bp::ItemStackRequestActionCraftRecipeOptional_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionCraftRecipeOptional_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData> &ctx,
+              bp::ItemStackRequestActionCraftRecipeOptional_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CraftRecipeOptionalActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CRAFT_RECIPE_OPTIONAL;
     to.recipe_net_id = from.recipe_net_id;
     to.filtered_string_index = from.filtered_string_index;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData Transformer<
-    bp::ItemStackRequestActionCraftGrindstone_<1001>,
-    bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData>::
-    transform(bp::ItemStackRequestActionCraftGrindstone_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionCraftGrindstone_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData> &ctx,
+              bp::ItemStackRequestActionCraftGrindstone_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData to;
+    auto &to = ctx.out();
     // ENDWEAVE: same action under two names -- 1001's grindstone recipe is 2168's
     // repair-and-disenchant, both at action type 16.
     to.action_type = bp::ItemStackRequestActionType::CRAFT_REPAIR_AND_DISENCHANT;
@@ -316,77 +292,69 @@ bp::ItemStackRequestCereal_<2168>::CraftRepairAndDisenchantActionData Transforme
     to.recipe_net_id = static_cast<std::int32_t>(from.recipe_net_id);
     to.num_crafts = from.num_crafts;
     to.repair_cost = from.repair_cost;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftLoomActionData Transformer<
-    bp::ItemStackRequestActionCraftLoom_<1001>,
-    bp::ItemStackRequestCereal_<2168>::CraftLoomActionData>::transform(bp::ItemStackRequestActionCraftLoom_<1001>
-                                                                           &&from)
+void Transformer<bp::ItemStackRequestActionCraftLoom_<1001>, bp::ItemStackRequestCereal_<2168>::CraftLoomActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CraftLoomActionData> &ctx,
+              bp::ItemStackRequestActionCraftLoom_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CraftLoomActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CRAFT_LOOM;
     to.pattern_name_id = std::move(from.pattern_name_id);
     to.num_crafts = from.num_crafts;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData Transformer<
-    bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001>,
-    bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData>::
-    transform(bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData> &ctx,
+              bp::ItemStackRequestActionCraftNonImplemented_DEPRECATEDASKTYLAING_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CraftNonImplementedActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CRAFT_NON_IMPLEMENTED_DEPRECATEDASKTYLAING;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::CraftResultsActionData Transformer<
-    bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001>,
-    bp::ItemStackRequestCereal_<2168>::CraftResultsActionData>::
-    transform(bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001> &&from)
+void Transformer<bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001>,
+                 bp::ItemStackRequestCereal_<2168>::CraftResultsActionData>::
+    transform(Context<bp::ItemStackRequestCereal_<2168>::CraftResultsActionData> &ctx,
+              bp::ItemStackRequestActionCraftResults_DEPRECATEDASKTYLAING_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::CraftResultsActionData to;
+    auto &to = ctx.out();
     to.action_type = bp::ItemStackRequestActionType::CRAFT_RESULTS_DEPRECATEDASKTYLAING;
     to.craft_results.reserve(from.craft_results.size());
     for (auto &result : from.craft_results) {
         to.craft_results.push_back(upgradeItemInstance(std::move(result)));
     }
     to.num_crafts = from.num_crafts;
-    return to;
 }
 
-bp::ItemStackRequestCereal_<2168>::RequestData Transformer<
-    bp::ItemStackRequestData_<1001>,
-    bp::ItemStackRequestCereal_<2168>::RequestData>::transform(bp::ItemStackRequestData_<1001> &&from)
+void Transformer<bp::ItemStackRequestData_<1001>, bp::ItemStackRequestCereal_<2168>::RequestData>::transform(
+    Context<bp::ItemStackRequestCereal_<2168>::RequestData> &ctx, bp::ItemStackRequestData_<1001> &&from)
 {
-    bp::ItemStackRequestCereal_<2168>::RequestData to;
+    auto &to = ctx.out();
     to.client_request_id = from.client_request_id;
     to.actions.reserve(from.actions.size());
     // ENDWEAVE: the tag is the variant index at both versions and they disagree above Create, so
     // each action is pushed by alternative type and the variant places it.
     for (auto &action : from.actions) {
         std::visit(
-            [&to](auto &data) {
+            [&to, &ctx](auto &data) {
                 // ENDWEAVE: the two deprecated slots have no 2168 class, so an action in one is
                 // dropped -- they are payload-less placeholders at 1001 too.
                 if constexpr (!std::is_same_v<std::remove_cvref_t<decltype(data)>, std::monostate>) {
-                    to.actions.push_back(ew::transform(std::move(data)));
+                    to.actions.push_back(ew::transform(ctx, std::move(data)));
                 }
             },
             action);
     }
     to.strings_to_filter = std::move(from.strings_to_filter);
     to.strings_to_filter_origin = from.strings_to_filter_origin;
-    return to;
 }
 
-bp::ItemStackRequestPacket_<2168> Transformer<bp::ItemStackRequestPacket_<1001>, bp::ItemStackRequestPacket_<2168>>::
-    transform(bp::ItemStackRequestPacket_<1001> &&from)
+void Transformer<bp::ItemStackRequestPacket_<1001>, bp::ItemStackRequestPacket_<2168>>::transform(
+    Context<bp::ItemStackRequestPacket_<2168>> &ctx, bp::ItemStackRequestPacket_<1001> &&from)
 {
-    bp::ItemStackRequestPacket_<2168> to;
-    to.requests = ew::transform(std::move(from.requests));
-    return to;
+    auto &to = ctx.out();
+    to.requests = ew::transform(ctx, std::move(from.requests));
 }
 
 } // namespace endweave

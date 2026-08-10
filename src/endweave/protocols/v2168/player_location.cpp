@@ -4,12 +4,11 @@
 
 namespace endweave {
 
-bp::PlayerUpdateEntityOverridesPacket_<1001> Transformer<
-    bp::PlayerUpdateEntityOverridesPacket_<2168>,
-    bp::PlayerUpdateEntityOverridesPacket_<1001>>::transform(bp::PlayerUpdateEntityOverridesPacket_<2168> &&from)
+void Transformer<bp::PlayerUpdateEntityOverridesPacket_<2168>, bp::PlayerUpdateEntityOverridesPacket_<1001>>::transform(
+    Context<bp::PlayerUpdateEntityOverridesPacket_<1001>> &ctx, bp::PlayerUpdateEntityOverridesPacket_<2168> &&from)
 {
     using Update = bp::PlayerUpdateEntityOverridesPacket_<2168>;
-    bp::PlayerUpdateEntityOverridesPacket_<1001> to;
+    auto &to = ctx.out();
     to.id = from.id;
     to.property_index = from.property_index;
     // ENDWEAVE: 2168 writes the type as the variant tag and again name-coded in the payload; the payload is
@@ -26,14 +25,13 @@ bp::PlayerUpdateEntityOverridesPacket_<1001> Transformer<
     if (const auto *float_override = std::get_if<Update::FloatOverride>(&from.update)) {
         to.float_value = float_override->value;
     }
-    return to;
 }
 
-bp::PlayerLocationPacket_<1001> Transformer<
-    bp::PlayerLocationPacket_<2168>, bp::PlayerLocationPacket_<1001>>::transform(bp::PlayerLocationPacket_<2168> &&from)
+void Transformer<bp::PlayerLocationPacket_<2168>, bp::PlayerLocationPacket_<1001>>::transform(
+    Context<bp::PlayerLocationPacket_<1001>> &ctx, bp::PlayerLocationPacket_<2168> &&from)
 {
     using Location = bp::PlayerLocationPacket_<2168>;
-    bp::PlayerLocationPacket_<1001> to;
+    auto &to = ctx.out();
     // ENDWEAVE: 1001 leads with the type, 2168 with the id and writes the type as both tag and payload; the
     // payload is what the handler reads, so the type comes from there.
     std::visit(
@@ -46,7 +44,6 @@ bp::PlayerLocationPacket_<1001> Transformer<
     if (const auto *coordinates = std::get_if<Location::CoordinatesLocation>(&from.location)) {
         to.pos = coordinates->pos;
     }
-    return to;
 }
 
 } // namespace endweave

@@ -4,29 +4,27 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::MobEquipmentPacket_<1001> Transformer<bp::MobEquipmentPacket_<2168>, bp::MobEquipmentPacket_<1001>>::transform(
-    bp::MobEquipmentPacket_<2168> &&from)
+void Transformer<bp::MobEquipmentPacket_<2168>, bp::MobEquipmentPacket_<1001>>::transform(
+    Context<bp::MobEquipmentPacket_<1001>> &ctx, bp::MobEquipmentPacket_<2168> &&from)
 {
-    bp::MobEquipmentPacket_<1001> to;
+    auto &to = ctx.out();
     to.runtime_id = from.runtime_id;
-    to.item = ew::transform(std::move(from.item));
+    to.item = ew::transform(ctx, std::move(from.item));
     to.slot = from.slot;
     to.selected_slot = from.selected_slot;
     to.container_id = from.container_id;
-    return to;
 }
 
-bp::MobArmorEquipmentPacket_<1001> Transformer<bp::MobArmorEquipmentPacket_<2168>, bp::MobArmorEquipmentPacket_<1001>>::
-    transform(bp::MobArmorEquipmentPacket_<2168> &&from)
+void Transformer<bp::MobArmorEquipmentPacket_<2168>, bp::MobArmorEquipmentPacket_<1001>>::transform(
+    Context<bp::MobArmorEquipmentPacket_<1001>> &ctx, bp::MobArmorEquipmentPacket_<2168> &&from)
 {
-    bp::MobArmorEquipmentPacket_<1001> to;
+    auto &to = ctx.out();
     to.runtime_id = from.runtime_id;
-    to.head = ew::transform(std::move(from.head));
-    to.torso = ew::transform(std::move(from.torso));
-    to.legs = ew::transform(std::move(from.legs));
-    to.feet = ew::transform(std::move(from.feet));
-    to.body = ew::transform(std::move(from.body));
-    return to;
+    to.head = ew::transform(ctx, std::move(from.head));
+    to.torso = ew::transform(ctx, std::move(from.torso));
+    to.legs = ew::transform(ctx, std::move(from.legs));
+    to.feet = ew::transform(ctx, std::move(from.feet));
+    to.body = ew::transform(ctx, std::move(from.body));
 }
 
 } // namespace endweave

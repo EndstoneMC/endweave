@@ -8,11 +8,10 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::EnvironmentAttributeData_<2168> Transformer<
-    bp::EnvironmentAttributeData_<2181>,
-    bp::EnvironmentAttributeData_<2168>>::transform(bp::EnvironmentAttributeData_<2181> &&from)
+void Transformer<bp::EnvironmentAttributeData_<2181>, bp::EnvironmentAttributeData_<2168>>::transform(
+    Context<bp::EnvironmentAttributeData_<2168>> &ctx, bp::EnvironmentAttributeData_<2181> &&from)
 {
-    bp::EnvironmentAttributeData_<2168> to;
+    auto &to = ctx.out();
     to.name = std::move(from.name);
     to.from_attribute = std::move(from.from_attribute);
     to.attribute = std::move(from.attribute);
@@ -23,63 +22,56 @@ bp::EnvironmentAttributeData_<2168> Transformer<
     to.local_transition_ticks = from.local_transition_ticks;
     // ENDWEAVE: noise_alignment is dropped; 2168 aligns a noise transition by the local tick alone.
     to.noise_transition = from.noise_transition;
-    return to;
 }
 
-bp::AttributeLayerData_<2168> Transformer<bp::AttributeLayerData_<2181>, bp::AttributeLayerData_<2168>>::transform(
-    bp::AttributeLayerData_<2181> &&from)
+void Transformer<bp::AttributeLayerData_<2181>, bp::AttributeLayerData_<2168>>::transform(
+    Context<bp::AttributeLayerData_<2168>> &ctx, bp::AttributeLayerData_<2181> &&from)
 {
-    bp::AttributeLayerData_<2168> to;
+    auto &to = ctx.out();
     to.name = std::move(from.name);
     to.noise_name = std::move(from.noise_name);
     to.dimension_id = from.dimension_id;
     to.settings = from.settings;
-    to.attributes = ew::transform(std::move(from.attributes));
-    return to;
+    to.attributes = ew::transform(ctx, std::move(from.attributes));
 }
 
-bp::UpdateAttributeLayersData_<2168> Transformer<
-    bp::UpdateAttributeLayersData_<2181>,
-    bp::UpdateAttributeLayersData_<2168>>::transform(bp::UpdateAttributeLayersData_<2181> &&from)
+void Transformer<bp::UpdateAttributeLayersData_<2181>, bp::UpdateAttributeLayersData_<2168>>::transform(
+    Context<bp::UpdateAttributeLayersData_<2168>> &ctx, bp::UpdateAttributeLayersData_<2181> &&from)
 {
-    bp::UpdateAttributeLayersData_<2168> to;
-    to.attribute_layers = ew::transform(std::move(from.attribute_layers));
-    return to;
+    auto &to = ctx.out();
+    to.attribute_layers = ew::transform(ctx, std::move(from.attribute_layers));
 }
 
-bp::UpdateEnvironmentAttributesData_<2168> Transformer<
-    bp::UpdateEnvironmentAttributesData_<2181>,
-    bp::UpdateEnvironmentAttributesData_<2168>>::transform(bp::UpdateEnvironmentAttributesData_<2181> &&from)
+void Transformer<bp::UpdateEnvironmentAttributesData_<2181>, bp::UpdateEnvironmentAttributesData_<2168>>::transform(
+    Context<bp::UpdateEnvironmentAttributesData_<2168>> &ctx, bp::UpdateEnvironmentAttributesData_<2181> &&from)
 {
-    bp::UpdateEnvironmentAttributesData_<2168> to;
+    auto &to = ctx.out();
     to.layer_name = std::move(from.layer_name);
     to.layer_dimension_id = from.layer_dimension_id;
-    to.attributes = ew::transform(std::move(from.attributes));
-    return to;
+    to.attributes = ew::transform(ctx, std::move(from.attributes));
 }
 
-bp::ClientboundAttributeLayerSyncPacket_<2168> Transformer<
-    bp::ClientboundAttributeLayerSyncPacket_<2181>,
-    bp::ClientboundAttributeLayerSyncPacket_<2168>>::transform(bp::ClientboundAttributeLayerSyncPacket_<2181> &&from)
+void Transformer<bp::ClientboundAttributeLayerSyncPacket_<2181>, bp::ClientboundAttributeLayerSyncPacket_<2168>>::
+    transform(Context<bp::ClientboundAttributeLayerSyncPacket_<2168>> &ctx,
+              bp::ClientboundAttributeLayerSyncPacket_<2181> &&from)
 {
-    bp::ClientboundAttributeLayerSyncPacket_<2168> to;
+    auto &to = ctx.out();
     // ENDWEAVE: the settings and removal arms are one type at both versions; only the two carrying
     // attribute data moved, and the assignment places each back in its own case.
     std::visit(
-        [&to](auto &alt) {
+        [&to, &ctx](auto &alt) {
             using Alt = std::remove_cvref_t<decltype(alt)>;
             if constexpr (std::is_same_v<Alt, bp::UpdateAttributeLayersData_<2181>>) {
-                to.data = ew::transform_to<bp::UpdateAttributeLayersData_<2168>>(std::move(alt));
+                to.data = ew::transform_to<bp::UpdateAttributeLayersData_<2168>>(ctx, std::move(alt));
             }
             else if constexpr (std::is_same_v<Alt, bp::UpdateEnvironmentAttributesData_<2181>>) {
-                to.data = ew::transform_to<bp::UpdateEnvironmentAttributesData_<2168>>(std::move(alt));
+                to.data = ew::transform_to<bp::UpdateEnvironmentAttributesData_<2168>>(ctx, std::move(alt));
             }
             else {
                 to.data = std::move(alt);
             }
         },
         from.data);
-    return to;
 }
 
 } // namespace endweave

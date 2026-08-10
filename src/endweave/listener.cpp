@@ -83,7 +83,7 @@ void logViolation(endstone::Logger &logger, std::string_view payload, std::strin
 } // namespace
 
 template <class Event>
-void PacketListener::translate(Event &event, const PacketHandlers &handlers)
+void PacketListener::translate(Event &event, UserConnection &connection, const PacketHandlers &handlers)
 {
     const int id = event.getPacketId();
     if (handlers.isCancelled(id)) {
@@ -99,8 +99,16 @@ void PacketListener::translate(Event &event, const PacketHandlers &handlers)
     std::string translated;
     bp::BinaryWriter out{translated};
     bp::BinaryReader in{event.getPayload()};
-    if (const auto result = handler(in, out); !result) {
+    bool cancelled = false;
+    if (const auto result = handler(connection, cancelled, in, out); !result) {
         logger_->warning("Dropping {}: {}.", packetLabel(id), result.error().message());
+        event.setCancelled(true);
+        return;
+    }
+    // A transform that could not say what the destination means dropped the packet on purpose,
+    // which is not the failure above and is not worth a warning.
+    if (cancelled) {
+        logger_->debug("Cancelled {}: the destination cannot express it.", packetLabel(id));
         event.setCancelled(true);
         return;
     }
@@ -161,7 +169,7 @@ void PacketListener::receive(endstone::PacketReceiveEvent &event, UserConnection
         return;
     }
 
-    translate(event, connection.getServerboundHandlers());
+    translate(event, connection, connection.getServerboundHandlers());
 }
 
 void PacketListener::send(endstone::PacketSendEvent &event, UserConnection &connection)
@@ -171,7 +179,7 @@ void PacketListener::send(endstone::PacketSendEvent &event, UserConnection &conn
         return;
     }
 
-    translate(event, connection.getClientboundHandlers());
+    translate(event, connection, connection.getClientboundHandlers());
 }
 
 void PacketListener::onPacketReceive(endstone::PacketReceiveEvent &event)

@@ -10,13 +10,13 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::ResourcePacksInfoPacket_<2168>, bp::ResourcePacksInfoPacket_<1001>> {
-    static std::expected<bp::ResourcePacksInfoPacket_<1001>, std::error_code> transform(
-        bp::ResourcePacksInfoPacket_<2168> &&from);
+    static void transform(Context<bp::ResourcePacksInfoPacket_<1001>> &ctx, bp::ResourcePacksInfoPacket_<2168> &&from);
 };
 
 template <>
 struct Transformer<bp::ResourcePackClientResponsePacket_<2168>, bp::ResourcePackClientResponsePacket_<1001>> {
-    static bp::ResourcePackClientResponsePacket_<1001> transform(bp::ResourcePackClientResponsePacket_<2168> &&from);
+    static void transform(Context<bp::ResourcePackClientResponsePacket_<1001>> &ctx,
+                          bp::ResourcePackClientResponsePacket_<2168> &&from);
 };
 
 } // namespace endweave

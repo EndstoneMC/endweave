@@ -16,12 +16,11 @@ namespace endweave {
 // once, where 1001 has a single packet-level action and cannot. BDS builds each packet from
 // one action, so the mixed form is something the 2168 shape permits rather than something
 // the wire carries, and it is refused rather than half-translated.
-std::expected<bp::PlayerListPacket_<1001>, std::error_code> Transformer<
-    bp::PlayerListPacket_<2168>, bp::PlayerListPacket_<1001>>::transform(bp::PlayerListPacket_<2168> &&from)
+void Transformer<bp::PlayerListPacket_<2168>, bp::PlayerListPacket_<1001>>::transform(
+    Context<bp::PlayerListPacket_<1001>> &ctx, bp::PlayerListPacket_<2168> &&from)
 {
-    bp::PlayerListPacket_<1001> to;
+    auto &to = ctx.out();
     if (from.entries.empty()) {
-        return to;
     }
     to.action = std::holds_alternative<bp::PlayerListPacket_<2168>::AddEntry>(from.entries.front())
                   ? bp::PlayerListPacketType::ADD
@@ -30,9 +29,10 @@ std::expected<bp::PlayerListPacket_<1001>, std::error_code> Transformer<
     for (auto &entry : from.entries) {
         if (auto *add = std::get_if<bp::PlayerListPacket_<2168>::AddEntry>(&entry)) {
             if (to.action != bp::PlayerListPacketType::ADD) {
-                return std::unexpected(std::make_error_code(std::errc::not_supported));
+                ctx.cancel();
+                return;
             }
-            auto skin = ew::transform_to<bp::SerializedSkinRef_<1001>>(std::move(add->skin));
+            auto skin = ew::transform_to<bp::SerializedSkinRef_<1001>>(ctx, std::move(add->skin));
             bp::PlayerListEntry_<1001> out;
             out.uuid = add->uuid;
             out.id = add->id;
@@ -43,7 +43,7 @@ std::expected<bp::PlayerListPacket_<1001>, std::error_code> Transformer<
             // ENDWEAVE: 2168 carries the trusted flag inside the skin; 1001 wants it in a run of one
             // bool per entry trailing the list, so it comes back out before the skin is converted.
             to.trusted_skins.push_back(skin.trusted_skin_flag == bp::TrustedSkinFlag::TRUE);
-            out.skin = ew::transform(std::move(skin));
+            out.skin = ew::transform(ctx, std::move(skin));
             out.is_teacher = add->is_teacher;
             out.is_host = add->is_host;
             out.is_sub_client = add->is_sub_client;
@@ -52,11 +52,11 @@ std::expected<bp::PlayerListPacket_<1001>, std::error_code> Transformer<
             continue;
         }
         if (to.action != bp::PlayerListPacketType::REMOVE) {
-            return std::unexpected(std::make_error_code(std::errc::not_supported));
+            ctx.cancel();
+            return;
         }
         to.removed_entries.push_back(std::get<bp::PlayerListPacket_<2168>::RemoveEntry>(entry).uuid);
     }
-    return to;
 }
 
 } // namespace endweave

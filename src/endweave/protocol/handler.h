@@ -105,37 +105,32 @@ consteval bool shouldHandle()
 }
 
 template <ProtocolVersion Cur, ProtocolVersion To, int Id>
-std::expected<packet_of<To, Id>, std::error_code> chain(packet_of<Cur, Id> &&from)
+void chain(const Context<packet_of<To, Id>> &ctx, packet_of<Cur, Id> &&from)
 {
     if constexpr (Cur == To) {
-        return std::move(from);
+        ctx.out() = std::move(from);
     }
     else if constexpr (std::is_same_v<packet_of<Cur, Id>, packet_of<step(Cur, To), Id>>) {
-        return chain<step(Cur, To), To, Id>(std::move(from));
+        chain<step(Cur, To), To, Id>(ctx, std::move(from));
     }
     else {
         static_assert(!WireCompatible<packet_of<Cur, Id>, packet_of<step(Cur, To), Id>>::value,
                       "endweave: this hop is declared wire-compatible, yet the chain has to hold the packet as an "
                       "object across it -- a hop further along that reshapes forces that. Write the Transformer for "
                       "this pair and drop the WireCompatible.");
-        using Next = packet_of<step(Cur, To), Id>;
-        // A hop that can refuse holds the packet in an expected across the call; a total one is
-        // still elided straight into the next hop.
-        if constexpr (FallibleTransformableFrom<packet_of<Cur, Id>, Next>) {
-            auto next = Transformer<packet_of<Cur, Id>, Next>::transform(std::move(from));
-            if (!next) {
-                return std::unexpected(next.error());
-            }
-            return chain<step(Cur, To), To, Id>(std::move(next).value());
+        packet_of<step(Cur, To), Id> next;
+        endweave::transform_into(ctx, std::move(from), next);
+        // A hop that dropped the packet leaves nothing worth carrying to the one after it.
+        if (ctx.isCancelled()) {
+            return;
         }
-        else {
-            return chain<step(Cur, To), To, Id>(endweave::transform_to<Next>(std::move(from)));
-        }
+        chain<step(Cur, To), To, Id>(ctx, std::move(next));
     }
 }
 
 template <ProtocolVersion From, ProtocolVersion To, int Id>
-std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWriter &out)
+std::expected<void, std::error_code> handle(UserConnection &connection, bool &cancelled, bp::BinaryReader &in,
+                                            bp::BinaryWriter &out)
 {
     auto result = bp::deserialize<packet_of<From, Id>>(in);
     if (!result) {
@@ -159,11 +154,14 @@ std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWrit
         bp::serialize(writer, packet);
     }
     else {
-        auto translated_packet = chain<From, To, Id>(std::move(packet));
-        if (!translated_packet) {
-            return std::unexpected(translated_packet.error());
+        packet_of<To, Id> translated_packet;
+        chain<From, To, Id>(Context<packet_of<To, Id>>{connection, cancelled, translated_packet}, std::move(packet));
+        // A transform anywhere on the chain may have dropped the packet, and whatever it wrote
+        // into the destination before that means nothing.
+        if (cancelled) {
+            return {};
         }
-        bp::serialize(writer, translated_packet.value());
+        bp::serialize(writer, translated_packet);
     }
 
     // The destination has to be able to read back what was just written for it. Serialiser
@@ -184,7 +182,8 @@ std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWrit
 } // namespace detail
 
 /** @see ViaVersion PacketHandler. */
-using PacketHandler = std::expected<void, std::error_code> (*)(bp::BinaryReader &, bp::BinaryWriter &);
+using PacketHandler = std::expected<void, std::error_code> (*)(UserConnection &, bool &, bp::BinaryReader &,
+                                                               bp::BinaryWriter &);
 
 namespace detail {
 

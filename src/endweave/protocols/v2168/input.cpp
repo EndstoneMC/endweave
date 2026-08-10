@@ -10,10 +10,10 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::PlayerBlockActionData_<1001> Transformer<bp::PlayerBlockActionData_<2168>, bp::PlayerBlockActionData_<1001>>::
-    transform(bp::PlayerBlockActionData_<2168> &&from)
+void Transformer<bp::PlayerBlockActionData_<2168>, bp::PlayerBlockActionData_<1001>>::transform(
+    Context<bp::PlayerBlockActionData_<1001>> &ctx, bp::PlayerBlockActionData_<2168> &&from)
 {
-    bp::PlayerBlockActionData_<1001> to;
+    auto &to = ctx.out();
     // ENDWEAVE: INTERNAL_UPDATE collides with 1001's COUNT sentinel, so it maps to UNKNOWN,
     // which BDS ignores. Dropping the action would be truer, but a transform is one-to-one.
     to.player_action_type = from.player_action_type == bp::PlayerActionType_<2168>::INTERNAL_UPDATE
@@ -21,13 +21,12 @@ bp::PlayerBlockActionData_<1001> Transformer<bp::PlayerBlockActionData_<2168>, b
                               : static_cast<bp::PlayerActionType_<1001>>(from.player_action_type);
     to.pos = from.pos;
     to.facing = from.facing;
-    return to;
 }
 
-bp::PlayerActionPacket_<1001> Transformer<bp::PlayerActionPacket_<2168>, bp::PlayerActionPacket_<1001>>::transform(
-    bp::PlayerActionPacket_<2168> &&from)
+void Transformer<bp::PlayerActionPacket_<2168>, bp::PlayerActionPacket_<1001>>::transform(
+    Context<bp::PlayerActionPacket_<1001>> &ctx, bp::PlayerActionPacket_<2168> &&from)
 {
-    bp::PlayerActionPacket_<1001> to;
+    auto &to = ctx.out();
     to.runtime_id = from.runtime_id;
     // ENDWEAVE: INTERNAL_UPDATE is 38, which is 1001's COUNT sentinel, so passing it through would
     // hand the server an action off the end of its enum. UNKNOWN is the one value BDS ignores.
@@ -37,14 +36,14 @@ bp::PlayerActionPacket_<1001> Transformer<bp::PlayerActionPacket_<2168>, bp::Pla
     to.pos = from.pos;
     to.result_pos = from.result_pos;
     to.face = from.face;
-    return to;
 }
 
-bp::PackedItemUseLegacyInventoryTransaction_<1001> Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2168>,
-                                                               bp::PackedItemUseLegacyInventoryTransaction_<1001>>::
-    transform(bp::PackedItemUseLegacyInventoryTransaction_<2168> &&from)
+void Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2168>,
+                 bp::PackedItemUseLegacyInventoryTransaction_<1001>>::
+    transform(Context<bp::PackedItemUseLegacyInventoryTransaction_<1001>> &ctx,
+              bp::PackedItemUseLegacyInventoryTransaction_<2168> &&from)
 {
-    bp::PackedItemUseLegacyInventoryTransaction_<1001> to;
+    auto &to = ctx.out();
     to.id = from.id.raw_id;
     // ENDWEAVE: 1001 reads the slots off the id rather than a flag, so a list the id does not gate
     // is one the server would never read back.
@@ -52,16 +51,15 @@ bp::PackedItemUseLegacyInventoryTransaction_<1001> Transformer<bp::PackedItemUse
         to.slots = std::move(from.slots).value();
     }
     to.transaction =
-        ew::transform(ew::transform_to<bp::ItemUseInventoryTransaction_<1001>>(std::move(from.transaction)));
-    return to;
+        ew::transform(ctx, ew::transform_to<bp::ItemUseInventoryTransaction_<1001>>(ctx, std::move(from.transaction)));
 }
 
-bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>, bp::PlayerAuthInputPacket_<1001>>::
-    transform(bp::PlayerAuthInputPacket_<2168> &&from)
+void Transformer<bp::PlayerAuthInputPacket_<2168>, bp::PlayerAuthInputPacket_<1001>>::transform(
+    Context<bp::PlayerAuthInputPacket_<1001>> &ctx, bp::PlayerAuthInputPacket_<2168> &&from)
 {
     using To = bp::PlayerAuthInputPacket_<1001>;
 
-    bp::PlayerAuthInputPacket_<1001> to;
+    auto &to = ctx.out();
     to.rot = from.rot;
     to.pos = from.pos;
     to.move = from.move;
@@ -91,13 +89,13 @@ bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>, b
     to.client_tick = from.client_tick;
     to.pos_delta = from.pos_delta;
     if (from.item_use_transaction.has_value()) {
-        to.item_use_transaction = ew::transform(std::move(from.item_use_transaction.value()));
+        to.item_use_transaction = ew::transform(ctx, std::move(from.item_use_transaction.value()));
     }
     if (from.item_stack_request.has_value()) {
-        to.item_stack_request = ew::transform(std::move(from.item_stack_request.value()));
+        to.item_stack_request = ew::transform(ctx, std::move(from.item_stack_request.value()));
     }
     if (from.player_block_actions.has_value()) {
-        to.player_block_actions = ew::transform(std::move(from.player_block_actions.value()));
+        to.player_block_actions = ew::transform(ctx, std::move(from.player_block_actions.value()));
     }
     // ENDWEAVE: 1001 cannot say "absent" here, but the gate flag is clear, so the zeroes never
     // reach the wire.
@@ -106,7 +104,6 @@ bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>, b
     to.analog_move_vector = from.analog_move_vector;
     to.camera_orientation = from.camera_orientation;
     to.raw_move_vector = from.raw_move_vector;
-    return to;
 }
 
 } // namespace endweave

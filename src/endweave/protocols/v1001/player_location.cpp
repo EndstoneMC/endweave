@@ -2,12 +2,11 @@
 
 namespace endweave {
 
-bp::PlayerUpdateEntityOverridesPacket_<2168> Transformer<
-    bp::PlayerUpdateEntityOverridesPacket_<1001>,
-    bp::PlayerUpdateEntityOverridesPacket_<2168>>::transform(bp::PlayerUpdateEntityOverridesPacket_<1001> &&from)
+void Transformer<bp::PlayerUpdateEntityOverridesPacket_<1001>, bp::PlayerUpdateEntityOverridesPacket_<2168>>::transform(
+    Context<bp::PlayerUpdateEntityOverridesPacket_<2168>> &ctx, bp::PlayerUpdateEntityOverridesPacket_<1001> &&from)
 {
     using Update = bp::PlayerUpdateEntityOverridesPacket_<2168>;
-    bp::PlayerUpdateEntityOverridesPacket_<2168> to;
+    auto &to = ctx.out();
     to.id = from.id;
     to.property_index = from.property_index;
     // ENDWEAVE: 2168 writes the type as the variant tag and again name-coded in the payload; the enumerators
@@ -29,14 +28,13 @@ bp::PlayerUpdateEntityOverridesPacket_<2168> Transformer<
         to.update = Update::ClearOverride{bp::UpdateType::CLEAR_OVERRIDES};
         break;
     }
-    return to;
 }
 
-bp::PlayerLocationPacket_<2168> Transformer<
-    bp::PlayerLocationPacket_<1001>, bp::PlayerLocationPacket_<2168>>::transform(bp::PlayerLocationPacket_<1001> &&from)
+void Transformer<bp::PlayerLocationPacket_<1001>, bp::PlayerLocationPacket_<2168>>::transform(
+    Context<bp::PlayerLocationPacket_<2168>> &ctx, bp::PlayerLocationPacket_<1001> &&from)
 {
     using Location = bp::PlayerLocationPacket_<2168>;
-    bp::PlayerLocationPacket_<2168> to;
+    auto &to = ctx.out();
     to.id = from.id;
     // ENDWEAVE: 2168 moved the type behind the id and writes it as both tag and payload; Coordinates is the
     // case for anything but Hide, and it carries the position.
@@ -46,7 +44,6 @@ bp::PlayerLocationPacket_<2168> Transformer<
     else {
         to.location = Location::CoordinatesLocation{from.type, from.pos};
     }
-    return to;
 }
 
 } // namespace endweave

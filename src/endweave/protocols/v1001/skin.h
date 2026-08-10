@@ -10,52 +10,54 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::legacy::AnimatedImageData, bp::AnimatedImageData> {
-    static bp::AnimatedImageData transform(bp::legacy::AnimatedImageData &&from);
+    static void transform(Context<bp::AnimatedImageData> &ctx, bp::legacy::AnimatedImageData &&from);
 };
 
 template <>
 struct Transformer<bp::AnimatedImageData, bp::legacy::AnimatedImageData> {
-    static bp::legacy::AnimatedImageData transform(bp::AnimatedImageData &&from);
+    static void transform(Context<bp::legacy::AnimatedImageData> &ctx, bp::AnimatedImageData &&from);
 };
 
 template <>
 struct Transformer<bp::legacy::SerializedPersonaPieceHandle, bp::SerializedPersonaPieceHandle> {
-    static bp::SerializedPersonaPieceHandle transform(bp::legacy::SerializedPersonaPieceHandle &&from);
+    static void transform(Context<bp::SerializedPersonaPieceHandle> &ctx,
+                          bp::legacy::SerializedPersonaPieceHandle &&from);
 };
 
 template <>
 struct Transformer<bp::SerializedPersonaPieceHandle, bp::legacy::SerializedPersonaPieceHandle> {
-    static bp::legacy::SerializedPersonaPieceHandle transform(bp::SerializedPersonaPieceHandle &&from);
+    static void transform(Context<bp::legacy::SerializedPersonaPieceHandle> &ctx,
+                          bp::SerializedPersonaPieceHandle &&from);
 };
 
 template <>
 struct Transformer<bp::legacy::TintMapColor, bp::TintMapColor> {
-    static bp::TintMapColor transform(bp::legacy::TintMapColor &&from);
+    static void transform(Context<bp::TintMapColor> &ctx, bp::legacy::TintMapColor &&from);
 };
 
 template <>
 struct Transformer<bp::TintMapColor, bp::legacy::TintMapColor> {
-    static bp::legacy::TintMapColor transform(bp::TintMapColor &&from);
+    static void transform(Context<bp::legacy::TintMapColor> &ctx, bp::TintMapColor &&from);
 };
 
 template <>
 struct Transformer<bp::legacy::SerializedSkinRef, bp::SerializedSkinRef_<1001>> {
-    static bp::SerializedSkinRef_<1001> transform(bp::legacy::SerializedSkinRef &&from);
+    static void transform(Context<bp::SerializedSkinRef_<1001>> &ctx, bp::legacy::SerializedSkinRef &&from);
 };
 
 template <>
 struct Transformer<bp::SerializedSkinRef_<1001>, bp::SerializedSkinRef_<2168>> {
-    static bp::SerializedSkinRef_<2168> transform(bp::SerializedSkinRef_<1001> &&from);
+    static void transform(Context<bp::SerializedSkinRef_<2168>> &ctx, bp::SerializedSkinRef_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::SerializedSkinRef_<1001>, bp::legacy::SerializedSkinRef> {
-    static bp::legacy::SerializedSkinRef transform(bp::SerializedSkinRef_<1001> &&from);
+    static void transform(Context<bp::legacy::SerializedSkinRef> &ctx, bp::SerializedSkinRef_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::PlayerSkinPacket_<1001>, bp::PlayerSkinPacket_<2168>> {
-    static bp::PlayerSkinPacket_<2168> transform(bp::PlayerSkinPacket_<1001> &&from);
+    static void transform(Context<bp::PlayerSkinPacket_<2168>> &ctx, bp::PlayerSkinPacket_<1001> &&from);
 };
 
 } // namespace endweave

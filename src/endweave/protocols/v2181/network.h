@@ -10,12 +10,13 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::DisconnectPacket_<2181>, bp::DisconnectPacket_<2168>> {
-    static bp::DisconnectPacket_<2168> transform(bp::DisconnectPacket_<2181> &&from);
+    static void transform(Context<bp::DisconnectPacket_<2168>> &ctx, bp::DisconnectPacket_<2181> &&from);
 };
 
 template <>
 struct Transformer<bp::PacketViolationWarningPacket_<2181>, bp::PacketViolationWarningPacket_<2168>> {
-    static bp::PacketViolationWarningPacket_<2168> transform(bp::PacketViolationWarningPacket_<2181> &&from);
+    static void transform(Context<bp::PacketViolationWarningPacket_<2168>> &ctx,
+                          bp::PacketViolationWarningPacket_<2181> &&from);
 };
 
 } // namespace endweave

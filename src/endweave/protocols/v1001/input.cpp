@@ -9,22 +9,22 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::PlayerBlockActionData_<2168> Transformer<bp::PlayerBlockActionData_<1001>, bp::PlayerBlockActionData_<2168>>::
-    transform(bp::PlayerBlockActionData_<1001> &&from)
+void Transformer<bp::PlayerBlockActionData_<1001>, bp::PlayerBlockActionData_<2168>>::transform(
+    Context<bp::PlayerBlockActionData_<2168>> &ctx, bp::PlayerBlockActionData_<1001> &&from)
 {
-    bp::PlayerBlockActionData_<2168> to;
+    auto &to = ctx.out();
     // ENDWEAVE: 2168 only appends INTERNAL_UPDATE, so every action 1001 can name keeps its value.
     to.player_action_type = static_cast<bp::PlayerActionType_<2168>>(from.player_action_type);
     to.pos = from.pos;
     to.facing = from.facing;
-    return to;
 }
 
-bp::PackedItemUseLegacyInventoryTransaction_<2168> Transformer<bp::PackedItemUseLegacyInventoryTransaction_<1001>,
-                                                               bp::PackedItemUseLegacyInventoryTransaction_<2168>>::
-    transform(bp::PackedItemUseLegacyInventoryTransaction_<1001> &&from)
+void Transformer<bp::PackedItemUseLegacyInventoryTransaction_<1001>,
+                 bp::PackedItemUseLegacyInventoryTransaction_<2168>>::
+    transform(Context<bp::PackedItemUseLegacyInventoryTransaction_<2168>> &ctx,
+              bp::PackedItemUseLegacyInventoryTransaction_<1001> &&from)
 {
-    bp::PackedItemUseLegacyInventoryTransaction_<2168> to;
+    auto &to = ctx.out();
     to.id = bp::ItemStackLegacyRequestId{from.id};
     // ENDWEAVE: 1001 reads the slots only under a negative even id and 2168 flags them, so the gate
     // the reader applied is what engages the flag.
@@ -32,16 +32,15 @@ bp::PackedItemUseLegacyInventoryTransaction_<2168> Transformer<bp::PackedItemUse
         to.slots = std::move(from.slots);
     }
     to.transaction =
-        ew::transform(ew::transform_to<bp::ItemUseInventoryTransaction_<1001>>(std::move(from.transaction)));
-    return to;
+        ew::transform(ctx, ew::transform_to<bp::ItemUseInventoryTransaction_<1001>>(ctx, std::move(from.transaction)));
 }
 
-bp::PlayerAuthInputPacket_<2168> Transformer<bp::PlayerAuthInputPacket_<1001>, bp::PlayerAuthInputPacket_<2168>>::
-    transform(bp::PlayerAuthInputPacket_<1001> &&from)
+void Transformer<bp::PlayerAuthInputPacket_<1001>, bp::PlayerAuthInputPacket_<2168>>::transform(
+    Context<bp::PlayerAuthInputPacket_<2168>> &ctx, bp::PlayerAuthInputPacket_<1001> &&from)
 {
     using From = bp::PlayerAuthInputPacket_<1001>;
 
-    bp::PlayerAuthInputPacket_<2168> to;
+    auto &to = ctx.out();
     to.rot = from.rot;
     to.pos = from.pos;
     to.move = from.move;
@@ -62,13 +61,13 @@ bp::PlayerAuthInputPacket_<2168> Transformer<bp::PlayerAuthInputPacket_<1001>, b
     // ENDWEAVE: The 1001 flag is the presence marker, not emptiness; a client can set a gate and
     // send an empty list.
     if (from.input_data.test(static_cast<std::size_t>(From::InputData::PERFORM_ITEM_INTERACTION))) {
-        to.item_use_transaction = ew::transform(std::move(from.item_use_transaction));
+        to.item_use_transaction = ew::transform(ctx, std::move(from.item_use_transaction));
     }
     if (from.input_data.test(static_cast<std::size_t>(From::InputData::PERFORM_ITEM_STACK_REQUEST))) {
-        to.item_stack_request = ew::transform(std::move(from.item_stack_request));
+        to.item_stack_request = ew::transform(ctx, std::move(from.item_stack_request));
     }
     if (from.input_data.test(static_cast<std::size_t>(From::InputData::PERFORM_BLOCK_ACTIONS))) {
-        to.player_block_actions = ew::transform(std::move(from.player_block_actions));
+        to.player_block_actions = ew::transform(ctx, std::move(from.player_block_actions));
     }
     if (from.input_data.test(static_cast<std::size_t>(From::InputData::IS_IN_CLIENT_PREDICTED_VEHICLE))) {
         to.vehicle_rot = from.vehicle_rot;
@@ -77,7 +76,6 @@ bp::PlayerAuthInputPacket_<2168> Transformer<bp::PlayerAuthInputPacket_<1001>, b
     to.analog_move_vector = from.analog_move_vector;
     to.camera_orientation = from.camera_orientation;
     to.raw_move_vector = from.raw_move_vector;
-    return to;
 }
 
 } // namespace endweave

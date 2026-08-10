@@ -74,35 +74,32 @@ bp::SkinImage imageOf(std::uint32_t width, std::uint32_t height, std::string &&b
 
 } // namespace
 
-bp::AnimatedImageData Transformer<bp::legacy::AnimatedImageData, bp::AnimatedImageData>::transform(
-    bp::legacy::AnimatedImageData &&from)
+void Transformer<bp::legacy::AnimatedImageData, bp::AnimatedImageData>::transform(Context<bp::AnimatedImageData> &ctx,
+                                                                                  bp::legacy::AnimatedImageData &&from)
 {
-    bp::AnimatedImageData to;
+    auto &to = ctx.out();
     to.image = imageOf(from.image_width, from.image_height, std::move(from.image_bytes));
     to.type = from.type;
     to.frames = from.frames;
     to.animation_expression = from.animation_expression;
-    return to;
 }
 
-bp::legacy::AnimatedImageData Transformer<bp::AnimatedImageData, bp::legacy::AnimatedImageData>::transform(
-    bp::AnimatedImageData &&from)
+void Transformer<bp::AnimatedImageData, bp::legacy::AnimatedImageData>::transform(
+    Context<bp::legacy::AnimatedImageData> &ctx, bp::AnimatedImageData &&from)
 {
-    bp::legacy::AnimatedImageData to;
+    auto &to = ctx.out();
     to.image_width = from.image.width;
     to.image_height = from.image.height;
     to.image_bytes = std::move(from.image.image_bytes);
     to.type = from.type;
     to.frames = from.frames;
     to.animation_expression = from.animation_expression;
-    return to;
 }
 
-bp::SerializedPersonaPieceHandle Transformer<
-    bp::legacy::SerializedPersonaPieceHandle,
-    bp::SerializedPersonaPieceHandle>::transform(bp::legacy::SerializedPersonaPieceHandle &&from)
+void Transformer<bp::legacy::SerializedPersonaPieceHandle, bp::SerializedPersonaPieceHandle>::transform(
+    Context<bp::SerializedPersonaPieceHandle> &ctx, bp::legacy::SerializedPersonaPieceHandle &&from)
 {
-    bp::SerializedPersonaPieceHandle to;
+    auto &to = ctx.out();
     to.piece_id = std::move(from.piece_id);
     // ENDWEAVE: the cerealised and pre-cereal enums carry BDS's same PieceType numbering and
     // differ only in the name table they encode through, so the value crosses unchanged.
@@ -110,54 +107,51 @@ bp::SerializedPersonaPieceHandle Transformer<
     to.pack_id = uuidFromString(from.pack_id);
     to.is_default_piece = from.is_default_piece;
     to.product_id = std::move(from.product_id);
-    return to;
 }
 
-bp::legacy::SerializedPersonaPieceHandle Transformer<
-    bp::SerializedPersonaPieceHandle,
-    bp::legacy::SerializedPersonaPieceHandle>::transform(bp::SerializedPersonaPieceHandle &&from)
+void Transformer<bp::SerializedPersonaPieceHandle, bp::legacy::SerializedPersonaPieceHandle>::transform(
+    Context<bp::legacy::SerializedPersonaPieceHandle> &ctx, bp::SerializedPersonaPieceHandle &&from)
 {
-    bp::legacy::SerializedPersonaPieceHandle to;
+    auto &to = ctx.out();
     to.piece_id = std::move(from.piece_id);
     to.piece_type = static_cast<bp::legacy::PieceType>(from.piece_type);
     to.pack_id = uuidToString(from.pack_id);
     to.is_default_piece = from.is_default_piece;
     to.product_id = std::move(from.product_id);
-    return to;
 }
 
-bp::TintMapColor Transformer<bp::legacy::TintMapColor, bp::TintMapColor>::transform(bp::legacy::TintMapColor &&from)
+void Transformer<bp::legacy::TintMapColor, bp::TintMapColor>::transform(Context<bp::TintMapColor> &ctx,
+                                                                        bp::legacy::TintMapColor &&from)
 {
-    bp::TintMapColor to;
+    auto &to = ctx.out();
     for (const auto &hex : from.colors) {
         to.colors.push_back(colorFromHex(hex));
     }
     // ENDWEAVE: BDS holds four colours per piece and the cerealised form writes exactly four behind
     // no count, so a shorter list would put a skin on the wire the client cannot read.
     to.colors.resize(4);
-    return to;
 }
 
-bp::legacy::TintMapColor Transformer<bp::TintMapColor, bp::legacy::TintMapColor>::transform(bp::TintMapColor &&from)
+void Transformer<bp::TintMapColor, bp::legacy::TintMapColor>::transform(Context<bp::legacy::TintMapColor> &ctx,
+                                                                        bp::TintMapColor &&from)
 {
-    bp::legacy::TintMapColor to;
+    auto &to = ctx.out();
     // ENDWEAVE: the piece type is the map key at the cerealised form, so the skin fills it in.
     to.piece_type = {};
     for (const bp::Color color : from.colors) {
         to.colors.push_back(colorToHex(color));
     }
-    return to;
 }
 
-bp::SerializedSkinRef_<1001> Transformer<bp::legacy::SerializedSkinRef, bp::SerializedSkinRef_<1001>>::transform(
-    bp::legacy::SerializedSkinRef &&from)
+void Transformer<bp::legacy::SerializedSkinRef, bp::SerializedSkinRef_<1001>>::transform(
+    Context<bp::SerializedSkinRef_<1001>> &ctx, bp::legacy::SerializedSkinRef &&from)
 {
-    bp::SerializedSkinRef_<1001> to;
+    auto &to = ctx.out();
     to.id = std::move(from.id);
     to.play_fab_id = std::move(from.play_fab_id);
     to.resource_patch = std::move(from.resource_patch);
     to.image_data = imageOf(from.image_width, from.image_height, std::move(from.image_bytes));
-    to.animated_image_data = ew::transform(std::move(from.animated_image_data));
+    to.animated_image_data = ew::transform(ctx, std::move(from.animated_image_data));
     to.cape_image_data = imageOf(from.cape_image_width, from.cape_image_height, std::move(from.cape_image_bytes));
     to.geometry_data = std::move(from.geometry_data);
     to.geometry_data_min_engine_version = std::move(from.geometry_data_min_engine_version);
@@ -166,11 +160,11 @@ bp::SerializedSkinRef_<1001> Transformer<bp::legacy::SerializedSkinRef, bp::Seri
     to.full_id = std::move(from.full_id);
     to.arm_size = from.arm_size;
     to.skin_color = colorFromHex(from.skin_color);
-    to.persona_pieces = ew::transform(std::move(from.persona_pieces));
+    to.persona_pieces = ew::transform(ctx, std::move(from.persona_pieces));
     // The pre-cereal write walks the map as a list, so each entry carries its own key back.
     for (auto &tint : from.piece_tint_colors) {
         const auto piece_type = static_cast<bp::PieceType>(tint.piece_type);
-        to.piece_tint_colors.emplace(piece_type, ew::transform(std::move(tint)));
+        to.piece_tint_colors.emplace(piece_type, ew::transform(ctx, std::move(tint)));
     }
     to.is_premium = from.is_premium;
     to.is_persona = from.is_persona;
@@ -180,20 +174,19 @@ bp::SerializedSkinRef_<1001> Transformer<bp::legacy::SerializedSkinRef, bp::Seri
     // ENDWEAVE: the pre-cereal skin has no flag of its own, so PlayerListPacket fills it in from
     // the trailing run it writes one bool per entry into.
     to.trusted_skin_flag = bp::TrustedSkinFlag::UNSET;
-    return to;
 }
 
-bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>, bp::legacy::SerializedSkinRef>::transform(
-    bp::SerializedSkinRef_<1001> &&from)
+void Transformer<bp::SerializedSkinRef_<1001>, bp::legacy::SerializedSkinRef>::transform(
+    Context<bp::legacy::SerializedSkinRef> &ctx, bp::SerializedSkinRef_<1001> &&from)
 {
-    bp::legacy::SerializedSkinRef to;
+    auto &to = ctx.out();
     to.id = std::move(from.id);
     to.play_fab_id = std::move(from.play_fab_id);
     to.resource_patch = std::move(from.resource_patch);
     to.image_width = from.image_data.width;
     to.image_height = from.image_data.height;
     to.image_bytes = std::move(from.image_data.image_bytes);
-    to.animated_image_data = ew::transform(std::move(from.animated_image_data));
+    to.animated_image_data = ew::transform(ctx, std::move(from.animated_image_data));
     to.cape_image_width = from.cape_image_data.width;
     to.cape_image_height = from.cape_image_data.height;
     to.cape_image_bytes = std::move(from.cape_image_data.image_bytes);
@@ -204,9 +197,9 @@ bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>, bp::lega
     to.full_id = std::move(from.full_id);
     to.arm_size = from.arm_size;
     to.skin_color = colorToHex(from.skin_color);
-    to.persona_pieces = ew::transform(std::move(from.persona_pieces));
+    to.persona_pieces = ew::transform(ctx, std::move(from.persona_pieces));
     for (auto &[piece_type, colors] : from.piece_tint_colors) {
-        auto tint = ew::transform_to<bp::legacy::TintMapColor>(std::move(colors));
+        auto tint = ew::transform_to<bp::legacy::TintMapColor>(ctx, std::move(colors));
         tint.piece_type = static_cast<bp::legacy::PieceType>(piece_type);
         to.piece_tint_colors.push_back(std::move(tint));
     }
@@ -217,13 +210,12 @@ bp::legacy::SerializedSkinRef Transformer<bp::SerializedSkinRef_<1001>, bp::lega
     to.overrides_player_appearance = from.overrides_player_appearance;
     // ENDWEAVE: trusted_skin_flag stops here; PlayerListPacket writes it as a trailing bool of its
     // own, and PlayerSkinPacket is cerealised at 1001 and never reaches this form.
-    return to;
 }
 
-bp::SerializedSkinRef_<2168> Transformer<bp::SerializedSkinRef_<1001>, bp::SerializedSkinRef_<2168>>::transform(
-    bp::SerializedSkinRef_<1001> &&from)
+void Transformer<bp::SerializedSkinRef_<1001>, bp::SerializedSkinRef_<2168>>::transform(
+    Context<bp::SerializedSkinRef_<2168>> &ctx, bp::SerializedSkinRef_<1001> &&from)
 {
-    bp::SerializedSkinRef_<2168> to;
+    auto &to = ctx.out();
     to.id = std::move(from.id);
     to.play_fab_id = std::move(from.play_fab_id);
     to.resource_patch = std::move(from.resource_patch);
@@ -248,18 +240,16 @@ bp::SerializedSkinRef_<2168> Transformer<bp::SerializedSkinRef_<1001>, bp::Seria
     // ENDWEAVE: 1001 carries no profile hash. Empty is what a client with no persona
     // profile sends, so the server reads the skin as unhashed rather than as a mismatch.
     to.profile_hash = {};
-    return to;
 }
 
-bp::PlayerSkinPacket_<2168> Transformer<bp::PlayerSkinPacket_<1001>, bp::PlayerSkinPacket_<2168>>::transform(
-    bp::PlayerSkinPacket_<1001> &&from)
+void Transformer<bp::PlayerSkinPacket_<1001>, bp::PlayerSkinPacket_<2168>>::transform(
+    Context<bp::PlayerSkinPacket_<2168>> &ctx, bp::PlayerSkinPacket_<1001> &&from)
 {
-    bp::PlayerSkinPacket_<2168> to;
+    auto &to = ctx.out();
     to.uuid = from.uuid;
-    to.skin = ew::transform(std::move(from.skin));
+    to.skin = ew::transform(ctx, std::move(from.skin));
     to.localized_new_skin_name = std::move(from.localized_new_skin_name);
     to.localized_old_skin_name = std::move(from.localized_old_skin_name);
-    return to;
 }
 
 } // namespace endweave

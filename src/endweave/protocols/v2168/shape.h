@@ -10,17 +10,18 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::TextDataPayload_<2168>, bp::TextDataPayload_<2181>> {
-    static bp::TextDataPayload_<2181> transform(bp::TextDataPayload_<2168> &&from);
+    static void transform(Context<bp::TextDataPayload_<2181>> &ctx, bp::TextDataPayload_<2168> &&from);
 };
 
 template <>
 struct Transformer<bp::PrimitiveShapeDataPayload_<2168>, bp::PrimitiveShapeDataPayload_<2181>> {
-    static bp::PrimitiveShapeDataPayload_<2181> transform(bp::PrimitiveShapeDataPayload_<2168> &&from);
+    static void transform(Context<bp::PrimitiveShapeDataPayload_<2181>> &ctx,
+                          bp::PrimitiveShapeDataPayload_<2168> &&from);
 };
 
 template <>
 struct Transformer<bp::PrimitiveShapesPacket_<2168>, bp::PrimitiveShapesPacket_<2181>> {
-    static bp::PrimitiveShapesPacket_<2181> transform(bp::PrimitiveShapesPacket_<2168> &&from);
+    static void transform(Context<bp::PrimitiveShapesPacket_<2181>> &ctx, bp::PrimitiveShapesPacket_<2168> &&from);
 };
 
 } // namespace endweave

@@ -30,10 +30,10 @@ bp::NetworkItemStackDescriptor downgradeLegacyItemStack(bp::SerializedNetworkIte
 
 namespace endweave {
 
-bp::MoveActorDeltaData_<1001> Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<1001>>::transform(
-    bp::MoveActorDeltaData_<2168> &&from)
+void Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<1001>>::transform(
+    Context<bp::MoveActorDeltaData_<1001>> &ctx, bp::MoveActorDeltaData_<2168> &&from)
 {
-    bp::MoveActorDeltaData_<1001> to;
+    auto &to = ctx.out();
     to.runtime_id = from.runtime_id;
     // ENDWEAVE: The header is rebuilt from the engaged optionals; a bit disagreeing with its
     // payload would desynchronise 1001's reader for the rest of the packet.
@@ -74,13 +74,12 @@ bp::MoveActorDeltaData_<1001> Transformer<bp::MoveActorDeltaData_<2168>, bp::Mov
     if (from.force_completion) {
         to.header |= MoveActorDeltaHeader::FORCE_COMPLETION;
     }
-    return to;
 }
 
-bp::AddPlayerPacket_<1001> Transformer<bp::AddPlayerPacket_<2168>, bp::AddPlayerPacket_<1001>>::transform(
-    bp::AddPlayerPacket_<2168> &&from)
+void Transformer<bp::AddPlayerPacket_<2168>, bp::AddPlayerPacket_<1001>>::transform(
+    Context<bp::AddPlayerPacket_<1001>> &ctx, bp::AddPlayerPacket_<2168> &&from)
 {
-    bp::AddPlayerPacket_<1001> to;
+    auto &to = ctx.out();
     to.uuid = from.uuid;
     to.name = std::move(from.name);
     to.runtime_id = from.runtime_id;
@@ -91,33 +90,31 @@ bp::AddPlayerPacket_<1001> Transformer<bp::AddPlayerPacket_<2168>, bp::AddPlayer
     to.y_head_rot = from.y_head_rot;
     to.carried_item = downgradeLegacyItemStack(std::move(from.carried_item));
     to.player_game_type = from.player_game_type;
-    to.unpack = ew::transform(std::move(from.unpack));
+    to.unpack = ew::transform(ctx, std::move(from.unpack));
     to.synched_properties = std::move(from.synched_properties);
     to.abilities_data = std::move(from.abilities_data);
     to.links = std::move(from.links);
     to.device_id = std::move(from.device_id);
     to.build_platform = from.build_platform;
-    return to;
 }
 
-bp::AddItemActorPacket_<1001> Transformer<bp::AddItemActorPacket_<2168>, bp::AddItemActorPacket_<1001>>::transform(
-    bp::AddItemActorPacket_<2168> &&from)
+void Transformer<bp::AddItemActorPacket_<2168>, bp::AddItemActorPacket_<1001>>::transform(
+    Context<bp::AddItemActorPacket_<1001>> &ctx, bp::AddItemActorPacket_<2168> &&from)
 {
-    bp::AddItemActorPacket_<1001> to;
+    auto &to = ctx.out();
     to.id = from.id;
     to.runtime_id = from.runtime_id;
     to.item = downgradeLegacyItemStack(std::move(from.item));
     to.pos = from.pos;
     to.velocity = from.velocity;
-    to.data = ew::transform(std::move(from.data));
+    to.data = ew::transform(ctx, std::move(from.data));
     to.is_from_fishing = from.is_from_fishing;
-    return to;
 }
 
-bp::MovePlayerPacket_<1001> Transformer<bp::MovePlayerPacket_<2168>, bp::MovePlayerPacket_<1001>>::transform(
-    bp::MovePlayerPacket_<2168> &&from)
+void Transformer<bp::MovePlayerPacket_<2168>, bp::MovePlayerPacket_<1001>>::transform(
+    Context<bp::MovePlayerPacket_<1001>> &ctx, bp::MovePlayerPacket_<2168> &&from)
 {
-    bp::MovePlayerPacket_<1001> to;
+    auto &to = ctx.out();
     to.player_id = from.player_id;
     to.pos = from.pos;
     to.rot = from.rot;
@@ -130,21 +127,19 @@ bp::MovePlayerPacket_<1001> Transformer<bp::MovePlayerPacket_<2168>, bp::MovePla
     to.cause = from.teleport_data.has_value() ? from.teleport_data.value().cause : 0;
     to.source_entity_type = from.teleport_data.has_value() ? from.teleport_data.value().source_entity_type : 0;
     to.tick = from.tick;
-    return to;
 }
 
-bp::MoveActorDeltaPacket_<1001> Transformer<
-    bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<1001>>::transform(bp::MoveActorDeltaPacket_<2168> &&from)
+void Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<1001>>::transform(
+    Context<bp::MoveActorDeltaPacket_<1001>> &ctx, bp::MoveActorDeltaPacket_<2168> &&from)
 {
-    bp::MoveActorDeltaPacket_<1001> to;
-    to.move_data = ew::transform(std::move(from.move_data));
-    return to;
+    auto &to = ctx.out();
+    to.move_data = ew::transform(ctx, std::move(from.move_data));
 }
 
-bp::MoveActorDeltaData_<2181> Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2181>>::transform(
-    bp::MoveActorDeltaData_<2168> &&from)
+void Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2181>>::transform(
+    Context<bp::MoveActorDeltaData_<2181>> &ctx, bp::MoveActorDeltaData_<2168> &&from)
 {
-    bp::MoveActorDeltaData_<2181> to;
+    auto &to = ctx.out();
     to.runtime_id = from.runtime_id;
     to.new_position_x = from.new_position_x;
     to.new_position_y = from.new_position_y;
@@ -159,15 +154,13 @@ bp::MoveActorDeltaData_<2181> Transformer<bp::MoveActorDeltaData_<2168>, bp::Mov
     // ENDWEAVE: 2168 stamps the move with no tick, so the interpolation 2181 keys on it starts from
     // zero for every actor.
     to.ticks = 0;
-    return to;
 }
 
-bp::MoveActorDeltaPacket_<2181> Transformer<
-    bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<2181>>::transform(bp::MoveActorDeltaPacket_<2168> &&from)
+void Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<2181>>::transform(
+    Context<bp::MoveActorDeltaPacket_<2181>> &ctx, bp::MoveActorDeltaPacket_<2168> &&from)
 {
-    bp::MoveActorDeltaPacket_<2181> to;
-    to.move_data = ew::transform(std::move(from.move_data));
-    return to;
+    auto &to = ctx.out();
+    to.move_data = ew::transform(ctx, std::move(from.move_data));
 }
 
 } // namespace endweave

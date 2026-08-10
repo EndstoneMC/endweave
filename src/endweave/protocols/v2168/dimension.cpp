@@ -10,8 +10,8 @@ using DimensionDefinitionV2168 = bp::DimensionDefinitionGroup_<2168>::DimensionD
 
 } // namespace
 
-DimensionDefinitionV1001 Transformer<DimensionDefinitionV2168, DimensionDefinitionV1001>::transform(
-    DimensionDefinitionV2168 &&from)
+void Transformer<DimensionDefinitionV2168, DimensionDefinitionV1001>::transform(Context<DimensionDefinitionV1001> &ctx,
+                                                                                DimensionDefinitionV2168 &&from)
 {
     DimensionDefinitionV1001 to;
     to.height_maximum = from.height_maximum;
@@ -19,15 +19,13 @@ DimensionDefinitionV1001 Transformer<DimensionDefinitionV2168, DimensionDefiniti
     to.generator_type = from.generator_type;
     to.dimension_type = from.dimension_type;
     // ENDWEAVE: 1001 has nowhere to put the owning pack, so pack_id is dropped and the name key stands alone.
-    return to;
 }
 
-bp::DimensionDataPacket_<1001> Transformer<bp::DimensionDataPacket_<2168>, bp::DimensionDataPacket_<1001>>::transform(
-    bp::DimensionDataPacket_<2168> &&from)
+void Transformer<bp::DimensionDataPacket_<2168>, bp::DimensionDataPacket_<1001>>::transform(
+    Context<bp::DimensionDataPacket_<1001>> &ctx, bp::DimensionDataPacket_<2168> &&from)
 {
-    bp::DimensionDataPacket_<1001> to;
-    to.dimension_definitions = ew::transform(std::move(from.dimension_definitions));
-    return to;
+    auto &to = ctx.out();
+    to.dimension_definitions = ew::transform(ctx, std::move(from.dimension_definitions));
 }
 
 } // namespace endweave

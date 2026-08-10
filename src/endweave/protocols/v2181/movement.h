@@ -10,12 +10,12 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::MoveActorDeltaData_<2181>, bp::MoveActorDeltaData_<2168>> {
-    static bp::MoveActorDeltaData_<2168> transform(bp::MoveActorDeltaData_<2181> &&from);
+    static void transform(Context<bp::MoveActorDeltaData_<2168>> &ctx, bp::MoveActorDeltaData_<2181> &&from);
 };
 
 template <>
 struct Transformer<bp::MoveActorDeltaPacket_<2181>, bp::MoveActorDeltaPacket_<2168>> {
-    static bp::MoveActorDeltaPacket_<2168> transform(bp::MoveActorDeltaPacket_<2181> &&from);
+    static void transform(Context<bp::MoveActorDeltaPacket_<2168>> &ctx, bp::MoveActorDeltaPacket_<2181> &&from);
 };
 
 } // namespace endweave

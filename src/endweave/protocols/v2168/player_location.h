@@ -10,12 +10,13 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::PlayerUpdateEntityOverridesPacket_<2168>, bp::PlayerUpdateEntityOverridesPacket_<1001>> {
-    static bp::PlayerUpdateEntityOverridesPacket_<1001> transform(bp::PlayerUpdateEntityOverridesPacket_<2168> &&from);
+    static void transform(Context<bp::PlayerUpdateEntityOverridesPacket_<1001>> &ctx,
+                          bp::PlayerUpdateEntityOverridesPacket_<2168> &&from);
 };
 
 template <>
 struct Transformer<bp::PlayerLocationPacket_<2168>, bp::PlayerLocationPacket_<1001>> {
-    static bp::PlayerLocationPacket_<1001> transform(bp::PlayerLocationPacket_<2168> &&from);
+    static void transform(Context<bp::PlayerLocationPacket_<1001>> &ctx, bp::PlayerLocationPacket_<2168> &&from);
 };
 
 } // namespace endweave

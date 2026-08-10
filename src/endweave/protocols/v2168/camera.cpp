@@ -7,10 +7,10 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::CameraPreset_<2181> Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2181>>::transform(
-    bp::CameraPreset_<2168> &&from)
+void Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2181>>::transform(Context<bp::CameraPreset_<2181>> &ctx,
+                                                                              bp::CameraPreset_<2168> &&from)
 {
-    bp::CameraPreset_<2181> to;
+    auto &to = ctx.out();
     to.name = std::move(from.name);
     to.inherit_from = std::move(from.inherit_from);
     to.pos_x = from.pos_x;
@@ -37,23 +37,20 @@ bp::CameraPreset_<2181> Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2
     // what 2181 writes for a preset that sets neither.
     to.apply_inherited_starting_rotation = false;
     to.starting_rotation = std::nullopt;
-    return to;
 }
 
-bp::CameraPresets_<2181> Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2181>>::transform(
-    bp::CameraPresets_<2168> &&from)
+void Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2181>>::transform(Context<bp::CameraPresets_<2181>> &ctx,
+                                                                                bp::CameraPresets_<2168> &&from)
 {
-    bp::CameraPresets_<2181> to;
-    to.presets = ew::transform(std::move(from.presets));
-    return to;
+    auto &to = ctx.out();
+    to.presets = ew::transform(ctx, std::move(from.presets));
 }
 
-bp::CameraPresetsPacket_<2181> Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2181>>::transform(
-    bp::CameraPresetsPacket_<2168> &&from)
+void Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2181>>::transform(
+    Context<bp::CameraPresetsPacket_<2181>> &ctx, bp::CameraPresetsPacket_<2168> &&from)
 {
-    bp::CameraPresetsPacket_<2181> to;
-    to.camera_presets = ew::transform(std::move(from.camera_presets));
-    return to;
+    auto &to = ctx.out();
+    to.camera_presets = ew::transform(ctx, std::move(from.camera_presets));
 }
 
 } // namespace endweave

@@ -8,17 +8,17 @@
 
 namespace endweave {
 
-bp::LevelSoundEvent_<1001> Transformer<bp::LevelSoundEvent_<2168>, bp::LevelSoundEvent_<1001>>::transform(
-    bp::LevelSoundEvent_<2168> &&from)
+void Transformer<bp::LevelSoundEvent_<2168>, bp::LevelSoundEvent_<1001>>::transform(
+    Context<bp::LevelSoundEvent_<1001>> &ctx, bp::LevelSoundEvent_<2168> &&from)
 {
     using To = bp::LevelSoundEvent_<1001>;
-    return bp::enum_cast<To>(bp::enum_name(from)).value_or(To::UNDEFINED);
+    ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::UNDEFINED);
 }
 
-bp::PlaySoundPacket_<1001> Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<1001>>::transform(
-    bp::PlaySoundPacket_<2168> &&from)
+void Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<1001>>::transform(
+    Context<bp::PlaySoundPacket_<1001>> &ctx, bp::PlaySoundPacket_<2168> &&from)
 {
-    bp::PlaySoundPacket_<1001> to;
+    auto &to = ctx.out();
     to.name = std::move(from.name);
     to.pos = from.pos;
     to.volume = from.volume;
@@ -26,23 +26,21 @@ bp::PlaySoundPacket_<1001> Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySound
     // ENDWEAVE: loop_count is dropped; a 1001 client plays the sound once, and the handle still lets the
     // server stop it.
     to.server_sound_handle = from.server_sound_handle;
-    return to;
 }
 
-std::expected<bp::ClientboundUpdateSoundDataPacket_<1001>, std::error_code> Transformer<
-    bp::ClientboundUpdateSoundDataPacket_<2168>,
-    bp::ClientboundUpdateSoundDataPacket_<1001>>::transform(bp::ClientboundUpdateSoundDataPacket_<2168> &&from)
+void Transformer<bp::ClientboundUpdateSoundDataPacket_<2168>, bp::ClientboundUpdateSoundDataPacket_<1001>>::transform(
+    Context<bp::ClientboundUpdateSoundDataPacket_<1001>> &ctx, bp::ClientboundUpdateSoundDataPacket_<2168> &&from)
 {
     // ENDWEAVE: Stop is all 1001's SoundDataEvent has. SetVolume, SetPitch, Fade, SeekTo, Pause and
     // Resume adjust a playing sound, and stopping it instead is further from what the server meant
     // than saying nothing.
     if (!std::holds_alternative<bp::Stop_<2168>>(from.event)) {
-        return std::unexpected(std::make_error_code(std::errc::not_supported));
+        ctx.cancel();
+        return;
     }
-    bp::ClientboundUpdateSoundDataPacket_<1001> to;
+    auto &to = ctx.out();
     to.server_sound_handle = from.server_sound_handle;
     to.sound_event = bp::SoundDataEvent_<1001>::STOP;
-    return to;
 }
 
 } // namespace endweave

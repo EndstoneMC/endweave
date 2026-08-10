@@ -10,22 +10,22 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::legacy::GameRule_<1001>, bp::GameRule> {
-    static bp::GameRule transform(bp::legacy::GameRule_<1001> &&from);
+    static void transform(Context<bp::GameRule> &ctx, bp::legacy::GameRule_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::LevelSettings_<1001>, bp::LevelSettings_<2168>> {
-    static bp::LevelSettings_<2168> transform(bp::LevelSettings_<1001> &&from);
+    static void transform(Context<bp::LevelSettings_<2168>> &ctx, bp::LevelSettings_<1001> &&from);
 };
 
 template <>
 struct Transformer<bp::BlockEntry, bp::ServerBlockProperty_<2168>> {
-    static bp::ServerBlockProperty_<2168> transform(bp::BlockEntry &&from);
+    static void transform(Context<bp::ServerBlockProperty_<2168>> &ctx, bp::BlockEntry &&from);
 };
 
 template <>
 struct Transformer<bp::StartGamePacket_<1001>, bp::StartGamePacket_<2168>> {
-    static bp::StartGamePacket_<2168> transform(bp::StartGamePacket_<1001> &&from);
+    static void transform(Context<bp::StartGamePacket_<2168>> &ctx, bp::StartGamePacket_<1001> &&from);
 };
 
 } // namespace endweave

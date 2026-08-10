@@ -8,10 +8,10 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::TextDataPayload_<2181> Transformer<bp::TextDataPayload_<2168>, bp::TextDataPayload_<2181>>::transform(
-    bp::TextDataPayload_<2168> &&from)
+void Transformer<bp::TextDataPayload_<2168>, bp::TextDataPayload_<2181>>::transform(
+    Context<bp::TextDataPayload_<2181>> &ctx, bp::TextDataPayload_<2168> &&from)
 {
-    bp::TextDataPayload_<2181> to;
+    auto &to = ctx.out();
     to.text = std::move(from.text);
     to.use_rotation = from.use_rotation;
     to.background_color = from.background_color;
@@ -21,14 +21,12 @@ bp::TextDataPayload_<2181> Transformer<bp::TextDataPayload_<2168>, bp::TextDataP
     to.depth_test = from.depth_test;
     to.show_backface = from.show_backface;
     to.show_text_backface = from.show_text_backface;
-    return to;
 }
 
-bp::PrimitiveShapeDataPayload_<2181> Transformer<
-    bp::PrimitiveShapeDataPayload_<2168>,
-    bp::PrimitiveShapeDataPayload_<2181>>::transform(bp::PrimitiveShapeDataPayload_<2168> &&from)
+void Transformer<bp::PrimitiveShapeDataPayload_<2168>, bp::PrimitiveShapeDataPayload_<2181>>::transform(
+    Context<bp::PrimitiveShapeDataPayload_<2181>> &ctx, bp::PrimitiveShapeDataPayload_<2168> &&from)
 {
-    bp::PrimitiveShapeDataPayload_<2181> to;
+    auto &to = ctx.out();
     to.network_id = from.network_id;
     to.shape_type = from.shape_type;
     to.location = from.location;
@@ -42,24 +40,22 @@ bp::PrimitiveShapeDataPayload_<2181> Transformer<
     // ENDWEAVE: text is the one arm that moved; the other nine are one type at both versions and the
     // assignment places each back in its own case.
     std::visit(
-        [&to](auto &alt) {
+        [&to, &ctx](auto &alt) {
             if constexpr (std::is_same_v<std::remove_cvref_t<decltype(alt)>, bp::TextDataPayload_<2168>>) {
-                to.extra_data_payload = ew::transform_to<bp::TextDataPayload_<2181>>(std::move(alt));
+                to.extra_data_payload = ew::transform_to<bp::TextDataPayload_<2181>>(ctx, std::move(alt));
             }
             else {
                 to.extra_data_payload = std::move(alt);
             }
         },
         from.extra_data_payload);
-    return to;
 }
 
-bp::PrimitiveShapesPacket_<2181> Transformer<
-    bp::PrimitiveShapesPacket_<2168>, bp::PrimitiveShapesPacket_<2181>>::transform(bp::PrimitiveShapesPacket_<2168> &&from)
+void Transformer<bp::PrimitiveShapesPacket_<2168>, bp::PrimitiveShapesPacket_<2181>>::transform(
+    Context<bp::PrimitiveShapesPacket_<2181>> &ctx, bp::PrimitiveShapesPacket_<2168> &&from)
 {
-    bp::PrimitiveShapesPacket_<2181> to;
-    to.shapes = ew::transform(std::move(from.shapes));
-    return to;
+    auto &to = ctx.out();
+    to.shapes = ew::transform(ctx, std::move(from.shapes));
 }
 
 } // namespace endweave

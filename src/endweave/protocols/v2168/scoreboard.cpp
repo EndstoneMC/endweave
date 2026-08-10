@@ -8,22 +8,20 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::ScoreboardIdentityPacketInfo_<1001> Transformer<
-    bp::ScoreboardIdentityPacketInfo_<2168>,
-    bp::ScoreboardIdentityPacketInfo_<1001>>::transform(bp::ScoreboardIdentityPacketInfo_<2168> &&from)
+void Transformer<bp::ScoreboardIdentityPacketInfo_<2168>, bp::ScoreboardIdentityPacketInfo_<1001>>::transform(
+    Context<bp::ScoreboardIdentityPacketInfo_<1001>> &ctx, bp::ScoreboardIdentityPacketInfo_<2168> &&from)
 {
-    bp::ScoreboardIdentityPacketInfo_<1001> to;
+    auto &to = ctx.out();
     to.scoreboard_id = from.scoreboard_id;
     // ENDWEAVE: an absent id is 2168's removal, which routes to 1001's other list, so the
     // null id here never reaches a client.
     to.player_id.actor_unique_id = from.player_id.value_or(0);
-    return to;
 }
 
-bp::SetScorePacket_<1001> Transformer<bp::SetScorePacket_<2168>, bp::SetScorePacket_<1001>>::transform(
-    bp::SetScorePacket_<2168> &&from)
+void Transformer<bp::SetScorePacket_<2168>, bp::SetScorePacket_<1001>>::transform(
+    Context<bp::SetScorePacket_<1001>> &ctx, bp::SetScorePacket_<2168> &&from)
 {
-    bp::SetScorePacket_<1001> to;
+    auto &to = ctx.out();
     // ENDWEAVE: 1001 has one action per packet and BDS never mixes them, so the first entry
     // names the batch and anything disagreeing is dropped below.
     to.type = !from.score_info.empty() && std::holds_alternative<bp::RemoveScore_<2168>>(from.score_info.front())
@@ -74,14 +72,12 @@ bp::SetScorePacket_<1001> Transformer<bp::SetScorePacket_<2168>, bp::SetScorePac
         }
         to.score_info.push_back(std::move(info));
     }
-    return to;
 }
 
-bp::SetScoreboardIdentityPacket_<1001> Transformer<
-    bp::SetScoreboardIdentityPacket_<2168>,
-    bp::SetScoreboardIdentityPacket_<1001>>::transform(bp::SetScoreboardIdentityPacket_<2168> &&from)
+void Transformer<bp::SetScoreboardIdentityPacket_<2168>, bp::SetScoreboardIdentityPacket_<1001>>::transform(
+    Context<bp::SetScoreboardIdentityPacket_<1001>> &ctx, bp::SetScoreboardIdentityPacket_<2168> &&from)
 {
-    bp::SetScoreboardIdentityPacket_<1001> to;
+    auto &to = ctx.out();
     to.type = from.type;
     if (from.type == bp::ScoreboardIdentityPacketType::REMOVE) {
         to.removed_identity_info.reserve(from.identity_info.size());
@@ -91,9 +87,8 @@ bp::SetScoreboardIdentityPacket_<1001> Transformer<
         }
     }
     else {
-        to.identity_info = ew::transform(std::move(from.identity_info));
+        to.identity_info = ew::transform(ctx, std::move(from.identity_info));
     }
-    return to;
 }
 
 } // namespace endweave

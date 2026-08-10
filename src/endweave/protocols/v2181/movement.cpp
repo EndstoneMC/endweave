@@ -6,10 +6,10 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::MoveActorDeltaData_<2168> Transformer<bp::MoveActorDeltaData_<2181>, bp::MoveActorDeltaData_<2168>>::transform(
-    bp::MoveActorDeltaData_<2181> &&from)
+void Transformer<bp::MoveActorDeltaData_<2181>, bp::MoveActorDeltaData_<2168>>::transform(
+    Context<bp::MoveActorDeltaData_<2168>> &ctx, bp::MoveActorDeltaData_<2181> &&from)
 {
-    bp::MoveActorDeltaData_<2168> to;
+    auto &to = ctx.out();
     to.runtime_id = from.runtime_id;
     to.new_position_x = from.new_position_x;
     to.new_position_y = from.new_position_y;
@@ -22,15 +22,13 @@ bp::MoveActorDeltaData_<2168> Transformer<bp::MoveActorDeltaData_<2181>, bp::Mov
     to.force_move_local_entity = from.force_move_local_entity;
     // ENDWEAVE: ticks is dropped; a 2168 client times the move by its own arrival.
     to.force_completion = from.force_completion;
-    return to;
 }
 
-bp::MoveActorDeltaPacket_<2168> Transformer<
-    bp::MoveActorDeltaPacket_<2181>, bp::MoveActorDeltaPacket_<2168>>::transform(bp::MoveActorDeltaPacket_<2181> &&from)
+void Transformer<bp::MoveActorDeltaPacket_<2181>, bp::MoveActorDeltaPacket_<2168>>::transform(
+    Context<bp::MoveActorDeltaPacket_<2168>> &ctx, bp::MoveActorDeltaPacket_<2181> &&from)
 {
-    bp::MoveActorDeltaPacket_<2168> to;
-    to.move_data = ew::transform(std::move(from.move_data));
-    return to;
+    auto &to = ctx.out();
+    to.move_data = ew::transform(ctx, std::move(from.move_data));
 }
 
 } // namespace endweave

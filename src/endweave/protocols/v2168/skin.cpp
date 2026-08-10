@@ -6,10 +6,10 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::SerializedSkinRef_<1001> Transformer<bp::SerializedSkinRef_<2168>, bp::SerializedSkinRef_<1001>>::transform(
-    bp::SerializedSkinRef_<2168> &&from)
+void Transformer<bp::SerializedSkinRef_<2168>, bp::SerializedSkinRef_<1001>>::transform(
+    Context<bp::SerializedSkinRef_<1001>> &ctx, bp::SerializedSkinRef_<2168> &&from)
 {
-    bp::SerializedSkinRef_<1001> to;
+    auto &to = ctx.out();
     to.id = std::move(from.id);
     to.play_fab_id = std::move(from.play_fab_id);
     to.resource_patch = std::move(from.resource_patch);
@@ -32,18 +32,16 @@ bp::SerializedSkinRef_<1001> Transformer<bp::SerializedSkinRef_<2168>, bp::Seria
     to.overrides_player_appearance = from.overrides_player_appearance;
     to.trusted_skin_flag = from.trusted_skin_flag;
     // ENDWEAVE: profile_hash stops here. 1001 has no field for it and the skin crosses whole.
-    return to;
 }
 
-bp::PlayerSkinPacket_<1001> Transformer<bp::PlayerSkinPacket_<2168>, bp::PlayerSkinPacket_<1001>>::transform(
-    bp::PlayerSkinPacket_<2168> &&from)
+void Transformer<bp::PlayerSkinPacket_<2168>, bp::PlayerSkinPacket_<1001>>::transform(
+    Context<bp::PlayerSkinPacket_<1001>> &ctx, bp::PlayerSkinPacket_<2168> &&from)
 {
-    bp::PlayerSkinPacket_<1001> to;
+    auto &to = ctx.out();
     to.uuid = from.uuid;
-    to.skin = ew::transform(std::move(from.skin));
+    to.skin = ew::transform(ctx, std::move(from.skin));
     to.localized_new_skin_name = std::move(from.localized_new_skin_name);
     to.localized_old_skin_name = std::move(from.localized_old_skin_name);
-    return to;
 }
 
 } // namespace endweave

@@ -8,30 +8,27 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::StructureEditorData_<1001> Transformer<bp::StructureEditorData_<2168>, bp::StructureEditorData_<1001>>::transform(
-    bp::StructureEditorData_<2168> &&from)
+void Transformer<bp::StructureEditorData_<2168>, bp::StructureEditorData_<1001>>::transform(
+    Context<bp::StructureEditorData_<1001>> &ctx, bp::StructureEditorData_<2168> &&from)
 {
-    bp::StructureEditorData_<1001> to;
-    to.structure_name = ew::transform(std::move(from.structure_name));
+    auto &to = ctx.out();
+    to.structure_name = ew::transform(ctx, std::move(from.structure_name));
     to.data_field = std::move(from.data_field);
     to.include_players = from.include_players;
     to.show_bounding_box = from.show_bounding_box;
     to.type = from.type;
     to.settings = std::move(from.settings);
     to.redstone_save_mode = from.redstone_save_mode;
-    return to;
 }
 
-bp::StructureBlockUpdatePacket_<1001> Transformer<
-    bp::StructureBlockUpdatePacket_<2168>,
-    bp::StructureBlockUpdatePacket_<1001>>::transform(bp::StructureBlockUpdatePacket_<2168> &&from)
+void Transformer<bp::StructureBlockUpdatePacket_<2168>, bp::StructureBlockUpdatePacket_<1001>>::transform(
+    Context<bp::StructureBlockUpdatePacket_<1001>> &ctx, bp::StructureBlockUpdatePacket_<2168> &&from)
 {
-    bp::StructureBlockUpdatePacket_<1001> to;
+    auto &to = ctx.out();
     to.block_pos = from.block_pos;
-    to.data = ew::transform(std::move(from.data));
+    to.data = ew::transform(ctx, std::move(from.data));
     to.trigger = from.trigger;
     to.is_waterlogged = from.is_waterlogged;
-    return to;
 }
 
 } // namespace endweave

@@ -6,10 +6,10 @@ namespace ew = endweave;
 
 namespace endweave {
 
-bp::MoveActorDeltaData_<2168> Transformer<bp::MoveActorDeltaData_<1001>, bp::MoveActorDeltaData_<2168>>::transform(
-    bp::MoveActorDeltaData_<1001> &&from)
+void Transformer<bp::MoveActorDeltaData_<1001>, bp::MoveActorDeltaData_<2168>>::transform(
+    Context<bp::MoveActorDeltaData_<2168>> &ctx, bp::MoveActorDeltaData_<1001> &&from)
 {
-    bp::MoveActorDeltaData_<2168> to;
+    auto &to = ctx.out();
     to.runtime_id = from.runtime_id;
     // ENDWEAVE: A clear header bit means the component was never on the wire, so it becomes
     // nullopt rather than a zero.
@@ -35,13 +35,12 @@ bp::MoveActorDeltaData_<2168> Transformer<bp::MoveActorDeltaData_<1001>, bp::Mov
     to.force_move = (from.header & MoveActorDeltaHeader::FORCE_MOVE) != 0;
     to.force_move_local_entity = (from.header & MoveActorDeltaHeader::FORCE_MOVE_LOCAL_ENTITY) != 0;
     to.force_completion = (from.header & MoveActorDeltaHeader::FORCE_COMPLETION) != 0;
-    return to;
 }
 
-bp::AddPlayerPacket_<2168> Transformer<bp::AddPlayerPacket_<1001>, bp::AddPlayerPacket_<2168>>::transform(
-    bp::AddPlayerPacket_<1001> &&from)
+void Transformer<bp::AddPlayerPacket_<1001>, bp::AddPlayerPacket_<2168>>::transform(
+    Context<bp::AddPlayerPacket_<2168>> &ctx, bp::AddPlayerPacket_<1001> &&from)
 {
-    bp::AddPlayerPacket_<2168> to;
+    auto &to = ctx.out();
     to.uuid = from.uuid;
     to.name = std::move(from.name);
     to.runtime_id = from.runtime_id;
@@ -50,35 +49,33 @@ bp::AddPlayerPacket_<2168> Transformer<bp::AddPlayerPacket_<1001>, bp::AddPlayer
     to.velocity = from.velocity;
     to.rot = from.rot;
     to.y_head_rot = from.y_head_rot;
-    to.carried_item = ew::transform(std::move(from.carried_item));
+    to.carried_item = ew::transform(ctx, std::move(from.carried_item));
     to.player_game_type = from.player_game_type;
-    to.unpack = ew::transform(std::move(from.unpack));
+    to.unpack = ew::transform(ctx, std::move(from.unpack));
     to.synched_properties = std::move(from.synched_properties);
     to.abilities_data = std::move(from.abilities_data);
     to.links = std::move(from.links);
     to.device_id = std::move(from.device_id);
     to.build_platform = from.build_platform;
-    return to;
 }
 
-bp::AddItemActorPacket_<2168> Transformer<bp::AddItemActorPacket_<1001>, bp::AddItemActorPacket_<2168>>::transform(
-    bp::AddItemActorPacket_<1001> &&from)
+void Transformer<bp::AddItemActorPacket_<1001>, bp::AddItemActorPacket_<2168>>::transform(
+    Context<bp::AddItemActorPacket_<2168>> &ctx, bp::AddItemActorPacket_<1001> &&from)
 {
-    bp::AddItemActorPacket_<2168> to;
+    auto &to = ctx.out();
     to.id = from.id;
     to.runtime_id = from.runtime_id;
-    to.item = ew::transform(std::move(from.item));
+    to.item = ew::transform(ctx, std::move(from.item));
     to.pos = from.pos;
     to.velocity = from.velocity;
-    to.data = ew::transform(std::move(from.data));
+    to.data = ew::transform(ctx, std::move(from.data));
     to.is_from_fishing = from.is_from_fishing;
-    return to;
 }
 
-bp::MovePlayerPacket_<2168> Transformer<bp::MovePlayerPacket_<1001>, bp::MovePlayerPacket_<2168>>::transform(
-    bp::MovePlayerPacket_<1001> &&from)
+void Transformer<bp::MovePlayerPacket_<1001>, bp::MovePlayerPacket_<2168>>::transform(
+    Context<bp::MovePlayerPacket_<2168>> &ctx, bp::MovePlayerPacket_<1001> &&from)
 {
-    bp::MovePlayerPacket_<2168> to;
+    auto &to = ctx.out();
     to.player_id = from.player_id;
     to.pos = from.pos;
     to.rot = from.rot;
@@ -92,15 +89,13 @@ bp::MovePlayerPacket_<2168> Transformer<bp::MovePlayerPacket_<1001>, bp::MovePla
         to.teleport_data = bp::MovePlayerTeleportData_<2168>{from.cause, from.source_entity_type};
     }
     to.tick = from.tick;
-    return to;
 }
 
-bp::MoveActorDeltaPacket_<2168> Transformer<
-    bp::MoveActorDeltaPacket_<1001>, bp::MoveActorDeltaPacket_<2168>>::transform(bp::MoveActorDeltaPacket_<1001> &&from)
+void Transformer<bp::MoveActorDeltaPacket_<1001>, bp::MoveActorDeltaPacket_<2168>>::transform(
+    Context<bp::MoveActorDeltaPacket_<2168>> &ctx, bp::MoveActorDeltaPacket_<1001> &&from)
 {
-    bp::MoveActorDeltaPacket_<2168> to;
-    to.move_data = ew::transform(std::move(from.move_data));
-    return to;
+    auto &to = ctx.out();
+    to.move_data = ew::transform(ctx, std::move(from.move_data));
 }
 
 } // namespace endweave

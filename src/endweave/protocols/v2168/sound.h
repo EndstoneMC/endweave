@@ -10,12 +10,12 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::LevelSoundEvent_<2168>, bp::LevelSoundEvent_<1001>> {
-    static bp::LevelSoundEvent_<1001> transform(bp::LevelSoundEvent_<2168> &&from);
+    static void transform(Context<bp::LevelSoundEvent_<1001>> &ctx, bp::LevelSoundEvent_<2168> &&from);
 };
 
 template <>
 struct Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<1001>> {
-    static bp::PlaySoundPacket_<1001> transform(bp::PlaySoundPacket_<2168> &&from);
+    static void transform(Context<bp::PlaySoundPacket_<1001>> &ctx, bp::PlaySoundPacket_<2168> &&from);
 };
 
 // ENDWEAVE: the name passes through, but 2168's Mount, Dismount and StrawBedBreakLeave resolve to
@@ -25,8 +25,8 @@ struct WireCompatible<bp::LevelSoundEventPacket_<2168>, bp::LevelSoundEventPacke
 
 template <>
 struct Transformer<bp::ClientboundUpdateSoundDataPacket_<2168>, bp::ClientboundUpdateSoundDataPacket_<1001>> {
-    static std::expected<bp::ClientboundUpdateSoundDataPacket_<1001>, std::error_code> transform(
-        bp::ClientboundUpdateSoundDataPacket_<2168> &&from);
+    static void transform(Context<bp::ClientboundUpdateSoundDataPacket_<1001>> &ctx,
+                          bp::ClientboundUpdateSoundDataPacket_<2168> &&from);
 };
 
 } // namespace endweave

@@ -14,10 +14,10 @@ constexpr std::int32_t kUnlimitedSubChunkRequest = -1;
 
 } // namespace
 
-bp::LevelChunkPacket_<2168> Transformer<bp::LevelChunkPacket_<1001>, bp::LevelChunkPacket_<2168>>::transform(
-    bp::LevelChunkPacket_<1001> &&from)
+void Transformer<bp::LevelChunkPacket_<1001>, bp::LevelChunkPacket_<2168>>::transform(
+    Context<bp::LevelChunkPacket_<2168>> &ctx, bp::LevelChunkPacket_<1001> &&from)
 {
-    bp::LevelChunkPacket_<2168> to;
+    auto &to = ctx.out();
     to.pos = from.pos;
     to.dimension_id = from.dimension_id;
     // ENDWEAVE: 1001's count doubles as the request marker, so a 2168 request sends zero and the optional carries it.
@@ -36,26 +36,22 @@ bp::LevelChunkPacket_<2168> Transformer<bp::LevelChunkPacket_<1001>, bp::LevelCh
     // ENDWEAVE: 2168 always writes the blob list, and a 1001 packet with the cache off decoded none.
     to.cache_metadata = std::move(from.cache_metadata);
     to.serialized_chunk = std::move(from.serialized_chunk);
-    return to;
 }
 
-bp::SubChunkPacket_<2168>::SubChunkPosOffset Transformer<
-    bp::SubChunkPacket_<1001>::SubChunkPosOffset,
-    bp::SubChunkPacket_<2168>::SubChunkPosOffset>::transform(bp::SubChunkPacket_<1001>::SubChunkPosOffset &&from)
+void Transformer<bp::SubChunkPacket_<1001>::SubChunkPosOffset, bp::SubChunkPacket_<2168>::SubChunkPosOffset>::transform(
+    Context<bp::SubChunkPacket_<2168>::SubChunkPosOffset> &ctx, bp::SubChunkPacket_<1001>::SubChunkPosOffset &&from)
 {
-    bp::SubChunkPacket_<2168>::SubChunkPosOffset to;
+    auto &to = ctx.out();
     to.x = from.x;
     to.y = from.y;
     to.z = from.z;
-    return to;
 }
 
-bp::SubChunkPacket_<2168>::HeightmapData Transformer<
-    bp::SubChunkPacket_<1001>::HeightmapData,
-    bp::SubChunkPacket_<2168>::HeightmapData>::transform(bp::SubChunkPacket_<1001>::HeightmapData &&from)
+void Transformer<bp::SubChunkPacket_<1001>::HeightmapData, bp::SubChunkPacket_<2168>::HeightmapData>::transform(
+    Context<bp::SubChunkPacket_<2168>::HeightmapData> &ctx, bp::SubChunkPacket_<1001>::HeightmapData &&from)
 {
     using HeightMapDataType = bp::SubChunkPacket_<1001>::HeightMapDataType;
-    bp::SubChunkPacket_<2168>::HeightmapData to;
+    auto &to = ctx.out();
     to.height_map_type = static_cast<bp::SubChunkPacket_<2168>::HeightMapDataType>(from.height_map_type);
     // ENDWEAVE: 1001 writes the 256 samples only for HAS_DATA, so that is what engages the 2168 optional.
     if (from.height_map_type == HeightMapDataType::HAS_DATA) {
@@ -65,58 +61,54 @@ bp::SubChunkPacket_<2168>::HeightmapData Transformer<
     if (from.render_height_map_type == HeightMapDataType::HAS_DATA) {
         to.subchunk_render_height_map = std::move(from.subchunk_render_height_map);
     }
-    return to;
 }
 
-bp::SubChunkPacket_<2168>::SubChunkPacketData Transformer<
-    bp::SubChunkPacket_<1001>::SubChunkPacketData,
-    bp::SubChunkPacket_<2168>::SubChunkPacketData>::transform(bp::SubChunkPacket_<1001>::SubChunkPacketData &&from)
+void Transformer<bp::SubChunkPacket_<1001>::SubChunkPacketData, bp::SubChunkPacket_<2168>::SubChunkPacketData>::
+    transform(Context<bp::SubChunkPacket_<2168>::SubChunkPacketData> &ctx,
+              bp::SubChunkPacket_<1001>::SubChunkPacketData &&from)
 {
-    bp::SubChunkPacket_<2168>::SubChunkPacketData to;
-    to.sub_chunk_pos_offset = ew::transform(std::move(from.sub_chunk_pos_offset));
+    auto &to = ctx.out();
+    to.sub_chunk_pos_offset = ew::transform(ctx, std::move(from.sub_chunk_pos_offset));
     to.result = static_cast<bp::SubChunkPacket_<2168>::SubChunkRequestResult>(from.result);
     // ENDWEAVE: an all-air sub-chunk carries no payload at 1001, so the 2168 optional stays empty.
     if (from.result != bp::SubChunkPacket_<1001>::SubChunkRequestResult::SUCCESS_ALL_AIR) {
         to.serialized_sub_chunk = std::move(from.serialized_sub_chunk);
     }
-    to.height_map_data = ew::transform(std::move(from.height_map_data));
+    to.height_map_data = ew::transform(ctx, std::move(from.height_map_data));
     // ENDWEAVE: zero is 1001's "no blob", which every all-air sub-chunk carries, and 2168 says
     // that with an absent optional rather than a sentinel.
     if (from.blob_id != 0) {
         to.blob_id = from.blob_id;
     }
-    return to;
 }
 
-bp::SubChunkPacket_<2168>::SubChunkPacketData Transformer<bp::SubChunkPacket_<1001>::UncachedSubChunkPacketData,
-                                                          bp::SubChunkPacket_<2168>::SubChunkPacketData>::
-    transform(bp::SubChunkPacket_<1001>::UncachedSubChunkPacketData &&from)
+void Transformer<bp::SubChunkPacket_<1001>::UncachedSubChunkPacketData, bp::SubChunkPacket_<2168>::SubChunkPacketData>::
+    transform(Context<bp::SubChunkPacket_<2168>::SubChunkPacketData> &ctx,
+              bp::SubChunkPacket_<1001>::UncachedSubChunkPacketData &&from)
 {
-    bp::SubChunkPacket_<2168>::SubChunkPacketData to;
-    to.sub_chunk_pos_offset = ew::transform(std::move(from.sub_chunk_pos_offset));
+    auto &to = ctx.out();
+    to.sub_chunk_pos_offset = ew::transform(ctx, std::move(from.sub_chunk_pos_offset));
     to.result = static_cast<bp::SubChunkPacket_<2168>::SubChunkRequestResult>(from.result);
     // ENDWEAVE: 1001's uncached entry writes its payload unconditionally, all-air included.
     to.serialized_sub_chunk = std::move(from.serialized_sub_chunk);
-    to.height_map_data = ew::transform(std::move(from.height_map_data));
+    to.height_map_data = ew::transform(ctx, std::move(from.height_map_data));
     // ENDWEAVE: blob_id belongs to the cached entry alone, so an uncached one reaches 2168 without it.
-    return to;
 }
 
-bp::SubChunkPacket_<2168> Transformer<bp::SubChunkPacket_<1001>, bp::SubChunkPacket_<2168>>::transform(
-    bp::SubChunkPacket_<1001> &&from)
+void Transformer<bp::SubChunkPacket_<1001>, bp::SubChunkPacket_<2168>>::transform(
+    Context<bp::SubChunkPacket_<2168>> &ctx, bp::SubChunkPacket_<1001> &&from)
 {
-    bp::SubChunkPacket_<2168> to;
+    auto &to = ctx.out();
     to.cache_enabled = from.cache_enabled;
     to.dimension_type = from.dimension_type;
     to.center_pos = {.x = from.center_pos_x, .y = from.center_pos_y, .z = from.center_pos_z};
     // ENDWEAVE: 1001 fills only the list its cache flag names, so the flag picks the source rather than emptiness.
     if (from.cache_enabled) {
-        to.sub_chunk_data = ew::transform(std::move(from.sub_chunk_data));
+        to.sub_chunk_data = ew::transform(ctx, std::move(from.sub_chunk_data));
     }
     else {
-        to.sub_chunk_data = ew::transform(std::move(from.uncached_sub_chunk_data));
+        to.sub_chunk_data = ew::transform(ctx, std::move(from.uncached_sub_chunk_data));
     }
-    return to;
 }
 
 } // namespace endweave

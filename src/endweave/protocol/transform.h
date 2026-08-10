@@ -1,10 +1,10 @@
 #pragma once
 
+#include "endweave/protocol/context.h"
+
 #include <concepts>
-#include <expected>
 #include <map>
 #include <optional>
-#include <system_error>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -24,18 +24,10 @@ inline constexpr bool wire_equal_v = std::is_same_v<From, To> || WireCompatible<
 namespace detail {
 
 template <class Source, class To>
-concept TransformableFrom = requires(Source &&source) {
-    { Transformer<std::remove_cvref_t<Source>, To>::transform(std::forward<Source>(source)) } -> std::same_as<To>;
-};
-
-/** The same call answering `std::expected` instead, for a pair the destination cannot always
- * express. Only a packet's transform may take this form: `chain` is the one caller that can
- * carry a refusal out, and a field has nowhere to put one. */
-template <class Source, class To>
-concept FallibleTransformableFrom = requires(Source &&source) {
+concept TransformableFrom = requires(Context<To> &ctx, Source &&source) {
     {
-        Transformer<std::remove_cvref_t<Source>, To>::transform(std::forward<Source>(source))
-    } -> std::same_as<std::expected<To, std::error_code>>;
+        Transformer<std::remove_cvref_t<Source>, To>::transform(ctx, std::forward<Source>(source))
+    } -> std::same_as<void>;
 };
 
 } // namespace detail
@@ -43,26 +35,34 @@ concept FallibleTransformableFrom = requires(Source &&source) {
 template <class From, class To>
 concept Transformable = detail::TransformableFrom<From, To>;
 
-template <class To, class From>
-[[nodiscard]] constexpr To transform_to(From &&from)
+/** Fills `out`, through a context of its own over the caller's connection and cancel. */
+template <class To, class From, class Parent>
+constexpr void transform_into(const Context<Parent> &ctx, From &&from, To &out)
 {
-    static_assert(!detail::FallibleTransformableFrom<From, To>,
-                  "endweave: this pair's transform can refuse, so only chain may call it -- a field has nowhere "
-                  "to report a refusal");
     static_assert(detail::TransformableFrom<From, To>,
                   "endweave: no Transformer<From, To>::transform accepting this value category");
     if constexpr (detail::TransformableFrom<From, To>) {
-        return Transformer<std::remove_cvref_t<From>, To>::transform(std::forward<From>(from));
+        Context<To> child = ctx.with(out);
+        Transformer<std::remove_cvref_t<From>, To>::transform(child, std::forward<From>(from));
     }
 }
 
-template <class Source>
+template <class To, class From, class Parent>
+[[nodiscard]] constexpr To transform_to(const Context<Parent> &ctx, From &&from)
+{
+    To out;
+    transform_into(ctx, std::forward<From>(from), out);
+    return out;
+}
+
+template <class Source, class Parent>
 class TransformProxy {
 public:
     using From = std::remove_cvref_t<Source>;
 
-    explicit constexpr TransformProxy(Source &&source) noexcept(std::is_nothrow_constructible_v<Source, Source &&>)
-        : source_(static_cast<Source &&>(source))
+    constexpr TransformProxy(const Context<Parent> &ctx,
+                             Source &&source) noexcept(std::is_nothrow_constructible_v<Source, Source &&>)
+        : ctx_(ctx), source_(static_cast<Source &&>(source))
     {
     }
 
@@ -75,57 +75,53 @@ public:
         requires detail::TransformableFrom<Source, To>
     [[nodiscard]] constexpr operator To() &&
     {
-        return transform_to<To>(static_cast<Source &&>(source_));
+        return transform_to<To>(ctx_, static_cast<Source &&>(source_));
     }
 
 private:
+    const Context<Parent> &ctx_;
     Source source_;
 };
 
-template <class From>
-[[nodiscard]] constexpr auto transform(From &&from) noexcept(
-    std::is_nothrow_constructible_v<TransformProxy<From>, From &&>)
+template <class Parent, class From>
+[[nodiscard]] constexpr auto transform(const Context<Parent> &ctx, From &&from) noexcept(
+    std::is_nothrow_constructible_v<TransformProxy<From, Parent>, const Context<Parent> &, From &&>)
 {
-    return TransformProxy<From>(std::forward<From>(from));
+    return TransformProxy<From, Parent>(ctx, std::forward<From>(from));
 }
 
 template <class From, class To>
 struct Transformer<std::optional<From>, std::optional<To>> {
-    static std::optional<To> transform(std::optional<From> &&from)
+    static void transform(Context<std::optional<To>> &ctx, std::optional<From> &&from)
         requires Transformable<From, To>
     {
-        std::optional<To> to;
         if (from.has_value()) {
-            to = transform_to<To>(std::move(from).value());
+            ctx.out() = transform_to<To>(ctx, std::move(from).value());
         }
-        return to;
     }
 };
 
 template <class From, class To>
 struct Transformer<std::vector<From>, std::vector<To>> {
-    static std::vector<To> transform(std::vector<From> &&from)
+    static void transform(Context<std::vector<To>> &ctx, std::vector<From> &&from)
         requires Transformable<From, To>
     {
-        std::vector<To> to;
+        auto &to = ctx.out();
         to.reserve(from.size());
         for (auto &item : from) {
-            to.push_back(transform_to<To>(std::move(item)));
+            transform_into(ctx, std::move(item), to.emplace_back());
         }
-        return to;
     }
 };
 
 template <class K, class From, class To>
 struct Transformer<std::map<K, From>, std::map<K, To>> {
-    static std::map<K, To> transform(std::map<K, From> &&from)
+    static void transform(Context<std::map<K, To>> &ctx, std::map<K, From> &&from)
         requires Transformable<From, To>
     {
-        std::map<K, To> to;
         for (auto &[key, value] : from) {
-            to.emplace(key, transform_to<To>(std::move(value)));
+            transform_into(ctx, std::move(value), ctx.out()[key]);
         }
-        return to;
     }
 };
 

@@ -25,29 +25,27 @@ To upgradePayload(From &from, std::index_sequence<I...>)
 
 } // namespace
 
-bp::DataItemEntry_<2168> Transformer<bp::DataItemEntry_<1001>, bp::DataItemEntry_<2168>>::transform(
-    bp::DataItemEntry_<1001> &&from)
+void Transformer<bp::DataItemEntry_<1001>, bp::DataItemEntry_<2168>>::transform(Context<bp::DataItemEntry_<2168>> &ctx,
+                                                                                bp::DataItemEntry_<1001> &&from)
 {
-    bp::DataItemEntry_<2168> to;
+    auto &to = ctx.out();
     to.id = from.id;
     to.payload = upgradePayload<decltype(to.payload)>(
         from.payload, std::make_index_sequence<std::variant_size_v<decltype(from.payload)>>{});
-    return to;
 }
 
-bp::SynchedActorData_<2168>::CopyableDataList Transformer<
-    bp::SynchedActorData_<1001>::CopyableDataList,
-    bp::SynchedActorData_<2168>::CopyableDataList>::transform(bp::SynchedActorData_<1001>::CopyableDataList &&from)
+void Transformer<bp::SynchedActorData_<1001>::CopyableDataList, bp::SynchedActorData_<2168>::CopyableDataList>::
+    transform(Context<bp::SynchedActorData_<2168>::CopyableDataList> &ctx,
+              bp::SynchedActorData_<1001>::CopyableDataList &&from)
 {
-    bp::SynchedActorData_<2168>::CopyableDataList to;
-    to.data = ew::transform(std::move(from.data));
-    return to;
+    auto &to = ctx.out();
+    to.data = ew::transform(ctx, std::move(from.data));
 }
 
-bp::AddActorPacket_<2168> Transformer<bp::AddActorPacket_<1001>, bp::AddActorPacket_<2168>>::transform(
-    bp::AddActorPacket_<1001> &&from)
+void Transformer<bp::AddActorPacket_<1001>, bp::AddActorPacket_<2168>>::transform(
+    Context<bp::AddActorPacket_<2168>> &ctx, bp::AddActorPacket_<1001> &&from)
 {
-    bp::AddActorPacket_<2168> to;
+    auto &to = ctx.out();
     to.entity_id = from.entity_id;
     to.runtime_id = from.runtime_id;
     to.actor_type = std::move(from.actor_type);
@@ -57,33 +55,30 @@ bp::AddActorPacket_<2168> Transformer<bp::AddActorPacket_<1001>, bp::AddActorPac
     to.y_head_rotation = from.y_head_rotation;
     to.y_body_rotation = from.y_body_rotation;
     to.attributes = std::move(from.attributes);
-    to.data = ew::transform(std::move(from.data));
+    to.data = ew::transform(ctx, std::move(from.data));
     to.synched_properties = std::move(from.synched_properties);
     to.links = std::move(from.links);
-    return to;
 }
 
-bp::SetActorDataPacket_<2168> Transformer<bp::SetActorDataPacket_<1001>, bp::SetActorDataPacket_<2168>>::transform(
-    bp::SetActorDataPacket_<1001> &&from)
+void Transformer<bp::SetActorDataPacket_<1001>, bp::SetActorDataPacket_<2168>>::transform(
+    Context<bp::SetActorDataPacket_<2168>> &ctx, bp::SetActorDataPacket_<1001> &&from)
 {
-    bp::SetActorDataPacket_<2168> to;
+    auto &to = ctx.out();
     to.id = from.id;
-    to.packed_items = ew::transform(std::move(from.packed_items));
+    to.packed_items = ew::transform(ctx, std::move(from.packed_items));
     to.synched_properties = std::move(from.synched_properties);
     to.tick = from.tick;
-    return to;
 }
 
-bp::SetLastHurtByPacket_<2168> Transformer<bp::SetLastHurtByPacket_<1001>, bp::SetLastHurtByPacket_<2168>>::transform(
-    bp::SetLastHurtByPacket_<1001> &&from)
+void Transformer<bp::SetLastHurtByPacket_<1001>, bp::SetLastHurtByPacket_<2168>>::transform(
+    Context<bp::SetLastHurtByPacket_<2168>> &ctx, bp::SetLastHurtByPacket_<1001> &&from)
 {
-    bp::SetLastHurtByPacket_<2168> to;
+    auto &to = ctx.out();
     // ENDWEAVE: ActorType composes a category with a type index, and 2168 recategorised the sulfur
     // cube from MONSTER to PATHFINDER_MOB. It is the only member whose number moved.
     to.last_hurt_by = from.last_hurt_by == bp::ActorType_<1001>::SULFUR_CUBE
                         ? bp::ActorType_<2168>::SULFUR_CUBE
                         : static_cast<bp::ActorType_<2168>>(from.last_hurt_by);
-    return to;
 }
 
 } // namespace endweave

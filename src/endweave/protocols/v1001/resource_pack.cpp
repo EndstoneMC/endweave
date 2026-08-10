@@ -4,10 +4,10 @@
 
 namespace endweave {
 
-bp::ResourcePacksInfoPacket_<2168> Transformer<bp::ResourcePacksInfoPacket_<1001>, bp::ResourcePacksInfoPacket_<2168>>::
-    transform(bp::ResourcePacksInfoPacket_<1001> &&from)
+void Transformer<bp::ResourcePacksInfoPacket_<1001>, bp::ResourcePacksInfoPacket_<2168>>::transform(
+    Context<bp::ResourcePacksInfoPacket_<2168>> &ctx, bp::ResourcePacksInfoPacket_<1001> &&from)
 {
-    bp::ResourcePacksInfoPacket_<2168> to;
+    auto &to = ctx.out();
     to.resource_pack_required = from.resource_pack_required;
     to.has_addon_packs = from.has_addon_packs;
     to.has_scripts = from.has_scripts;
@@ -15,15 +15,13 @@ bp::ResourcePacksInfoPacket_<2168> Transformer<bp::ResourcePacksInfoPacket_<1001
     to.world_template_id_and_version = std::move(from.world_template_id_and_version);
     // ENDWEAVE: only the length prefix changed, uint16 to uvarint32; every 1001 list fits in one.
     to.resource_packs = std::move(from.resource_packs);
-    return to;
 }
 
-bp::ResourcePackClientResponsePacket_<2168> Transformer<
-    bp::ResourcePackClientResponsePacket_<1001>,
-    bp::ResourcePackClientResponsePacket_<2168>>::transform(bp::ResourcePackClientResponsePacket_<1001> &&from)
+void Transformer<bp::ResourcePackClientResponsePacket_<1001>, bp::ResourcePackClientResponsePacket_<2168>>::transform(
+    Context<bp::ResourcePackClientResponsePacket_<2168>> &ctx, bp::ResourcePackClientResponsePacket_<1001> &&from)
 {
     using Response = bp::ResourcePackClientResponsePacket_<2168>;
-    bp::ResourcePackClientResponsePacket_<2168> to;
+    auto &to = ctx.out();
     // ENDWEAVE: 1001 numbers the response 1..4 and 2168 tags the variant 0..3; selecting the case by
     // enumerator keeps that off-by-one out of the pack handshake.
     switch (from.response) {
@@ -44,7 +42,6 @@ bp::ResourcePackClientResponsePacket_<2168> Transformer<
         to.response = Response::Cancel{bp::ResourcePackResponse::CANCEL};
         break;
     }
-    return to;
 }
 
 } // namespace endweave
