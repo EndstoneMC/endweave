@@ -10,14 +10,16 @@ different one by translating packets on the wire. The wire codec comes from the 
 [bedrock-protocol](https://github.com/EndstoneMC/bedrock-protocol) library. endweave owns the
 translation semantics.
 
-## Current state
+## Architecture
 
-The whole path is wired. The listener reads the client's protocol off
-`RequestNetworkSettingsPacket`, `UserConnection::setClientVersion` resolves both handler tables
-once, and `PacketListener::translate` queries them per packet. `connection.h` includes `handler.h`,
-so every translation unit that reaches the listener instantiates the tables — the missing-transform
-build gate is live, and a green `cmake --build` means every packet that needs work between 1001 and
-2168 has it.
+The listener reads the client's protocol off `RequestNetworkSettingsPacket`,
+`UserConnection::setClientVersion` resolves both handler tables once, and
+`PacketListener::translate` queries them per packet. `connection.h` includes `handler.h`, so every
+translation unit that reaches the listener instantiates the tables: a green `cmake --build` means
+every packet that needs work between the supported versions has it.
+
+`SUPPORTED_VERSIONS` in `protocol/version.h` is 1001, 2168 and 2181, a sorted line that endpoints
+route along.
 
 `protocol/handler.h` is the dispatch layer. It resolves a (from, to) version pair into a
 `PacketHandlers` table and answers `get(id)` with the function that translates that packet, or null
@@ -33,20 +35,21 @@ per-packet claims stay apart:
 | `protocol/rewrite.h` | `Rewriter<Version, Id>` | this packet needs fixing up at this version whatever else happens |
 | `protocol/cancel.h` | `Cancel<From, To, Id>` | drop this packet on this edge rather than translate it |
 
-`UserConnection` still carries the type-keyed store that stateful handlers key into, and the
-listener keeps the connection table warm and evicts on disconnect and quit.
+`protocol/context.h` `Context` is what every transform on one packet is handed: the
+`UserConnection` it belongs to, and the cancel any of them may answer with.
+
+`UserConnection` carries the type-keyed store that stateful handlers key into, and the listener
+keeps the connection table warm and evicts on disconnect and quit.
 
 ## What endweave takes from ViaVersion, and what it does not
 
-endweave began as a port of [ViaVersion](https://github.com/ViaVersion/ViaVersion) (its forward
-protocols) fused with [ViaBackwards](https://github.com/ViaVersion/ViaBackwards) (its backward
-protocols), and is no longer one. Upstream registers handlers by hand at runtime; endweave derives
-them from bedrock-protocol's schema at compile time. That single difference reaches everything above
-the transforms — there is no `Protocol` class, no registration call, no `PacketWrapper`, no
-`ProtocolPipeline`, no `ProtocolManager` and no path-finding. Do not restore any of them for the
-sake of the resemblance. Structural fidelity was the earlier goal and is not the goal now; the
-guarantees in **The handler layer** are, and several of them are only reachable by giving that
-structure up.
+[ViaVersion](https://github.com/ViaVersion/ViaVersion) (forward protocols) and
+[ViaBackwards](https://github.com/ViaVersion/ViaBackwards) (backward protocols) register handlers by
+hand at runtime; endweave derives them from bedrock-protocol's schema at compile time. That single
+difference reaches everything above the transforms: there is no `Protocol` class, no registration
+call, no `ProtocolPipeline`, no `ProtocolManager` and no path-finding. Do not add any of them for
+the sake of the resemblance — the guarantees in **The handler layer** are the goal, and several of
+them are only reachable without that structure.
 
 Upstream stays valuable for three things.
 
@@ -77,40 +80,40 @@ Upstream stays valuable for three things.
 
 3. **A mistake that compiles is a design bug.** ViaVersion cannot tell you at build time that a
    packet was forgotten, because registration is a runtime call. Here it can, and the missing
-   `Transformer` build failure is the whole return on abandoning the port. Weigh a change by what it
+   `Transformer` build failure is what the schema-derived design buys. Weigh a change by what it
    still catches.
 
 4. **No API/Impl interface split.** ViaVersion splits every core type into an interface (in its
    `api/` module) and an `Impl` (in `common/`), such as `ProtocolManager` + `ProtocolManagerImpl`.
-   endweave has no third-party API surface, so that split is deliberately collapsed into one
-   concrete class per type. Reproducing it is over-engineering. The `@see` names both halves.
+   endweave has no third-party API surface, so that split is collapsed into one concrete class per
+   type. Reproducing it is over-engineering. The `@see` names both halves.
 
 Upstream lives under `com.viaversion.viaversion` (api in the `api/` module, impls in `common/`)
 and `com.viaversion.viabackwards`.
 
-## Settled decisions for the translation layer
-
-Most of these are now realised in `protocol/handler.h` rather than pending; the logger rule is
-still a directive. Either way they are binding.
+## Design decisions for the translation layer
 
 - **No protocol classes at all.** ViaVersion has a protocol per adjacent-version *pair*
   (`Protocol1_20To1_20_2`) that packets are registered into by hand. endweave derives the whole
   thing instead: `handler.h` generates a handler per (from, to, id) out of bedrock-protocol's
-  `packet_of`, so there is no node, no edge, and nothing to register. Do not reintroduce pair-named
-  classes, and do not add a per-version roster — see **The handler layer**.
+  `packet_of`, so there is no node, no edge, and nothing to register. Do not add pair-named classes
+  or a per-version roster — see **The handler layer**.
 - **Transforms speak decoded packets, never streams.** A `Transformer` is a converter between two
   eras' structs of one packet, not a reader over a buffer, and none of them names `BinaryReader` or
   `BinaryWriter`. The generated `handle` is the one exception and is not a transform: it is the
   codec glue that decodes, calls one transform, and re-encodes. Keep the streams there.
 - **Where ViaVersion throws, endweave returns `std::unexpected`.** Its handlers report everything
-  through exceptions, and those land in the error channel here.
+  through exceptions, and those land in the error channel here. A deliberate refusal is not an
+  error: that is `ctx.cancel()`, described under **Transformers**.
 - **Packets come from bedrock-protocol, ids and types both.** `MinecraftPacketIds` is the generated
   mirror of BDS's enum and `packet_of<V, Id>` maps an id to the struct that carries it at that
   version. endweave keeps no list of its own, so a list can never go stale against the schema.
-- **Dropped as Java-Edition-specific, keep them dropped:** the `State` machine (Bedrock has one flat
-  id space), the per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable
-  and never renumbered, so the id *is* the identity), `AbstractProtocol`'s four generic parameters,
-  `MappingData`, the rewriter hierarchy, and ViaVersion's `PacketWrapper` + `Type<T>` value registry.
+- **Not modelled, as Java-Edition-specific:** the `State` machine (Bedrock has one flat id space),
+  the per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable and never
+  renumbered, so the id *is* the identity), `AbstractProtocol`'s four generic parameters,
+  `MappingData`, the rewriter hierarchy, and ViaVersion's `Type<T>` value registry. Do not add them.
+  Of `PacketWrapper`, only the connection and cancel half exists, as `Context`; the buffer half has
+  no place because the schema derives the codec.
 - **One logger,** the Endstone plugin logger, threaded through rather than reached as a global. It
   is the analogue of ViaVersion's `Via.getPlatform().getLogger()`. Match ViaVersion's levels: `info`
   for connection and lifecycle lines, `warning` for problems and remap failures.
@@ -143,13 +146,13 @@ compile.
   `Rewriter` overrides it in the other direction.
 - **A packet the destination does not have is cancelled, never forwarded.** `shouldCancel` is
   `has_packet<From, Id>` and then either a gap anywhere on the path or an explicit `Cancel`; the
-  schema half of it covers every case: a newer
-  client sending something an older server never knew, a newer server sending something an older
-  client cannot parse, and either direction across a version that removed a packet. `isCancelled(id)`
-  is a second `constexpr` table beside the handlers, queried before them, so a cancelled packet costs
-  one indexed load and builds no buffer either. Cancelling and handling are disjoint by
-  construction, since `shouldHandle` gives way to `shouldCancel`. Forwarding an id the peer does
-  not know is worse than dropping it — it desynchronises or disconnects.
+  schema half of it covers every case: a newer client sending something an older server never knew,
+  a newer server sending something an older client cannot parse, and either direction across a
+  version that removed a packet. `isCancelled(id)` is a second `constexpr` table beside the
+  handlers, queried before them, so a cancelled packet costs one indexed load and builds no buffer
+  either. Cancelling and handling are disjoint by construction, since `shouldHandle` gives way to
+  `shouldCancel`. Forwarding an id the peer does not know is worse than dropping it — it
+  desynchronises or disconnects.
 - **An explicit `Cancel` is the one sanctioned way not to port a packet.** `Cancel<From, To, Id>`
   defaults to false and a specialization drops that id on that edge: no handler, no `Transformer`
   demanded, no decode and no re-encode. It is checked on the endpoint pair and on every hop of the
@@ -161,16 +164,14 @@ compile.
 - **Cancellation reaches only as far as the schema does.** `has_packet` means "bedrock-protocol
   models this", not "this exists on the wire", so an id modelled at neither version reads false on
   both sides and still passes through: nothing in the schema says whether the destination has it.
-  Between 1001 and 2168 nothing cancels today, because both model the same 18 packets. The predicate
-  first bites at a real range boundary — `ClientboundUpdateSoundDataPacket` (348) arrives at 1001,
-  so 1001 to 975 cancels it.
+  `SetPlayerFurnaceOptions` (351) is the live case — modelled at 2181 alone, so leaving 2181 cancels
+  it rather than handing an older peer an id it never knew.
 - **Null means passthrough, and the caller must be able to see it before it builds anything.**
-  `PacketHandler` takes only the two streams, so `PacketHandlers::get(id)` answers without them. A
-  handler that takes the id would force the caller to construct a `BinaryReader` and a
-  `BinaryWriter` just to learn there was nothing to do. Keep the id lookup free of buffers.
+  `PacketHandlers::get(id)` answers without a `BinaryReader` or `BinaryWriter`, so the caller learns
+  there is nothing to do before constructing either. Keep the id lookup free of buffers.
 - **Passthrough is the null handler, not a return value.** A handler that runs either succeeds or
   carries an `error_code`, which is why it returns `std::expected<void, std::error_code>`. Do not
-  reintroduce a result enum with a `Passthrough` case.
+  add a result enum with a `Passthrough` case.
 - **Resolve once per connection, never per packet.** `getPacketHandlers(from, to)` is the analogue
   of Velocity's `getProtocolRegistry`, which the decoder caches rather than re-looking-up. Store both
   directions on `UserConnection`; per packet it is then a bounds check and an indexed load.
@@ -191,12 +192,12 @@ compile.
   would reach for a protocol graph.
 - **A client already on the server's protocol is left alone.** `shouldHandle` is false whenever
   `From == To`, so a same-version connection resolves to empty tables and endweave is transparent to
-  it. That guard is load-bearing now that a `Rewriter` can force handling on its own: without it,
+  it. That guard is load-bearing because a `Rewriter` can force handling on its own: without it,
   `StartGamePacket` would be decoded and its checksum zeroed for players who need no translation.
-- **A hop whose type did not change is skipped, not transformed.** `reshape` returns the struct
-  untouched when `packet_of<Cur, Id>` and `packet_of<next, Id>` are one type, so an unchanged packet
-  costs nothing mid-chain and needs no `Transformer<T, T>`. Do not add one: it would collide with
-  the container partial specializations in `transform.h`.
+- **A hop whose type did not change is skipped, not transformed.** `chain` passes the struct
+  straight on when `packet_of<Cur, Id>` and `packet_of<next, Id>` are one type, so an unchanged
+  packet costs nothing mid-chain and needs no `Transformer<T, T>`. Do not add one: it would collide
+  with the container partial specializations in `transform.h`.
 - **`ProtocolVersion::UNKNOWN` is the sentinel, not `std::optional`.** It matches Velocity's
   `getProtocolVersion(int)`, and it composes: an unknown version matches no fold arm, so the table
   comes back empty and every `get(id)` is null without a presence check at any call site.
@@ -232,11 +233,12 @@ untouched: no reader, no struct, no `Transformer`, nothing in either table.
   different actor and it stays a `Transformer`.
 - **A declaration only reaches the endpoints.** `handle` decodes at `From` and encodes at `To`, so a
   wire-compatible pair that ends up mid-chain has to be held as an object and needs its
-  `Transformer` back. `reshape` static-asserts exactly that, by name. Adding a third version will
-  fire it for 123 and 175: either restore those transforms, or teach `handle` to decode and encode
-  at the far end of a leading and trailing run of free hops, which is roughly twenty lines and makes
-  the declarations compose through chains. That is a deliberate omission, not an oversight — it buys
-  nothing while there are two versions.
+  `Transformer` back. `chain` static-asserts exactly that, by name. 123 and 175 stay clear of it
+  because 2181 leaves both unreshaped, so `packet_of<2181, Id>` is the same type as
+  `packet_of<2168, Id>` and the declared pair is still an endpoint pair. A version that does reshape
+  one of them fires the assert: either restore that transform, or teach `handle` to decode and
+  encode at the far end of a leading and trailing run of free hops, which is roughly twenty lines
+  and makes the declarations compose through chains.
 - **The real fix is upstream.** bedrock-protocol should alias rather than re-emit an identical
   snapshot; every pair that stops being two types stops needing a declaration here.
 
@@ -262,35 +264,52 @@ a semantic change, not a shape change, and it is not `Transformer`'s job.
   live there because they belong to no era's file; a rewriter for a single version goes in that
   version's module header like everything else.
 - **`WireCompatible` and a `Rewriter` on the same hop contradict each other.** A rewrite has to hold
-  the destination struct, which a wire-compatible pair never builds. `reshape` says so by name.
+  the destination struct, which a wire-compatible pair never builds. `chain` says so by name.
   Write the `Transformer`.
 
 ## Transformers
 
 `Transformer` is the analogue of ViaVersion's `ValueTransformer`, in the shape of `std::formatter`:
 a trait declared undefined in `protocol/transform.h` and specialized per source/destination pair
-that changes shape. That header also holds the `ew::transform` / `ew::transform_to` call surface and
-the `std::optional` / `std::vector` / `std::map` specializations. A transform returns its result
-outright, unless the destination cannot always express the source, in which case it returns
-`std::expected` and may refuse — see **A packet the destination cannot express is refused**.
+that changes shape. That header also holds the `ew::transform` / `ew::transform_to` /
+`ew::transform_into` call surface and the `std::optional` / `std::vector` / `std::map`
+specializations.
 
+- **The context is the first parameter, and the destination lives in it.**
+  `Transformer<From, To>::transform(Context<To> &ctx, From &&from)` returns `void` and fills
+  `ctx.out()`. This is ViaVersion's `ValueTransformer#transform(PacketWrapper, T1)`, which also
+  takes its wrapper first. `Context` carries the `UserConnection` the packet belongs to and the
+  cancel any transform on it may answer with; `ctx.with(child)` makes the context a nested field
+  writes through, so the connection and the cancel reach every level. `Context<To>` is a concrete
+  type inside a specialization, which is what keeps the body out-of-line in the `.cpp`: templating
+  `transform` on the context instead, as `std::formatter` does, would force every body into a header
+  and collapse the parallel per-module translation units into the three that include `handler.h`.
+- **A packet the destination cannot express is dropped through the context.** `ctx.cancel()` sets
+  the flag and the transform returns immediately; whatever it wrote is never read. `chain` stops at
+  the hop that cancelled, `handle` skips the encode, and the listener cancels the packet and logs it
+  at debug — a refusal is a deliberate drop, not the error the `std::expected` channel reports. The
+  live cases are `ClientboundUpdateSoundDataPacket`, whose six adjust-events have nothing but Stop
+  at 1001, `PlayerListPacket` holding adds and removes at once, and `ResourcePacksInfoPacket` past
+  the 65535 its count can spell. Reach for it where the alternative tells the destination something
+  the server did not mean — a field with no source is invented instead, per the rule further down.
+  @see ViaVersion `PacketWrapper#cancel`, which its `PacketHandler` answers with the same way.
 - **Keyed on the source and destination pair, with one method.**
-  `Transformer<v1001::Foo, v2168::Foo>::transform` returns a `v2168::Foo` and the opposite pair
-  returns the 1001 one, so the key names both ends and the method never has to. The pair is what
-  keeps the key unique once a third era exists: an era below adds
-  `Transformer<v1001::Foo, v975::Foo>`, a distinct specialization rather than a competing one. One
-  source reaching several destinations is the ordinary case here, not a special one. A type that
-  did not change between two eras is one C++ type in both namespaces and needs no specialization.
+  `Transformer<v1001::Foo, v2168::Foo>::transform` fills a `v2168::Foo` and the opposite pair fills
+  the 1001 one, so the key names both ends and the method never has to. The pair is what keeps the
+  key unique across eras: an era below adds `Transformer<v1001::Foo, v975::Foo>`, a distinct
+  specialization rather than a competing one. One source reaching several destinations is the
+  ordinary case here, not a special one. A type that did not change between two eras is one C++ type
+  in both namespaces and needs no specialization.
 - **One file per source version,** `protocols/<version>/`, holding every specialization whose source
   type belongs to that version — `WireCompatible` and single-version `Rewriter` specializations
-  included, so one file answers everything about that era's packets. v1001 and v2168 are currently the outermost eras modelled, so v1001
-  holds the pairs leaving 1001 and v2168 the pairs leaving 2168; a missing pair is a "no
-  `Transformer<From, To>`" error rather than a wrong conversion.
+  included, so one file answers everything about that era's packets. v1001 and v2181 are the
+  outermost eras modelled; a missing pair is a "no `Transformer<From, To>`" error rather than a
+  wrong conversion.
 - **`Transformable<From, To>` is the availability test,** and it asks whether a call to
-  `Transformer<From, To>::transform` is well-formed and returns exactly `To` — not whether the
-  specialization exists. A declaration alone never reads as a supported edge, and a container pair
-  whose elements have no transform reports as untransformable rather than as a body that happens to
-  fail later.
+  `Transformer<From, To>::transform` is well-formed with a `Context<To>` and returns `void` — not
+  whether the specialization exists. A declaration alone never reads as a supported edge, and a
+  container pair whose elements have no transform reports as untransformable rather than as a body
+  that happens to fail later.
 - **A type with two wire shapes at one version is just another pair.** BDS writes
   `SerializedSkinRef` two ways at 1001: cerealised for `PlayerSkinPacket`, and through
   `SerializedSkinImpl::write` for a `PlayerListPacket` entry, which bedrock-protocol emits as
@@ -301,48 +320,49 @@ outright, unless the destination cannot always express the source, in which case
   keys are 1001-era, so both live in `protocols/v1001/skin.{h,cpp}` — the module that owns the
   types. A conversion never earns a file or a free function of its own. A chain has to name its
   middle type, since a proxy cannot feed another `transform`:
-  `ew::transform(ew::transform_to<bp::SerializedSkinRef_<1001>>(std::move(entry.skin)))`.
+  `ew::transform(ctx, ew::transform_to<bp::SerializedSkinRef_<1001>>(ctx, std::move(entry.skin)))`.
 - **The specialization is declared in the header, the body defined in the sibling `.cpp`,** which is
-  listed in `endstone_add_plugin`. An out-of-line body rules out a deduced return type, so the
-  declaration spells the returned struct outright. No trailing return types. The destination now
-  also appears in the key, which makes the return type on the definition look redundant — it is not
-  droppable: an out-of-line definition must repeat the declared return type, and `auto` on both ends
-  would only deduce within the defining `.cpp`, leaving every other translation unit unable to call
-  it.
+  listed in `endstone_add_plugin`. This is what keeps each module a translation unit of its own: the
+  bodies compile in parallel, and editing one recompiles one file rather than every table that
+  includes `handler.h`.
 - **A transform consumes its source.** It takes an rvalue reference and moves every field that owns
   storage, since the packet it came from is on its way out. A `const` source is a compile error
   rather than a copy.
-- **Assign every field explicitly, in declaration order.** Only a field whose shape actually changed
-  carries logic, and it reads as the odd one out against the plain assignments around it.
+- **Assign every field explicitly, in declaration order,** through `auto &to = ctx.out();`. Only a
+  field whose shape actually changed carries logic, and it reads as the odd one out against the
+  plain assignments around it.
 - **A packet delegates to the `Transformer` of each changed field's type,** moving into it. The
   arithmetic of a changed field lives in that field's transform, never restated at the packet.
 - **Call through `ew::transform`,** which returns a proxy that takes its destination from the
-  assignment target, so a field reads `to.slots = ew::transform(std::move(from.slots));` — no
+  assignment target, so a field reads `to.slots = ew::transform(ctx, std::move(from.slots));` — no
   versioned type at the call site. The `std::move` is not optional: `transform` preserves the value
   category it is handed and every body takes `&&`, so an lvalue is a compile error rather than a
   silent copy. It always consumes what it is handed, so never pass it something the rest of the body
-  still reads, and hoist any member read out of an argument list that also moves the object.
-  Where there is no destination context — an `auto` local, the inner half of a chain — use
-  `ew::transform_to<Dest>(std::move(x))` and spell the destination. Qualifying is not optional:
-  inside a `Transformer<...>::transform` body the unqualified name finds the member, lookup stops at
-  class scope, and the free function is never a candidate.
+  still reads, and hoist any member read out of an argument list that also moves the object. Where
+  there is no destination context — an `auto` local, the inner half of a chain — use
+  `ew::transform_to<Dest>(ctx, std::move(x))` and spell the destination; where the destination
+  already exists as an object, `ew::transform_into(ctx, std::move(x), dest)` fills it in place.
+  Qualifying is not optional: inside a `Transformer<...>::transform` body the unqualified name finds
+  the member, lookup stops at class scope, and the free function is never a candidate. A lambda that
+  calls through any of them has to capture `ctx`.
 - **`std::optional`, `std::vector` and `std::map` are already specialized,** each pairing the
   container of the source element with the container of the destination one. They unwrap, delegate
   to the element's `Transformer`, and compose (`optional<vector<T>>`), so a field never spells a
   loop or a `has_value()` guard. They take an rvalue and nothing else, so a forgotten `std::move`
-  is the compile error the rule above promises rather than a silently copied container. An element with no `Transformer` is a compile error, which is what
-  keeps a missing include from passing the value through untranslated.
+  is the compile error the rule above promises rather than a silently copied container. An element
+  with no `Transformer` is a compile error, which is what keeps a missing include from passing the
+  value through untranslated.
 - **A renumbered enum is mapped by name, never by a shift.** New enumerators are appended before
   a trailing sentinel, so the sentinel's number moves every version: `LevelSoundEvent::UNDEFINED`
   is 601 at 975, 611 at 1001 and 614 at 2168, and 611 is `MOUNT` at 2168. Passing the number
   through means an actor that meant "no sound" names a real one at the other end and plays it on
-  the interval `HEARTBEAT_INTERVAL_TICKS` sets — the bug that motivated this. `byName` in
-  `protocol/enum.h` matches the generated `names_v` of one era against `enum_cast` of the other and
-  falls back to the destination's own sentinel, so the mapping is derived rather than a
-  hand-maintained shift table, and it survives removals and insertions anywhere rather than only
-  before the sentinel. The table is folded on first use, not at compile time: 600 names against 600
-  names costs seconds a translation unit and a raised `-fconstexpr-steps`, and buys nothing.
-  ViaVersion's `MappingData` is the shift table this replaces; do not reintroduce one.
+  the interval `HEARTBEAT_INTERVAL_TICKS` sets. `byName` in `protocol/enum.h` matches the generated
+  `names_v` of one era against `enum_cast` of the other and falls back to the destination's own
+  sentinel, so the mapping is derived rather than a hand-maintained shift table, and it survives
+  removals and insertions anywhere rather than only before the sentinel. The table is folded on
+  first use, not at compile time: 600 names against 600 names costs seconds a translation unit and a
+  raised `-fconstexpr-steps`, and buys nothing. ViaVersion's `MappingData` is the shift table this
+  replaces; do not add one.
 - **A projection is written out both ways.** v1001's tagged `ItemStackNetIdVariant` reaches v2168 as
   one signed varint (`n` for an `ItemStackNetId`, `-2n-1` for an `ItemStackRequestId`, `-2n` for an
   `ItemStackLegacyRequestId`), and v2168's transform reads the case back from sign and parity. The
@@ -357,18 +377,8 @@ outright, unless the destination cannot always express the source, in which case
 - **A field with no source is invented, and says so.** Downgrading writes `is_chat_logging = false`,
   and `value_or({})` where 2168 made a field optional that 1001 required, so an absent world id
   becomes a null UUID. `PresenceConfiguration`'s `experience_name` and `world_name` are simply gone
-  at 2168 and come back `std::nullopt`. Each of these is a candidate to refuse the downgrade through
-  the rule below; none should be quietly widened into looking faithful.
-- **A packet the destination cannot express is refused, not half-translated.** That transform returns
-  `std::expected<To, std::error_code>` and answers `std::unexpected`; `chain` carries it out to
-  `handle`, and the listener cancels the packet and logs the reason. Only a packet's transform may
-  take this form — `chain` is the one caller that can act on a refusal, and `transform_to`
-  static-asserts against a field reaching for it. The live cases are
-  `ClientboundUpdateSoundDataPacket`, whose six adjust-events have nothing but Stop at 1001,
-  `PlayerListPacket` holding adds and removes at once, and `ResourcePacksInfoPacket` past the 65535
-  its count can spell. It is opt-in per pair: a total hop is still elided straight into the next, so
-  the move budget is unchanged. Refuse where the alternative tells the destination something the
-  server did not mean — a field with no source is the rule above, not this one.
+  at 2168 and come back `std::nullopt`. Each of these is a candidate for `ctx.cancel()` instead;
+  none should be quietly widened into looking faithful.
 
 ## Correspondence map
 
@@ -377,6 +387,7 @@ outright, unless the destination cannot always express the source, in which case
 | `connection/connection.h` `UserConnection` | `UserConnection` + `UserConnectionImpl` |
 | `connection/manager.h` `ConnectionManager` | `ConnectionManager` + `ConnectionManagerImpl` |
 | `plugin.{h,cpp}`, `listener.{h,cpp}` | platform module (plugin main + netty decode/encode handlers) |
+| `protocol/context.h` `Context` | `PacketWrapper` |
 | `protocol/transform.h` `Transformer` | `ValueTransformer` |
 | `protocol/transform.h` `WireCompatible` | none — the schema-derived design has no upstream counterpart |
 | `protocol/rewrite.h` `Rewriter` | none by name; the job is ViaVersion's per-packet `PacketHandler` lambda |
@@ -401,7 +412,7 @@ The plugin lands at `build/endweave-<version>.so`. Drop it in the server's `plug
 
 There is no test suite and no `tests/`. bedrock-protocol's own goldens cover the codec, this repo
 only wires it up, and a transform is exercised by the packets that run through it. Do not add one
-back without a case those goldens cannot reach.
+without a case those goldens cannot reach.
 
 A green build is the gate. `listener.cpp` reaches `handler.h` through `connection.h`, so building
 instantiates every handler table and a packet that needs work without a `Transformer` stops the
@@ -413,22 +424,23 @@ build.
   private members `lower_case_` (trailing underscore), locals/params `lower_case`.
 - **A move is fine, a copy is not.** Packets are moved through the chain, never copied, and the
   budget is one move for the whole walk however many versions it crosses — the base case's
-  `return std::move(from)`. Everything else is guaranteed elision. Weigh a change against that: a
-  helper that returns by value where the object could have been passed along by reference costs a
-  memberwise move of the whole struct per hop, which is what retired `reshape`.
+  `ctx.out() = std::move(from)`. Weigh a change against that: a helper that returns by value where
+  the object could have been passed along by reference costs a memberwise move of the whole struct
+  per hop.
 - **Simple over clever, and nothing speculative.** No metaprogramming that today's version set does
-  not exercise, and no helper that exists only to name two lines. The leading/trailing free-hop
-  collapsing was written, measured, and dropped for exactly this reason: it was dead code against
-  two versions, and the failure mode without it is a named `static_assert` telling you to restore a
-  Transformer, which is the better trade.
+  not exercise, and no helper that exists only to name two lines. Collapsing leading and trailing
+  runs of free hops in `handle` is the standing example of what not to write: it would be dead code
+  against the versions modelled, and the failure mode without it is a named `static_assert` telling
+  you to restore a `Transformer`, which is the better trade.
 - Prefer explicit `.value()` on `std::optional` and `std::expected` over `operator*`. Check for
   presence first (`if (!x)`), then read through `.value()`.
 - Prefer `std::unique_ptr` over `std::optional` to hold an owned object with deferred
   construction. Reserve `std::optional` for genuine value-presence.
-- **Comments: do not write any.** The one exception is the upstream correspondence line, a single
-  `/** @see ViaVersion Foo#bar. */` on a type or method that has a ViaVersion counterpart. Nothing
-  else, no explanations, no rationale, no `@param` or `@return` blocks, no trailing notes on
-  members. Comments already in the tree that a human wrote stay.
+- **Comments: write almost none.** Two exceptions. An upstream correspondence line, a single
+  `/** @see ViaVersion Foo#bar. */` on a type or method that has a ViaVersion counterpart. And an
+  `// ENDWEAVE:` note where a conversion is lossy, invented or refused, or where a `WireCompatible`
+  claim needs its evidence — those record what the code cannot say for itself. Nothing else: no
+  explanations, no rationale, no `@param` or `@return` blocks, no trailing notes on members.
 - Include `<protocol/network.h>` and friends rather than the `<bedrock/protocol.hpp>` umbrella when
   only one module is needed. The umbrella's `protocol/game.h` has an enumerator named `VOID` that
   clashes with `winnt.h` once `<endstone/endstone.hpp>` has pulled in `windows.h`. `handler.h` is
