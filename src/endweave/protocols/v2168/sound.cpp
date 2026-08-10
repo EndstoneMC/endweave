@@ -1,7 +1,10 @@
 #include "endweave/protocols/v2168/sound.h"
 
 #include <bedrock/enum.hpp>
+#include <expected>
+#include <system_error>
 #include <utility>
+#include <variant>
 
 namespace endweave {
 
@@ -26,14 +29,18 @@ bp::PlaySoundPacket_<1001> Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySound
     return to;
 }
 
-bp::ClientboundUpdateSoundDataPacket_<1001> Transformer<
+std::expected<bp::ClientboundUpdateSoundDataPacket_<1001>, std::error_code> Transformer<
     bp::ClientboundUpdateSoundDataPacket_<2168>,
     bp::ClientboundUpdateSoundDataPacket_<1001>>::transform(bp::ClientboundUpdateSoundDataPacket_<2168> &&from)
 {
+    // ENDWEAVE: Stop is all 1001's SoundDataEvent has. SetVolume, SetPitch, Fade, SeekTo, Pause and
+    // Resume adjust a playing sound, and stopping it instead is further from what the server meant
+    // than saying nothing.
+    if (!std::holds_alternative<bp::Stop_<2168>>(from.event)) {
+        return std::unexpected(std::make_error_code(std::errc::not_supported));
+    }
     bp::ClientboundUpdateSoundDataPacket_<1001> to;
     to.server_sound_handle = from.server_sound_handle;
-    // ENDWEAVE: TODO 1001's SoundDataEvent has only Stop, so SetVolume, SetPitch, Fade, SeekTo, Pause and
-    // Resume all end the sound instead of adjusting it. Refuse those six once there is an error channel.
     to.sound_event = bp::SoundDataEvent_<1001>::STOP;
     return to;
 }

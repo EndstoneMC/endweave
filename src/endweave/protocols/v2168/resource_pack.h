@@ -10,7 +10,8 @@ namespace endweave {
 
 template <>
 struct Transformer<bp::ResourcePacksInfoPacket_<2168>, bp::ResourcePacksInfoPacket_<1001>> {
-    static bp::ResourcePacksInfoPacket_<1001> transform(bp::ResourcePacksInfoPacket_<2168> &&from);
+    static std::expected<bp::ResourcePacksInfoPacket_<1001>, std::error_code> transform(
+        bp::ResourcePacksInfoPacket_<2168> &&from);
 };
 
 template <>

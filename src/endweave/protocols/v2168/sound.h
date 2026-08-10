@@ -25,7 +25,8 @@ struct WireCompatible<bp::LevelSoundEventPacket_<2168>, bp::LevelSoundEventPacke
 
 template <>
 struct Transformer<bp::ClientboundUpdateSoundDataPacket_<2168>, bp::ClientboundUpdateSoundDataPacket_<1001>> {
-    static bp::ClientboundUpdateSoundDataPacket_<1001> transform(bp::ClientboundUpdateSoundDataPacket_<2168> &&from);
+    static std::expected<bp::ClientboundUpdateSoundDataPacket_<1001>, std::error_code> transform(
+        bp::ClientboundUpdateSoundDataPacket_<2168> &&from);
 };
 
 } // namespace endweave

@@ -105,7 +105,7 @@ consteval bool shouldHandle()
 }
 
 template <ProtocolVersion Cur, ProtocolVersion To, int Id>
-packet_of<To, Id> chain(packet_of<Cur, Id> &&from)
+std::expected<packet_of<To, Id>, std::error_code> chain(packet_of<Cur, Id> &&from)
 {
     if constexpr (Cur == To) {
         return std::move(from);
@@ -118,7 +118,19 @@ packet_of<To, Id> chain(packet_of<Cur, Id> &&from)
                       "endweave: this hop is declared wire-compatible, yet the chain has to hold the packet as an "
                       "object across it -- a hop further along that reshapes forces that. Write the Transformer for "
                       "this pair and drop the WireCompatible.");
-        return chain<step(Cur, To), To, Id>(endweave::transform_to<packet_of<step(Cur, To), Id>>(std::move(from)));
+        using Next = packet_of<step(Cur, To), Id>;
+        // A hop that can refuse holds the packet in an expected across the call; a total one is
+        // still elided straight into the next hop.
+        if constexpr (FallibleTransformableFrom<packet_of<Cur, Id>, Next>) {
+            auto next = Transformer<packet_of<Cur, Id>, Next>::transform(std::move(from));
+            if (!next) {
+                return std::unexpected(next.error());
+            }
+            return chain<step(Cur, To), To, Id>(std::move(next).value());
+        }
+        else {
+            return chain<step(Cur, To), To, Id>(endweave::transform_to<Next>(std::move(from)));
+        }
     }
 }
 
@@ -147,7 +159,11 @@ std::expected<void, std::error_code> handle(bp::BinaryReader &in, bp::BinaryWrit
         bp::serialize(writer, packet);
     }
     else {
-        bp::serialize(writer, chain<From, To, Id>(std::move(packet)));
+        auto translated_packet = chain<From, To, Id>(std::move(packet));
+        if (!translated_packet) {
+            return std::unexpected(translated_packet.error());
+        }
+        bp::serialize(writer, translated_packet.value());
     }
 
     // The destination has to be able to read back what was just written for it. Serialiser

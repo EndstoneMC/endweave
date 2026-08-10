@@ -271,8 +271,8 @@ a semantic change, not a shape change, and it is not `Transformer`'s job.
 a trait declared undefined in `protocol/transform.h` and specialized per source/destination pair
 that changes shape. That header also holds the `ew::transform` / `ew::transform_to` call surface and
 the `std::optional` / `std::vector` / `std::map` specializations. A transform returns its result
-outright — the `std::unexpected` channel above has no bearing on it yet, which is what the last rule
-here is about.
+outright, unless the destination cannot always express the source, in which case it returns
+`std::expected` and may refuse — see **A packet the destination cannot express is refused**.
 
 - **Keyed on the source and destination pair, with one method.**
   `Transformer<v1001::Foo, v2168::Foo>::transform` returns a `v2168::Foo` and the opposite pair
@@ -357,8 +357,18 @@ here is about.
 - **A field with no source is invented, and says so.** Downgrading writes `is_chat_logging = false`,
   and `value_or({})` where 2168 made a field optional that 1001 required, so an absent world id
   becomes a null UUID. `PresenceConfiguration`'s `experience_name` and `world_name` are simply gone
-  at 2168 and come back `std::nullopt`. Each of these is a candidate to refuse the downgrade once
-  there is an error channel; none should be quietly widened into looking faithful.
+  at 2168 and come back `std::nullopt`. Each of these is a candidate to refuse the downgrade through
+  the rule below; none should be quietly widened into looking faithful.
+- **A packet the destination cannot express is refused, not half-translated.** That transform returns
+  `std::expected<To, std::error_code>` and answers `std::unexpected`; `chain` carries it out to
+  `handle`, and the listener cancels the packet and logs the reason. Only a packet's transform may
+  take this form — `chain` is the one caller that can act on a refusal, and `transform_to`
+  static-asserts against a field reaching for it. The live cases are
+  `ClientboundUpdateSoundDataPacket`, whose six adjust-events have nothing but Stop at 1001,
+  `PlayerListPacket` holding adds and removes at once, and `ResourcePacksInfoPacket` past the 65535
+  its count can spell. It is opt-in per pair: a total hop is still elided straight into the next, so
+  the move budget is unchanged. Refuse where the alternative tells the destination something the
+  server did not mean — a field with no source is the rule above, not this one.
 
 ## Correspondence map
 

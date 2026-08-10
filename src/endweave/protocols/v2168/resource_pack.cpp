@@ -1,15 +1,23 @@
 #include "endweave/protocols/v2168/resource_pack.h"
 
 #include <cstdint>
+#include <expected>
 #include <limits>
+#include <system_error>
 #include <utility>
 #include <variant>
 
 namespace endweave {
 
-bp::ResourcePacksInfoPacket_<1001> Transformer<bp::ResourcePacksInfoPacket_<2168>, bp::ResourcePacksInfoPacket_<1001>>::
-    transform(bp::ResourcePacksInfoPacket_<2168> &&from)
+std::expected<bp::ResourcePacksInfoPacket_<1001>, std::error_code> Transformer<
+    bp::ResourcePacksInfoPacket_<2168>,
+    bp::ResourcePacksInfoPacket_<1001>>::transform(bp::ResourcePacksInfoPacket_<2168> &&from)
 {
+    // ENDWEAVE: 1001 counts the packs in a uint16, so a longer list writes a wrapped count and
+    // desynchronises the stream from there on.
+    if (from.resource_packs.size() > std::numeric_limits<std::uint16_t>::max()) {
+        return std::unexpected(std::make_error_code(std::errc::value_too_large));
+    }
     bp::ResourcePacksInfoPacket_<1001> to;
     to.resource_pack_required = from.resource_pack_required;
     to.has_addon_packs = from.has_addon_packs;
@@ -17,11 +25,6 @@ bp::ResourcePacksInfoPacket_<1001> Transformer<bp::ResourcePacksInfoPacket_<2168
     to.force_disable_vibrant_visuals = from.force_disable_vibrant_visuals;
     to.world_template_id_and_version = std::move(from.world_template_id_and_version);
     to.resource_packs = std::move(from.resource_packs);
-    // ENDWEAVE: TODO 1001 counts the packs in a uint16; above 65535 the count wraps and desynchronises the
-    // stream, so the list is cut — a client short of packs beats a dead connection. Refuse it once we can.
-    if (to.resource_packs.size() > std::numeric_limits<std::uint16_t>::max()) {
-        to.resource_packs.resize(std::numeric_limits<std::uint16_t>::max());
-    }
     return to;
 }
 

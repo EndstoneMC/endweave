@@ -3,6 +3,8 @@
 #include "endweave/protocols/v1001/skin.h"
 #include "endweave/protocols/v2168/skin.h"
 
+#include <expected>
+#include <system_error>
 #include <utility>
 #include <variant>
 
@@ -10,14 +12,12 @@ namespace ew = endweave;
 
 namespace endweave {
 
-// ENDWEAVE: TODO 2168 carries the action per entry, so one packet may hold adds and
-// removes at once, where 1001 has a single packet-level action and cannot. The action of
-// the first entry wins and entries of the other kind are dropped. BDS builds each packet
-// from one action, so the mixed form is something the 2168 shape permits rather than
-// something the wire carries; refusing the downgrade needs the error channel a transform
-// does not have yet.
-bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>, bp::PlayerListPacket_<1001>>::transform(
-    bp::PlayerListPacket_<2168> &&from)
+// ENDWEAVE: 2168 carries the action per entry, so one packet may hold adds and removes at
+// once, where 1001 has a single packet-level action and cannot. BDS builds each packet from
+// one action, so the mixed form is something the 2168 shape permits rather than something
+// the wire carries, and it is refused rather than half-translated.
+std::expected<bp::PlayerListPacket_<1001>, std::error_code> Transformer<
+    bp::PlayerListPacket_<2168>, bp::PlayerListPacket_<1001>>::transform(bp::PlayerListPacket_<2168> &&from)
 {
     bp::PlayerListPacket_<1001> to;
     if (from.entries.empty()) {
@@ -30,7 +30,7 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>, bp::PlayerL
     for (auto &entry : from.entries) {
         if (auto *add = std::get_if<bp::PlayerListPacket_<2168>::AddEntry>(&entry)) {
             if (to.action != bp::PlayerListPacketType::ADD) {
-                continue;
+                return std::unexpected(std::make_error_code(std::errc::not_supported));
             }
             auto skin = ew::transform_to<bp::SerializedSkinRef_<1001>>(std::move(add->skin));
             bp::PlayerListEntry_<1001> out;
@@ -52,7 +52,7 @@ bp::PlayerListPacket_<1001> Transformer<bp::PlayerListPacket_<2168>, bp::PlayerL
             continue;
         }
         if (to.action != bp::PlayerListPacketType::REMOVE) {
-            continue;
+            return std::unexpected(std::make_error_code(std::errc::not_supported));
         }
         to.removed_entries.push_back(std::get<bp::PlayerListPacket_<2168>::RemoveEntry>(entry).uuid);
     }

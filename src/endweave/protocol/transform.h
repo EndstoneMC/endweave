@@ -1,8 +1,10 @@
 #pragma once
 
 #include <concepts>
+#include <expected>
 #include <map>
 #include <optional>
+#include <system_error>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -26,6 +28,16 @@ concept TransformableFrom = requires(Source &&source) {
     { Transformer<std::remove_cvref_t<Source>, To>::transform(std::forward<Source>(source)) } -> std::same_as<To>;
 };
 
+/** The same call answering `std::expected` instead, for a pair the destination cannot always
+ * express. Only a packet's transform may take this form: `chain` is the one caller that can
+ * carry a refusal out, and a field has nowhere to put one. */
+template <class Source, class To>
+concept FallibleTransformableFrom = requires(Source &&source) {
+    {
+        Transformer<std::remove_cvref_t<Source>, To>::transform(std::forward<Source>(source))
+    } -> std::same_as<std::expected<To, std::error_code>>;
+};
+
 } // namespace detail
 
 template <class From, class To>
@@ -34,6 +46,9 @@ concept Transformable = detail::TransformableFrom<From, To>;
 template <class To, class From>
 [[nodiscard]] constexpr To transform_to(From &&from)
 {
+    static_assert(!detail::FallibleTransformableFrom<From, To>,
+                  "endweave: this pair's transform can refuse, so only chain may call it -- a field has nowhere "
+                  "to report a refusal");
     static_assert(detail::TransformableFrom<From, To>,
                   "endweave: no Transformer<From, To>::transform accepting this value category");
     if constexpr (detail::TransformableFrom<From, To>) {
