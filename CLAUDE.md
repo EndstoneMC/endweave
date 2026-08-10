@@ -401,6 +401,16 @@ build.
 
 - C++23, clang-format (see `.clang-format`). Classes/enums `CamelCase`, methods `camelBack`,
   private members `lower_case_` (trailing underscore), locals/params `lower_case`.
+- **A move is fine, a copy is not.** Packets are moved through the chain, never copied, and the
+  budget is one move for the whole walk however many versions it crosses — the base case's
+  `return std::move(from)`. Everything else is guaranteed elision. Weigh a change against that: a
+  helper that returns by value where the object could have been passed along by reference costs a
+  memberwise move of the whole struct per hop, which is what retired `reshape`.
+- **Simple over clever, and nothing speculative.** No metaprogramming that today's version set does
+  not exercise, and no helper that exists only to name two lines. The leading/trailing free-hop
+  collapsing was written, measured, and dropped for exactly this reason: it was dead code against
+  two versions, and the failure mode without it is a named `static_assert` telling you to restore a
+  Transformer, which is the better trade.
 - Prefer explicit `.value()` on `std::optional` and `std::expected` over `operator*`. Check for
   presence first (`if (!x)`), then read through `.value()`.
 - Prefer `std::unique_ptr` over `std::optional` to hold an owned object with deferred
