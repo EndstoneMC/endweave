@@ -6,7 +6,7 @@ bp::AnvilDamagePacket_<1001> Transformer<bp::AnvilDamagePacket_<2168>, bp::Anvil
     bp::AnvilDamagePacket_<2168> &&from)
 {
     bp::AnvilDamagePacket_<1001> to;
-    // ENDWEAVE: TODO 2168 sends no damage and it cannot be recovered. Undamaged is the one value that
+    // ENDWEAVE: 2168 sends no damage and it cannot be recovered. Undamaged is the one value that
     // cannot break an anvil the server still has.
     to.damage = 0;
     to.position = from.position;

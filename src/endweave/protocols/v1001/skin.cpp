@@ -245,7 +245,7 @@ bp::SerializedSkinRef_<2168> Transformer<bp::SerializedSkinRef_<1001>, bp::Seria
     to.is_primary_user = from.is_primary_user;
     to.overrides_player_appearance = from.overrides_player_appearance;
     to.trusted_skin_flag = from.trusted_skin_flag;
-    // ENDWEAVE: TODO 1001 carries no profile hash. Empty is what a client with no persona
+    // ENDWEAVE: 1001 carries no profile hash. Empty is what a client with no persona
     // profile sends, so the server reads the skin as unhashed rather than as a mismatch.
     to.profile_hash = {};
     return to;

@@ -15,7 +15,7 @@ bp::NetworkItemStackDescriptor downgradeLegacyItemStack(bp::SerializedNetworkIte
     to.id = from.id;
     to.stack_size = from.stack_size;
     to.aux_value = from.aux_value;
-    // ENDWEAVE: TODO 2168 codes a request id as -2n-1 and a legacy request id as -2n, and the
+    // ENDWEAVE: 2168 codes a request id as -2n-1 and a legacy request id as -2n, and the
     // legacy descriptor holds only a bare net id, so both negative cases are dropped.
     if (from.net_id_variant.has_value() && from.net_id_variant.value() >= 0) {
         to.net_id = bp::ItemStackNetId{from.net_id_variant.value()};
@@ -125,7 +125,7 @@ bp::MovePlayerPacket_<1001> Transformer<bp::MovePlayerPacket_<2168>, bp::MovePla
     to.reset_position = from.reset_position;
     to.on_ground = from.on_ground;
     to.riding_id = from.riding_id;
-    // ENDWEAVE: TODO teleport_data under a non-TELEPORT mode is dropped; forcing the mode would
+    // ENDWEAVE: teleport_data under a non-TELEPORT mode is dropped; forcing the mode would
     // carry it but make the client snap instead of move. TELEPORT with no data invents 0/0.
     to.cause = from.teleport_data.has_value() ? from.teleport_data.value().cause : 0;
     to.source_entity_type = from.teleport_data.has_value() ? from.teleport_data.value().source_entity_type : 0;

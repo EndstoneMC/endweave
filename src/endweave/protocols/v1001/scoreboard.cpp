@@ -71,7 +71,7 @@ bp::SetScorePacket_<2168> Transformer<bp::SetScorePacket_<1001>, bp::SetScorePac
             to.score_info.emplace_back(std::move(changed));
             break;
         }
-        // ENDWEAVE: TODO 2168 has no arm for an identity-less entry, and inventing one would
+        // ENDWEAVE: 2168 has no arm for an identity-less entry, and inventing one would
         // put the score on the wrong holder, so the entry is dropped whole.
         case bp::IdentityDefinition::Type::INVALID:
             break;

@@ -14,7 +14,7 @@ bp::PlayerBlockActionData_<1001> Transformer<bp::PlayerBlockActionData_<2168>, b
     transform(bp::PlayerBlockActionData_<2168> &&from)
 {
     bp::PlayerBlockActionData_<1001> to;
-    // ENDWEAVE: TODO INTERNAL_UPDATE collides with 1001's COUNT sentinel, so it maps to UNKNOWN,
+    // ENDWEAVE: INTERNAL_UPDATE collides with 1001's COUNT sentinel, so it maps to UNKNOWN,
     // which BDS ignores. Dropping the action would be truer, but a transform is one-to-one.
     to.player_action_type = from.player_action_type == bp::PlayerActionType_<2168>::INTERNAL_UPDATE
                               ? bp::PlayerActionType_<1001>::UNKNOWN

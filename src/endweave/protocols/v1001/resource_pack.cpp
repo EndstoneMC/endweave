@@ -39,7 +39,7 @@ bp::ResourcePackClientResponsePacket_<2168> Transformer<
         break;
     case bp::ResourcePackResponse::CANCEL:
     default:
-        // ENDWEAVE: TODO 1001 reads the response as a raw int8; a value outside 1..4 has no case and no name
+        // ENDWEAVE: 1001 reads the response as a raw int8; a value outside 1..4 has no case and no name
         // 2168 could write, so Cancel ends the exchange rather than stalling it.
         to.response = Response::Cancel{bp::ResourcePackResponse::CANCEL};
         break;

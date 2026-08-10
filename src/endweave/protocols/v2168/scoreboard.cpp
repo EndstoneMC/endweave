@@ -39,7 +39,7 @@ bp::SetScorePacket_<1001> Transformer<bp::SetScorePacket_<2168>, bp::SetScorePac
             info.scoreboard_id = removed->scoreboard_id;
             // ENDWEAVE: empty is what the client already shows for an objective it cannot name.
             info.objective_name = std::move(removed->objective_name).value_or(std::string{});
-            // ENDWEAVE: TODO 1001 requires a score on a removal and 2168 carries none, so it
+            // ENDWEAVE: 1001 requires a score on a removal and 2168 carries none, so it
             // reads zero. The client discards the entry, so it is never displayed.
             to.removed_score_info.push_back(std::move(info));
             continue;

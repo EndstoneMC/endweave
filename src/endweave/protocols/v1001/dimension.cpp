@@ -18,7 +18,7 @@ DimensionDefinitionV2168 Transformer<DimensionDefinitionV1001, DimensionDefiniti
     to.height_minimum = from.height_minimum;
     to.generator_type = from.generator_type;
     to.dimension_type = from.dimension_type;
-    // ENDWEAVE: TODO 1001 names no owning pack, and the null UUID is what BDS leaves when there is none.
+    // ENDWEAVE: 1001 names no owning pack, and the null UUID is what BDS leaves when there is none.
     to.pack_id = {};
     return to;
 }

@@ -24,7 +24,7 @@ bp::PlayerUpdateEntityOverridesPacket_<2168> Transformer<
         break;
     case bp::UpdateType::CLEAR_OVERRIDES:
     default:
-        // ENDWEAVE: TODO 1001 reads the type as a raw uint8; a value outside the four has no case and no
+        // ENDWEAVE: 1001 reads the type as a raw uint8; a value outside the four has no case and no
         // name 2168 could write, so it clamps to the clear that needs no payload.
         to.update = Update::ClearOverride{bp::UpdateType::CLEAR_OVERRIDES};
         break;
