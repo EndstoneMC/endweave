@@ -21,6 +21,7 @@ namespace ProtocolVersions {
 constexpr std::array SUPPORTED_VERSIONS{
     ProtocolVersion::v26_30,
     ProtocolVersion::v26_40,
+    ProtocolVersion::v26_50,
 };
 
 constexpr std::size_t indexOf(ProtocolVersion version)
