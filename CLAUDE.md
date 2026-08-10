@@ -387,11 +387,11 @@ cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=clang++
 cmake --build build
 ```
 
-The plugin lands at `build/endstone_endweave.so`. Drop it in the server's `plugins/`.
+The plugin lands at `build/endweave-<version>.so`. Drop it in the server's `plugins/`.
 
-There is no test suite. `CMakeLists.txt` still guards `tests/` behind `ENDWEAVE_BUILD_TESTS`, but
-nothing defines that option and `tests/CMakeLists.txt` is empty: bedrock-protocol's own goldens
-cover the codec, and a transform is exercised by the packets that run through it.
+There is no test suite and no `tests/`. bedrock-protocol's own goldens cover the codec, this repo
+only wires it up, and a transform is exercised by the packets that run through it. Do not add one
+back without a case those goldens cannot reach.
 
 A green build is the gate. `listener.cpp` reaches `handler.h` through `connection.h`, so building
 instantiates every handler table and a packet that needs work without a `Transformer` stops the

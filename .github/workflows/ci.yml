@@ -63,10 +63,6 @@ jobs:
         working-directory: endweave
         run: cmake --build build
 
-      - name: Test
-        working-directory: endweave
-        run: ctest --test-dir build --output-on-failure
-
       # The plugin is dlopen'd next to an LD_PRELOADed runtime carrying its own libc++, so
       # anything exported at default visibility can interpose. Expect single digits.
       - name: Check exported symbols

@@ -75,8 +75,3 @@ endif ()
 # Install into a server: the plugin endstone loads.
 install(TARGETS ${PROJECT_NAME} COMPONENT plugin
         LIBRARY DESTINATION plugins RUNTIME DESTINATION plugins)
-
-if (ENDWEAVE_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif ()
