@@ -46,10 +46,12 @@ bp::PlayerAuthInputPacket_<2168> Transformer<bp::PlayerAuthInputPacket_<1001>, b
     to.pos = from.pos;
     to.move = from.move;
     to.y_head_rot = from.y_head_rot;
-    // ENDWEAVE: 2168 only appends INTERNAL_UPDATE at 65, so every bit 1001 can set keeps its index
-    // and the widening leaves the new one clear.
+    // ENDWEAVE: 1001 sets bits, 2168 names the flags it set. Every index 1001 can carry survives
+    // the bump, so a set bit is its own flag id and the list comes out ascending, as BDS writes it.
     for (std::size_t bit = 0; bit < from.input_data.size(); ++bit) {
-        to.input_data.set(bit, from.input_data.test(bit));
+        if (from.input_data.test(bit)) {
+            to.input_data.push_back(static_cast<bp::PlayerAuthInputPacket_<2168>::InputData>(bit));
+        }
     }
     to.input_mode = from.input_mode;
     to.play_mode = from.play_mode;

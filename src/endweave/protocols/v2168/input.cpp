@@ -66,9 +66,13 @@ bp::PlayerAuthInputPacket_<1001> Transformer<bp::PlayerAuthInputPacket_<2168>, b
     to.pos = from.pos;
     to.move = from.move;
     to.y_head_rot = from.y_head_rot;
-    // ENDWEAVE: INTERNAL_UPDATE is bit 65, past the end of 1001's bitset, so it is dropped.
-    for (std::size_t bit = 0; bit < to.input_data.size(); ++bit) {
-        to.input_data.set(bit, from.input_data.test(bit));
+    // ENDWEAVE: 2168 names the flags it set, 1001 wants them as bits. INTERNAL_UPDATE is 65, past
+    // the end of 1001's bitset, so it is dropped along with anything else off the end.
+    for (const auto flag : from.input_data) {
+        const auto bit = static_cast<std::size_t>(flag);
+        if (bit < to.input_data.size()) {
+            to.input_data.set(bit);
+        }
     }
     // ENDWEAVE: The gate flags are recomputed from the engaged payloads; at 1001 the flag drives
     // the reader, and one that disagrees eats the rest of the packet.
