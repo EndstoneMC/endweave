@@ -35,11 +35,11 @@ public:
 
     /** Resolves both handler tables once, when the client announces itself. Everything
      * after that is an indexed load. */
-    void setClientVersion(ProtocolVersion version)
+    void setClientVersion(ProtocolVersion version, ProtocolVersion server_version)
     {
         client_version_ = version;
-        serverbound_ = getPacketHandlers(version, ProtocolVersions::SERVER_VERSION);
-        clientbound_ = getPacketHandlers(ProtocolVersions::SERVER_VERSION, version);
+        serverbound_ = getPacketHandlers(version, server_version);
+        clientbound_ = getPacketHandlers(server_version, version);
     }
 
     /** @see ViaVersion Protocol#cancelServerbound. */

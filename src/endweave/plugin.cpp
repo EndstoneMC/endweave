@@ -1,10 +1,10 @@
 #include "endweave/plugin.h"
 
+#include "endstone/logger.h"
 #include "endweave/config.h"
 #include "endweave/version.h"
 
 #include <chrono>
-#include <cstdint>
 #include <endstone/endstone.hpp>
 
 namespace endweave {
@@ -12,12 +12,17 @@ namespace endweave {
 void Plugin::onEnable()
 {
     const Config config = Config::load(getDataFolder(), getLogger());
-    if (config.debug.enabled) {
-        // The handler's lines go to the debug channel, which the default level discards.
-        getLogger().setLevel(endstone::Logger::Debug);
+    getLogger().setLevel(config.debug.enabled ? endstone::Logger::Debug : endstone::Logger::Info);
+
+    const int protocol = getServer().getProtocolVersion();
+    const ProtocolVersion server_version = ProtocolVersions::getProtocolVersion(protocol);
+    if (server_version == ProtocolVersion::UNKNOWN) {
+        getLogger().error("This server speaks protocol {}, which endweave does not translate. Standing down.",
+                          protocol);
+        return;
     }
 
-    PacketListener &listener = listener_.emplace(connections_, getLogger(), config.debug);
+    PacketListener &listener = listener_.emplace(connections_, getLogger(), config.debug, server_version);
     registerEvent(&PacketListener::onPacketReceive, listener);
     registerEvent(&PacketListener::onPacketSend, listener);
     registerEvent(&PacketListener::onPlayerQuit, listener);

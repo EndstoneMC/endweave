@@ -38,10 +38,10 @@ ProtocolVersion readClientVersion(std::string_view payload)
 /** The server compares the announced protocol against its own and disconnects the client
  * outright when they differ, before any packet this plugin could translate. So the
  * version it sees has to be its own. */
-std::string announceServerVersion()
+std::string announceServerVersion(ProtocolVersion server_version)
 {
     bp::RequestNetworkSettingsPacket packet;
-    packet.client_network_version = static_cast<std::int32_t>(ProtocolVersions::SERVER_VERSION);
+    packet.client_network_version = static_cast<std::int32_t>(server_version);
     std::string payload;
     bp::BinaryWriter out{payload};
     bp::serialize(out, packet);
@@ -50,14 +50,14 @@ std::string announceServerVersion()
 
 /** Login repeats the protocol version, and the server checks it a second time, so the
  * handshake rewrite alone is not enough to get a client past the door. */
-std::string rewriteLoginVersion(std::string_view payload)
+std::string rewriteLoginVersion(std::string_view payload, ProtocolVersion server_version)
 {
     bp::BinaryReader in{payload};
     auto packet = bp::deserialize<bp::LoginPacket>(in);
     if (!packet) {
         return {};
     }
-    packet->client_network_version = static_cast<std::int32_t>(ProtocolVersions::SERVER_VERSION);
+    packet->client_network_version = static_cast<std::int32_t>(server_version);
     std::string rewritten;
     bp::BinaryWriter out{rewritten};
     bp::serialize(out, *packet);
@@ -137,16 +137,16 @@ void PacketListener::receive(endstone::PacketReceiveEvent &event, UserConnection
                           connection.getAddress().getHostname());
             return;
         }
-        connection.setClientVersion(version);
-        if (version != ProtocolVersions::SERVER_VERSION) {
-            event.setPayload(announceServerVersion());
+        connection.setClientVersion(version, server_version_);
+        if (version != server_version_) {
+            event.setPayload(announceServerVersion(server_version_));
         }
         logger_->info("{} connected on protocol {}.", connection.getAddress().getHostname(), static_cast<int>(version));
         return;
     }
 
-    if (event.getPacketId() == kLoginPacketId && connection.getClientVersion() != ProtocolVersions::SERVER_VERSION) {
-        std::string rewritten = rewriteLoginVersion(event.getPayload());
+    if (event.getPacketId() == kLoginPacketId && connection.getClientVersion() != server_version_) {
+        std::string rewritten = rewriteLoginVersion(event.getPayload(), server_version_);
         if (rewritten.empty()) {
             logger_->warning("{} sent a login that did not decode; leaving it untouched.",
                              connection.getAddress().getHostname());

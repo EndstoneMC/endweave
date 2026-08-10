@@ -13,8 +13,10 @@ namespace endweave {
 
 class PacketListener {
 public:
-    PacketListener(ConnectionManager &connections, endstone::Logger &logger, Config::Debug debug)
-        : connections_(&connections), logger_(&logger), debug_(logger, std::move(debug))
+    PacketListener(ConnectionManager &connections, endstone::Logger &logger, Config::Debug debug,
+                   ProtocolVersion server_version)
+        : connections_(&connections), logger_(&logger), debug_(logger, std::move(debug)),
+          server_version_(server_version)
     {
     }
 
@@ -44,6 +46,7 @@ private:
     ConnectionManager *connections_;
     endstone::Logger *logger_;
     DebugHandler debug_;
+    ProtocolVersion server_version_;
 };
 
 } // namespace endweave
