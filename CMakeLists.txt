@@ -60,7 +60,7 @@ endstone_add_plugin(${PROJECT_NAME}
         src/endweave/listener.cpp)
 add_subdirectory(src/endweave/protocols/v1001)
 add_subdirectory(src/endweave/protocols/v2168)
-add_subdirectory(src/endweave/protocols/v2181)
+add_subdirectory(src/endweave/protocols/v2187)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${CMAKE_CURRENT_BINARY_DIR}/src)
 target_link_libraries(${PROJECT_NAME} PRIVATE bedrock::protocol endstone::endstone tomlplusplus::tomlplusplus)
 # Report a malformed config through the return value rather than over the plugin boundary.

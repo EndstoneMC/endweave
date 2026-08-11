@@ -29,4 +29,9 @@ struct Transformer<bp::ClientboundUpdateSoundDataPacket_<2168>, bp::ClientboundU
                           bp::ClientboundUpdateSoundDataPacket_<2168> &&from);
 };
 
+template <>
+struct Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<2187>> {
+    static void transform(Context<bp::PlaySoundPacket_<2187>> &ctx, bp::PlaySoundPacket_<2168> &&from);
+};
+
 } // namespace endweave

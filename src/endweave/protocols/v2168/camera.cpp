@@ -7,7 +7,7 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2181>>::transform(Context<bp::CameraPreset_<2181>> &ctx,
+void Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2187>>::transform(Context<bp::CameraPreset_<2187>> &ctx,
                                                                               bp::CameraPreset_<2168> &&from)
 {
     auto &to = ctx.out();
@@ -34,20 +34,20 @@ void Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2181>>::transform(Co
     to.aim_assist = std::move(from.aim_assist);
     to.control_scheme = from.control_scheme;
     // ENDWEAVE: 2168 has no starting rotation to inherit or to send, and false with an absent pair is
-    // what 2181 writes for a preset that sets neither.
+    // what 2187 writes for a preset that sets neither.
     to.apply_inherited_starting_rotation = false;
     to.starting_rotation = std::nullopt;
 }
 
-void Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2181>>::transform(Context<bp::CameraPresets_<2181>> &ctx,
+void Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2187>>::transform(Context<bp::CameraPresets_<2187>> &ctx,
                                                                                 bp::CameraPresets_<2168> &&from)
 {
     auto &to = ctx.out();
     to.presets = ew::transform(ctx, std::move(from.presets));
 }
 
-void Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2181>>::transform(
-    Context<bp::CameraPresetsPacket_<2181>> &ctx, bp::CameraPresetsPacket_<2168> &&from)
+void Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2187>>::transform(
+    Context<bp::CameraPresetsPacket_<2187>> &ctx, bp::CameraPresetsPacket_<2168> &&from)
 {
     auto &to = ctx.out();
     to.camera_presets = ew::transform(ctx, std::move(from.camera_presets));

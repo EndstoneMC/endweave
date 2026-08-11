@@ -169,4 +169,26 @@ struct Transformer<bp::ItemStackRequestPacket_<2168>, bp::ItemStackRequestPacket
     static void transform(Context<bp::ItemStackRequestPacket_<1001>> &ctx, bp::ItemStackRequestPacket_<2168> &&from);
 };
 
+template <>
+struct Transformer<bp::ItemStackResponseSlotInfo_<2168>, bp::ItemStackResponseSlotInfo_<2187>> {
+    static void transform(Context<bp::ItemStackResponseSlotInfo_<2187>> &ctx,
+                          bp::ItemStackResponseSlotInfo_<2168> &&from);
+};
+
+template <>
+struct Transformer<bp::ItemStackResponseContainerInfo_<2168>, bp::ItemStackResponseContainerInfo_<2187>> {
+    static void transform(Context<bp::ItemStackResponseContainerInfo_<2187>> &ctx,
+                          bp::ItemStackResponseContainerInfo_<2168> &&from);
+};
+
+template <>
+struct Transformer<bp::ItemStackResponseInfo_<2168>, bp::ItemStackResponseInfo_<2187>> {
+    static void transform(Context<bp::ItemStackResponseInfo_<2187>> &ctx, bp::ItemStackResponseInfo_<2168> &&from);
+};
+
+template <>
+struct Transformer<bp::ItemStackResponsePacket_<2168>, bp::ItemStackResponsePacket_<2187>> {
+    static void transform(Context<bp::ItemStackResponsePacket_<2187>> &ctx, bp::ItemStackResponsePacket_<2168> &&from);
+};
+
 } // namespace endweave

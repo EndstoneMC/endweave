@@ -18,7 +18,7 @@ The listener reads the client's protocol off `RequestNetworkSettingsPacket`,
 translation unit that reaches the listener instantiates the tables: a green `cmake --build` means
 every packet that needs work between the supported versions has it.
 
-`SUPPORTED_VERSIONS` in `protocol/version.h` is 1001, 2168 and 2181, a sorted line that endpoints
+`SUPPORTED_VERSIONS` in `protocol/version.h` is 1001, 2168 and 2187, a sorted line that endpoints
 route along.
 
 `protocol/handler.h` is the dispatch layer. It resolves a (from, to) version pair into a
@@ -164,8 +164,10 @@ compile.
 - **Cancellation reaches only as far as the schema does.** `has_packet` means "bedrock-protocol
   models this", not "this exists on the wire", so an id modelled at neither version reads false on
   both sides and still passes through: nothing in the schema says whether the destination has it.
-  `SetPlayerFurnaceOptions` (351) is the live case — modelled at 2181 alone, so leaving 2181 cancels
-  it rather than handing an older peer an id it never knew.
+  `SetPlayerFurnaceOptions` (351) is the live case — modelled at 2187 alone, so leaving 2187 cancels
+  it rather than handing an older peer an id it never knew. `RecordStarted` (352) is the other half:
+  2187 names the id but no version models the packet, so it reads false at both ends and is relayed
+  to a 2168 peer that has no such packet.
 - **Null means passthrough, and the caller must be able to see it before it builds anything.**
   `PacketHandlers::get(id)` answers without a `BinaryReader` or `BinaryWriter`, so the caller learns
   there is nothing to do before constructing either. Keep the id lookup free of buffers.
@@ -234,7 +236,7 @@ untouched: no reader, no struct, no `Transformer`, nothing in either table.
 - **A declaration only reaches the endpoints.** `handle` decodes at `From` and encodes at `To`, so a
   wire-compatible pair that ends up mid-chain has to be held as an object and needs its
   `Transformer` back. `chain` static-asserts exactly that, by name. 123 and 175 stay clear of it
-  because 2181 leaves both unreshaped, so `packet_of<2181, Id>` is the same type as
+  because 2187 leaves both unreshaped, so `packet_of<2187, Id>` is the same type as
   `packet_of<2168, Id>` and the declared pair is still an endpoint pair. A version that does reshape
   one of them fires the assert: either restore that transform, or teach `handle` to decode and
   encode at the far end of a leading and trailing run of free hops, which is roughly twenty lines
@@ -302,7 +304,7 @@ specializations.
   in both namespaces and needs no specialization.
 - **One file per source version,** `protocols/<version>/`, holding every specialization whose source
   type belongs to that version — `WireCompatible` and single-version `Rewriter` specializations
-  included, so one file answers everything about that era's packets. v1001 and v2181 are the
+  included, so one file answers everything about that era's packets. v1001 and v2187 are the
   outermost eras modelled; a missing pair is a "no `Transformer<From, To>`" error rather than a
   wrong conversion.
 - **`Transformable<From, To>` is the availability test,** and it asks whether a call to

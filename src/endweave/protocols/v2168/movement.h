@@ -37,13 +37,13 @@ struct Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<10
 };
 
 template <>
-struct Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2181>> {
-    static void transform(Context<bp::MoveActorDeltaData_<2181>> &ctx, bp::MoveActorDeltaData_<2168> &&from);
+struct Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2187>> {
+    static void transform(Context<bp::MoveActorDeltaData_<2187>> &ctx, bp::MoveActorDeltaData_<2168> &&from);
 };
 
 template <>
-struct Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<2181>> {
-    static void transform(Context<bp::MoveActorDeltaPacket_<2181>> &ctx, bp::MoveActorDeltaPacket_<2168> &&from);
+struct Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<2187>> {
+    static void transform(Context<bp::MoveActorDeltaPacket_<2187>> &ctx, bp::MoveActorDeltaPacket_<2168> &&from);
 };
 
 } // namespace endweave

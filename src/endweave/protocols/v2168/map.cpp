@@ -70,12 +70,12 @@ void Transformer<bp::ClientboundMapItemDataPacket_<2168>, bp::ClientboundMapItem
     }
 }
 
-void Transformer<bp::MapDecoration_<2168>, bp::MapDecoration_<2181>>::transform(Context<bp::MapDecoration_<2181>> &ctx,
+void Transformer<bp::MapDecoration_<2168>, bp::MapDecoration_<2187>>::transform(Context<bp::MapDecoration_<2187>> &ctx,
                                                                                 bp::MapDecoration_<2168> &&from)
 {
-    using Type = bp::MapDecoration_<2181>::Type;
+    using Type = bp::MapDecoration_<2187>::Type;
     auto &to = ctx.out();
-    // ENDWEAVE: 2181 appended five structure markers ahead of Count, so Count itself is renumbered and
+    // ENDWEAVE: 2187 appended five structure markers ahead of Count, so Count itself is renumbered and
     // passing the byte through would turn it into AbandonedCamp.
     to.image = bp::enum_cast<Type>(bp::enum_name(from.image)).value_or(Type::NO_DRAW);
     to.rotation = from.rotation;
@@ -85,8 +85,8 @@ void Transformer<bp::MapDecoration_<2168>, bp::MapDecoration_<2181>>::transform(
     to.color = from.color;
 }
 
-void Transformer<bp::ClientboundMapItemDataPacket_<2168>, bp::ClientboundMapItemDataPacket_<2181>>::transform(
-    Context<bp::ClientboundMapItemDataPacket_<2181>> &ctx, bp::ClientboundMapItemDataPacket_<2168> &&from)
+void Transformer<bp::ClientboundMapItemDataPacket_<2168>, bp::ClientboundMapItemDataPacket_<2187>>::transform(
+    Context<bp::ClientboundMapItemDataPacket_<2187>> &ctx, bp::ClientboundMapItemDataPacket_<2168> &&from)
 {
     auto &to = ctx.out();
     to.map_id = from.map_id;
