@@ -1,5 +1,5 @@
 ---
-name: follow-protocol-version
+name: follow-protocol
 description: Follow bedrock-protocol to a new network version - rename the era directory onto the new number, renumber every Transformer key, and carry the update's new wire changes across the hop below it in both directions. Use when the schema has rolled forward or should ("add 2192 support", "follow 1.26.50.x to protocol N", "support the new preview's protocol", "bump the supported version").
 ---
 
@@ -20,9 +20,9 @@ endweave owns translation semantics, not the wire format. Before touching
 anything here, the sibling `../bedrock-protocol` checkout must already model the
 new version.
 
-- If it does not, run **bedrock-protocol's `model-protocol-version` skill**
+- If it does not, run **bedrock-protocol's `bump-protocol` skill**
   first - invoke it if this session lists it, otherwise read it directly at
-  `../bedrock-protocol/.claude/skills/model-protocol-version/SKILL.md` and
+  `../bedrock-protocol/.claude/skills/bump-protocol/SKILL.md` and
   follow it there. It covers establishing the number (check it exists - a
   requested number may not), diffing the protocol-docs dumps, renumbering the
   superseded gates and modelling the delta.
