@@ -1,5 +1,5 @@
 ---
-name: follow-protocol
+name: add-protocol
 description: Follow bedrock-protocol to a new network version - rename the era directory onto the new number, renumber every Transformer key, and carry the update's new wire changes across the hop below it in both directions. Use when the schema has rolled forward or should ("add 2192 support", "follow 1.26.50.x to protocol N", "support the new preview's protocol", "bump the supported version").
 ---
 
