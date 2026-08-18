@@ -5,21 +5,21 @@
 
 namespace endweave {
 
-void Transformer<bp::DisconnectPacket_<2168>, bp::DisconnectPacket_<2187>>::transform(
-    Context<bp::DisconnectPacket_<2187>> &ctx, bp::DisconnectPacket_<2168> &&from)
+void Transformer<bp::DisconnectPacket_<2168>, bp::DisconnectPacket_<2192>>::transform(
+    Context<bp::DisconnectPacket_<2192>> &ctx, bp::DisconnectPacket_<2168> &&from)
 {
-    using Reason = bp::DisconnectFailReason_<2187>;
+    using Reason = bp::DisconnectFailReason_<2192>;
     auto &to = ctx.out();
-    // ENDWEAVE: 2187 inserted MissingStructureData and UnsupportedTransport ahead of the trailing
+    // ENDWEAVE: 2192 inserted MissingStructureData and UnsupportedTransport ahead of the trailing
     // sentinel, so the name carries the reason rather than the byte.
     to.reason = bp::enum_cast<Reason>(bp::enum_name(from.reason)).value_or(Reason::UNKNOWN);
     to.messages = std::move(from.messages);
 }
 
-void Transformer<bp::PacketViolationWarningPacket_<2168>, bp::PacketViolationWarningPacket_<2187>>::transform(
-    Context<bp::PacketViolationWarningPacket_<2187>> &ctx, bp::PacketViolationWarningPacket_<2168> &&from)
+void Transformer<bp::PacketViolationWarningPacket_<2168>, bp::PacketViolationWarningPacket_<2192>>::transform(
+    Context<bp::PacketViolationWarningPacket_<2192>> &ctx, bp::PacketViolationWarningPacket_<2168> &&from)
 {
-    using Ids = bp::MinecraftPacketIds_<2187>;
+    using Ids = bp::MinecraftPacketIds_<2192>;
     auto &to = ctx.out();
     to.violation_type = from.violation_type;
     to.violation_severity = from.violation_severity;

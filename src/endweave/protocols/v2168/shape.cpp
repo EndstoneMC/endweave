@@ -8,14 +8,14 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::TextDataPayload_<2168>, bp::TextDataPayload_<2187>>::transform(
-    Context<bp::TextDataPayload_<2187>> &ctx, bp::TextDataPayload_<2168> &&from)
+void Transformer<bp::TextDataPayload_<2168>, bp::TextDataPayload_<2192>>::transform(
+    Context<bp::TextDataPayload_<2192>> &ctx, bp::TextDataPayload_<2168> &&from)
 {
     auto &to = ctx.out();
     to.text = std::move(from.text);
     to.use_rotation = from.use_rotation;
     to.background_color = from.background_color;
-    // ENDWEAVE: 2168 sends no line gap, so multi-line text reaches a 2187 client with its lines
+    // ENDWEAVE: 2168 sends no line gap, so multi-line text reaches a 2192 client with its lines
     // touching. Nothing on the wire says what the old renderer spaced them by.
     to.line_gap_height = 0.0F;
     to.depth_test = from.depth_test;
@@ -23,8 +23,8 @@ void Transformer<bp::TextDataPayload_<2168>, bp::TextDataPayload_<2187>>::transf
     to.show_text_backface = from.show_text_backface;
 }
 
-void Transformer<bp::PrimitiveShapeDataPayload_<2168>, bp::PrimitiveShapeDataPayload_<2187>>::transform(
-    Context<bp::PrimitiveShapeDataPayload_<2187>> &ctx, bp::PrimitiveShapeDataPayload_<2168> &&from)
+void Transformer<bp::PrimitiveShapeDataPayload_<2168>, bp::PrimitiveShapeDataPayload_<2192>>::transform(
+    Context<bp::PrimitiveShapeDataPayload_<2192>> &ctx, bp::PrimitiveShapeDataPayload_<2168> &&from)
 {
     auto &to = ctx.out();
     to.network_id = from.network_id;
@@ -42,7 +42,7 @@ void Transformer<bp::PrimitiveShapeDataPayload_<2168>, bp::PrimitiveShapeDataPay
     std::visit(
         [&to, &ctx](auto &alt) {
             if constexpr (std::is_same_v<std::remove_cvref_t<decltype(alt)>, bp::TextDataPayload_<2168>>) {
-                to.extra_data_payload = ew::transform_to<bp::TextDataPayload_<2187>>(ctx, std::move(alt));
+                to.extra_data_payload = ew::transform_to<bp::TextDataPayload_<2192>>(ctx, std::move(alt));
             }
             else {
                 to.extra_data_payload = std::move(alt);
@@ -51,8 +51,8 @@ void Transformer<bp::PrimitiveShapeDataPayload_<2168>, bp::PrimitiveShapeDataPay
         from.extra_data_payload);
 }
 
-void Transformer<bp::PrimitiveShapesPacket_<2168>, bp::PrimitiveShapesPacket_<2187>>::transform(
-    Context<bp::PrimitiveShapesPacket_<2187>> &ctx, bp::PrimitiveShapesPacket_<2168> &&from)
+void Transformer<bp::PrimitiveShapesPacket_<2168>, bp::PrimitiveShapesPacket_<2192>>::transform(
+    Context<bp::PrimitiveShapesPacket_<2192>> &ctx, bp::PrimitiveShapesPacket_<2168> &&from)
 {
     auto &to = ctx.out();
     to.shapes = ew::transform(ctx, std::move(from.shapes));

@@ -4,6 +4,7 @@
 #include "endweave/protocols/v2168/actor.h"
 #include "endweave/protocols/v2168/attributes.h"
 #include "endweave/protocols/v2168/block.h"
+#include "endweave/protocols/v2168/boss.h"
 #include "endweave/protocols/v2168/camera.h"
 #include "endweave/protocols/v2168/chunk.h"
 #include "endweave/protocols/v2168/crafting.h"

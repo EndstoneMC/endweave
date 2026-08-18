@@ -1,5 +1,6 @@
 target_sources(endweave PRIVATE
         attributes.cpp
+        boss.cpp
         camera.cpp
         diagnostics.cpp
         input.cpp

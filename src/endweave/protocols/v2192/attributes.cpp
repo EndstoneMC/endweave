@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2187/attributes.h"
+#include "endweave/protocols/v2192/attributes.h"
 
 #include <type_traits>
 #include <utility>
@@ -8,8 +8,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::EnvironmentAttributeData_<2187>, bp::EnvironmentAttributeData_<2168>>::transform(
-    Context<bp::EnvironmentAttributeData_<2168>> &ctx, bp::EnvironmentAttributeData_<2187> &&from)
+void Transformer<bp::EnvironmentAttributeData_<2192>, bp::EnvironmentAttributeData_<2168>>::transform(
+    Context<bp::EnvironmentAttributeData_<2168>> &ctx, bp::EnvironmentAttributeData_<2192> &&from)
 {
     auto &to = ctx.out();
     to.name = std::move(from.name);
@@ -24,8 +24,8 @@ void Transformer<bp::EnvironmentAttributeData_<2187>, bp::EnvironmentAttributeDa
     to.noise_transition = from.noise_transition;
 }
 
-void Transformer<bp::AttributeLayerData_<2187>, bp::AttributeLayerData_<2168>>::transform(
-    Context<bp::AttributeLayerData_<2168>> &ctx, bp::AttributeLayerData_<2187> &&from)
+void Transformer<bp::AttributeLayerData_<2192>, bp::AttributeLayerData_<2168>>::transform(
+    Context<bp::AttributeLayerData_<2168>> &ctx, bp::AttributeLayerData_<2192> &&from)
 {
     auto &to = ctx.out();
     to.name = std::move(from.name);
@@ -35,15 +35,15 @@ void Transformer<bp::AttributeLayerData_<2187>, bp::AttributeLayerData_<2168>>::
     to.attributes = ew::transform(ctx, std::move(from.attributes));
 }
 
-void Transformer<bp::UpdateAttributeLayersData_<2187>, bp::UpdateAttributeLayersData_<2168>>::transform(
-    Context<bp::UpdateAttributeLayersData_<2168>> &ctx, bp::UpdateAttributeLayersData_<2187> &&from)
+void Transformer<bp::UpdateAttributeLayersData_<2192>, bp::UpdateAttributeLayersData_<2168>>::transform(
+    Context<bp::UpdateAttributeLayersData_<2168>> &ctx, bp::UpdateAttributeLayersData_<2192> &&from)
 {
     auto &to = ctx.out();
     to.attribute_layers = ew::transform(ctx, std::move(from.attribute_layers));
 }
 
-void Transformer<bp::UpdateEnvironmentAttributesData_<2187>, bp::UpdateEnvironmentAttributesData_<2168>>::transform(
-    Context<bp::UpdateEnvironmentAttributesData_<2168>> &ctx, bp::UpdateEnvironmentAttributesData_<2187> &&from)
+void Transformer<bp::UpdateEnvironmentAttributesData_<2192>, bp::UpdateEnvironmentAttributesData_<2168>>::transform(
+    Context<bp::UpdateEnvironmentAttributesData_<2168>> &ctx, bp::UpdateEnvironmentAttributesData_<2192> &&from)
 {
     auto &to = ctx.out();
     to.layer_name = std::move(from.layer_name);
@@ -51,9 +51,9 @@ void Transformer<bp::UpdateEnvironmentAttributesData_<2187>, bp::UpdateEnvironme
     to.attributes = ew::transform(ctx, std::move(from.attributes));
 }
 
-void Transformer<bp::ClientboundAttributeLayerSyncPacket_<2187>, bp::ClientboundAttributeLayerSyncPacket_<2168>>::
+void Transformer<bp::ClientboundAttributeLayerSyncPacket_<2192>, bp::ClientboundAttributeLayerSyncPacket_<2168>>::
     transform(Context<bp::ClientboundAttributeLayerSyncPacket_<2168>> &ctx,
-              bp::ClientboundAttributeLayerSyncPacket_<2187> &&from)
+              bp::ClientboundAttributeLayerSyncPacket_<2192> &&from)
 {
     auto &to = ctx.out();
     // ENDWEAVE: the settings and removal arms are one type at both versions; only the two carrying
@@ -61,10 +61,10 @@ void Transformer<bp::ClientboundAttributeLayerSyncPacket_<2187>, bp::Clientbound
     std::visit(
         [&to, &ctx](auto &alt) {
             using Alt = std::remove_cvref_t<decltype(alt)>;
-            if constexpr (std::is_same_v<Alt, bp::UpdateAttributeLayersData_<2187>>) {
+            if constexpr (std::is_same_v<Alt, bp::UpdateAttributeLayersData_<2192>>) {
                 to.data = ew::transform_to<bp::UpdateAttributeLayersData_<2168>>(ctx, std::move(alt));
             }
-            else if constexpr (std::is_same_v<Alt, bp::UpdateEnvironmentAttributesData_<2187>>) {
+            else if constexpr (std::is_same_v<Alt, bp::UpdateEnvironmentAttributesData_<2192>>) {
                 to.data = ew::transform_to<bp::UpdateEnvironmentAttributesData_<2168>>(ctx, std::move(alt));
             }
             else {

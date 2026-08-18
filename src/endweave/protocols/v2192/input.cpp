@@ -1,6 +1,6 @@
-#include "endweave/protocols/v2187/input.h"
+#include "endweave/protocols/v2192/input.h"
 
-#include "endweave/protocols/v2187/inventory.h"
+#include "endweave/protocols/v2192/inventory.h"
 
 #include <bedrock/enum.hpp>
 #include <utility>
@@ -9,17 +9,17 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::PlayerAuthInputPacket_<2187>::InputData, bp::PlayerAuthInputPacket_<2168>::InputData>::transform(
-    Context<bp::PlayerAuthInputPacket_<2168>::InputData> &ctx, bp::PlayerAuthInputPacket_<2187>::InputData &&from)
+void Transformer<bp::PlayerAuthInputPacket_<2192>::InputData, bp::PlayerAuthInputPacket_<2168>::InputData>::transform(
+    Context<bp::PlayerAuthInputPacket_<2168>::InputData> &ctx, bp::PlayerAuthInputPacket_<2192>::InputData &&from)
 {
     using To = bp::PlayerAuthInputPacket_<2168>::InputData;
     ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::INPUT_NUM);
 }
 
-void Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2187>,
+void Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2192>,
                  bp::PackedItemUseLegacyInventoryTransaction_<2168>>::
     transform(Context<bp::PackedItemUseLegacyInventoryTransaction_<2168>> &ctx,
-              bp::PackedItemUseLegacyInventoryTransaction_<2187> &&from)
+              bp::PackedItemUseLegacyInventoryTransaction_<2192> &&from)
 {
     auto &to = ctx.out();
     to.id = from.id;
@@ -27,8 +27,8 @@ void Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2187>,
     to.transaction = ew::transform(ctx, std::move(from.transaction));
 }
 
-void Transformer<bp::PlayerAuthInputPacket_<2187>, bp::PlayerAuthInputPacket_<2168>>::transform(
-    Context<bp::PlayerAuthInputPacket_<2168>> &ctx, bp::PlayerAuthInputPacket_<2187> &&from)
+void Transformer<bp::PlayerAuthInputPacket_<2192>, bp::PlayerAuthInputPacket_<2168>>::transform(
+    Context<bp::PlayerAuthInputPacket_<2168>> &ctx, bp::PlayerAuthInputPacket_<2192> &&from)
 {
     auto &to = ctx.out();
     to.rot = from.rot;

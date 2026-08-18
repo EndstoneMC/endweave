@@ -20,19 +20,19 @@ struct Transformer<bp::ServerboundDiagnosticsPacket_<2168>, bp::ServerboundDiagn
 };
 
 template <>
-struct Transformer<bp::MemoryCategoryCounter_<2168>, bp::MemoryCategoryCounter_<2187>> {
-    static void transform(Context<bp::MemoryCategoryCounter_<2187>> &ctx, bp::MemoryCategoryCounter_<2168> &&from);
+struct Transformer<bp::MemoryCategoryCounter_<2168>, bp::MemoryCategoryCounter_<2192>> {
+    static void transform(Context<bp::MemoryCategoryCounter_<2192>> &ctx, bp::MemoryCategoryCounter_<2168> &&from);
 };
 
 template <>
-struct Transformer<bp::EntityDiagnosticTimingInfo_<2168>, bp::EntityDiagnosticTimingInfo_<2187>> {
-    static void transform(Context<bp::EntityDiagnosticTimingInfo_<2187>> &ctx,
+struct Transformer<bp::EntityDiagnosticTimingInfo_<2168>, bp::EntityDiagnosticTimingInfo_<2192>> {
+    static void transform(Context<bp::EntityDiagnosticTimingInfo_<2192>> &ctx,
                           bp::EntityDiagnosticTimingInfo_<2168> &&from);
 };
 
 template <>
-struct Transformer<bp::ServerboundDiagnosticsPacket_<2168>, bp::ServerboundDiagnosticsPacket_<2187>> {
-    static void transform(Context<bp::ServerboundDiagnosticsPacket_<2187>> &ctx,
+struct Transformer<bp::ServerboundDiagnosticsPacket_<2168>, bp::ServerboundDiagnosticsPacket_<2192>> {
+    static void transform(Context<bp::ServerboundDiagnosticsPacket_<2192>> &ctx,
                           bp::ServerboundDiagnosticsPacket_<2168> &&from);
 };
 

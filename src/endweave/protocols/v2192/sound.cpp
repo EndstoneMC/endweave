@@ -1,11 +1,11 @@
-#include "endweave/protocols/v2187/sound.h"
+#include "endweave/protocols/v2192/sound.h"
 
 #include <utility>
 
 namespace endweave {
 
-void Transformer<bp::PlaySoundPacket_<2187>, bp::PlaySoundPacket_<2168>>::transform(
-    Context<bp::PlaySoundPacket_<2168>> &ctx, bp::PlaySoundPacket_<2187> &&from)
+void Transformer<bp::PlaySoundPacket_<2192>, bp::PlaySoundPacket_<2168>>::transform(
+    Context<bp::PlaySoundPacket_<2168>> &ctx, bp::PlaySoundPacket_<2192> &&from)
 {
     auto &to = ctx.out();
     to.name = std::move(from.name);

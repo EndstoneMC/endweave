@@ -9,8 +9,8 @@ namespace bp = bedrock::protocol;
 namespace endweave {
 
 template <>
-struct Transformer<bp::PlaySoundPacket_<2187>, bp::PlaySoundPacket_<2168>> {
-    static void transform(Context<bp::PlaySoundPacket_<2168>> &ctx, bp::PlaySoundPacket_<2187> &&from);
+struct Transformer<bp::PlaySoundPacket_<2192>, bp::PlaySoundPacket_<2168>> {
+    static void transform(Context<bp::PlaySoundPacket_<2168>> &ctx, bp::PlaySoundPacket_<2192> &&from);
 };
 
 } // namespace endweave

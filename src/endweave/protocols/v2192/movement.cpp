@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2187/movement.h"
+#include "endweave/protocols/v2192/movement.h"
 
 #include <utility>
 
@@ -6,8 +6,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::MoveActorDeltaData_<2187>, bp::MoveActorDeltaData_<2168>>::transform(
-    Context<bp::MoveActorDeltaData_<2168>> &ctx, bp::MoveActorDeltaData_<2187> &&from)
+void Transformer<bp::MoveActorDeltaData_<2192>, bp::MoveActorDeltaData_<2168>>::transform(
+    Context<bp::MoveActorDeltaData_<2168>> &ctx, bp::MoveActorDeltaData_<2192> &&from)
 {
     auto &to = ctx.out();
     to.runtime_id = from.runtime_id;
@@ -24,8 +24,8 @@ void Transformer<bp::MoveActorDeltaData_<2187>, bp::MoveActorDeltaData_<2168>>::
     to.force_completion = from.force_completion;
 }
 
-void Transformer<bp::MoveActorDeltaPacket_<2187>, bp::MoveActorDeltaPacket_<2168>>::transform(
-    Context<bp::MoveActorDeltaPacket_<2168>> &ctx, bp::MoveActorDeltaPacket_<2187> &&from)
+void Transformer<bp::MoveActorDeltaPacket_<2192>, bp::MoveActorDeltaPacket_<2168>>::transform(
+    Context<bp::MoveActorDeltaPacket_<2168>> &ctx, bp::MoveActorDeltaPacket_<2192> &&from)
 {
     auto &to = ctx.out();
     to.move_data = ew::transform(ctx, std::move(from.move_data));

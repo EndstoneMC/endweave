@@ -26,13 +26,13 @@ struct Transformer<bp::ClientboundMapItemDataPacket_<2168>, bp::ClientboundMapIt
 };
 
 template <>
-struct Transformer<bp::MapDecoration_<2168>, bp::MapDecoration_<2187>> {
-    static void transform(Context<bp::MapDecoration_<2187>> &ctx, bp::MapDecoration_<2168> &&from);
+struct Transformer<bp::MapDecoration_<2168>, bp::MapDecoration_<2192>> {
+    static void transform(Context<bp::MapDecoration_<2192>> &ctx, bp::MapDecoration_<2168> &&from);
 };
 
 template <>
-struct Transformer<bp::ClientboundMapItemDataPacket_<2168>, bp::ClientboundMapItemDataPacket_<2187>> {
-    static void transform(Context<bp::ClientboundMapItemDataPacket_<2187>> &ctx,
+struct Transformer<bp::ClientboundMapItemDataPacket_<2168>, bp::ClientboundMapItemDataPacket_<2192>> {
+    static void transform(Context<bp::ClientboundMapItemDataPacket_<2192>> &ctx,
                           bp::ClientboundMapItemDataPacket_<2168> &&from);
 };
 

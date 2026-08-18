@@ -333,8 +333,8 @@ void Transformer<bp::ItemStackRequestPacket_<2168>, bp::ItemStackRequestPacket_<
     to.requests = ew::transform(ctx, std::move(from.requests));
 }
 
-void Transformer<bp::ItemStackResponseSlotInfo_<2168>, bp::ItemStackResponseSlotInfo_<2187>>::transform(
-    Context<bp::ItemStackResponseSlotInfo_<2187>> &ctx, bp::ItemStackResponseSlotInfo_<2168> &&from)
+void Transformer<bp::ItemStackResponseSlotInfo_<2168>, bp::ItemStackResponseSlotInfo_<2192>>::transform(
+    Context<bp::ItemStackResponseSlotInfo_<2192>> &ctx, bp::ItemStackResponseSlotInfo_<2168> &&from)
 {
     auto &to = ctx.out();
     to.requested_slot = from.requested_slot;
@@ -345,16 +345,16 @@ void Transformer<bp::ItemStackResponseSlotInfo_<2168>, bp::ItemStackResponseSlot
     to.durability_correction = from.durability_correction;
 }
 
-void Transformer<bp::ItemStackResponseContainerInfo_<2168>, bp::ItemStackResponseContainerInfo_<2187>>::transform(
-    Context<bp::ItemStackResponseContainerInfo_<2187>> &ctx, bp::ItemStackResponseContainerInfo_<2168> &&from)
+void Transformer<bp::ItemStackResponseContainerInfo_<2168>, bp::ItemStackResponseContainerInfo_<2192>>::transform(
+    Context<bp::ItemStackResponseContainerInfo_<2192>> &ctx, bp::ItemStackResponseContainerInfo_<2168> &&from)
 {
     auto &to = ctx.out();
     to.full_container_name = std::move(from.full_container_name);
     to.slots = ew::transform(ctx, std::move(from.slots));
 }
 
-void Transformer<bp::ItemStackResponseInfo_<2168>, bp::ItemStackResponseInfo_<2187>>::transform(
-    Context<bp::ItemStackResponseInfo_<2187>> &ctx, bp::ItemStackResponseInfo_<2168> &&from)
+void Transformer<bp::ItemStackResponseInfo_<2168>, bp::ItemStackResponseInfo_<2192>>::transform(
+    Context<bp::ItemStackResponseInfo_<2192>> &ctx, bp::ItemStackResponseInfo_<2168> &&from)
 {
     auto &to = ctx.out();
     to.result = from.result;
@@ -362,8 +362,8 @@ void Transformer<bp::ItemStackResponseInfo_<2168>, bp::ItemStackResponseInfo_<21
     to.containers = ew::transform(ctx, std::move(from.containers));
 }
 
-void Transformer<bp::ItemStackResponsePacket_<2168>, bp::ItemStackResponsePacket_<2187>>::transform(
-    Context<bp::ItemStackResponsePacket_<2187>> &ctx, bp::ItemStackResponsePacket_<2168> &&from)
+void Transformer<bp::ItemStackResponsePacket_<2168>, bp::ItemStackResponsePacket_<2192>>::transform(
+    Context<bp::ItemStackResponsePacket_<2192>> &ctx, bp::ItemStackResponsePacket_<2168> &&from)
 {
     auto &to = ctx.out();
     to.responses = ew::transform(ctx, std::move(from.responses));

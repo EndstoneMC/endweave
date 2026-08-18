@@ -9,18 +9,18 @@ namespace bp = bedrock::protocol;
 namespace endweave {
 
 template <>
-struct Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2187>> {
-    static void transform(Context<bp::CameraPreset_<2187>> &ctx, bp::CameraPreset_<2168> &&from);
+struct Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2192>> {
+    static void transform(Context<bp::CameraPreset_<2192>> &ctx, bp::CameraPreset_<2168> &&from);
 };
 
 template <>
-struct Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2187>> {
-    static void transform(Context<bp::CameraPresets_<2187>> &ctx, bp::CameraPresets_<2168> &&from);
+struct Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2192>> {
+    static void transform(Context<bp::CameraPresets_<2192>> &ctx, bp::CameraPresets_<2168> &&from);
 };
 
 template <>
-struct Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2187>> {
-    static void transform(Context<bp::CameraPresetsPacket_<2187>> &ctx, bp::CameraPresetsPacket_<2168> &&from);
+struct Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2192>> {
+    static void transform(Context<bp::CameraPresetsPacket_<2192>> &ctx, bp::CameraPresetsPacket_<2168> &&from);
 };
 
 } // namespace endweave

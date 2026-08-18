@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2187/camera.h"
+#include "endweave/protocols/v2192/camera.h"
 
 #include <utility>
 
@@ -6,8 +6,8 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::CameraPreset_<2187>, bp::CameraPreset_<2168>>::transform(Context<bp::CameraPreset_<2168>> &ctx,
-                                                                              bp::CameraPreset_<2187> &&from)
+void Transformer<bp::CameraPreset_<2192>, bp::CameraPreset_<2168>>::transform(Context<bp::CameraPreset_<2168>> &ctx,
+                                                                              bp::CameraPreset_<2192> &&from)
 {
     auto &to = ctx.out();
     to.name = std::move(from.name);
@@ -36,15 +36,15 @@ void Transformer<bp::CameraPreset_<2187>, bp::CameraPreset_<2168>>::transform(Co
     // enters the preset at whatever rotation it already had.
 }
 
-void Transformer<bp::CameraPresets_<2187>, bp::CameraPresets_<2168>>::transform(Context<bp::CameraPresets_<2168>> &ctx,
-                                                                                bp::CameraPresets_<2187> &&from)
+void Transformer<bp::CameraPresets_<2192>, bp::CameraPresets_<2168>>::transform(Context<bp::CameraPresets_<2168>> &ctx,
+                                                                                bp::CameraPresets_<2192> &&from)
 {
     auto &to = ctx.out();
     to.presets = ew::transform(ctx, std::move(from.presets));
 }
 
-void Transformer<bp::CameraPresetsPacket_<2187>, bp::CameraPresetsPacket_<2168>>::transform(
-    Context<bp::CameraPresetsPacket_<2168>> &ctx, bp::CameraPresetsPacket_<2187> &&from)
+void Transformer<bp::CameraPresetsPacket_<2192>, bp::CameraPresetsPacket_<2168>>::transform(
+    Context<bp::CameraPresetsPacket_<2168>> &ctx, bp::CameraPresetsPacket_<2192> &&from)
 {
     auto &to = ctx.out();
     to.camera_presets = ew::transform(ctx, std::move(from.camera_presets));

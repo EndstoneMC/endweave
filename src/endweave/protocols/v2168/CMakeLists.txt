@@ -2,6 +2,7 @@ target_sources(endweave PRIVATE
         actor.cpp
         attributes.cpp
         block.cpp
+        boss.cpp
         camera.cpp
         chunk.cpp
         crafting.cpp

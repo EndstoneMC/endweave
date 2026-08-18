@@ -30,8 +30,8 @@ struct Transformer<bp::ClientboundUpdateSoundDataPacket_<2168>, bp::ClientboundU
 };
 
 template <>
-struct Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<2187>> {
-    static void transform(Context<bp::PlaySoundPacket_<2187>> &ctx, bp::PlaySoundPacket_<2168> &&from);
+struct Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<2192>> {
+    static void transform(Context<bp::PlaySoundPacket_<2192>> &ctx, bp::PlaySoundPacket_<2168> &&from);
 };
 
 } // namespace endweave

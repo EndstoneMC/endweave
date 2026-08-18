@@ -17,7 +17,7 @@ different protocol versions by rewriting packets at the network layer. Inspired 
 |-------------------|----------|
 | 1.26.30           | 1001     |
 | 1.26.40           | 2168     |
-| 1.26.50           | 2187     |
+| 1.26.50           | 2192     |
 
 A client on any of these can join a server on any other. A client the plugin does not know is left alone and
 meets whatever the server would have told it anyway.

@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2187/diagnostics.h"
+#include "endweave/protocols/v2192/diagnostics.h"
 
 #include <bedrock/enum.hpp>
 #include <utility>
@@ -7,19 +7,19 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::MemoryCategoryCounter_<2187>, bp::MemoryCategoryCounter_<2168>>::transform(
-    Context<bp::MemoryCategoryCounter_<2168>> &ctx, bp::MemoryCategoryCounter_<2187> &&from)
+void Transformer<bp::MemoryCategoryCounter_<2192>, bp::MemoryCategoryCounter_<2168>>::transform(
+    Context<bp::MemoryCategoryCounter_<2168>> &ctx, bp::MemoryCategoryCounter_<2192> &&from)
 {
     auto &to = ctx.out();
-    // ENDWEAVE: 2187 dropped Persona_Textures and shifted every category above it down one, so the name
+    // ENDWEAVE: 2192 dropped Persona_Textures and shifted every category above it down one, so the name
     // carries the meaning, not the byte.
     to.category = bp::enum_cast<bp::MemoryCategory_<2168>>(bp::enum_name(from.category))
                       .value_or(bp::MemoryCategory_<2168>::UNKNOWN);
     to.current_bytes = from.current_bytes;
 }
 
-void Transformer<bp::EntityDiagnosticTimingInfo_<2187>, bp::EntityDiagnosticTimingInfo_<2168>>::transform(
-    Context<bp::EntityDiagnosticTimingInfo_<2168>> &ctx, bp::EntityDiagnosticTimingInfo_<2187> &&from)
+void Transformer<bp::EntityDiagnosticTimingInfo_<2192>, bp::EntityDiagnosticTimingInfo_<2168>>::transform(
+    Context<bp::EntityDiagnosticTimingInfo_<2168>> &ctx, bp::EntityDiagnosticTimingInfo_<2192> &&from)
 {
     auto &to = ctx.out();
     to.display_name = std::move(from.display_name);
@@ -29,8 +29,8 @@ void Transformer<bp::EntityDiagnosticTimingInfo_<2187>, bp::EntityDiagnosticTimi
     to.percent_of_total = from.percent_of_total;
 }
 
-void Transformer<bp::ServerboundDiagnosticsPacket_<2187>, bp::ServerboundDiagnosticsPacket_<2168>>::transform(
-    Context<bp::ServerboundDiagnosticsPacket_<2168>> &ctx, bp::ServerboundDiagnosticsPacket_<2187> &&from)
+void Transformer<bp::ServerboundDiagnosticsPacket_<2192>, bp::ServerboundDiagnosticsPacket_<2168>>::transform(
+    Context<bp::ServerboundDiagnosticsPacket_<2168>> &ctx, bp::ServerboundDiagnosticsPacket_<2192> &&from)
 {
     auto &to = ctx.out();
     to.avg_fps = from.avg_fps;

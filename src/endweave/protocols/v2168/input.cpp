@@ -107,16 +107,16 @@ void Transformer<bp::PlayerAuthInputPacket_<2168>, bp::PlayerAuthInputPacket_<10
     to.raw_move_vector = from.raw_move_vector;
 }
 
-void Transformer<bp::PlayerAuthInputPacket_<2168>::InputData, bp::PlayerAuthInputPacket_<2187>::InputData>::transform(
-    Context<bp::PlayerAuthInputPacket_<2187>::InputData> &ctx, bp::PlayerAuthInputPacket_<2168>::InputData &&from)
+void Transformer<bp::PlayerAuthInputPacket_<2168>::InputData, bp::PlayerAuthInputPacket_<2192>::InputData>::transform(
+    Context<bp::PlayerAuthInputPacket_<2192>::InputData> &ctx, bp::PlayerAuthInputPacket_<2168>::InputData &&from)
 {
-    using To = bp::PlayerAuthInputPacket_<2187>::InputData;
+    using To = bp::PlayerAuthInputPacket_<2192>::InputData;
     ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::INPUT_NUM);
 }
 
 void Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2168>,
-                 bp::PackedItemUseLegacyInventoryTransaction_<2187>>::
-    transform(Context<bp::PackedItemUseLegacyInventoryTransaction_<2187>> &ctx,
+                 bp::PackedItemUseLegacyInventoryTransaction_<2192>>::
+    transform(Context<bp::PackedItemUseLegacyInventoryTransaction_<2192>> &ctx,
               bp::PackedItemUseLegacyInventoryTransaction_<2168> &&from)
 {
     auto &to = ctx.out();
@@ -125,8 +125,8 @@ void Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2168>,
     to.transaction = ew::transform(ctx, std::move(from.transaction));
 }
 
-void Transformer<bp::PlayerAuthInputPacket_<2168>, bp::PlayerAuthInputPacket_<2187>>::transform(
-    Context<bp::PlayerAuthInputPacket_<2187>> &ctx, bp::PlayerAuthInputPacket_<2168> &&from)
+void Transformer<bp::PlayerAuthInputPacket_<2168>, bp::PlayerAuthInputPacket_<2192>>::transform(
+    Context<bp::PlayerAuthInputPacket_<2192>> &ctx, bp::PlayerAuthInputPacket_<2168> &&from)
 {
     auto &to = ctx.out();
     to.rot = from.rot;
