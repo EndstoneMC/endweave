@@ -18,20 +18,24 @@ The listener reads the client's protocol off `RequestNetworkSettingsPacket`,
 translation unit that reaches the listener instantiates the tables: a green `cmake --build` means
 every packet that needs work between the supported versions has it.
 
-`SUPPORTED_VERSIONS` in `protocol/version.h` is 1001, 2168 and 2192, a sorted line that endpoints
-route along.
+`SUPPORTED_VERSIONS` in `protocol/version.h` is 1001, 2168, 2169 and 2192, a sorted line that
+endpoints route along. 2169 is endweave's own name for 1.26.44, which reshaped SetScorePacket and
+left the network version at 2168; `networkVersion` maps it back before anything reaches the wire,
+and `dialectOf` picks it off the game version at login, since nothing on the wire separates the
+two.
 
 `protocol/handler.h` is the dispatch layer. It resolves a (from, to) version pair into a
 `PacketHandlers` table and answers `get(id)` with the function that translates that packet, or null
 where nothing has to happen.
 
-Four things decide what a packet costs, and each has its own header so the mechanism and the
+Five things decide what a packet costs, and each has its own header so the mechanism and the
 per-packet claims stay apart:
 
 | header | trait | says |
 | --- | --- | --- |
 | `protocol/transform.h` | `Transformer<FromType, ToType>` | how a shape change is carried across one hop |
 | `protocol/transform.h` | `WireCompatible<FromType, ToType>` | two eras' snapshots encode the same bytes, so relay them untouched |
+| `protocol/transform.h` | `memberwise_complete_v<FromType, ToType>` | the destination names every member the source does, so the copy needs nobody to write it |
 | `protocol/rewrite.h` | `Rewriter<Version, Id>` | this packet needs fixing up at this version whatever else happens |
 | `protocol/cancel.h` | `Cancel<From, To, Id>` | drop this packet on this edge rather than translate it |
 
