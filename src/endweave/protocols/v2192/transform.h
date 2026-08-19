@@ -3,6 +3,7 @@
 #include "endweave/protocol/transform.h"
 #include "endweave/protocols/v2192/attributes.h"
 #include "endweave/protocols/v2192/boss.h"
+#include "endweave/protocols/v2192/chunk.h"
 #include "endweave/protocols/v2192/diagnostics.h"
 #include "endweave/protocols/v2192/input.h"
 #include "endweave/protocols/v2192/inventory.h"

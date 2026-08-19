@@ -50,6 +50,37 @@ void Transformer<bp::SubChunkPacket_<2168>::HeightmapData, bp::SubChunkPacket_<1
     to.subchunk_render_height_map = std::move(from.subchunk_render_height_map).value_or(std::vector<std::int8_t>{});
 }
 
+namespace {
+
+/** 2192 sends the height map a row at a time, each with a length of its own, where 2168 sends one
+ * flat run. Sixteen rows of sixteen is the same 256 values and the sixteen lengths are the whole of
+ * the difference. */
+std::optional<std::vector<std::vector<std::int8_t>>> rowsOf(std::optional<std::vector<std::int8_t>> &&flat)
+{
+    if (!flat.has_value()) {
+        return std::nullopt;
+    }
+    constexpr std::size_t kRow = 16;
+    std::vector<std::vector<std::int8_t>> rows;
+    rows.reserve(flat->size() / kRow);
+    for (std::size_t at = 0; at + kRow <= flat->size(); at += kRow) {
+        rows.emplace_back(flat->begin() + at, flat->begin() + at + kRow);
+    }
+    return rows;
+}
+
+} // namespace
+
+void Transformer<bp::SubChunkPacket_<2168>::HeightmapData, bp::SubChunkPacket_<2192>::HeightmapData>::transform(
+    Context<bp::SubChunkPacket_<2192>::HeightmapData> &ctx, bp::SubChunkPacket_<2168>::HeightmapData &&from)
+{
+    auto &to = ctx.out();
+    to.height_map_type = from.height_map_type;
+    to.subchunk_height_map = rowsOf(std::move(from.subchunk_height_map));
+    to.render_height_map_type = from.render_height_map_type;
+    to.subchunk_render_height_map = rowsOf(std::move(from.subchunk_render_height_map));
+}
+
 void Transformer<bp::SubChunkPacket_<2168>::SubChunkPacketData, bp::SubChunkPacket_<1001>::SubChunkPacketData>::
     transform(Context<bp::SubChunkPacket_<1001>::SubChunkPacketData> &ctx,
               bp::SubChunkPacket_<2168>::SubChunkPacketData &&from)

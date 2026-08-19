@@ -20,6 +20,12 @@ struct Transformer<bp::SubChunkPacket_<2168>::HeightmapData, bp::SubChunkPacket_
 };
 
 template <>
+struct Transformer<bp::SubChunkPacket_<2168>::HeightmapData, bp::SubChunkPacket_<2192>::HeightmapData> {
+    static void transform(Context<bp::SubChunkPacket_<2192>::HeightmapData> &ctx,
+                          bp::SubChunkPacket_<2168>::HeightmapData &&from);
+};
+
+template <>
 struct Transformer<bp::SubChunkPacket_<2168>::SubChunkPacketData, bp::SubChunkPacket_<1001>::SubChunkPacketData> {
     static void transform(Context<bp::SubChunkPacket_<1001>::SubChunkPacketData> &ctx,
                           bp::SubChunkPacket_<2168>::SubChunkPacketData &&from);
@@ -29,8 +35,5 @@ template <>
 struct Transformer<bp::SubChunkPacket_<2168>, bp::SubChunkPacket_<1001>> {
     static void transform(Context<bp::SubChunkPacket_<1001>> &ctx, bp::SubChunkPacket_<2168> &&from);
 };
-
-template <>
-struct WireCompatible<bp::SubChunkRequestPacket_<2168>, bp::SubChunkRequestPacket_<1001>> : std::true_type {};
 
 } // namespace endweave
