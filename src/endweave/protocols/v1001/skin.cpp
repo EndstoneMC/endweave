@@ -1,5 +1,7 @@
 #include "endweave/protocols/v1001/skin.h"
 
+#include <cstddef>
+
 #include <charconv>
 #include <cstdint>
 #include <format>
@@ -124,12 +126,12 @@ void Transformer<bp::legacy::TintMapColor, bp::TintMapColor>::transform(Context<
                                                                         bp::legacy::TintMapColor &&from)
 {
     auto &to = ctx.out();
-    for (const auto &hex : from.colors) {
-        to.colors.push_back(colorFromHex(hex));
-    }
     // ENDWEAVE: BDS holds four colours per piece and the cerealised form writes exactly four behind
-    // no count, so a shorter list would put a skin on the wire the client cannot read.
-    to.colors.resize(4);
+    // no count, so a shorter list leaves the rest of the four at their default.
+    const std::size_t carried = from.colors.size() < to.colors.size() ? from.colors.size() : to.colors.size();
+    for (std::size_t i = 0; i < carried; ++i) {
+        to.colors[i] = colorFromHex(from.colors[i]);
+    }
 }
 
 void Transformer<bp::TintMapColor, bp::legacy::TintMapColor>::transform(Context<bp::legacy::TintMapColor> &ctx,

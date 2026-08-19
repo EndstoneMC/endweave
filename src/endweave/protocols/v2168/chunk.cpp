@@ -1,4 +1,7 @@
 #include "endweave/protocols/v2168/chunk.h"
+#include <optional>
+#include <cstddef>
+#include <array>
 
 #include <cstdint>
 #include <string>
@@ -45,26 +48,24 @@ void Transformer<bp::SubChunkPacket_<2168>::HeightmapData, bp::SubChunkPacket_<1
     auto &to = ctx.out();
     to.height_map_type = static_cast<bp::SubChunkPacket_<1001>::HeightMapDataType>(from.height_map_type);
     // ENDWEAVE: TODO 1001 writes the samples only for HAS_DATA, so a HAS_DATA map with none goes out short.
-    to.subchunk_height_map = std::move(from.subchunk_height_map).value_or(std::vector<std::int8_t>{});
+    to.subchunk_height_map = std::move(from.subchunk_height_map).value_or(std::array<std::array<std::int8_t, 16>, 16>{});
     to.render_height_map_type = static_cast<bp::SubChunkPacket_<1001>::HeightMapDataType>(from.render_height_map_type);
-    to.subchunk_render_height_map = std::move(from.subchunk_render_height_map).value_or(std::vector<std::int8_t>{});
+    to.subchunk_render_height_map = std::move(from.subchunk_render_height_map).value_or(std::array<std::array<std::int8_t, 16>, 16>{});
 }
 
 namespace {
 
-/** 2192 sends the height map a row at a time, each with a length of its own, where 2168 sends one
- * flat run. Sixteen rows of sixteen is the same 256 values and the sixteen lengths are the whole of
- * the difference. */
-std::optional<std::vector<std::vector<std::int8_t>>> rowsOf(std::optional<std::vector<std::int8_t>> &&flat)
+/** 2192 gives each row a length of its own where 2168 writes sixteen behind none. The rows are the
+ * same sixteen values either way, so only the spelling changes. */
+std::optional<std::array<std::vector<std::int8_t>, 16>> rowsOf(
+    std::optional<std::array<std::array<std::int8_t, 16>, 16>> &&fixed)
 {
-    if (!flat.has_value()) {
+    if (!fixed.has_value()) {
         return std::nullopt;
     }
-    constexpr std::size_t kRow = 16;
-    std::vector<std::vector<std::int8_t>> rows;
-    rows.reserve(flat->size() / kRow);
-    for (std::size_t at = 0; at + kRow <= flat->size(); at += kRow) {
-        rows.emplace_back(flat->begin() + at, flat->begin() + at + kRow);
+    std::array<std::vector<std::int8_t>, 16> rows;
+    for (std::size_t i = 0; i < rows.size(); ++i) {
+        rows[i].assign((*fixed)[i].begin(), (*fixed)[i].end());
     }
     return rows;
 }
