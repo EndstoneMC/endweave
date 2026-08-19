@@ -41,7 +41,7 @@ ProtocolVersion readClientVersion(std::string_view payload)
 std::string announceServerVersion(ProtocolVersion server_version)
 {
     bp::RequestNetworkSettingsPacket packet;
-    packet.client_network_version = static_cast<std::int32_t>(server_version);
+    packet.client_network_version = static_cast<std::int32_t>(ProtocolVersions::networkVersion(server_version));
     std::string payload;
     bp::BinaryWriter out{payload};
     bp::serialize(out, packet);
@@ -57,7 +57,7 @@ std::string rewriteLoginVersion(std::string_view payload, ProtocolVersion server
     if (!packet) {
         return {};
     }
-    packet->client_network_version = static_cast<std::int32_t>(server_version);
+    packet->client_network_version = static_cast<std::int32_t>(ProtocolVersions::networkVersion(server_version));
     std::string rewritten;
     bp::BinaryWriter out{rewritten};
     bp::serialize(out, *packet);
@@ -206,6 +206,26 @@ void PacketListener::onPacketSend(endstone::PacketSendEvent &event)
     if (debug_.logsPostTransform()) {
         log("POST", event, *connection, "CLIENTBOUND");
     }
+}
+
+void PacketListener::onPlayerLogin(endstone::PlayerLoginEvent &event)
+{
+    endstone::Player &player = event.getPlayer();
+    UserConnection *connection = connections_->get(player.getAddress());
+    if (connection == nullptr) {
+        return;
+    }
+
+    const ProtocolVersion announced = connection->getClientVersion();
+    const ProtocolVersion dialect = ProtocolVersions::dialectOf(announced, player.getGameVersion());
+    if (dialect == announced) {
+        return;
+    }
+
+    connection->setClientVersion(dialect, server_version_);
+    logger_->info("{} speaks {}, which shares protocol {} with older builds; translating as {}.",
+                  player.getAddress().getHostname(), player.getGameVersion(),
+                  ProtocolVersions::networkVersion(dialect), static_cast<int>(dialect));
 }
 
 void PacketListener::onPlayerQuit(endstone::PlayerQuitEvent &event)

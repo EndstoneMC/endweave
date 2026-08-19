@@ -15,7 +15,9 @@ void Plugin::onEnable()
     getLogger().setLevel(config.debug.enabled ? endstone::Logger::Debug : endstone::Logger::Info);
 
     const int protocol = getServer().getProtocolVersion();
-    const ProtocolVersion server_version = ProtocolVersions::getProtocolVersion(protocol);
+    // 1.26.40 and 1.26.44 both report 2168, so the server's own dialect needs the game version too.
+    const ProtocolVersion server_version =
+        ProtocolVersions::dialectOf(ProtocolVersions::getProtocolVersion(protocol), getServer().getMinecraftVersion());
     if (server_version == ProtocolVersion::UNKNOWN) {
         getLogger().error("This server speaks protocol {}, which endweave does not translate. Standing down.",
                           protocol);
@@ -25,6 +27,7 @@ void Plugin::onEnable()
     PacketListener &listener = listener_.emplace(connections_, getLogger(), config.debug, server_version);
     registerEvent(&PacketListener::onPacketReceive, listener);
     registerEvent(&PacketListener::onPacketSend, listener);
+    registerEvent(&PacketListener::onPlayerLogin, listener);
     registerEvent(&PacketListener::onPlayerQuit, listener);
 
     getServer().getScheduler().runTaskTimer(

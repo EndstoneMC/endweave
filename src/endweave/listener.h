@@ -24,6 +24,10 @@ public:
 
     void onPacketSend(endstone::PacketSendEvent &event);
 
+    /** The handshake carries only the network version, and 1.26.40 and 1.26.44 share one. Login is
+     * where the game version first reaches a plugin, and it lands long before any SetScorePacket. */
+    void onPlayerLogin(endstone::PlayerLoginEvent &event);
+
     void onPlayerQuit(endstone::PlayerQuitEvent &event);
 
 private:

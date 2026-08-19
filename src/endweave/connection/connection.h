@@ -39,7 +39,7 @@ public:
     {
         client_version_ = version;
         serverbound_ = getPacketHandlers(version, server_version);
-        clientbound_ = getPacketHandlers(server_version, version);
+        clientbound_ = getPacketHandlers(ProtocolVersions::clientboundSource(version, server_version), version);
     }
 
     /** @see ViaVersion Protocol#cancelServerbound. */
