@@ -55,9 +55,4 @@ struct Transformer<bp::SerializedSkinRef_<1001>, bp::legacy::SerializedSkinRef> 
     static void transform(Context<bp::legacy::SerializedSkinRef> &ctx, bp::SerializedSkinRef_<1001> &&from);
 };
 
-template <>
-struct Transformer<bp::PlayerSkinPacket_<1001>, bp::PlayerSkinPacket_<2168>> {
-    static void transform(Context<bp::PlayerSkinPacket_<2168>> &ctx, bp::PlayerSkinPacket_<1001> &&from);
-};
-
 } // namespace endweave

@@ -15,9 +15,4 @@ struct Transformer<bp::DimensionDefinitionGroup_<1001>::DimensionDefinition,
                           bp::DimensionDefinitionGroup_<1001>::DimensionDefinition &&from);
 };
 
-template <>
-struct Transformer<bp::DimensionDataPacket_<1001>, bp::DimensionDataPacket_<2168>> {
-    static void transform(Context<bp::DimensionDataPacket_<2168>> &ctx, bp::DimensionDataPacket_<1001> &&from);
-};
-
 } // namespace endweave

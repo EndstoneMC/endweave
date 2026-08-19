@@ -135,31 +135,6 @@ void Transformer<bp::ShapelessRecipePayload_<2168>, bp::ShapelessRecipePayload_<
     to.net_id = from.net_id;
 }
 
-void Transformer<bp::SmithingTransformRecipePayload_<2168>, bp::SmithingTransformRecipePayload_<1001>>::transform(
-    Context<bp::SmithingTransformRecipePayload_<1001>> &ctx, bp::SmithingTransformRecipePayload_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.recipe_id = std::move(from.recipe_id);
-    to.template_ingredient = ew::transform(ctx, std::move(from.template_ingredient));
-    to.base_ingredient = ew::transform(ctx, std::move(from.base_ingredient));
-    to.addition_ingredient = ew::transform(ctx, std::move(from.addition_ingredient));
-    to.result = ew::transform(ctx, std::move(from.result));
-    to.tag = std::move(from.tag);
-    to.net_id = from.net_id;
-}
-
-void Transformer<bp::SmithingTrimRecipePayload_<2168>, bp::SmithingTrimRecipePayload_<1001>>::transform(
-    Context<bp::SmithingTrimRecipePayload_<1001>> &ctx, bp::SmithingTrimRecipePayload_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.recipe_id = std::move(from.recipe_id);
-    to.template_ingredient = ew::transform(ctx, std::move(from.template_ingredient));
-    to.base_ingredient = ew::transform(ctx, std::move(from.base_ingredient));
-    to.addition_ingredient = ew::transform(ctx, std::move(from.addition_ingredient));
-    to.tag = std::move(from.tag);
-    to.net_id = from.net_id;
-}
-
 void Transformer<bp::CraftingDataPacket_<2168>, bp::CraftingDataPacket_<1001>>::transform(
     Context<bp::CraftingDataPacket_<1001>> &ctx, bp::CraftingDataPacket_<2168> &&from)
 {
@@ -207,33 +182,6 @@ void Transformer<bp::CraftingDataPacket_<2168>, bp::CraftingDataPacket_<1001>>::
     to.container_mix_entries = std::move(from.container_mix_entries);
     to.material_reducer_entries = std::move(from.material_reducer_entries);
     to.clear_recipes = from.clear_recipes;
-}
-
-void Transformer<bp::CreativeGroupInfoPayload_<2168>, bp::CreativeGroupInfoPayload_<1001>>::transform(
-    Context<bp::CreativeGroupInfoPayload_<1001>> &ctx, bp::CreativeGroupInfoPayload_<2168> &&from)
-{
-    auto &to = ctx.out();
-    // ENDWEAVE: one enum in both eras. 1001 writes the wider field, so nothing narrows.
-    to.creative_item_category = from.creative_item_category;
-    to.name = std::move(from.name);
-    to.icon = ew::transform(ctx, std::move(from.icon));
-}
-
-void Transformer<bp::CreativeItemEntryPayload_<2168>, bp::CreativeItemEntryPayload_<1001>>::transform(
-    Context<bp::CreativeItemEntryPayload_<1001>> &ctx, bp::CreativeItemEntryPayload_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.creative_item_net_id = from.creative_item_net_id;
-    to.item_descriptor = ew::transform(ctx, std::move(from.item_descriptor));
-    to.group_index = from.group_index;
-}
-
-void Transformer<bp::CreativeContentPacket_<2168>, bp::CreativeContentPacket_<1001>>::transform(
-    Context<bp::CreativeContentPacket_<1001>> &ctx, bp::CreativeContentPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.groups = ew::transform(ctx, std::move(from.groups));
-    to.entries = ew::transform(ctx, std::move(from.entries));
 }
 
 } // namespace endweave

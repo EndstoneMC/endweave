@@ -1,7 +1,6 @@
 #include "endweave/protocols/v2168/player_list.h"
 
 #include "endweave/protocols/v1001/skin.h"
-#include "endweave/protocols/v2168/skin.h"
 
 #include <expected>
 #include <system_error>

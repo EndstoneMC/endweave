@@ -20,19 +20,8 @@ struct Transformer<bp::ItemStackResponseSlotInfo_<2168>, bp::ItemStackResponseSl
 };
 
 template <>
-struct Transformer<bp::ItemStackResponseContainerInfo_<2168>, bp::ItemStackResponseContainerInfo_<1001>> {
-    static void transform(Context<bp::ItemStackResponseContainerInfo_<1001>> &ctx,
-                          bp::ItemStackResponseContainerInfo_<2168> &&from);
-};
-
-template <>
 struct Transformer<bp::ItemStackResponseInfo_<2168>, bp::ItemStackResponseInfo_<1001>> {
     static void transform(Context<bp::ItemStackResponseInfo_<1001>> &ctx, bp::ItemStackResponseInfo_<2168> &&from);
-};
-
-template <>
-struct Transformer<bp::ItemStackResponsePacket_<2168>, bp::ItemStackResponsePacket_<1001>> {
-    static void transform(Context<bp::ItemStackResponsePacket_<1001>> &ctx, bp::ItemStackResponsePacket_<2168> &&from);
 };
 
 template <>
@@ -162,33 +151,6 @@ template <>
 struct Transformer<bp::ItemStackRequestCereal_<2168>::RequestData, bp::ItemStackRequestData_<1001>> {
     static void transform(Context<bp::ItemStackRequestData_<1001>> &ctx,
                           bp::ItemStackRequestCereal_<2168>::RequestData &&from);
-};
-
-template <>
-struct Transformer<bp::ItemStackRequestPacket_<2168>, bp::ItemStackRequestPacket_<1001>> {
-    static void transform(Context<bp::ItemStackRequestPacket_<1001>> &ctx, bp::ItemStackRequestPacket_<2168> &&from);
-};
-
-template <>
-struct Transformer<bp::ItemStackResponseSlotInfo_<2168>, bp::ItemStackResponseSlotInfo_<2192>> {
-    static void transform(Context<bp::ItemStackResponseSlotInfo_<2192>> &ctx,
-                          bp::ItemStackResponseSlotInfo_<2168> &&from);
-};
-
-template <>
-struct Transformer<bp::ItemStackResponseContainerInfo_<2168>, bp::ItemStackResponseContainerInfo_<2192>> {
-    static void transform(Context<bp::ItemStackResponseContainerInfo_<2192>> &ctx,
-                          bp::ItemStackResponseContainerInfo_<2168> &&from);
-};
-
-template <>
-struct Transformer<bp::ItemStackResponseInfo_<2168>, bp::ItemStackResponseInfo_<2192>> {
-    static void transform(Context<bp::ItemStackResponseInfo_<2192>> &ctx, bp::ItemStackResponseInfo_<2168> &&from);
-};
-
-template <>
-struct Transformer<bp::ItemStackResponsePacket_<2168>, bp::ItemStackResponsePacket_<2192>> {
-    static void transform(Context<bp::ItemStackResponsePacket_<2192>> &ctx, bp::ItemStackResponsePacket_<2168> &&from);
 };
 
 } // namespace endweave

@@ -60,16 +60,6 @@ void Transformer<bp::AddActorPacket_<1001>, bp::AddActorPacket_<2168>>::transfor
     to.links = std::move(from.links);
 }
 
-void Transformer<bp::SetActorDataPacket_<1001>, bp::SetActorDataPacket_<2168>>::transform(
-    Context<bp::SetActorDataPacket_<2168>> &ctx, bp::SetActorDataPacket_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.id = from.id;
-    to.packed_items = ew::transform(ctx, std::move(from.packed_items));
-    to.synched_properties = std::move(from.synched_properties);
-    to.tick = from.tick;
-}
-
 void Transformer<bp::SetLastHurtByPacket_<1001>, bp::SetLastHurtByPacket_<2168>>::transform(
     Context<bp::SetLastHurtByPacket_<2168>> &ctx, bp::SetLastHurtByPacket_<1001> &&from)
 {

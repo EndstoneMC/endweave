@@ -91,14 +91,6 @@ void Transformer<bp::ItemStackResponseSlotInfo_<1001>, bp::ItemStackResponseSlot
     to.durability_correction = from.durability_correction;
 }
 
-void Transformer<bp::ItemStackResponseContainerInfo_<1001>, bp::ItemStackResponseContainerInfo_<2168>>::transform(
-    Context<bp::ItemStackResponseContainerInfo_<2168>> &ctx, bp::ItemStackResponseContainerInfo_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.full_container_name = std::move(from.full_container_name);
-    to.slots = ew::transform(ctx, std::move(from.slots));
-}
-
 void Transformer<bp::ItemStackResponseInfo_<1001>, bp::ItemStackResponseInfo_<2168>>::transform(
     Context<bp::ItemStackResponseInfo_<2168>> &ctx, bp::ItemStackResponseInfo_<1001> &&from)
 {
@@ -110,13 +102,6 @@ void Transformer<bp::ItemStackResponseInfo_<1001>, bp::ItemStackResponseInfo_<21
     if (from.result == bp::ItemStackNetResult::SUCCESS) {
         to.containers = ew::transform(ctx, std::move(from.containers));
     }
-}
-
-void Transformer<bp::ItemStackResponsePacket_<1001>, bp::ItemStackResponsePacket_<2168>>::transform(
-    Context<bp::ItemStackResponsePacket_<2168>> &ctx, bp::ItemStackResponsePacket_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.responses = ew::transform(ctx, std::move(from.responses));
 }
 
 void Transformer<bp::ItemStackRequestSlotInfo_<1001>, bp::ItemStackRequestCereal_<2168>::SlotInfoData>::transform(
@@ -348,13 +333,6 @@ void Transformer<bp::ItemStackRequestData_<1001>, bp::ItemStackRequestCereal_<21
     }
     to.strings_to_filter = std::move(from.strings_to_filter);
     to.strings_to_filter_origin = from.strings_to_filter_origin;
-}
-
-void Transformer<bp::ItemStackRequestPacket_<1001>, bp::ItemStackRequestPacket_<2168>>::transform(
-    Context<bp::ItemStackRequestPacket_<2168>> &ctx, bp::ItemStackRequestPacket_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.requests = ew::transform(ctx, std::move(from.requests));
 }
 
 } // namespace endweave

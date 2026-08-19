@@ -8,19 +8,6 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::TextDataPayload_<2192>, bp::TextDataPayload_<2168>>::transform(
-    Context<bp::TextDataPayload_<2168>> &ctx, bp::TextDataPayload_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.text = std::move(from.text);
-    to.use_rotation = from.use_rotation;
-    to.background_color = from.background_color;
-    // ENDWEAVE: line_gap_height is dropped; a 2168 client spaces the lines itself.
-    to.depth_test = from.depth_test;
-    to.show_backface = from.show_backface;
-    to.show_text_backface = from.show_text_backface;
-}
-
 void Transformer<bp::PrimitiveShapeDataPayload_<2192>, bp::PrimitiveShapeDataPayload_<2168>>::transform(
     Context<bp::PrimitiveShapeDataPayload_<2168>> &ctx, bp::PrimitiveShapeDataPayload_<2192> &&from)
 {
@@ -47,13 +34,6 @@ void Transformer<bp::PrimitiveShapeDataPayload_<2192>, bp::PrimitiveShapeDataPay
             }
         },
         from.extra_data_payload);
-}
-
-void Transformer<bp::PrimitiveShapesPacket_<2192>, bp::PrimitiveShapesPacket_<2168>>::transform(
-    Context<bp::PrimitiveShapesPacket_<2168>> &ctx, bp::PrimitiveShapesPacket_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.shapes = ew::transform(ctx, std::move(from.shapes));
 }
 
 } // namespace endweave

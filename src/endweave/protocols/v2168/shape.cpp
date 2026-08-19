@@ -51,11 +51,4 @@ void Transformer<bp::PrimitiveShapeDataPayload_<2168>, bp::PrimitiveShapeDataPay
         from.extra_data_payload);
 }
 
-void Transformer<bp::PrimitiveShapesPacket_<2168>, bp::PrimitiveShapesPacket_<2192>>::transform(
-    Context<bp::PrimitiveShapesPacket_<2192>> &ctx, bp::PrimitiveShapesPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.shapes = ew::transform(ctx, std::move(from.shapes));
-}
-
 } // namespace endweave

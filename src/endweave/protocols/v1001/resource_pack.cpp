@@ -4,19 +4,6 @@
 
 namespace endweave {
 
-void Transformer<bp::ResourcePacksInfoPacket_<1001>, bp::ResourcePacksInfoPacket_<2168>>::transform(
-    Context<bp::ResourcePacksInfoPacket_<2168>> &ctx, bp::ResourcePacksInfoPacket_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.resource_pack_required = from.resource_pack_required;
-    to.has_addon_packs = from.has_addon_packs;
-    to.has_scripts = from.has_scripts;
-    to.force_disable_vibrant_visuals = from.force_disable_vibrant_visuals;
-    to.world_template_id_and_version = std::move(from.world_template_id_and_version);
-    // ENDWEAVE: only the length prefix changed, uint16 to uvarint32; every 1001 list fits in one.
-    to.resource_packs = std::move(from.resource_packs);
-}
-
 void Transformer<bp::ResourcePackClientResponsePacket_<1001>, bp::ResourcePackClientResponsePacket_<2168>>::transform(
     Context<bp::ResourcePackClientResponsePacket_<2168>> &ctx, bp::ResourcePackClientResponsePacket_<1001> &&from)
 {

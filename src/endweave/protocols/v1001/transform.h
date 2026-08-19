@@ -2,12 +2,10 @@
 
 #include "endweave/protocol/transform.h"
 #include "endweave/protocols/v1001/actor.h"
-#include "endweave/protocols/v1001/block.h"
 #include "endweave/protocols/v1001/chunk.h"
 #include "endweave/protocols/v1001/crafting.h"
 #include "endweave/protocols/v1001/diagnostics.h"
 #include "endweave/protocols/v1001/dimension.h"
-#include "endweave/protocols/v1001/equipment.h"
 #include "endweave/protocols/v1001/game.h"
 #include "endweave/protocols/v1001/input.h"
 #include "endweave/protocols/v1001/inventory.h"
@@ -21,7 +19,6 @@
 #include "endweave/protocols/v1001/scoreboard.h"
 #include "endweave/protocols/v1001/skin.h"
 #include "endweave/protocols/v1001/sound.h"
-#include "endweave/protocols/v1001/structure.h"
 
 #include <protocol/game.h>
 #include <protocol/inventory.h>

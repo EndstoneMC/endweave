@@ -129,13 +129,6 @@ void Transformer<bp::MovePlayerPacket_<2168>, bp::MovePlayerPacket_<1001>>::tran
     to.tick = from.tick;
 }
 
-void Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<1001>>::transform(
-    Context<bp::MoveActorDeltaPacket_<1001>> &ctx, bp::MoveActorDeltaPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.move_data = ew::transform(ctx, std::move(from.move_data));
-}
-
 void Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2192>>::transform(
     Context<bp::MoveActorDeltaData_<2192>> &ctx, bp::MoveActorDeltaData_<2168> &&from)
 {
@@ -154,13 +147,6 @@ void Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2192>>::
     // ENDWEAVE: 2168 stamps the move with no tick, so the interpolation 2192 keys on it starts from
     // zero for every actor.
     to.ticks = 0;
-}
-
-void Transformer<bp::MoveActorDeltaPacket_<2168>, bp::MoveActorDeltaPacket_<2192>>::transform(
-    Context<bp::MoveActorDeltaPacket_<2192>> &ctx, bp::MoveActorDeltaPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.move_data = ew::transform(ctx, std::move(from.move_data));
 }
 
 } // namespace endweave

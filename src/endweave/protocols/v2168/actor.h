@@ -25,11 +25,6 @@ struct Transformer<bp::AddActorPacket_<2168>, bp::AddActorPacket_<1001>> {
 };
 
 template <>
-struct Transformer<bp::SetActorDataPacket_<2168>, bp::SetActorDataPacket_<1001>> {
-    static void transform(Context<bp::SetActorDataPacket_<1001>> &ctx, bp::SetActorDataPacket_<2168> &&from);
-};
-
-template <>
 struct Transformer<bp::SetLastHurtByPacket_<2168>, bp::SetLastHurtByPacket_<1001>> {
     static void transform(Context<bp::SetLastHurtByPacket_<1001>> &ctx, bp::SetLastHurtByPacket_<2168> &&from);
 };

@@ -26,33 +26,6 @@ void Transformer<bp::EnvironmentAttributeData_<2168>, bp::EnvironmentAttributeDa
     to.noise_alignment = {};
 }
 
-void Transformer<bp::AttributeLayerData_<2168>, bp::AttributeLayerData_<2192>>::transform(
-    Context<bp::AttributeLayerData_<2192>> &ctx, bp::AttributeLayerData_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.name = std::move(from.name);
-    to.noise_name = std::move(from.noise_name);
-    to.dimension_id = from.dimension_id;
-    to.settings = from.settings;
-    to.attributes = ew::transform(ctx, std::move(from.attributes));
-}
-
-void Transformer<bp::UpdateAttributeLayersData_<2168>, bp::UpdateAttributeLayersData_<2192>>::transform(
-    Context<bp::UpdateAttributeLayersData_<2192>> &ctx, bp::UpdateAttributeLayersData_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.attribute_layers = ew::transform(ctx, std::move(from.attribute_layers));
-}
-
-void Transformer<bp::UpdateEnvironmentAttributesData_<2168>, bp::UpdateEnvironmentAttributesData_<2192>>::transform(
-    Context<bp::UpdateEnvironmentAttributesData_<2192>> &ctx, bp::UpdateEnvironmentAttributesData_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.layer_name = std::move(from.layer_name);
-    to.layer_dimension_id = from.layer_dimension_id;
-    to.attributes = ew::transform(ctx, std::move(from.attributes));
-}
-
 void Transformer<bp::ClientboundAttributeLayerSyncPacket_<2168>, bp::ClientboundAttributeLayerSyncPacket_<2192>>::
     transform(Context<bp::ClientboundAttributeLayerSyncPacket_<2192>> &ctx,
               bp::ClientboundAttributeLayerSyncPacket_<2168> &&from)

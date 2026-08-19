@@ -39,18 +39,4 @@ void Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2192>>::transform(Co
     to.starting_rotation = std::nullopt;
 }
 
-void Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2192>>::transform(Context<bp::CameraPresets_<2192>> &ctx,
-                                                                                bp::CameraPresets_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.presets = ew::transform(ctx, std::move(from.presets));
-}
-
-void Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2192>>::transform(
-    Context<bp::CameraPresetsPacket_<2192>> &ctx, bp::CameraPresetsPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.camera_presets = ew::transform(ctx, std::move(from.camera_presets));
-}
-
 } // namespace endweave

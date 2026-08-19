@@ -35,31 +35,4 @@ void Transformer<bp::GatheringsConfigurationJoinInfo_<2168>, bp::GatheringsConfi
     to.server_id = std::move(from.server_id).value_or(std::string{});
 }
 
-void Transformer<bp::ServerConfigurationJoinInfo_<2168>, bp::ServerConfigurationJoinInfo_<1001>>::transform(
-    Context<bp::ServerConfigurationJoinInfo_<1001>> &ctx, bp::ServerConfigurationJoinInfo_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.gatherings_configuration = ew::transform(ctx, std::move(from.gatherings_configuration));
-    to.client_store_entry_point_configuration = std::move(from.client_store_entry_point_configuration);
-    to.presence_configuration = ew::transform(ctx, std::move(from.presence_configuration));
-}
-
-void Transformer<bp::TransferPacket_<2168>, bp::TransferPacket_<1001>>::transform(
-    Context<bp::TransferPacket_<1001>> &ctx, bp::TransferPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.destination = std::move(from.destination);
-    to.destination_port = from.destination_port;
-    to.reload_world = from.reload_world;
-    // ENDWEAVE: gatherings_configuration is dropped; 1001 transfers carry the destination alone, and the
-    // next StartGame brings the join info anyway.
-}
-
-void Transformer<bp::ServerPresenceInfoPacket_<2168>, bp::ServerPresenceInfoPacket_<1001>>::transform(
-    Context<bp::ServerPresenceInfoPacket_<1001>> &ctx, bp::ServerPresenceInfoPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.presence_configuration = ew::transform(ctx, std::move(from.presence_configuration));
-}
-
 } // namespace endweave

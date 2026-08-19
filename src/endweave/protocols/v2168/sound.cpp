@@ -16,19 +16,6 @@ void Transformer<bp::LevelSoundEvent_<2168>, bp::LevelSoundEvent_<1001>>::transf
     ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::UNDEFINED);
 }
 
-void Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<1001>>::transform(
-    Context<bp::PlaySoundPacket_<1001>> &ctx, bp::PlaySoundPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.name = std::move(from.name);
-    to.pos = from.pos;
-    to.volume = from.volume;
-    to.pitch = from.pitch;
-    // ENDWEAVE: loop_count is dropped; a 1001 client plays the sound once, and the handle still lets the
-    // server stop it.
-    to.server_sound_handle = from.server_sound_handle;
-}
-
 void Transformer<bp::ClientboundUpdateSoundDataPacket_<2168>, bp::ClientboundUpdateSoundDataPacket_<1001>>::transform(
     Context<bp::ClientboundUpdateSoundDataPacket_<1001>> &ctx, bp::ClientboundUpdateSoundDataPacket_<2168> &&from)
 {

@@ -30,15 +30,6 @@ void Transformer<bp::GatheringsConfigurationJoinInfo_<1001>, bp::GatheringsConfi
     to.server_id = std::move(from.server_id);
 }
 
-void Transformer<bp::ServerConfigurationJoinInfo_<1001>, bp::ServerConfigurationJoinInfo_<2168>>::transform(
-    Context<bp::ServerConfigurationJoinInfo_<2168>> &ctx, bp::ServerConfigurationJoinInfo_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.gatherings_configuration = ew::transform(ctx, std::move(from.gatherings_configuration));
-    to.client_store_entry_point_configuration = std::move(from.client_store_entry_point_configuration);
-    to.presence_configuration = ew::transform(ctx, std::move(from.presence_configuration));
-}
-
 void Transformer<bp::TransferPacket_<1001>, bp::TransferPacket_<2168>>::transform(
     Context<bp::TransferPacket_<2168>> &ctx, bp::TransferPacket_<1001> &&from)
 {
@@ -48,13 +39,6 @@ void Transformer<bp::TransferPacket_<1001>, bp::TransferPacket_<2168>>::transfor
     to.reload_world = from.reload_world;
     // ENDWEAVE: 1001 sends no gatherings configuration, and absent is what 2168 writes without one.
     to.gatherings_configuration = std::nullopt;
-}
-
-void Transformer<bp::ServerPresenceInfoPacket_<1001>, bp::ServerPresenceInfoPacket_<2168>>::transform(
-    Context<bp::ServerPresenceInfoPacket_<2168>> &ctx, bp::ServerPresenceInfoPacket_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.presence_configuration = ew::transform(ctx, std::move(from.presence_configuration));
 }
 
 } // namespace endweave

@@ -38,37 +38,8 @@ struct Transformer<bp::ShapelessRecipePayload_<1001>, bp::ShapelessRecipePayload
 };
 
 template <>
-struct Transformer<bp::SmithingTransformRecipePayload_<1001>, bp::SmithingTransformRecipePayload_<2168>> {
-    static void transform(Context<bp::SmithingTransformRecipePayload_<2168>> &ctx,
-                          bp::SmithingTransformRecipePayload_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::SmithingTrimRecipePayload_<1001>, bp::SmithingTrimRecipePayload_<2168>> {
-    static void transform(Context<bp::SmithingTrimRecipePayload_<2168>> &ctx,
-                          bp::SmithingTrimRecipePayload_<1001> &&from);
-};
-
-template <>
 struct Transformer<bp::CraftingDataPacket_<1001>, bp::CraftingDataPacket_<2168>> {
     static void transform(Context<bp::CraftingDataPacket_<2168>> &ctx, bp::CraftingDataPacket_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::CreativeGroupInfoPayload_<1001>, bp::CreativeGroupInfoPayload_<2168>> {
-    static void transform(Context<bp::CreativeGroupInfoPayload_<2168>> &ctx,
-                          bp::CreativeGroupInfoPayload_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::CreativeItemEntryPayload_<1001>, bp::CreativeItemEntryPayload_<2168>> {
-    static void transform(Context<bp::CreativeItemEntryPayload_<2168>> &ctx,
-                          bp::CreativeItemEntryPayload_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::CreativeContentPacket_<1001>, bp::CreativeContentPacket_<2168>> {
-    static void transform(Context<bp::CreativeContentPacket_<2168>> &ctx, bp::CreativeContentPacket_<1001> &&from);
 };
 
 } // namespace endweave

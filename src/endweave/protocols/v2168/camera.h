@@ -13,14 +13,4 @@ struct Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2192>> {
     static void transform(Context<bp::CameraPreset_<2192>> &ctx, bp::CameraPreset_<2168> &&from);
 };
 
-template <>
-struct Transformer<bp::CameraPresets_<2168>, bp::CameraPresets_<2192>> {
-    static void transform(Context<bp::CameraPresets_<2192>> &ctx, bp::CameraPresets_<2168> &&from);
-};
-
-template <>
-struct Transformer<bp::CameraPresetsPacket_<2168>, bp::CameraPresetsPacket_<2192>> {
-    static void transform(Context<bp::CameraPresetsPacket_<2192>> &ctx, bp::CameraPresetsPacket_<2168> &&from);
-};
-
 } // namespace endweave

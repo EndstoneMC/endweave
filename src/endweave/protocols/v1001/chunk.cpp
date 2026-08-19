@@ -38,15 +38,6 @@ void Transformer<bp::LevelChunkPacket_<1001>, bp::LevelChunkPacket_<2168>>::tran
     to.serialized_chunk = std::move(from.serialized_chunk);
 }
 
-void Transformer<bp::SubChunkPacket_<1001>::SubChunkPosOffset, bp::SubChunkPacket_<2168>::SubChunkPosOffset>::transform(
-    Context<bp::SubChunkPacket_<2168>::SubChunkPosOffset> &ctx, bp::SubChunkPacket_<1001>::SubChunkPosOffset &&from)
-{
-    auto &to = ctx.out();
-    to.x = from.x;
-    to.y = from.y;
-    to.z = from.z;
-}
-
 void Transformer<bp::SubChunkPacket_<1001>::HeightmapData, bp::SubChunkPacket_<2168>::HeightmapData>::transform(
     Context<bp::SubChunkPacket_<2168>::HeightmapData> &ctx, bp::SubChunkPacket_<1001>::HeightmapData &&from)
 {

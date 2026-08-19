@@ -26,27 +26,6 @@ struct Transformer<bp::InventoryAction_<1001>, bp::InventoryAction_<2168>> {
 };
 
 template <>
-struct Transformer<bp::InventoryTransaction_<1001>, bp::InventoryTransaction_<2168>> {
-    static void transform(Context<bp::InventoryTransaction_<2168>> &ctx, bp::InventoryTransaction_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::NormalTransactionData_<1001>, bp::NormalTransactionData_<2168>> {
-    static void transform(Context<bp::NormalTransactionData_<2168>> &ctx, bp::NormalTransactionData_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::InventoryMismatchData_<1001>, bp::InventoryMismatchData_<2168>> {
-    static void transform(Context<bp::InventoryMismatchData_<2168>> &ctx, bp::InventoryMismatchData_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::ItemUseInventoryTransaction_<1001>, bp::ItemUseInventoryTransaction_<2168>> {
-    static void transform(Context<bp::ItemUseInventoryTransaction_<2168>> &ctx,
-                          bp::ItemUseInventoryTransaction_<1001> &&from);
-};
-
-template <>
 struct Transformer<bp::legacy::ItemUseInventoryTransaction_<1001>, bp::ItemUseInventoryTransaction_<1001>> {
     static void transform(Context<bp::ItemUseInventoryTransaction_<1001>> &ctx,
                           bp::legacy::ItemUseInventoryTransaction_<1001> &&from);
@@ -73,22 +52,6 @@ struct Transformer<bp::ItemReleaseInventoryTransaction_<1001>, bp::ItemReleaseIn
 template <>
 struct Transformer<bp::TransactionData_<1001>, bp::TransactionData_<2168>> {
     static void transform(Context<bp::TransactionData_<2168>> &ctx, bp::TransactionData_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::InventoryTransactionPacket_<1001>, bp::InventoryTransactionPacket_<2168>> {
-    static void transform(Context<bp::InventoryTransactionPacket_<2168>> &ctx,
-                          bp::InventoryTransactionPacket_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::InventoryContentPacket_<1001>, bp::InventoryContentPacket_<2168>> {
-    static void transform(Context<bp::InventoryContentPacket_<2168>> &ctx, bp::InventoryContentPacket_<1001> &&from);
-};
-
-template <>
-struct Transformer<bp::InventorySlotPacket_<1001>, bp::InventorySlotPacket_<2168>> {
-    static void transform(Context<bp::InventorySlotPacket_<2168>> &ctx, bp::InventorySlotPacket_<1001> &&from);
 };
 
 } // namespace endweave

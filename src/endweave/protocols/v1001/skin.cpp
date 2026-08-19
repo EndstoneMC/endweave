@@ -242,14 +242,4 @@ void Transformer<bp::SerializedSkinRef_<1001>, bp::SerializedSkinRef_<2168>>::tr
     to.profile_hash = {};
 }
 
-void Transformer<bp::PlayerSkinPacket_<1001>, bp::PlayerSkinPacket_<2168>>::transform(
-    Context<bp::PlayerSkinPacket_<2168>> &ctx, bp::PlayerSkinPacket_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.uuid = from.uuid;
-    to.skin = ew::transform(ctx, std::move(from.skin));
-    to.localized_new_skin_name = std::move(from.localized_new_skin_name);
-    to.localized_old_skin_name = std::move(from.localized_old_skin_name);
-}
-
 } // namespace endweave

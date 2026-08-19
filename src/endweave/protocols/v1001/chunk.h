@@ -14,12 +14,6 @@ struct Transformer<bp::LevelChunkPacket_<1001>, bp::LevelChunkPacket_<2168>> {
 };
 
 template <>
-struct Transformer<bp::SubChunkPacket_<1001>::SubChunkPosOffset, bp::SubChunkPacket_<2168>::SubChunkPosOffset> {
-    static void transform(Context<bp::SubChunkPacket_<2168>::SubChunkPosOffset> &ctx,
-                          bp::SubChunkPacket_<1001>::SubChunkPosOffset &&from);
-};
-
-template <>
 struct Transformer<bp::SubChunkPacket_<1001>::HeightmapData, bp::SubChunkPacket_<2168>::HeightmapData> {
     static void transform(Context<bp::SubChunkPacket_<2168>::HeightmapData> &ctx,
                           bp::SubChunkPacket_<1001>::HeightmapData &&from);

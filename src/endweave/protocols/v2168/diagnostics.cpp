@@ -19,26 +19,6 @@ void Transformer<bp::MemoryCategoryCounter_<2168>, bp::MemoryCategoryCounter_<10
     to.current_bytes = from.current_bytes;
 }
 
-void Transformer<bp::ServerboundDiagnosticsPacket_<2168>, bp::ServerboundDiagnosticsPacket_<1001>>::transform(
-    Context<bp::ServerboundDiagnosticsPacket_<1001>> &ctx, bp::ServerboundDiagnosticsPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.avg_fps = from.avg_fps;
-    to.avg_server_sim_tick_time_ms = from.avg_server_sim_tick_time_ms;
-    to.avg_client_sim_tick_time_ms = from.avg_client_sim_tick_time_ms;
-    to.avg_begin_frame_time_ms = from.avg_begin_frame_time_ms;
-    to.avg_input_time_ms = from.avg_input_time_ms;
-    to.avg_render_time_ms = from.avg_render_time_ms;
-    to.avg_end_frame_time_ms = from.avg_end_frame_time_ms;
-    to.avg_remainder_time_percent = from.avg_remainder_time_percent;
-    to.avg_unaccounted_time_percent = from.avg_unaccounted_time_percent;
-    to.category_counters = ew::transform(ctx, std::move(from.category_counters));
-    to.entity_timings = std::move(from.entity_timings);
-    // ENDWEAVE: system_categories is dropped; 1001 reads these timings by index alone.
-    to.system_timings = std::move(from.system_timings);
-    to.whisker_data = std::move(from.whisker_data);
-}
-
 void Transformer<bp::MemoryCategoryCounter_<2168>, bp::MemoryCategoryCounter_<2192>>::transform(
     Context<bp::MemoryCategoryCounter_<2192>> &ctx, bp::MemoryCategoryCounter_<2168> &&from)
 {
@@ -62,26 +42,6 @@ void Transformer<bp::EntityDiagnosticTimingInfo_<2168>, bp::EntityDiagnosticTimi
     // when the client has no position to offer.
     to.position = std::nullopt;
     to.dimension = std::nullopt;
-}
-
-void Transformer<bp::ServerboundDiagnosticsPacket_<2168>, bp::ServerboundDiagnosticsPacket_<2192>>::transform(
-    Context<bp::ServerboundDiagnosticsPacket_<2192>> &ctx, bp::ServerboundDiagnosticsPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.avg_fps = from.avg_fps;
-    to.avg_server_sim_tick_time_ms = from.avg_server_sim_tick_time_ms;
-    to.avg_client_sim_tick_time_ms = from.avg_client_sim_tick_time_ms;
-    to.avg_begin_frame_time_ms = from.avg_begin_frame_time_ms;
-    to.avg_input_time_ms = from.avg_input_time_ms;
-    to.avg_render_time_ms = from.avg_render_time_ms;
-    to.avg_end_frame_time_ms = from.avg_end_frame_time_ms;
-    to.avg_remainder_time_percent = from.avg_remainder_time_percent;
-    to.avg_unaccounted_time_percent = from.avg_unaccounted_time_percent;
-    to.category_counters = ew::transform(ctx, std::move(from.category_counters));
-    to.entity_timings = ew::transform(ctx, std::move(from.entity_timings));
-    to.system_timings = std::move(from.system_timings);
-    to.system_categories = std::move(from.system_categories);
-    to.whisker_data = std::move(from.whisker_data);
 }
 
 } // namespace endweave

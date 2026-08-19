@@ -2,13 +2,11 @@ target_sources(endweave PRIVATE
         actor.cpp
         attributes.cpp
         block.cpp
-        boss.cpp
         camera.cpp
         chunk.cpp
         crafting.cpp
         diagnostics.cpp
         dimension.cpp
-        equipment.cpp
         game.cpp
         input.cpp
         inventory.cpp
@@ -22,6 +20,4 @@ target_sources(endweave PRIVATE
         resource_pack.cpp
         scoreboard.cpp
         shape.cpp
-        skin.cpp
-        sound.cpp
-        structure.cpp)
+        sound.cpp)

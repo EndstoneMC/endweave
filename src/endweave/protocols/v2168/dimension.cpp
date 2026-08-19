@@ -21,11 +21,4 @@ void Transformer<DimensionDefinitionV2168, DimensionDefinitionV1001>::transform(
     // ENDWEAVE: 1001 has nowhere to put the owning pack, so pack_id is dropped and the name key stands alone.
 }
 
-void Transformer<bp::DimensionDataPacket_<2168>, bp::DimensionDataPacket_<1001>>::transform(
-    Context<bp::DimensionDataPacket_<1001>> &ctx, bp::DimensionDataPacket_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.dimension_definitions = ew::transform(ctx, std::move(from.dimension_definitions));
-}
-
 } // namespace endweave

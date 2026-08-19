@@ -13,16 +13,4 @@ struct Transformer<bp::MemoryCategoryCounter_<2192>, bp::MemoryCategoryCounter_<
     static void transform(Context<bp::MemoryCategoryCounter_<2168>> &ctx, bp::MemoryCategoryCounter_<2192> &&from);
 };
 
-template <>
-struct Transformer<bp::EntityDiagnosticTimingInfo_<2192>, bp::EntityDiagnosticTimingInfo_<2168>> {
-    static void transform(Context<bp::EntityDiagnosticTimingInfo_<2168>> &ctx,
-                          bp::EntityDiagnosticTimingInfo_<2192> &&from);
-};
-
-template <>
-struct Transformer<bp::ServerboundDiagnosticsPacket_<2192>, bp::ServerboundDiagnosticsPacket_<2168>> {
-    static void transform(Context<bp::ServerboundDiagnosticsPacket_<2168>> &ctx,
-                          bp::ServerboundDiagnosticsPacket_<2192> &&from);
-};
-
 } // namespace endweave

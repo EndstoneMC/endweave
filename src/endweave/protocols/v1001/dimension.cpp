@@ -22,11 +22,4 @@ void Transformer<DimensionDefinitionV1001, DimensionDefinitionV2168>::transform(
     to.pack_id = {};
 }
 
-void Transformer<bp::DimensionDataPacket_<1001>, bp::DimensionDataPacket_<2168>>::transform(
-    Context<bp::DimensionDataPacket_<2168>> &ctx, bp::DimensionDataPacket_<1001> &&from)
-{
-    auto &to = ctx.out();
-    to.dimension_definitions = ew::transform(ctx, std::move(from.dimension_definitions));
-}
-
 } // namespace endweave

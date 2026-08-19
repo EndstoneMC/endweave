@@ -19,9 +19,4 @@ struct Transformer<bp::PrimitiveShapeDataPayload_<2168>, bp::PrimitiveShapeDataP
                           bp::PrimitiveShapeDataPayload_<2168> &&from);
 };
 
-template <>
-struct Transformer<bp::PrimitiveShapesPacket_<2168>, bp::PrimitiveShapesPacket_<2192>> {
-    static void transform(Context<bp::PrimitiveShapesPacket_<2192>> &ctx, bp::PrimitiveShapesPacket_<2168> &&from);
-};
-
 } // namespace endweave

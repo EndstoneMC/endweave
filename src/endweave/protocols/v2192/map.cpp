@@ -22,23 +22,4 @@ void Transformer<bp::MapDecoration_<2192>, bp::MapDecoration_<2168>>::transform(
     to.color = from.color;
 }
 
-void Transformer<bp::ClientboundMapItemDataPacket_<2192>, bp::ClientboundMapItemDataPacket_<2168>>::transform(
-    Context<bp::ClientboundMapItemDataPacket_<2168>> &ctx, bp::ClientboundMapItemDataPacket_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.map_id = from.map_id;
-    to.dimension = from.dimension;
-    to.locked = from.locked;
-    to.map_origin = from.map_origin;
-    to.creation_map_ids = std::move(from.creation_map_ids);
-    to.scale = from.scale;
-    to.unique_ids = std::move(from.unique_ids);
-    to.decorations = ew::transform(ctx, std::move(from.decorations));
-    to.width = from.width;
-    to.height = from.height;
-    to.start_x = from.start_x;
-    to.start_y = from.start_y;
-    to.map_pixels = std::move(from.map_pixels);
-}
-
 } // namespace endweave

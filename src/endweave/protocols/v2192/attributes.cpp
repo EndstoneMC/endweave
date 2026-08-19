@@ -8,49 +8,6 @@ namespace ew = endweave;
 
 namespace endweave {
 
-void Transformer<bp::EnvironmentAttributeData_<2192>, bp::EnvironmentAttributeData_<2168>>::transform(
-    Context<bp::EnvironmentAttributeData_<2168>> &ctx, bp::EnvironmentAttributeData_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.name = std::move(from.name);
-    to.from_attribute = std::move(from.from_attribute);
-    to.attribute = std::move(from.attribute);
-    to.to_attribute = std::move(from.to_attribute);
-    to.current_transition_ticks = from.current_transition_ticks;
-    to.total_transition_ticks = from.total_transition_ticks;
-    to.easing = from.easing;
-    to.local_transition_ticks = from.local_transition_ticks;
-    // ENDWEAVE: noise_alignment is dropped; 2168 aligns a noise transition by the local tick alone.
-    to.noise_transition = from.noise_transition;
-}
-
-void Transformer<bp::AttributeLayerData_<2192>, bp::AttributeLayerData_<2168>>::transform(
-    Context<bp::AttributeLayerData_<2168>> &ctx, bp::AttributeLayerData_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.name = std::move(from.name);
-    to.noise_name = std::move(from.noise_name);
-    to.dimension_id = from.dimension_id;
-    to.settings = from.settings;
-    to.attributes = ew::transform(ctx, std::move(from.attributes));
-}
-
-void Transformer<bp::UpdateAttributeLayersData_<2192>, bp::UpdateAttributeLayersData_<2168>>::transform(
-    Context<bp::UpdateAttributeLayersData_<2168>> &ctx, bp::UpdateAttributeLayersData_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.attribute_layers = ew::transform(ctx, std::move(from.attribute_layers));
-}
-
-void Transformer<bp::UpdateEnvironmentAttributesData_<2192>, bp::UpdateEnvironmentAttributesData_<2168>>::transform(
-    Context<bp::UpdateEnvironmentAttributesData_<2168>> &ctx, bp::UpdateEnvironmentAttributesData_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.layer_name = std::move(from.layer_name);
-    to.layer_dimension_id = from.layer_dimension_id;
-    to.attributes = ew::transform(ctx, std::move(from.attributes));
-}
-
 void Transformer<bp::ClientboundAttributeLayerSyncPacket_<2192>, bp::ClientboundAttributeLayerSyncPacket_<2168>>::
     transform(Context<bp::ClientboundAttributeLayerSyncPacket_<2168>> &ctx,
               bp::ClientboundAttributeLayerSyncPacket_<2192> &&from)
