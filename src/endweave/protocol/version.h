@@ -58,42 +58,60 @@ constexpr int networkVersion(ProtocolVersion version)
     return static_cast<int>(version == ProtocolVersion::v26_44 ? ProtocolVersion::v26_40 : version);
 }
 
-/** Whether a dotted game version is at or past the floor, comparing only the components the floor
- * names. A string that does not parse reads as older, which leaves an unrecognised build on the
+/** Whether a dotted version is at or past `minor.patch`. Two spellings reach this and they do
+ * not agree on how many components they carry: Endstone spells the server's version
+ * `26.40` and a client's `1.26.50`, so a leading `1` is Bedrock's major and is dropped where it
+ * appears. A string that does not parse reads as older, which leaves an unrecognised build on the
  * shape every 2168 client understood. */
-constexpr bool atLeast(std::string_view game_version, int major, int minor, int patch)
+constexpr bool atLeast(std::string_view version, int minor, int patch)
 {
+    int parts[3] = {0, 0, 0};
+    std::size_t count = 0;
     std::size_t at = 0;
-    for (const int want : {major, minor, patch}) {
+    while (at < version.size() && count < 3 && version[at] >= '0' && version[at] <= '9') {
         int have = 0;
-        bool read_any = false;
-        while (at < game_version.size() && game_version[at] >= '0' && game_version[at] <= '9') {
-            have = have * 10 + (game_version[at] - '0');
+        while (at < version.size() && version[at] >= '0' && version[at] <= '9') {
+            have = have * 10 + (version[at] - '0');
             ++at;
-            read_any = true;
         }
-        if (!read_any) {
-            return false;
-        }
-        if (have != want) {
-            return have > want;
-        }
-        if (at < game_version.size() && game_version[at] == '.') {
+        parts[count++] = have;
+        if (at < version.size() && version[at] == '.') {
             ++at;
         }
     }
-    return true;
+    const bool majored = count > 0 && parts[0] == 1;
+    const int *v = majored ? parts + 1 : parts;
+    if ((majored ? count - 1 : count) < 2) {
+        return false;
+    }
+    return v[0] != minor ? v[0] > minor : v[1] >= patch;
 }
 
-/** 1.26.40 and 1.26.44 announce the same 2168 and disagree on SetScorePacket, so the game version
- * is the only thing that tells the two dialects apart. */
-constexpr ProtocolVersion dialectOf(ProtocolVersion announced, std::string_view game_version)
+/** 1.26.40 and 1.26.44 announce the same 2168 and disagree on SetScorePacket, so the version is
+ * the only thing that tells the two dialects apart. */
+constexpr ProtocolVersion dialectOf(ProtocolVersion announced, std::string_view version)
 {
-    if (announced == ProtocolVersion::v26_40 && atLeast(game_version, 1, 26, 44)) {
+    if (announced == ProtocolVersion::v26_40 && atLeast(version, 26, 44)) {
         return ProtocolVersion::v26_44;
     }
     return announced;
 }
+
+// Both spellings, and the boundary either side of it.
+static_assert(!atLeast("26.40", 26, 44));
+static_assert(!atLeast("26.43", 26, 44));
+static_assert(atLeast("26.44", 26, 44));
+static_assert(atLeast("26.50", 26, 44));
+static_assert(!atLeast("1.26.40", 26, 44));
+static_assert(!atLeast("1.26.43.1", 26, 44));
+static_assert(atLeast("1.26.44", 26, 44));
+static_assert(atLeast("1.26.50.26", 26, 44));
+static_assert(atLeast("1.27.0", 26, 44));
+static_assert(!atLeast("", 26, 44));
+static_assert(!atLeast("unknown", 26, 44));
+static_assert(dialectOf(ProtocolVersion::v26_40, "26.40") == ProtocolVersion::v26_40);
+static_assert(dialectOf(ProtocolVersion::v26_40, "1.26.44") == ProtocolVersion::v26_44);
+static_assert(dialectOf(ProtocolVersion::v26_50, "1.26.50.26") == ProtocolVersion::v26_50);
 
 /** The version a clientbound packet arrives as. Endstone already rewrites SetScorePacket to
  * 1.26.43's shape for every client in [1.26.40, 1.26.44) -- exactly those that resolve to
