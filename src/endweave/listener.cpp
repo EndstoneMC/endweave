@@ -133,7 +133,7 @@ void PacketListener::log(std::string_view stage, Event &event, const UserConnect
                          std::string_view direction) const
 {
     debug_.logPacket(stage, connection.getAddress().getHostname(), direction, event.getPacketId(),
-                     static_cast<int>(connection.getClientVersion()), event.getPayload().size());
+                     static_cast<int>(connection.getClientVersion()), event.getPayload());
 }
 
 void PacketListener::receive(endstone::PacketReceiveEvent &event, UserConnection &connection)

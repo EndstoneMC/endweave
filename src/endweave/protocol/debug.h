@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <endstone/endstone.hpp>
 #include <format>
+#include <iterator>
 #include <set>
 #include <string>
 #include <string_view>
@@ -57,18 +58,38 @@ public:
         return enabled_ && (packets_.empty() || packets_.contains(id));
     }
 
-    /** `PRE : <address> SERVERBOUND: START_GAME(11) (0x0B) [2168] 412b`
+    /** `PRE : <address> SERVERBOUND: START_GAME(11) (0x0B) [2168] 412b`, and the body under it.
+     * A translation that fails says only which packet and why, and the bytes are the rest of it.
      * @see ViaVersion ProtocolPipelineImpl#logPacket. */
     void logPacket(std::string_view stage, std::string_view address, std::string_view direction, int id,
-                   int client_version, std::size_t size) const
+                   int client_version, std::string_view payload) const
     {
         if (!shouldLog(id)) {
             return;
         }
-        logger_->debug("{}: {} {}: {} [{}] {}b", stage, address, direction, packetLabel(id), client_version, size);
+        logger_->debug("{}: {} {}: {} [{}] {}b", stage, address, direction, packetLabel(id), client_version,
+                       payload.size());
+        logger_->debug("{}: {}", stage, hex(payload));
     }
 
 private:
+    /** The body as hex, capped: a filter narrow enough to want the bytes is narrow enough that
+     * the first quarter-kilobyte of them is the interesting part. */
+    static std::string hex(std::string_view payload)
+    {
+        constexpr std::size_t kMax = 256;
+        const std::size_t shown = payload.size() < kMax ? payload.size() : kMax;
+        std::string out;
+        out.reserve(shown * 3 + 16);
+        for (std::size_t i = 0; i < shown; ++i) {
+            std::format_to(std::back_inserter(out), "{:02X} ", static_cast<unsigned char>(payload[i]));
+        }
+        if (shown < payload.size()) {
+            std::format_to(std::back_inserter(out), "... +{}", payload.size() - shown);
+        }
+        return out;
+    }
+
     endstone::Logger *logger_;
     bool enabled_;
     std::set<int> packets_;
