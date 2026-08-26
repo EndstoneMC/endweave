@@ -10,10 +10,10 @@
 #include "endweave/protocols/v2192/transform.h"
 
 #include <array>
-#include <bedrock/packet.hpp>
 #include <bedrock/protocol.hpp>
-#include <bedrock/serializer.hpp>
-#include <bedrock/stream.hpp>
+#include <bedrock/protocol/packet.hpp>
+#include <bedrock/protocol/serializer.hpp>
+#include <bedrock/protocol/stream.hpp>
 #include <concepts>
 #include <expected>
 #include <span>

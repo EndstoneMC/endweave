@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/scoreboard.h>
+#include <bedrock/protocol/scoreboard.h>
 
 namespace bp = bedrock::protocol;
 

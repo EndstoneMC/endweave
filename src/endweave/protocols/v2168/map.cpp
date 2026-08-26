@@ -1,8 +1,7 @@
 #include "endweave/protocols/v2168/map.h"
 
-#include "protocol/map.h"
-
-#include <bedrock/enum.hpp>
+#include <bedrock/protocol/enum.hpp>
+#include <bedrock/protocol/map.h>
 #include <cstdint>
 #include <utility>
 

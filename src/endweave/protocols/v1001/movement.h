@@ -4,8 +4,8 @@
 #include "endweave/protocols/v1001/actor.h"
 #include "endweave/protocols/v1001/inventory.h"
 
+#include <bedrock/protocol/movement.h>
 #include <cstdint>
-#include <protocol/movement.h>
 
 namespace bp = bedrock::protocol;
 

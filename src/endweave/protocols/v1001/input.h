@@ -3,7 +3,7 @@
 #include "endweave/protocol/transform.h"
 #include "endweave/protocols/v1001/item_stack.h"
 
-#include <protocol/input.h>
+#include <bedrock/protocol/input.h>
 
 namespace bp = bedrock::protocol;
 

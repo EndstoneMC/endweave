@@ -1,6 +1,6 @@
 #include "endweave/protocols/v1001/diagnostics.h"
 
-#include <bedrock/enum.hpp>
+#include <bedrock/protocol/enum.hpp>
 #include <optional>
 #include <utility>
 

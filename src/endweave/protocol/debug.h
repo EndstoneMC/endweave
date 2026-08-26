@@ -2,8 +2,8 @@
 
 #include "endweave/config.h"
 
-#include <bedrock/enum.hpp>
 #include <bedrock/protocol.hpp>
+#include <bedrock/protocol/enum.hpp>
 #include <cstddef>
 #include <endstone/endstone.hpp>
 #include <format>

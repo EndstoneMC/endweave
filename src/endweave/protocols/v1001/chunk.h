@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/chunk.h>
+#include <bedrock/protocol/chunk.h>
 
 namespace bp = bedrock::protocol;
 

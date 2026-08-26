@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/diagnostics.h>
+#include <bedrock/protocol/diagnostics.h>
 
 namespace bp = bedrock::protocol;
 

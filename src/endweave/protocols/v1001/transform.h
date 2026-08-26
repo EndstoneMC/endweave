@@ -20,9 +20,9 @@
 #include "endweave/protocols/v1001/skin.h"
 #include "endweave/protocols/v1001/sound.h"
 
-#include <protocol/game.h>
-#include <protocol/inventory.h>
-#include <protocol/presence.h>
+#include <bedrock/protocol/game.h>
+#include <bedrock/protocol/inventory.h>
+#include <bedrock/protocol/presence.h>
 
 namespace bp = bedrock::protocol;
 

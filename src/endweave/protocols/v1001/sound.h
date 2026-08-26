@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/sound.h>
+#include <bedrock/protocol/sound.h>
 
 namespace bp = bedrock::protocol;
 

@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/inventory.h>
+#include <bedrock/protocol/inventory.h>
 
 namespace bp = bedrock::protocol;
 

@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/context.h"
 
-#include <bedrock/reflect.hpp>
+#include <bedrock/protocol/detail/reflect.hpp>
 #include <concepts>
 #include <cstddef>
 #include <map>

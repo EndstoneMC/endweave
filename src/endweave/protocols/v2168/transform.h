@@ -24,9 +24,9 @@
 #include "endweave/protocols/v2168/shape.h"
 #include "endweave/protocols/v2168/sound.h"
 
-#include <protocol/game.h>
-#include <protocol/inventory.h>
-#include <protocol/presence.h>
+#include <bedrock/protocol/game.h>
+#include <bedrock/protocol/inventory.h>
+#include <bedrock/protocol/presence.h>
 
 namespace bp = bedrock::protocol;
 

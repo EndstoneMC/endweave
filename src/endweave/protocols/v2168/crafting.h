@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/crafting.h>
+#include <bedrock/protocol/crafting.h>
 
 namespace bp = bedrock::protocol;
 

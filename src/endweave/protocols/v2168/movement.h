@@ -5,7 +5,7 @@
 #include "endweave/protocols/v2168/actor.h"
 #include "endweave/protocols/v2168/inventory.h"
 
-#include <protocol/movement.h>
+#include <bedrock/protocol/movement.h>
 
 namespace bp = bedrock::protocol;
 

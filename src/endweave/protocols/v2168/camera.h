@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/camera.h>
+#include <bedrock/protocol/camera.h>
 
 namespace bp = bedrock::protocol;
 

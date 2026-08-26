@@ -1,6 +1,6 @@
 #include "endweave/protocols/v2168/sound.h"
 
-#include <bedrock/enum.hpp>
+#include <bedrock/protocol/enum.hpp>
 #include <expected>
 #include <optional>
 #include <system_error>

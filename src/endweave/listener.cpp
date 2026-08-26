@@ -1,7 +1,7 @@
 #include "endweave/listener.h"
 
+#include <bedrock/protocol/network.h>
 #include <cstdint>
-#include <protocol/network.h>
 #include <string>
 #include <string_view>
 
@@ -224,8 +224,8 @@ void PacketListener::onPlayerLogin(endstone::PlayerLoginEvent &event)
 
     connection->setClientVersion(dialect, server_version_);
     logger_->info("{} speaks {}, which shares protocol {} with older builds; translating as {}.",
-                  player.getAddress().getHostname(), player.getGameVersion(),
-                  ProtocolVersions::networkVersion(dialect), static_cast<int>(dialect));
+                  player.getAddress().getHostname(), player.getGameVersion(), ProtocolVersions::networkVersion(dialect),
+                  static_cast<int>(dialect));
 }
 
 void PacketListener::onPlayerQuit(endstone::PlayerQuitEvent &event)

@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/skin.h>
+#include <bedrock/protocol/skin.h>
 
 namespace bp = bedrock::protocol;
 

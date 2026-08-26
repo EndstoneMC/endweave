@@ -3,7 +3,7 @@
 #include "endweave/protocols/v1001/inventory.h"
 #include "endweave/protocols/v2168/inventory.h"
 
-#include <bedrock/enum.hpp>
+#include <bedrock/protocol/enum.hpp>
 #include <cstddef>
 #include <utility>
 

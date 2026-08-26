@@ -2,13 +2,13 @@
 
 #include "endweave/protocol/rewrite.h"
 
-#include <bedrock/enum.hpp>
+#include <bedrock/protocol/actor.h>
+#include <bedrock/protocol/enum.hpp>
+#include <bedrock/protocol/game.h>
+#include <bedrock/protocol/movement.h>
+#include <bedrock/protocol/network.h>
+#include <bedrock/protocol/sound.h>
 #include <cstdint>
-#include <protocol/actor.h>
-#include <protocol/game.h>
-#include <protocol/movement.h>
-#include <protocol/network.h>
-#include <protocol/sound.h>
 #include <variant>
 #include <vector>
 

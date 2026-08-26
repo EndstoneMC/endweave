@@ -2,7 +2,7 @@
 
 #include "endweave/protocols/v2192/inventory.h"
 
-#include <bedrock/enum.hpp>
+#include <bedrock/protocol/enum.hpp>
 #include <utility>
 
 namespace ew = endweave;

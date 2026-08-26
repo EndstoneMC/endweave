@@ -1,6 +1,6 @@
 #include "endweave/protocols/v2168/network.h"
 
-#include <bedrock/enum.hpp>
+#include <bedrock/protocol/enum.hpp>
 #include <utility>
 
 namespace endweave {

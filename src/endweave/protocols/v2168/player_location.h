@@ -2,7 +2,7 @@
 
 #include "endweave/protocol/transform.h"
 
-#include <protocol/player_location.h>
+#include <bedrock/protocol/player_location.h>
 
 namespace bp = bedrock::protocol;
 
