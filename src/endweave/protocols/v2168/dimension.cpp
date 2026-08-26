@@ -13,7 +13,7 @@ using DimensionDefinitionV2168 = bp::DimensionDefinitionGroup_<2168>::DimensionD
 void Transformer<DimensionDefinitionV2168, DimensionDefinitionV1001>::transform(Context<DimensionDefinitionV1001> &ctx,
                                                                                 DimensionDefinitionV2168 &&from)
 {
-    DimensionDefinitionV1001 to;
+    auto &to = ctx.out();
     to.height_maximum = from.height_maximum;
     to.height_minimum = from.height_minimum;
     to.generator_type = from.generator_type;
