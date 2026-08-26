@@ -59,4 +59,14 @@ struct Transformer<bp::TransactionData_<2168>, bp::TransactionData_<2192>> {
     static void transform(Context<bp::TransactionData_<2192>> &ctx, bp::TransactionData_<2168> &&from);
 };
 
+template <>
+struct Transformer<bp::ContainerOpenPacket_<2168>, bp::ContainerOpenPacket_<2192>> {
+    static void transform(Context<bp::ContainerOpenPacket_<2192>> &ctx, bp::ContainerOpenPacket_<2168> &&from);
+};
+
+template <>
+struct Transformer<bp::ContainerClosePacket_<2168>, bp::ContainerClosePacket_<2192>> {
+    static void transform(Context<bp::ContainerClosePacket_<2192>> &ctx, bp::ContainerClosePacket_<2168> &&from);
+};
+
 } // namespace endweave

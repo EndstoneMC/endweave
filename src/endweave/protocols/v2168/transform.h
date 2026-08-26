@@ -23,6 +23,7 @@
 #include "endweave/protocols/v2168/scoreboard.h"
 #include "endweave/protocols/v2168/shape.h"
 #include "endweave/protocols/v2168/sound.h"
+#include "endweave/protocols/v2168/trade.h"
 
 #include <bedrock/protocol/game.h>
 #include <bedrock/protocol/inventory.h>

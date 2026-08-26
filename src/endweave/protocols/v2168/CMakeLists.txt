@@ -20,4 +20,5 @@ target_sources(endweave PRIVATE
         resource_pack.cpp
         scoreboard.cpp
         shape.cpp
-        sound.cpp)
+        sound.cpp
+        trade.cpp)

@@ -12,6 +12,7 @@
 #include "endweave/protocols/v2192/network.h"
 #include "endweave/protocols/v2192/resource_pack.h"
 #include "endweave/protocols/v2192/shape.h"
+#include "endweave/protocols/v2192/trade.h"
 
 namespace bp = bedrock::protocol;
 

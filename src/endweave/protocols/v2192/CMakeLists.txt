@@ -9,4 +9,5 @@ target_sources(endweave PRIVATE
         map.cpp
         network.cpp
         resource_pack.cpp
-        shape.cpp)
+        shape.cpp
+        trade.cpp)

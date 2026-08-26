@@ -1,5 +1,6 @@
 #include "endweave/protocols/v2168/inventory.h"
 
+#include <bedrock/protocol/enum.hpp>
 #include <utility>
 #include <variant>
 
@@ -133,6 +134,36 @@ void Transformer<bp::TransactionData_<2168>, bp::TransactionData_<2192>>::transf
             to = ew::transform(ctx, std::move(data));
         },
         from);
+}
+
+void Transformer<bp::ContainerOpenPacket_<2168>, bp::ContainerOpenPacket_<2192>>::transform(
+    Context<bp::ContainerOpenPacket_<2192>> &ctx, bp::ContainerOpenPacket_<2168> &&from)
+{
+    // ENDWEAVE: 2192 names every container 2168 does, so this only answers a rename.
+    const auto type = bp::enum_cast<bp::ContainerType_<2192>>(bp::enum_name(from.type));
+    if (!type) {
+        ctx.cancel();
+        return;
+    }
+    auto &to = ctx.out();
+    to.container_id = from.container_id;
+    to.type = *type;
+    to.pos = from.pos;
+    to.entity_unique_id = from.entity_unique_id;
+}
+
+void Transformer<bp::ContainerClosePacket_<2168>, bp::ContainerClosePacket_<2192>>::transform(
+    Context<bp::ContainerClosePacket_<2192>> &ctx, bp::ContainerClosePacket_<2168> &&from)
+{
+    const auto type = bp::enum_cast<bp::ContainerType_<2192>>(bp::enum_name(from.container_type));
+    if (!type) {
+        ctx.cancel();
+        return;
+    }
+    auto &to = ctx.out();
+    to.container_id = from.container_id;
+    to.container_type = *type;
+    to.server_initiated_close = from.server_initiated_close;
 }
 
 } // namespace endweave
