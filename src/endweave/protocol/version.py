@@ -82,12 +82,13 @@ class ProtocolVersion:
             version: Numeric protocol id, e.g. 924.
             name: Version name, e.g. "1.26.0", "1.26.0-1.26.3" or "1.26.2x".
             version_range: Minecraft versions covered, when the name does not say.
-            known: False for placeholders standing in for unregistered ids.
+            known: False for placeholders standing in for unregistered ids,
+                whose names are never read as a range.
 
         Raises:
             ValueError: If the name looks like a range or a wildcard but cannot be read as one.
         """
-        if version_range is None and "-" in name:
+        if known and version_range is None and "-" in name:
             first, _, last = name.partition("-")
             base_version, _, range_from_text = first.rpartition(".")
             last_base, _, range_to_text = last.rpartition(".")
@@ -95,7 +96,7 @@ class ProtocolVersion:
                 raise ValueError(f"cannot derive a version range from {name}, pass one explicitly")
             version_range = SubVersionRange(base_version, int(range_from_text), int(range_to_text))
 
-        if version_range is None and name.endswith("x"):
+        if known and version_range is None and name.endswith("x"):
             base_version, _, line = name[:-1].rpartition(".")
             if not base_version or (line and not line.isdigit()):
                 raise ValueError(f"cannot derive a version range from {name}, pass one explicitly")

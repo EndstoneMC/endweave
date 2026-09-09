@@ -30,7 +30,7 @@ from .config import ConfigurationProvider, EndweaveConfig
 from .connection import ConnectionManager
 from .debug import DebugHandler
 from .metrics import EndweaveMetrics
-from .protocol.version import get_protocol
+from .protocol.version import UNKNOWN, get_by_name, get_protocol
 from .update import send_update_message
 from .util import translate_alternate_color_codes
 
@@ -46,18 +46,20 @@ class EndweavePlugin(Plugin):
         "endweave": {
             "description": "Endweave plugin commands",
             "usages": [
+                "/endweave",
                 "/endweave list",
                 "/endweave debug [clear|pre|post]",
                 "/endweave debug <add|remove> <packet: string>",
                 "/endweave reload",
             ],
-            "permission": "endweave.command",
+            "permissions": ["endweave.command"],
         }
     }
     permissions = {
         "endweave.admin": {
             "default": "op",
             "children": {
+                "endweave.command": True,
                 "endweave.command.list": True,
                 "endweave.command.debug": True,
                 "endweave.command.reload": True,
@@ -97,8 +99,9 @@ class EndweavePlugin(Plugin):
             return
 
         client_network_version = int.from_bytes(payload[:4], "big", signed=True)
+        protocol_version = get_protocol(client_network_version)
         connection = self._connection_manager.get_or_create(str(event.address))
-        connection.protocol_version = get_protocol(client_network_version)
+        connection.protocol_version = protocol_version
 
     @event_handler(priority=EventPriority.LOWEST)
     def on_packet_send(self, event: PacketSendEvent) -> None:
@@ -108,10 +111,15 @@ class EndweavePlugin(Plugin):
     def on_player_login(self, event: PlayerLoginEvent) -> None:
         player = event.player
         connection = self._connection_manager.get_connection(str(player.address))
-        if connection is None:
+        if event.is_cancelled:
+            if connection is not None:
+                self._connection_manager.on_disconnect(connection)
             return
 
-        protocol_version = connection.protocol_version
+        protocol_version = connection.protocol_version if connection is not None else UNKNOWN
+        if protocol_version == UNKNOWN:
+            protocol_version = get_by_name(player.game_version) or UNKNOWN
+
         if protocol_version in self._configuration.blocked_protocol_versions:
             event.kick_message = translate_alternate_color_codes(self._configuration.blocked_disconnect_message)
             event.cancel()
@@ -119,10 +127,12 @@ class EndweavePlugin(Plugin):
                 self.logger.info(
                     f"Blocked join due to unsupported version from {player.address} ({protocol_version.name})"
                 )
-            self._connection_manager.on_disconnect(connection)
+            if connection is not None:
+                self._connection_manager.on_disconnect(connection)
             return
 
-        connection.player = player
+        if connection is not None:
+            connection.player = player
 
     @event_handler
     def on_player_join(self, event: PlayerJoinEvent) -> None:
@@ -132,6 +142,9 @@ class EndweavePlugin(Plugin):
 
     @event_handler
     def on_player_quit(self, event: PlayerQuitEvent) -> None:
-        connection = self._connection_manager.get_connection(str(event.player.address))
-        if connection is not None:
-            self._connection_manager.on_disconnect(connection)
+        player = event.player
+        connection = self._connection_manager.get_connection(str(player.address))
+        if connection is None or connection.player is None or connection.player.unique_id != player.unique_id:
+            return
+
+        self._connection_manager.on_disconnect(connection)

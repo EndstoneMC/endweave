@@ -1,4 +1,4 @@
-"""Version detection off the handshake, and the blocked version gate behind it."""
+"""Version detection off the handshake, the blocked version gate, and what the plugin declares."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
+from endstone.command import Command
 
 from endweave.config import EndweaveConfig
 from endweave.connection import ConnectionManager
@@ -52,10 +53,18 @@ def handshake(protocol: int, address: str = ADDRESS, packet_id: int = 193) -> Ma
     return event
 
 
-def login(address: str = ADDRESS, name: str = "Steve") -> MagicMock:
+def login(
+    address: str = ADDRESS,
+    name: str = "Steve",
+    game_version: str = "1.26.10",
+    *,
+    cancelled: bool = False,
+) -> MagicMock:
     event = MagicMock()
+    event.is_cancelled = cancelled
     event.player.address = address
     event.player.name = name
+    event.player.game_version = game_version
     event.player.unique_id = uuid4()
     return event
 
@@ -90,6 +99,17 @@ class TestVersionDetection:
         event.payload = b"\x00\x03"
 
         plugin.on_packet_receive(event)
+
+        assert not plugin._connection_manager.connections
+
+    def test_creates_no_connection_for_a_version_it_cannot_resolve(
+        self, make_plugin: Callable[..., StubPlugin], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        plugin = make_plugin()
+        monkeypatch.setattr("endweave.plugin.get_protocol", MagicMock(side_effect=ValueError("bad version")))
+
+        with pytest.raises(ValueError):
+            plugin.on_packet_receive(handshake(975))
 
         assert not plugin._connection_manager.connections
 
@@ -138,6 +158,19 @@ class TestLogin:
         event.cancel.assert_not_called()
         assert plugin._connection_manager.get_connection(ADDRESS) is None
 
+    def test_drops_the_connection_of_a_login_another_plugin_cancelled(
+        self, make_plugin: Callable[..., StubPlugin]
+    ) -> None:
+        plugin = make_plugin()
+        plugin.on_packet_receive(handshake(975))
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+
+        plugin.on_player_login(login(cancelled=True))
+
+        assert plugin._connection_manager.get_connection(ADDRESS) is None
+        assert connection.player is None
+        assert connection.active is False
+
     def test_drops_the_connection_when_the_player_quits(self, make_plugin: Callable[..., StubPlugin]) -> None:
         plugin = make_plugin()
         plugin.on_packet_receive(handshake(975))
@@ -151,6 +184,25 @@ class TestLogin:
 
         assert plugin._connection_manager.get_connection(ADDRESS) is None
         assert connection.active is False
+
+    def test_keeps_the_connection_of_a_player_still_on_the_same_address(
+        self, make_plugin: Callable[..., StubPlugin]
+    ) -> None:
+        plugin = make_plugin()
+        plugin.on_packet_receive(handshake(975))
+        leaving = login(name="PlayerTwo")
+        plugin.on_player_login(leaving)
+        staying = login(name="PlayerOne")
+        plugin.on_player_login(staying)
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+
+        quit_event = MagicMock()
+        quit_event.player = leaving.player
+        plugin.on_player_quit(quit_event)
+
+        assert plugin._connection_manager.get_connection(ADDRESS) is connection
+        assert connection.player is staying.player
+        assert connection.active is True
 
 
 class TestBlockedVersions:
@@ -178,6 +230,52 @@ class TestBlockedVersions:
         plugin = make_plugin("block-protocols = [975]\n")
         plugin.on_packet_receive(handshake(944))
         event = login()
+
+        plugin.on_player_login(event)
+
+        event.cancel.assert_not_called()
+
+    def test_refuses_a_blocked_client_whose_handshake_was_evicted(self, make_plugin: Callable[..., StubPlugin]) -> None:
+        plugin = make_plugin("block-protocols = [975]\n")
+        plugin.on_packet_receive(handshake(975))
+        for port in range(1025):
+            plugin.on_packet_receive(handshake(944, address=f"127.0.0.1:{port}"))
+        event = login(game_version="1.26.20")
+
+        plugin.on_player_login(event)
+
+        event.cancel.assert_called_once()
+
+    def test_refuses_a_blocked_client_that_never_shook_hands(self, make_plugin: Callable[..., StubPlugin]) -> None:
+        plugin = make_plugin("block-protocols = [975]\n")
+        event = login(game_version="1.26.20")
+
+        plugin.on_player_login(event)
+
+        event.cancel.assert_called_once()
+
+    def test_reads_the_handshake_before_the_game_version(self, make_plugin: Callable[..., StubPlugin]) -> None:
+        plugin = make_plugin("block-protocols = [9999]\n")
+        plugin.on_packet_receive(handshake(9999))
+        event = login(game_version="1.26.10")
+
+        plugin.on_player_login(event)
+
+        event.cancel.assert_called_once()
+
+    def test_refuses_an_unidentifiable_client_below_a_lower_bound(self, make_plugin: Callable[..., StubPlugin]) -> None:
+        plugin = make_plugin('block-versions = ["<1.26.0"]\n')
+        event = login(game_version="1.99.0")
+
+        plugin.on_player_login(event)
+
+        event.cancel.assert_called_once()
+
+    def test_admits_an_unidentifiable_client_when_nothing_is_blocked(
+        self, make_plugin: Callable[..., StubPlugin]
+    ) -> None:
+        plugin = make_plugin()
+        event = login(game_version="1.99.0")
 
         plugin.on_player_login(event)
 
@@ -211,3 +309,18 @@ class TestBlockedVersions:
         plugin.on_player_login(login())
 
         mock_logger.info.assert_called_once_with(f"Blocked join due to unsupported version from {ADDRESS} (1.26.20)")
+
+
+class TestDeclaration:
+    def test_gates_the_command_behind_a_permission_endstone_reads(self) -> None:
+        command = Command("endweave", **EndweavePlugin.commands["endweave"])
+
+        assert command.permissions == ["endweave.command"]
+
+    def test_grants_the_command_permission_to_an_admin(self) -> None:
+        children = EndweavePlugin.permissions["endweave.admin"]["children"]
+
+        assert children["endweave.command"] is True
+
+    def test_offers_a_usage_with_no_subcommand(self) -> None:
+        assert "/endweave" in EndweavePlugin.commands["endweave"]["usages"]

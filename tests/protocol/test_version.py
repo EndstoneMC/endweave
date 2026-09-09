@@ -143,6 +143,19 @@ def test_get_protocol_makes_a_placeholder_for_unregistered_ids() -> None:
     assert not is_registered(UNREGISTERED_VERSION)
 
 
+@pytest.mark.parametrize("version", [-2168, -1, 0])
+def test_get_protocol_has_a_placeholder_for_every_id(version: int) -> None:
+    """A client may put any int on the wire, so no id may raise."""
+    placeholder = get_protocol(version)
+    assert placeholder.name == f"Unknown ({version})"
+    assert not placeholder.known
+
+
+def test_a_placeholder_name_is_never_read_as_a_range() -> None:
+    placeholder = ProtocolVersion(-1, "Unknown (-1)", known=False)
+    assert placeholder.included_versions == frozenset({"Unknown (-1)"})
+
+
 def test_registered_versions_are_known() -> None:
     assert v1_26_0.known
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,8 +10,24 @@ from endstone.command import CommandSender
 
 from endweave._version import __version__
 from endweave.commands import CommandHandler, DebugSubCommand, ListSubCommand, ReloadSubCommand, SubCommand
-from endweave.debug import DebugHandler
+from endweave.debug import DebugHandler, Direction, PacketType
 from endweave.plugin import EndweavePlugin
+
+START_GAME = PacketType(11, "START_GAME", Direction.CLIENTBOUND)
+TEXT = PacketType(9, "TEXT", Direction.CLIENTBOUND)
+
+
+@dataclass(frozen=True)
+class StubPacket:
+    """Minimal LoggablePacket: an ID, plus a type once one has been resolved."""
+
+    packet_id: int
+    packet_type: PacketType | None = None
+
+
+def grant(sender: MagicMock, *permissions: str) -> None:
+    """Hold exactly these permission nodes, answering has_permission with real booleans."""
+    sender.has_permission.side_effect = frozenset(permissions).__contains__
 
 
 @pytest.fixture
@@ -18,6 +35,7 @@ def mock_sender() -> MagicMock:
     """Command sender double whose .send_message calls are the assertion target."""
     sender = MagicMock()
     sender.server.online_players = []
+    grant(sender, "endweave.admin")
     return sender
 
 
@@ -69,15 +87,6 @@ def test_the_permission_defaults_off_the_name() -> None:
     assert ReloadSubCommand(MagicMock()).permission == "endweave.command.reload"
 
 
-def test_the_permission_is_declared_as_a_child_of_endweave_admin() -> None:
-    children = EndweavePlugin.permissions["endweave.admin"]["children"]
-    assert children == {
-        "endweave.command.list": True,
-        "endweave.command.debug": True,
-        "endweave.command.reload": True,
-    }
-
-
 class NamedSubCommand(SubCommand):
     def __init__(self, name: str) -> None:
         self._name = name
@@ -112,6 +121,13 @@ def handler(debug_handler: DebugHandler, configuration_provider: MagicMock) -> C
     return CommandHandler(debug_handler, configuration_provider)
 
 
+def test_every_registered_permission_is_a_child_of_endweave_admin(handler: CommandHandler) -> None:
+    children = EndweavePlugin.permissions["endweave.admin"]["children"]
+    assert handler.subcommands
+    for subcommand in handler.subcommands:
+        assert children.get(subcommand.permission) is True
+
+
 def test_a_known_word_routes_to_its_subcommand(handler: CommandHandler, mock_sender: MagicMock) -> None:
     assert handler.on_command(mock_sender, MagicMock(), ["list"]) is True
     assert sent(mock_sender) == ["§cNo players found!"]
@@ -135,15 +151,42 @@ def test_an_unknown_word_says_so_then_shows_the_help(handler: CommandHandler, mo
 
 
 def test_a_sender_with_no_permission_is_turned_away(handler: CommandHandler, mock_sender: MagicMock) -> None:
-    mock_sender.has_permission.return_value = False
+    grant(mock_sender)
     assert handler.on_command(mock_sender, MagicMock(), ["list"]) is False
     assert sent(mock_sender) == ["§cYou are not allowed to use this command!"]
 
 
 def test_the_admin_permission_alone_opens_every_subcommand(handler: CommandHandler, mock_sender: MagicMock) -> None:
-    mock_sender.has_permission.side_effect = lambda name: name == "endweave.admin"
+    grant(mock_sender, "endweave.admin")
     assert handler.on_command(mock_sender, MagicMock(), ["list"]) is True
     assert sent(mock_sender) == ["§cNo players found!"]
+
+
+def test_a_subcommand_permission_alone_opens_that_subcommand(handler: CommandHandler, mock_sender: MagicMock) -> None:
+    grant(mock_sender, "endweave.command.list")
+    assert handler.on_command(mock_sender, MagicMock(), ["list"]) is True
+    assert sent(mock_sender) == ["§cNo players found!"]
+
+
+def test_a_subcommand_permission_does_not_open_the_others(
+    handler: CommandHandler, configuration_provider: MagicMock, mock_sender: MagicMock
+) -> None:
+    grant(mock_sender, "endweave.command.list")
+    assert handler.on_command(mock_sender, MagicMock(), ["reload"]) is False
+    configuration_provider.reload_configs.assert_not_called()
+    assert sent(mock_sender) == ["§cYou are not allowed to use this command!"]
+
+
+def test_the_help_lists_only_the_subcommands_the_sender_may_run(
+    handler: CommandHandler, mock_sender: MagicMock
+) -> None:
+    grant(mock_sender, "endweave.command.list")
+    assert handler.on_command(mock_sender, MagicMock(), []) is False
+    assert sent(mock_sender) == [
+        f"§aEndweave §c{__version__}",
+        "§6Commands:",
+        "§2/endweave list §7- §6Shows lists of the versions from logged in players.",
+    ]
 
 
 def test_a_subcommand_returning_false_says_nothing_of_its_own(handler: CommandHandler, mock_sender: MagicMock) -> None:
@@ -199,7 +242,7 @@ def test_debug_clear_empties_the_packet_filter(
 ) -> None:
     debug_handler.add_packet_type_name_to_log("START_GAME")
     assert handler.on_command(mock_sender, MagicMock(), ["debug", "clear"]) is True
-    assert debug_handler._packet_type_names == set()
+    assert debug_handler.should_log(StubPacket(9, TEXT), Direction.CLIENTBOUND)
     assert sent(mock_sender) == ["§6Cleared packet types to log"]
 
 
@@ -207,9 +250,10 @@ def test_debug_add_and_remove_upper_case_the_packet_name(
     handler: CommandHandler, debug_handler: DebugHandler, mock_sender: MagicMock
 ) -> None:
     assert handler.on_command(mock_sender, MagicMock(), ["debug", "add", "start_game"]) is True
-    assert debug_handler._packet_type_names == {"START_GAME"}
+    assert debug_handler.should_log(StubPacket(11, START_GAME), Direction.CLIENTBOUND)
+    assert not debug_handler.should_log(StubPacket(9, TEXT), Direction.CLIENTBOUND)
     assert handler.on_command(mock_sender, MagicMock(), ["debug", "remove", "start_game"]) is True
-    assert debug_handler._packet_type_names == set()
+    assert debug_handler.should_log(StubPacket(9, TEXT), Direction.CLIENTBOUND)
     assert sent(mock_sender) == [
         "§6Added packet type start_game to debug logging",
         "§6Removed packet type start_game from debug logging",
@@ -243,3 +287,11 @@ def test_reload_ignores_trailing_arguments(
 ) -> None:
     assert handler.on_command(mock_sender, MagicMock(), ["reload", "now"]) is True
     configuration_provider.reload_configs.assert_called_once_with()
+
+
+def test_a_config_that_will_not_parse_is_reported_to_the_sender(
+    handler: CommandHandler, configuration_provider: MagicMock, mock_sender: MagicMock
+) -> None:
+    configuration_provider.reload_configs.side_effect = ValueError("Unexpected character: '}' at line 3 col 5")
+    assert handler.on_command(mock_sender, MagicMock(), ["reload"]) is True
+    assert sent(mock_sender) == ["§cFailed to reload the configuration: Unexpected character: '}' at line 3 col 5"]

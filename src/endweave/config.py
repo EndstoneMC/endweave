@@ -127,22 +127,22 @@ class ConfigSection:
 
     def get_bool(self, key: str, default: bool) -> bool:
         """Read a boolean, or ``default`` if the key is missing or another type."""
-        value = self._values.get(key)
+        value = self.get(key)
         return bool(value) if isinstance(value, bool) else default
 
     def get_string(self, key: str, default: str) -> str:
         """Read a string, or ``default`` if the key is missing or another type."""
-        value = self._values.get(key)
+        value = self.get(key)
         return str(value) if isinstance(value, str) else default
 
     def get_int(self, key: str, default: int) -> int:
         """Read an integer, or ``default`` if the key is missing or not a number."""
-        value = self._values.get(key)
+        value = self.get(key)
         return int(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else default
 
     def get_float(self, key: str, default: float) -> float:
         """Read a float, or ``default`` if the key is missing or not a number."""
-        value = self._values.get(key)
+        value = self.get(key)
         return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else default
 
     def get_list_safe(self, key: str, item_type: type[T], invalid_value_message: str | None = None) -> list[T]:
@@ -156,13 +156,17 @@ class ConfigSection:
             item_type: Type every entry must have.
             invalid_value_message: Warning logged per dropped entry, with a
                 single ``%s`` for the entry itself. None to drop them quietly.
+                A key holding something other than a list is warned about by
+                key name instead.
 
         Returns:
             The entries of the requested type, or an empty list if the key
             holds no list.
         """
-        value = self._values.get(key)
+        value = self.get(key)
         if not isinstance(value, list):
+            if value is not None and invalid_value_message is not None:
+                self.logger.warning(f"Config option {key} must be a list, ignoring it")
             return []
 
         values: list[T] = []
@@ -290,6 +294,10 @@ class Config(ConfigSection, ABC):
             merged_value = merged.get(key)
             if isinstance(value, dict) and isinstance(merged_value, dict):
                 self._merge(key, value, merged_value)
+            elif key in merged and isinstance(value, dict) != isinstance(merged_value, dict):
+                name = key if section_key is None else f"{section_key}.{key}"
+                expected = "a table" if isinstance(merged_value, dict) else "a single value"
+                self.logger.warning(f"Config option {name} must be {expected}, keeping the default")
             elif section_key in self.sections_with_modifiable_keys() or key in merged:
                 merged[key] = value
 

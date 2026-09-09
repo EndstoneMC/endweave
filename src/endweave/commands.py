@@ -143,7 +143,12 @@ class ReloadSubCommand(SubCommand):
         return "Reload the config from the disk."
 
     def execute(self, sender: CommandSender, args: list[str]) -> bool:
-        self._configuration_provider.reload_configs()
+        try:
+            self._configuration_provider.reload_configs()
+        except Exception as exc:
+            sender.send_message(f"§cFailed to reload the configuration: {exc}")
+            return True
+
         sender.send_message(
             "§6Configuration successfully reloaded! Some config options may require a restart to take effect."
         )
@@ -173,6 +178,11 @@ class CommandHandler(CommandExecutor):
         if name in self._subcommands:
             raise ValueError(f"SubCommand {subcommand.name} does already exist!")
         self._subcommands[name] = subcommand
+
+    @property
+    def subcommands(self) -> tuple[SubCommand, ...]:
+        """The registered subcommands, in registration order."""
+        return tuple(self._subcommands.values())
 
     def on_command(self, sender: CommandSender, command: Command, args: list[str]) -> bool:
         if not any(self._is_allowed(sender, subcommand) for subcommand in self._subcommands.values()):

@@ -19,6 +19,9 @@ name = "default"
 
 [section]
 nested = 1
+flag = true
+label = "deep"
+ids = [1, 2]
 
 [servers]
 """
@@ -93,6 +96,25 @@ class TestLoading:
         assert section is not None
         assert section.get_int("nested", 0) == 9
         assert section.contains("gone") is False
+
+    def test_keeps_the_default_table_a_user_wrote_a_value_over(
+        self, config: StubConfig, config_file: Path, mock_logger: MagicMock
+    ) -> None:
+        write(config_file, "section = 5\n")
+        config.reload()
+
+        assert config.get("section.nested") == 1
+        assert "[section]" in config_file.read_text()
+        assert "section" in mock_logger.warning.call_args.args[0]
+
+    def test_keeps_the_default_value_a_user_wrote_a_table_over(
+        self, config: StubConfig, config_file: Path, mock_logger: MagicMock
+    ) -> None:
+        write(config_file, "[count]\nnested = 1\n")
+        config.reload()
+
+        assert config.get_int("count", 0) == 3
+        assert "count" in mock_logger.warning.call_args.args[0]
 
     def test_restores_the_comments_of_the_defaults(self, config: StubConfig, config_file: Path) -> None:
         write(config_file, "enabled = false\n")
@@ -171,6 +193,15 @@ class TestSectionGetters:
         assert config.get("section.missing", "fallback") == "fallback"
         assert config.get("missing.nested", "fallback") == "fallback"
 
+    def test_typed_getters_follow_a_dotted_path(self, config: StubConfig) -> None:
+        config.reload()
+
+        assert config.get_bool("section.flag", False) is True
+        assert config.get_string("section.label", "") == "deep"
+        assert config.get_int("section.nested", 0) == 1
+        assert config.get_float("section.nested", 0.0) == 1.0
+        assert config.get_list_safe("section.ids", int) == [1, 2]
+
     def test_section_of_a_non_section_is_none(self, config: StubConfig) -> None:
         config.reload()
 
@@ -201,6 +232,19 @@ class TestSectionGetters:
         config.reload()
 
         assert config.get_list_safe("missing", str) == []
+
+    def test_list_warns_when_the_key_holds_no_list(self, config: StubConfig, mock_logger: MagicMock) -> None:
+        config.reload()
+        config.set("protocols", 975)
+
+        assert config.get_list_safe("protocols", int, "bad: '%s'") == []
+        assert "protocols" in mock_logger.warning.call_args.args[0]
+
+    def test_list_of_a_missing_key_stays_quiet(self, config: StubConfig, mock_logger: MagicMock) -> None:
+        config.reload()
+
+        assert config.get_list_safe("missing", int, "bad: '%s'") == []
+        mock_logger.warning.assert_not_called()
 
 
 class TestConfigurationProvider:
@@ -251,6 +295,16 @@ class TestEndweaveOptions:
         assert config.max_error_length == 20
         assert config.log_blocked_joins is True
 
+    def test_a_value_in_place_of_the_logging_table_keeps_the_defaults(
+        self, config_file: Path, mock_logger: MagicMock
+    ) -> None:
+        write(config_file, "logging = 5\n")
+        config = EndweaveConfig(config_file, mock_logger)
+        config.reload()
+
+        assert config.max_error_length == 1500
+        assert "log-blocked-joins" in config_file.read_text()
+
 
 class TestBlockedProtocolVersions:
     def load(self, config_file: Path, logger: MagicMock, text: str) -> BlockedProtocolVersions:
@@ -293,6 +347,23 @@ class TestBlockedProtocolVersions:
         assert get_protocol(2168) in blocked
         assert get_protocol(944) not in blocked
 
+    def test_the_lower_bound_itself_is_not_blocked(self, config_file: Path, mock_logger: MagicMock) -> None:
+        blocked = self.load(config_file, mock_logger, 'block-versions = ["<1.26.0"]\n')
+
+        assert get_protocol(924) not in blocked
+        assert get_protocol(898) in blocked
+
+    def test_the_upper_bound_itself_is_not_blocked(self, config_file: Path, mock_logger: MagicMock) -> None:
+        blocked = self.load(config_file, mock_logger, 'block-versions = [">1.26.30"]\n')
+
+        assert get_protocol(1001) not in blocked
+        assert get_protocol(2168) in blocked
+
+    def test_blocks_a_protocol_number_no_version_speaks(self, config_file: Path, mock_logger: MagicMock) -> None:
+        blocked = self.load(config_file, mock_logger, "block-protocols = [-1]\n")
+
+        assert get_protocol(-1) in blocked
+
     def test_warns_about_an_unknown_version(self, config_file: Path, mock_logger: MagicMock) -> None:
         blocked = self.load(config_file, mock_logger, 'block-versions = ["1.99.0"]\n')
 
@@ -303,6 +374,12 @@ class TestBlockedProtocolVersions:
         blocked = self.load(config_file, mock_logger, 'block-versions = ["<1.26.0", "<1.26.20"]\n')
 
         assert blocked.blocks_below == get_protocol(975)
+        assert "overridden by" in mock_logger.warning.call_args.args[0]
+
+    def test_warns_when_the_upper_bound_is_set_twice(self, config_file: Path, mock_logger: MagicMock) -> None:
+        blocked = self.load(config_file, mock_logger, 'block-versions = [">1.26.30", ">1.26.45"]\n')
+
+        assert blocked.blocks_above == get_protocol(2169)
         assert "overridden by" in mock_logger.warning.call_args.args[0]
 
     def test_warns_about_a_version_blocked_twice(self, config_file: Path, mock_logger: MagicMock) -> None:
