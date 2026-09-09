@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "endstone-endweave"
 dynamic = ["version"]
-dependencies = ["endstone>=0.11"]
+dependencies = ["aiohttp", "endstone>=0.11", "packaging", "tomlkit"]
 description = "Protocol translation plugin for Endstone - allows newer clients on older servers"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -25,7 +25,6 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = ["pytest", "mypy", "ruff"]
-tools = ["pydot", "pydantic>=2"]
 
 [project.urls]
 Repository = "https://github.com/EndstoneMC/endweave"

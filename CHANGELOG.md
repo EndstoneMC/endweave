@@ -9,10 +9,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - `/endweave list` groups the online players by the protocol version they speak. Requires `endweave.command.list`, which `endweave.admin` grants and operators hold by default.
 - `/endweave debug` toggles debug mode, `debug pre` and `debug post` the transform logging phases, and `debug add|remove <packet>` and `debug clear` edit the packet filter. Requires `endweave.command.debug`.
-- `/endweave reload` reads the config files off the disk again. Requires `endweave.command.reload`.
+- `/endweave` on its own lists the subcommands you are allowed to run.
+- `/endweave reload` reads the config files off the disk again, and reports a config file that will not parse back to whoever ran the command. Requires `endweave.command.reload`. `log-other-conversion-warnings` is the exception: the debug handler is built once when the plugin is enabled and keeps the value it was given then, so changing that option still needs a restart.
 - `config.toml` is merged against the packaged defaults on startup: options added in a release show up in a config written by an older one, options that are no longer shipped are dropped, and the comments are brought back up to date. Values you have already set are kept.
 - A `[logging]` section. `log-other-conversion-warnings` turns the conversion warnings on and off, and `log-blocked-joins` reports every refused join. `log-entity-data-errors` and `max-error-length` are read but not yet acted on.
-- `block-versions` and `block-protocols` refuse a client at login, before any world data is streamed, with the kick message from `block-disconnect-msg`. Entries that name no known version are reported on startup, and `&` colour codes in the message are translated.
+- `block-versions` and `block-protocols` refuse a client at login, before any world data is streamed, with the kick message from `block-disconnect-msg`. The check reads the protocol the client announced in its RequestNetworkSettings, and falls back to the version the client reports on joining when that handshake was never seen, so a connection already open when the plugin was enabled is still checked. Entries that name no known version are reported on startup, and `&` colour codes in the message are translated.
 
 ## [0.4.3] - 2026-05-08
 
@@ -135,3 +136,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Per-player connection tracking
 - Protocol chaining support for future multi-version translation
 - CI/CD with GitHub Actions
+
+[Unreleased]: https://github.com/EndstoneMC/endweave/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/EndstoneMC/endweave/compare/v0.4.2...v0.4.3
+[0.4.2]: https://github.com/EndstoneMC/endweave/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/EndstoneMC/endweave/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/EndstoneMC/endweave/compare/v0.3.2...v0.4.0
+[0.3.2]: https://github.com/EndstoneMC/endweave/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/EndstoneMC/endweave/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/EndstoneMC/endweave/compare/v0.2.4...v0.3.0
+[0.2.4]: https://github.com/EndstoneMC/endweave/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/EndstoneMC/endweave/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/EndstoneMC/endweave/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/EndstoneMC/endweave/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/EndstoneMC/endweave/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/EndstoneMC/endweave/releases/tag/v0.1.0

@@ -71,7 +71,15 @@ jobs:
         if: ${{ !inputs.dry_run }}
         run: |
           DATE=$(date -u +%Y-%m-%d)
-          sed -i "s/^## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
+          REPO="https://github.com/${{ github.repository }}"
+          PREV_TAG=$(sed -n 's|^\[Unreleased\]: .*/compare/\(v[0-9][0-9.]*\)\.\.\.HEAD$|\1|p' CHANGELOG.md)
+          if [ -n "$PREV_TAG" ]; then
+            NEW_LINK="[$VERSION]: $REPO/compare/$PREV_TAG...v$VERSION"
+          else
+            NEW_LINK="[$VERSION]: $REPO/releases/tag/v$VERSION"
+          fi
+          sed -i "s|^## \[Unreleased\]|## [Unreleased]\n\n## [$VERSION] - $DATE|" CHANGELOG.md
+          sed -i "s|^\[Unreleased\]: .*|[Unreleased]: $REPO/compare/v$VERSION...HEAD\n$NEW_LINK|" CHANGELOG.md
 
       - name: Commit and tag
         if: ${{ !inputs.dry_run }}
@@ -143,6 +151,14 @@ jobs:
 
       - name: Build
         run: uv build
+
+      - name: Check wheel contents
+        run: |
+          WHEEL=$(ls dist/*.whl)
+          if ! unzip -l "$WHEEL" | grep -q ' endweave/config.toml$'; then
+            echo "::error::endweave/config.toml is missing from $WHEEL, the plugin cannot load its defaults at runtime"
+            exit 1
+          fi
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

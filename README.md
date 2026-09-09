@@ -9,14 +9,22 @@ different protocol versions by rewriting packets at the network layer. Inspired 
 
 ## Supported Versions
 
-| Minecraft Version   | Protocol |
-|---------------------|----------|
-| 1.21.120            | 859      |
-| 1.21.124            | 860      |
-| 1.21.130 - 1.21.132 | 898      |
-| 1.26.0 - 1.26.3     | 924      |
-| 1.26.10 - 1.26.13   | 944      |
-| 1.26.20             | 975      |
+| Minecraft Version | Protocol |
+|-------------------|----------|
+| 1.21.120-1.21.123 | 859      |
+| 1.21.124          | 860      |
+| 1.21.130-1.21.132 | 898      |
+| 1.26.0-1.26.3     | 924      |
+| 1.26.10-1.26.13   | 944      |
+| 1.26.20           | 975      |
+| 1.26.30-1.26.32   | 1001     |
+| 1.26.40-1.26.44   | 2168     |
+| 1.26.45           | 2169     |
+| 1.26.5x           | 2192     |
+
+The names in the left column are the ones Endweave uses everywhere: `/endweave list` prints them, and
+`block-versions` in `config.toml` accepts them as well as any single version they cover. `1.26.5x` is the whole hotfix
+line, 1.26.50 through 1.26.59.
 
 ## Quick Start
 

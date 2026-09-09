@@ -5,8 +5,13 @@ config-version = 1
 check-for-updates = true
 
 # Blocked versions, written as readable version strings with optional '<' and '>' prefixes.
-# To block 1.26.20, everything below 1.26.0 and everything above 1.26.45:
-#   block-versions = ["<1.26.0", "1.26.20", ">1.26.45"]
+# Blocking works on protocols, not on single versions: an entry names a version, but what it blocks is the protocol
+# that version speaks, together with every other version speaking it. The '<' and '>' bounds are exclusive and are
+# compared the same way, so ">1.26.30" lets 1.26.31 and 1.26.32 in, because all three speak protocol 1001.
+# To block everything on a protocol older than 1.26.0, the protocol 1.26.30 speaks (1.26.30 to 1.26.32),
+# and everything on a protocol newer than the one 1.26.40 speaks (so 1.26.41 to 1.26.44 still get in):
+#   block-versions = ["<1.26.0", "1.26.30", ">1.26.40"]
+# Use block-protocols below when you want to name a protocol outright.
 block-versions = []
 # Block specific Bedrock protocol version numbers. Can be used alongside block-versions.
 block-protocols = []
