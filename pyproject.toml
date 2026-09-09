@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["mypy", "ruff"]
+dev = ["pytest", "mypy", "ruff"]
 tools = ["pydot", "pydantic>=2"]
 
 [project.urls]
@@ -40,6 +40,10 @@ exclude = ["src/endstone_endweave/_version.py"]
 
 [tool.ruff.lint]
 select = ["I", "E", "F", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--import-mode=importlib", "--strict-markers"]
 
 [tool.mypy]
 strict = true
