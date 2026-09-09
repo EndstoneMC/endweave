@@ -17,9 +17,9 @@ from .update import UpdateChecker
 class EndweavePlugin(Plugin):
     """Endstone plugin that enables protocol translation between Bedrock versions."""
 
-    prefix = "Endweave"  # type: ignore[assignment]
-    api_version = "0.11"  # type: ignore[assignment]
-    permissions = {  # type: ignore[assignment]
+    prefix = "Endweave"
+    api_version = "0.11"
+    permissions = {
         "endweave.update": {
             "description": "Receive update notifications on join",
             "default": "op",
@@ -42,11 +42,11 @@ class EndweavePlugin(Plugin):
             self._update_checker = UpdateChecker(self.logger, __version__)
             self._update_checker.check()
 
-    @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value,untyped-decorator]
+    @event_handler(priority=EventPriority.LOWEST)
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
         pass
 
-    @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value,untyped-decorator]
+    @event_handler(priority=EventPriority.LOWEST)
     def on_packet_send(self, event: PacketSendEvent) -> None:
         pass
 

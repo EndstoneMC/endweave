@@ -32,11 +32,11 @@ Repository = "https://github.com/EndstoneMC/endweave"
 Issues = "https://github.com/EndstoneMC/endweave/issues"
 
 [project.entry-points."endstone"]
-endweave = "endstone_endweave:EndweavePlugin"
+endweave = "endweave:EndweavePlugin"
 
 [tool.ruff]
 line-length = 120
-exclude = ["src/endstone_endweave/_version.py"]
+exclude = ["src/endweave/_version.py"]
 
 [tool.ruff.lint]
 select = ["I", "E", "F", "W"]
@@ -49,9 +49,16 @@ addopts = ["--import-mode=importlib", "--strict-markers"]
 strict = true
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "endweave.plugin"
+disable_error_code = ["assignment", "func-returns-value", "untyped-decorator"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/endweave"]
+
 [tool.hatch.version]
 source = "vcs"
 raw-options.local_scheme = "no-local-version"
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/endstone_endweave/_version.py"
+version-file = "src/endweave/_version.py"

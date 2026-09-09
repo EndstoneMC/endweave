@@ -4,8 +4,8 @@ from collections.abc import Iterator
 
 import pytest
 
-from endstone_endweave.protocol import version as version_module
-from endstone_endweave.protocol.version import (
+from endweave.protocol import version as version_module
+from endweave.protocol.version import (
     UNKNOWN,
     ProtocolVersion,
     SubVersionRange,
@@ -20,6 +20,8 @@ from endstone_endweave.protocol.version import (
     v1_26_20,
     v1_26_30,
 )
+
+UNREGISTERED_VERSION = max(get_protocols()).version + 1
 
 
 @pytest.fixture
@@ -117,7 +119,7 @@ def test_comparing_with_a_plain_int_is_a_type_error() -> None:
 
 def test_registered_ids_are_reported() -> None:
     assert is_registered(975)
-    assert not is_registered(2168)
+    assert not is_registered(UNREGISTERED_VERSION)
 
 
 def test_get_protocol_returns_the_registered_instance() -> None:
@@ -125,10 +127,10 @@ def test_get_protocol_returns_the_registered_instance() -> None:
 
 
 def test_get_protocol_makes_a_placeholder_for_unregistered_ids() -> None:
-    unregistered = get_protocol(2168)
-    assert unregistered.name == "Unknown (2168)"
+    unregistered = get_protocol(UNREGISTERED_VERSION)
+    assert unregistered.name == f"Unknown ({UNREGISTERED_VERSION})"
     assert not unregistered.known
-    assert not is_registered(2168)
+    assert not is_registered(UNREGISTERED_VERSION)
 
 
 def test_registered_versions_are_known() -> None:
@@ -161,9 +163,9 @@ def test_get_by_name_returns_none_for_an_unknown_version() -> None:
 
 
 def test_register_inserts_in_protocol_order(isolated_registry: None) -> None:
-    added = register(2168, "1.26.40")
+    added = register(UNREGISTERED_VERSION, "1.99.0")
 
-    assert get_protocol(2168) is added
-    assert get_by_name("1.26.40") is added
+    assert get_protocol(UNREGISTERED_VERSION) is added
+    assert get_by_name("1.99.0") is added
     assert get_protocols() == sorted(get_protocols())
     assert get_protocols()[-1] is added
