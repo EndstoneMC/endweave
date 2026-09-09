@@ -1,0 +1,12 @@
+BasedOnStyle: Microsoft
+AccessModifierOffset: -4
+AlignConsecutiveMacros: Consecutive
+AlignEscapedNewlines: Left
+AlignOperands: AlignAfterOperator
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Empty
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeBraces: Stroustrup
+IncludeBlocks: Regroup
+InsertBraces: true
+InsertNewlineAtEOF: true
