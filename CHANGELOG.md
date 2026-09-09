@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - `/endweave list` groups the online players by the protocol version they speak. Requires `endweave.command.list`, which `endweave.admin` grants and operators hold by default.
+- `/endweave debug` toggles debug mode, `debug pre` and `debug post` the transform logging phases, and `debug add|remove <packet>` and `debug clear` edit the packet filter. Requires `endweave.command.debug`.
 
 ## [0.4.3] - 2026-05-08
 
