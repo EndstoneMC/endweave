@@ -65,29 +65,42 @@ class ProtocolVersion:
     ) -> None:
         """Create a protocol version.
 
-        A hyphenated name such as "1.26.0-1.26.3" derives its own range, so
-        ``version_range`` is only needed for names that cannot be read that way,
-        wildcards among them.
+        Names derive their own range, so ``version_range`` is only needed for a
+        name none of these three shapes fits:
+
+        * "1.26.20", one Minecraft version;
+        * "1.26.0-1.26.3", every version between the two, inclusive;
+        * "1.26.2x", the whole hotfix line 1.26.20 to 1.26.29.
+
+        The wildcard is ViaVersion's, moved one digit along. Bedrock spends the
+        last digit of the patch on hotfixes where Java spends a component of its
+        own, so Java's "1.8.x" is Bedrock's "1.26.2x". Both are read the same
+        way: whatever stands before the "x" is fixed, and the digit it replaces
+        runs 0 through 9.
 
         Args:
             version: Numeric protocol id, e.g. 924.
-            name: Version name, e.g. "1.26.0" or "1.26.0-1.26.3".
+            name: Version name, e.g. "1.26.0", "1.26.0-1.26.3" or "1.26.2x".
             version_range: Minecraft versions covered, when the name does not say.
             known: False for placeholders standing in for unregistered ids.
 
         Raises:
-            ValueError: If the name is a wildcard or an underivable range and no range is given.
+            ValueError: If the name looks like a range or a wildcard but cannot be read as one.
         """
-        if version_range is None and name.endswith(".x"):
-            raise ValueError(f"wildcard name needs a version range: {name}")
-
         if version_range is None and "-" in name:
             first, _, last = name.partition("-")
-            base_version, _, range_from = first.rpartition(".")
-            last_base, _, range_to = last.rpartition(".")
-            if base_version != last_base or not range_from.isdigit() or not range_to.isdigit():
+            base_version, _, range_from_text = first.rpartition(".")
+            last_base, _, range_to_text = last.rpartition(".")
+            if base_version != last_base or not range_from_text.isdigit() or not range_to_text.isdigit():
                 raise ValueError(f"cannot derive a version range from {name}, pass one explicitly")
-            version_range = SubVersionRange(base_version, int(range_from), int(range_to))
+            version_range = SubVersionRange(base_version, int(range_from_text), int(range_to_text))
+
+        if version_range is None and name.endswith("x"):
+            base_version, _, line = name[:-1].rpartition(".")
+            if not base_version or (line and not line.isdigit()):
+                raise ValueError(f"cannot derive a version range from {name}, pass one explicitly")
+            range_from = int(line + "0") if line else 0
+            version_range = SubVersionRange(base_version, range_from, range_from + 9)
 
         self.version = version
         self.name = name
@@ -101,8 +114,8 @@ class ProtocolVersion:
 
     @property
     def is_version_wildcard(self) -> bool:
-        """Whether the name covers a whole minor line, e.g. "1.26.x"."""
-        return self.name.endswith(".x")
+        """Whether the name covers a whole hotfix line, e.g. "1.26.2x"."""
+        return self.name.endswith("x")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ProtocolVersion):
@@ -133,7 +146,7 @@ def register(version: int, name: str, version_range: SubVersionRange | None = No
 
     Args:
         version: Numeric protocol id, e.g. 924.
-        name: Version name, e.g. "1.26.0" or "1.26.0-1.26.3".
+        name: Version name, e.g. "1.26.0", "1.26.0-1.26.3" or "1.26.2x".
         version_range: Minecraft versions covered, when the name does not say.
 
     Returns:
@@ -198,10 +211,13 @@ def get_by_name(name: str) -> ProtocolVersion | None:
 
 UNKNOWN = ProtocolVersion(-1, "UNKNOWN", known=False)
 
-v1_21_120 = register(859, "1.21.120")
+v1_21_120 = register(859, "1.21.120-1.21.123")
 v1_21_124 = register(860, "1.21.124")
 v1_21_130 = register(898, "1.21.130-1.21.132")
 v1_26_0 = register(924, "1.26.0-1.26.3")
 v1_26_10 = register(944, "1.26.10-1.26.13")
 v1_26_20 = register(975, "1.26.20")
 v1_26_30 = register(1001, "1.26.30-1.26.32")
+v1_26_40 = register(2168, "1.26.40-1.26.44")
+v1_26_45 = register(2169, "1.26.45")
+v1_26_50 = register(2192, "1.26.5x")

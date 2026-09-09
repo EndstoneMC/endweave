@@ -74,21 +74,31 @@ def test_an_explicit_range_overrides_the_name() -> None:
     assert explicit.included_versions == frozenset({"1.26.0", "1.26.1"})
 
 
-@pytest.mark.parametrize("name", ["1.21.124-1.26.0", "1.26.0-1.26.x", "1.26-1.26.3"])
+@pytest.mark.parametrize("name", ["1.21.124-1.26.0", "1.26.0-1.26.x", "1.26-1.26.3", "1.26.beta-x", "x"])
 def test_underivable_range_names_are_rejected(name: str) -> None:
     with pytest.raises(ValueError):
         ProtocolVersion(924, name)
 
 
-def test_wildcard_name_needs_a_range() -> None:
-    with pytest.raises(ValueError):
-        ProtocolVersion(924, "1.26.x")
-
-
-def test_wildcard_name_is_flagged() -> None:
-    wildcard = ProtocolVersion(924, "1.26.x", SubVersionRange("1.26", 0, 3))
+def test_wildcard_covers_a_whole_hotfix_line() -> None:
+    """Bedrock spends the last digit of the patch on hotfixes, so 1.26.2x is 1.26.20 to 1.26.29."""
+    wildcard = ProtocolVersion(975, "1.26.2x")
+    assert wildcard.included_versions == frozenset(f"1.26.2{hotfix}" for hotfix in range(10))
     assert wildcard.is_version_wildcard
+
+
+def test_wildcard_reads_a_multi_digit_line() -> None:
+    assert ProtocolVersion(859, "1.21.12x").included_versions == frozenset(f"1.21.12{hotfix}" for hotfix in range(10))
+
+
+def test_java_style_wildcard_reads_the_same_way() -> None:
+    """The Java form is the same rule with nothing standing before the "x"."""
+    assert ProtocolVersion(47, "1.8.x").included_versions == frozenset(f"1.8.{hotfix}" for hotfix in range(10))
+
+
+def test_a_plain_name_is_not_a_wildcard() -> None:
     assert not v1_26_0.is_version_wildcard
+    assert not v1_26_20.is_version_wildcard
 
 
 def test_str_names_the_version_and_id() -> None:
