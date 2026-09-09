@@ -1,2 +1,26 @@
+# Used for updating config files automatically. Do not touch.
+config-version = 1
+
 # Check for new versions on startup
 check-for-updates = true
+
+# Blocked versions, written as readable version strings with optional '<' and '>' prefixes.
+# To block 1.26.20, everything below 1.26.0 and everything above 1.26.45:
+#   block-versions = ["<1.26.0", "1.26.20", ">1.26.45"]
+block-versions = []
+# Block specific Bedrock protocol version numbers. Can be used alongside block-versions.
+block-protocols = []
+# Message shown to a player kicked for using a blocked version
+block-disconnect-msg = "You are using an unsupported Minecraft version!"
+
+# Logging behaviour. When debugging issues, we may ask you to change some of these.
+# Most are off by default so bad input cannot spam the log.
+[logging]
+# Log more about kicks caused by a blocked protocol version
+log-blocked-joins = false
+# Log errors while converting entity data
+log-entity-data-errors = true
+# Warn about other problems while converting items, blocks or anything else between versions
+log-other-conversion-warnings = false
+# Longest error message written to the console
+max-error-length = 1500
