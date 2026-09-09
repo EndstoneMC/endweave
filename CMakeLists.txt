@@ -27,7 +27,12 @@ endif ()
 set_target_properties(bedrock_protocol PROPERTIES
         CXX_VISIBILITY_PRESET hidden
         VISIBILITY_INLINES_HIDDEN ON)
-find_package(Python 3.12 REQUIRED COMPONENTS Interpreter Development.Module Development.SABIModule)
+if (NOT SKBUILD)
+    message(STATUS "endweave: building outside scikit-build-core; the wheel is built with 'pip wheel .'")
+endif ()
+
+find_package(Python 3.10 REQUIRED COMPONENTS Interpreter Development.Module
+        OPTIONAL_COMPONENTS Development.SABIModule)
 
 execute_process(
         COMMAND "${Python_EXECUTABLE}" -c "import nanobind; print(nanobind.cmake_dir())"
@@ -38,6 +43,11 @@ if (NOT NB_RESULT EQUAL 0)
 endif ()
 list(APPEND CMAKE_PREFIX_PATH "${NB_DIR}")
 find_package(nanobind CONFIG REQUIRED)
+
+if (SKBUILD_SABI_VERSION AND NOT TARGET Python::SABIModule)
+    message(FATAL_ERROR "endweave: a stable-ABI wheel was asked for and Development.SABIModule was not found, "
+            "so nanobind would fall back to a version-specific build and tag the wheel wrongly.")
+endif ()
 
 nanobind_add_module(_pipeline STABLE_ABI NB_STATIC src/endweave/_pipeline.cpp)
 target_include_directories(_pipeline PRIVATE src)
@@ -60,3 +70,8 @@ nanobind_add_stub(_pipeline_stub
 )
 
 install(TARGETS _pipeline COMPONENT python DESTINATION endweave)
+
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/endweave/_version.py")
+    install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/endweave/_version.py"
+            COMPONENT python DESTINATION endweave)
+endif ()

@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
+requires = ["scikit-build-core>=0.10", "nanobind>=2.0", "setuptools-scm>=8"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "endstone-endweave"
@@ -35,7 +35,7 @@ endweave = "endweave:EndweavePlugin"
 
 [tool.ruff]
 line-length = 120
-exclude = ["src/endweave/_version.py"]
+exclude = ["src/endweave/_version.py", "src/endweave/_pipeline.pyi"]
 
 [tool.ruff.lint]
 select = ["I", "E", "F", "W"]
@@ -52,12 +52,19 @@ ignore_missing_imports = true
 module = "endweave.plugin"
 disable_error_code = ["assignment", "func-returns-value", "untyped-decorator"]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/endweave"]
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+build-dir = "build/{wheel_tag}"
+wheel.packages = ["src/endweave"]
+wheel.py-api = "cp312"
+wheel.exclude = ["**/*.cpp", "**/*.h", "**/CMakeLists.txt"]
+install.components = ["python"]
+sdist.exclude = [".github", "build", "tests"]
 
-[tool.hatch.version]
-source = "vcs"
-raw-options.local_scheme = "no-local-version"
+[[tool.dynamic-metadata]]
+field = "version"
+provider = "scikit_build_core.metadata.setuptools_scm"
 
-[tool.hatch.build.hooks.vcs]
-version-file = "src/endweave/_version.py"
+[tool.setuptools_scm]
+version_file = "src/endweave/_version.py"
+local_scheme = "no-local-version"
