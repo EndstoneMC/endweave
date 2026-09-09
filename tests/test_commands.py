@@ -8,7 +8,7 @@ import pytest
 from endstone.command import CommandSender
 
 from endweave._version import __version__
-from endweave.commands import CommandHandler, DebugSubCommand, ListSubCommand, SubCommand
+from endweave.commands import CommandHandler, DebugSubCommand, ListSubCommand, ReloadSubCommand, SubCommand
 from endweave.debug import DebugHandler
 from endweave.plugin import EndweavePlugin
 
@@ -66,11 +66,16 @@ def test_an_unregistered_game_version_falls_back_to_unknown(mock_sender: MagicMo
 def test_the_permission_defaults_off_the_name() -> None:
     assert ListSubCommand().permission == "endweave.command.list"
     assert DebugSubCommand(MagicMock()).permission == "endweave.command.debug"
+    assert ReloadSubCommand(MagicMock()).permission == "endweave.command.reload"
 
 
 def test_the_permission_is_declared_as_a_child_of_endweave_admin() -> None:
     children = EndweavePlugin.permissions["endweave.admin"]["children"]
-    assert children == {"endweave.command.list": True, "endweave.command.debug": True}
+    assert children == {
+        "endweave.command.list": True,
+        "endweave.command.debug": True,
+        "endweave.command.reload": True,
+    }
 
 
 class NamedSubCommand(SubCommand):
@@ -96,9 +101,15 @@ def debug_handler(mock_logger: MagicMock) -> DebugHandler:
 
 
 @pytest.fixture
-def handler(debug_handler: DebugHandler) -> CommandHandler:
+def configuration_provider() -> MagicMock:
+    """The provider the reload subcommand drives."""
+    return MagicMock()
+
+
+@pytest.fixture
+def handler(debug_handler: DebugHandler, configuration_provider: MagicMock) -> CommandHandler:
     """A handler with the default subcommands registered, as on_enable builds it."""
-    return CommandHandler(debug_handler)
+    return CommandHandler(debug_handler, configuration_provider)
 
 
 def test_a_known_word_routes_to_its_subcommand(handler: CommandHandler, mock_sender: MagicMock) -> None:
@@ -113,6 +124,7 @@ def test_no_arguments_shows_the_help_listing(handler: CommandHandler, mock_sende
         "§6Commands:",
         "§2/endweave list §7- §6Shows lists of the versions from logged in players.",
         "§2/endweave debug §7- §6Toggle various debug modes.",
+        "§2/endweave reload §7- §6Reload the config from the disk.",
     ]
 
 
@@ -214,3 +226,20 @@ def test_debug_words_are_case_insensitive(
 ) -> None:
     assert handler.on_command(mock_sender, MagicMock(), ["DEBUG", "CLEAR"]) is True
     assert sent(mock_sender) == ["§6Cleared packet types to log"]
+
+
+def test_reload_rereads_every_config(
+    handler: CommandHandler, configuration_provider: MagicMock, mock_sender: MagicMock
+) -> None:
+    assert handler.on_command(mock_sender, MagicMock(), ["reload"]) is True
+    configuration_provider.reload_configs.assert_called_once_with()
+    assert sent(mock_sender) == [
+        "§6Configuration successfully reloaded! Some config options may require a restart to take effect."
+    ]
+
+
+def test_reload_ignores_trailing_arguments(
+    handler: CommandHandler, configuration_provider: MagicMock, mock_sender: MagicMock
+) -> None:
+    assert handler.on_command(mock_sender, MagicMock(), ["reload", "now"]) is True
+    configuration_provider.reload_configs.assert_called_once_with()

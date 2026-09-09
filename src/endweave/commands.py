@@ -5,6 +5,7 @@ See Also:
     com.viaversion.viaversion.commands.ViaCommandHandler
     com.viaversion.viaversion.commands.defaultsubs.DebugSubCmd
     com.viaversion.viaversion.commands.defaultsubs.ListSubCmd
+    com.viaversion.viaversion.commands.defaultsubs.ReloadSubCmd
 """
 
 from __future__ import annotations
@@ -16,10 +17,11 @@ from collections import defaultdict
 from endstone.command import Command, CommandExecutor, CommandSender
 
 from ._version import __version__
+from .config import ConfigurationProvider
 from .debug import DebugHandler
 from .protocol.version import UNKNOWN, ProtocolVersion, get_by_name
 
-__all__ = ["CommandHandler", "DebugSubCommand", "ListSubCommand", "SubCommand"]
+__all__ = ["CommandHandler", "DebugSubCommand", "ListSubCommand", "ReloadSubCommand", "SubCommand"]
 
 
 class SubCommand(ABC):
@@ -126,12 +128,35 @@ class DebugSubCommand(SubCommand):
         return False
 
 
+class ReloadSubCommand(SubCommand):
+    """Reads the config files off the disk again."""
+
+    def __init__(self, configuration_provider: ConfigurationProvider) -> None:
+        self._configuration_provider = configuration_provider
+
+    @property
+    def name(self) -> str:
+        return "reload"
+
+    @property
+    def description(self) -> str:
+        return "Reload the config from the disk."
+
+    def execute(self, sender: CommandSender, args: list[str]) -> bool:
+        self._configuration_provider.reload_configs()
+        sender.send_message(
+            "§6Configuration successfully reloaded! Some config options may require a restart to take effect."
+        )
+        return True
+
+
 class CommandHandler(CommandExecutor):
-    def __init__(self, debug_handler: DebugHandler) -> None:
+    def __init__(self, debug_handler: DebugHandler, configuration_provider: ConfigurationProvider) -> None:
         super().__init__()
         self._subcommands: dict[str, SubCommand] = {}
         self.register_subcommand(ListSubCommand())
         self.register_subcommand(DebugSubCommand(debug_handler))
+        self.register_subcommand(ReloadSubCommand(configuration_provider))
 
     def register_subcommand(self, subcommand: SubCommand) -> None:
         """Add a subcommand to the routing table.

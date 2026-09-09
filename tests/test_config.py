@@ -233,6 +233,16 @@ class TestEndweaveOptions:
         assert endweave_config.check_for_updates is False
         assert endweave_config.get_bool("check-for-updates", True) is False
 
+    def test_reload_picks_up_an_edit_on_disk(self, config_file: Path, mock_logger: MagicMock) -> None:
+        config = EndweaveConfig(config_file, mock_logger)
+        config.reload()
+        assert config.check_for_updates is True
+
+        write(config_file, "check-for-updates = false\n")
+        config.reload()
+
+        assert config.check_for_updates is False
+
     def test_reads_the_logging_section(self, config_file: Path, mock_logger: MagicMock) -> None:
         write(config_file, "[logging]\nmax-error-length = 20\nlog-blocked-joins = true\n")
         config = EndweaveConfig(config_file, mock_logger)

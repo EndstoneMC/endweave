@@ -30,6 +30,7 @@ class EndweavePlugin(Plugin):
                 "/endweave list",
                 "/endweave debug [clear|pre|post]",
                 "/endweave debug <add|remove> <packet: string>",
+                "/endweave reload",
             ],
             "permission": "endweave.command",
         }
@@ -40,6 +41,7 @@ class EndweavePlugin(Plugin):
             "children": {
                 "endweave.command.list": True,
                 "endweave.command.debug": True,
+                "endweave.command.reload": True,
             },
         },
     }
@@ -57,7 +59,7 @@ class EndweavePlugin(Plugin):
         self._debug_handler = DebugHandler(
             self.logger, log_conversion_warnings=self._configuration.log_other_conversion_warnings
         )
-        self.get_command("endweave").executor = CommandHandler(self._debug_handler)
+        self.get_command("endweave").executor = CommandHandler(self._debug_handler, self._configuration_provider)
 
         # bStats metrics (https://bstats.org/plugin/bukkit/Endweave/30345)
         self._metrics = EndweaveMetrics(self, service_id=30345)
