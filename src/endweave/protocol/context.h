@@ -2,7 +2,7 @@
 
 namespace endweave {
 
-class UserConnection;
+class Session;
 
 /** The connection every transform on one packet shares, the cancel any of them may answer
  * with, and the object this one fills in.
@@ -11,15 +11,14 @@ class UserConnection;
 template <class To>
 class Context {
 public:
-    Context(UserConnection &connection, bool &cancelled, To &out) noexcept
-        : connection_(connection), cancelled_(cancelled), out_(out)
+    Context(Session &session, bool &cancelled, To &out) noexcept : session_(session), cancelled_(cancelled), out_(out)
     {
     }
 
     /** @see ViaVersion PacketWrapper#user. */
-    [[nodiscard]] UserConnection &connection() const noexcept
+    [[nodiscard]] Session &session() const noexcept
     {
-        return connection_;
+        return session_;
     }
 
     /** What this transform writes into, in place of returning it. */
@@ -33,7 +32,7 @@ public:
     template <class Child>
     [[nodiscard]] Context<Child> with(Child &out) const noexcept
     {
-        return Context<Child>{connection_, cancelled_, out};
+        return Context<Child>{session_, cancelled_, out};
     }
 
     /** Drops the packet rather than translating it, for a source the destination cannot
@@ -52,7 +51,7 @@ public:
     }
 
 private:
-    UserConnection &connection_;
+    Session &session_;
     bool &cancelled_;
     To &out_;
 };

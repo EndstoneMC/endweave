@@ -129,7 +129,7 @@ void chain(const Context<packet_of<To, Id>> &ctx, packet_of<Cur, Id> &&from)
 }
 
 template <ProtocolVersion From, ProtocolVersion To, int Id>
-std::expected<void, std::error_code> handle(UserConnection &connection, bool &cancelled, bp::BinaryReader &in,
+std::expected<void, std::error_code> handle(Session &session, bool &cancelled, bp::BinaryReader &in,
                                             bp::BinaryWriter &out)
 {
     auto result = bp::deserialize<packet_of<From, Id>>(in);
@@ -155,7 +155,7 @@ std::expected<void, std::error_code> handle(UserConnection &connection, bool &ca
     }
     else {
         packet_of<To, Id> translated_packet;
-        chain<From, To, Id>(Context<packet_of<To, Id>>{connection, cancelled, translated_packet}, std::move(packet));
+        chain<From, To, Id>(Context<packet_of<To, Id>>{session, cancelled, translated_packet}, std::move(packet));
         // A transform anywhere on the chain may have dropped the packet, and whatever it wrote
         // into the destination before that means nothing.
         if (cancelled) {
@@ -182,7 +182,7 @@ std::expected<void, std::error_code> handle(UserConnection &connection, bool &ca
 } // namespace detail
 
 /** @see ViaVersion PacketHandler. */
-using PacketHandler = std::expected<void, std::error_code> (*)(UserConnection &, bool &, bp::BinaryReader &,
+using PacketHandler = std::expected<void, std::error_code> (*)(Session &, bool &, bp::BinaryReader &,
                                                                bp::BinaryWriter &);
 
 namespace detail {

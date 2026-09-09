@@ -1,4 +1,4 @@
-target_sources(endweave PRIVATE
+target_sources(_pipeline PRIVATE
         attributes.cpp
         camera.cpp
         chunk.cpp
