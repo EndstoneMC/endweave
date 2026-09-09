@@ -9,6 +9,7 @@ from endstone.event import (
 )
 from endstone.plugin import Plugin
 
+from .commands import CommandHandler
 from .metrics import EndweaveMetrics
 from .update import send_update_message
 
@@ -18,6 +19,23 @@ class EndweavePlugin(Plugin):
 
     prefix = "Endweave"
     api_version = "0.11"
+    commands = {
+        "endweave": {
+            "description": "Endweave plugin commands",
+            "usages": [
+                "/endweave list",
+            ],
+            "permission": "endweave.command",
+        }
+    }
+    permissions = {
+        "endweave.admin": {
+            "default": "op",
+            "children": {
+                "endweave.command.list": True,
+            },
+        },
+    }
 
     def on_enable(self) -> None:
         self.save_default_config()
@@ -26,6 +44,7 @@ class EndweavePlugin(Plugin):
         self.logger.info(f"Detected server protocol {server_protocol} (MC {self.server.minecraft_version})")
 
         self.register_events(self)
+        self.get_command("endweave").executor = CommandHandler()
 
         # bStats metrics (https://bstats.org/plugin/bukkit/Endweave/30345)
         self._metrics = EndweaveMetrics(self, service_id=30345)
