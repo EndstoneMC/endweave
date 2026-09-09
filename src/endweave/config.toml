@@ -10,7 +10,8 @@ check-for-updates = true
 block-versions = []
 # Block specific Bedrock protocol version numbers. Can be used alongside block-versions.
 block-protocols = []
-# Message shown to a player kicked for using a blocked version
+# Message shown to a player kicked for using a blocked version.
+# A '&' in front of a colour or format code is read as the section sign.
 block-disconnect-msg = "You are using an unsupported Minecraft version!"
 
 # Logging behaviour. When debugging issues, we may ask you to change some of these.

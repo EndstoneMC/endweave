@@ -1,17 +1,27 @@
 """The connections Endweave tracks, and the registry holding them.
 
 ViaVersion's UserConnection and ConnectionManager, down to what a Bedrock
-server plugin can hold. ProtocolInfo is folded in, less its connection state,
-which Bedrock has no counterpart for, and its pipeline and compression flag,
-which belong to a translation layer this does not model. Nothing here
-translates a packet, and the per connection StorableObject storage is left out.
+server plugin can hold: the peer, the protocol it speaks against the one the
+server speaks, and whether the connection is still live.
 
-The Channel is an Endstone Player, so the netty pieces went with it: raw sends,
-passthrough tokens, the packet tracker, and the close-future listener the
-manager registers to clean up after itself. A player leaving arrives as an
-event instead. The client side of a connection is gone too. ViaVersion draws
-that line for ViaProxy, which runs Via as a client, where an Endstone plugin is
-always the server, so one map replaces the two ConnectionManagerImpl keeps.
+Connections are keyed by address string and created on the first packet from a
+peer, not at login. Endstone gives a packet event an address, a sub client id
+and no player until login finishes, so across the login sequence the address is
+the only identity to hand, where ViaVersion has a uuid from LOGIN_SUCCESS
+onwards. Two things that key cannot do: tell split screen clients on one
+address apart, and identify a NetherNet peer, whose address comes through empty
+because BDS holds its identity as a NetherNet id rather than an address. Both
+wait on Endstone exposing the NetworkIdentifier itself. A peer that shakes
+hands and never logs in is never quit either, so pending connections are capped
+and the oldest are dropped.
+
+ProtocolInfo is folded in, less its connection state, which Bedrock has no
+counterpart for, and its pipeline and compression flag, which belong to a
+translation layer this does not model. Nothing here translates a packet, and
+the per connection StorableObject storage is left out along with the protocol
+storables behind it. The client side of a connection is gone too: ViaVersion
+draws that line for ViaProxy, which runs Via as a client, where an Endstone
+plugin is always the server.
 
 See Also:
     com.viaversion.viaversion.api.connection.ConnectionManager
@@ -27,37 +37,32 @@ from __future__ import annotations
 import itertools
 from collections.abc import Mapping
 from types import MappingProxyType
-from uuid import UUID
 
-from endstone import Logger, Player
+from endstone import Player
 
-from .protocol.version import ProtocolVersion
+from .protocol.version import UNKNOWN, ProtocolVersion
 
-__all__ = ["Connection", "ConnectionManager"]
+__all__ = ["MAX_PENDING_CONNECTIONS", "Connection", "ConnectionManager"]
+
+MAX_PENDING_CONNECTIONS = 1024
 
 _IDS = itertools.count(1)
 
 
 class Connection:
-    """One player's connection and the protocol versions on either end of it.
+    """One peer's connection and the protocol versions on either end of it.
 
     See Also:
         com.viaversion.viaversion.api.connection.UserConnection
         com.viaversion.viaversion.connection.UserConnectionImpl
     """
 
-    def __init__(
-        self,
-        player: Player,
-        protocol_version: ProtocolVersion,
-        server_protocol_version: ProtocolVersion,
-    ) -> None:
+    def __init__(self, address: str, server_protocol_version: ProtocolVersion) -> None:
         self._id = next(_IDS)
-        self._player = player
-        self._unique_id = player.unique_id
-        self._name = player.name
-        self._protocol_version = protocol_version
+        self._address = address
         self._server_protocol_version = server_protocol_version
+        self.protocol_version = UNKNOWN
+        self.player: Player | None = None
         self.active = True
         self.pending_disconnect = False
 
@@ -66,69 +71,61 @@ class Connection:
         return self._id
 
     @property
-    def player(self) -> Player:
-        return self._player
-
-    @property
-    def unique_id(self) -> UUID:
-        return self._unique_id
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def protocol_version(self) -> ProtocolVersion:
-        return self._protocol_version
+    def address(self) -> str:
+        return self._address
 
     @property
     def server_protocol_version(self) -> ProtocolVersion:
         return self._server_protocol_version
 
     def disconnect(self, reason: str) -> None:
-        if not self.active or self.pending_disconnect:
+        if self.player is None or not self.active or self.pending_disconnect:
             return
 
         self.pending_disconnect = True
-        self._player.kick(reason)
+        self.player.kick(reason)
 
     def __repr__(self) -> str:
-        return f"Connection(id={self._id}, name={self._name!r}, protocol_version={self._protocol_version!r})"
+        return f"Connection(id={self._id}, address={self._address!r}, protocol_version={self.protocol_version!r})"
 
 
 class ConnectionManager:
-    """The connections being handled, keyed by the player's uuid.
+    """The connections being handled, keyed by the peer's address.
 
     See Also:
         com.viaversion.viaversion.api.connection.ConnectionManager
         com.viaversion.viaversion.connection.ConnectionManagerImpl
     """
 
-    def __init__(self, logger: Logger) -> None:
-        self._logger = logger
-        self._connections: dict[UUID, Connection] = {}
+    def __init__(self, server_protocol_version: ProtocolVersion) -> None:
+        self._server_protocol_version = server_protocol_version
+        self._connections: dict[str, Connection] = {}
         self._connections_view = MappingProxyType(self._connections)
 
     @property
-    def connections(self) -> Mapping[UUID, Connection]:
+    def connections(self) -> Mapping[str, Connection]:
         return self._connections_view
 
-    def has_connection(self, unique_id: UUID) -> bool:
-        return unique_id in self._connections
+    def has_connection(self, address: str) -> bool:
+        return address in self._connections
 
-    def get_connection(self, unique_id: UUID) -> Connection | None:
-        return self._connections.get(unique_id)
+    def get_connection(self, address: str) -> Connection | None:
+        return self._connections.get(address)
 
-    def on_login_success(self, connection: Connection) -> None:
-        if not connection.active:
-            return
+    def get_or_create(self, address: str) -> Connection:
+        connection = self._connections.get(address)
+        if connection is not None:
+            return connection
 
-        previous = self._connections.get(connection.unique_id)
-        if previous is not None and previous is not connection:
-            self._logger.warning(f"Duplicate UUID on connection! ({connection.unique_id})")
-        self._connections[connection.unique_id] = connection
+        connection = Connection(address, self._server_protocol_version)
+        self._connections[address] = connection
+
+        pending = [tracked for tracked in self._connections.values() if tracked.player is None]
+        for stale in pending[:-MAX_PENDING_CONNECTIONS]:
+            del self._connections[stale.address]
+        return connection
 
     def on_disconnect(self, connection: Connection) -> None:
         connection.active = False
-        if self._connections.get(connection.unique_id) is connection:
-            del self._connections[connection.unique_id]
+        if self._connections.get(connection.address) is connection:
+            del self._connections[connection.address]
