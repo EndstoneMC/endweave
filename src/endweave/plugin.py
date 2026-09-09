@@ -18,12 +18,6 @@ class EndweavePlugin(Plugin):
 
     prefix = "Endweave"
     api_version = "0.11"
-    permissions = {
-        "endweave.update": {
-            "description": "Receive update notifications on join",
-            "default": "op",
-        },
-    }
 
     def on_enable(self) -> None:
         self.save_default_config()
