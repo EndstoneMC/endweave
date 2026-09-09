@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2168_to_v2192/dimension.h"
+#include "dimension.h"
 
 namespace ew = endweave;
 

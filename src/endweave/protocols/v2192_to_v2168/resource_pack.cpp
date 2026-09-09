@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2192_to_v2168/resource_pack.h"
+#include "resource_pack.h"
 
 #include <utility>
 #include <variant>

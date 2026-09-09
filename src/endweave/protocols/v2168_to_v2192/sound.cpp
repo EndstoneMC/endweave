@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2168_to_v2192/sound.h"
+#include "sound.h"
 
 #include <bedrock/protocol/enum.hpp>
 #include <expected>

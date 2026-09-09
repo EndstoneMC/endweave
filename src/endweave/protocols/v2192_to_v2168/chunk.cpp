@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2192_to_v2168/chunk.h"
+#include "chunk.h"
 
 #include <array>
 #include <cstddef>

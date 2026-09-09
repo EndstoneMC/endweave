@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2192_to_v2168/shape.h"
+#include "shape.h"
 
 #include <type_traits>
 #include <utility>

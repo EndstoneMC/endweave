@@ -1,18 +1,18 @@
 #pragma once
 
+#include "attributes.h"
+#include "boss.h"
+#include "chunk.h"
+#include "diagnostics.h"
+#include "dimension.h"
 #include "endweave/protocol/transform.h"
-#include "endweave/protocols/v2192_to_v2168/attributes.h"
-#include "endweave/protocols/v2192_to_v2168/boss.h"
-#include "endweave/protocols/v2192_to_v2168/chunk.h"
-#include "endweave/protocols/v2192_to_v2168/diagnostics.h"
-#include "endweave/protocols/v2192_to_v2168/dimension.h"
-#include "endweave/protocols/v2192_to_v2168/input.h"
-#include "endweave/protocols/v2192_to_v2168/inventory.h"
-#include "endweave/protocols/v2192_to_v2168/map.h"
-#include "endweave/protocols/v2192_to_v2168/network.h"
-#include "endweave/protocols/v2192_to_v2168/resource_pack.h"
-#include "endweave/protocols/v2192_to_v2168/shape.h"
-#include "endweave/protocols/v2192_to_v2168/trade.h"
+#include "input.h"
+#include "inventory.h"
+#include "map.h"
+#include "network.h"
+#include "resource_pack.h"
+#include "shape.h"
+#include "trade.h"
 
 namespace bp = bedrock::protocol;
 

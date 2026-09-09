@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2168_to_v2192/diagnostics.h"
+#include "diagnostics.h"
 
 #include <bedrock/protocol/enum.hpp>
 #include <optional>

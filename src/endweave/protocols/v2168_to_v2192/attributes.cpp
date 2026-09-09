@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2168_to_v2192/attributes.h"
+#include "attributes.h"
 
 #include <type_traits>
 #include <utility>

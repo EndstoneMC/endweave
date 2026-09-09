@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2192_to_v2168/boss.h"
+#include "boss.h"
 
 #include <utility>
 

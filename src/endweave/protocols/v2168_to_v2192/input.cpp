@@ -1,6 +1,6 @@
-#include "endweave/protocols/v2168_to_v2192/input.h"
+#include "input.h"
 
-#include "endweave/protocols/v2168_to_v2192/inventory.h"
+#include "inventory.h"
 
 #include <bedrock/protocol/enum.hpp>
 #include <bedrock/protocol/transaction.h>

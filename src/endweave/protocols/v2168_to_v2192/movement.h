@@ -1,7 +1,7 @@
 #pragma once
 
 #include "endweave/protocol/transform.h"
-#include "endweave/protocols/v2168_to_v2192/inventory.h"
+#include "inventory.h"
 
 #include <bedrock/protocol/actor.h>
 #include <bedrock/protocol/movement.h>

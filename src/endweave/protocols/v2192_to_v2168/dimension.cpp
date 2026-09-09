@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2192_to_v2168/dimension.h"
+#include "dimension.h"
 
 #include <utility>
 

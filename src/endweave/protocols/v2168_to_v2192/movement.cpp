@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2168_to_v2192/movement.h"
+#include "movement.h"
 
 #include <cstdint>
 #include <utility>

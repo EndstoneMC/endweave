@@ -1,4 +1,4 @@
-#include "endweave/protocols/v2168_to_v2192/network.h"
+#include "network.h"
 
 #include <bedrock/protocol/enum.hpp>
 #include <utility>
