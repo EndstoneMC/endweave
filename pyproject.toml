@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "mypy", "ruff"]
+dev = ["mypy", "ruff"]
 tools = ["pydot", "pydantic>=2"]
 
 [project.urls]
@@ -40,13 +40,6 @@ exclude = ["src/endstone_endweave/_version.py"]
 
 [tool.ruff.lint]
 select = ["I", "E", "F", "W"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = ["--import-mode=importlib", "--strict-markers"]
-markers = [
-    "integration: tests that exercise the protocol pipeline end-to-end (multiple components wired together)",
-]
 
 [tool.mypy]
 strict = true

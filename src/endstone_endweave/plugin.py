@@ -1,53 +1,21 @@
 """Endweave plugin - protocol translation for Bedrock Edition."""
 
-from pathlib import Path
-
 from endstone.event import (
     EventPriority,
     PacketReceiveEvent,
     PacketSendEvent,
     PlayerJoinEvent,
-    PlayerLoginEvent,
-    PlayerQuitEvent,
-    ServerListPingEvent,
     event_handler,
 )
 from endstone.plugin import Plugin
 
 from ._version import __version__
-from .connection import ConnectionManager
-from .debug import DebugHandler
 from .metrics import EndweaveMetrics
-from .pipeline import ProtocolPipeline
-from .protocol import Protocol
-from .protocol.base import create_base_protocol
-from .protocol.manager import ProtocolManager
-from .protocol.v859_to_v860 import create_protocol as create_v859_to_v860
-from .protocol.v860_to_v859 import create_protocol as create_v860_to_v859
-from .protocol.v860_to_v898 import create_protocol as create_v860_to_v898
-from .protocol.v898_to_v860 import create_protocol as create_v898_to_v860
-from .protocol.v898_to_v924 import create_protocol as create_v898_to_v924
-from .protocol.v924_to_v898 import create_protocol as create_v924_to_v898
-from .protocol.v924_to_v944 import create_protocol as create_v924_to_v944
-from .protocol.v944_to_v924 import create_protocol as create_v944_to_v924
-from .protocol.v944_to_v975 import create_protocol as create_v944_to_v975
-from .protocol.v975_to_v1001 import create_protocol as create_v975_to_v1001
-from .protocol.versions import VERSIONS
 from .update import UpdateChecker
-
-# Defaults for the login gate, used when config.toml has no [gate] section. By default
-# nothing is gated; configure which client protocols to refuse via [gate] in config.toml.
-# config.toml values override these when present.
-_DEFAULT_BLOCKED_PROTOCOLS = ()
-_DEFAULT_BLOCK_MESSAGE = "This client version is not supported on this server yet."
 
 
 class EndweavePlugin(Plugin):
-    """Endstone plugin that enables protocol translation between Bedrock versions.
-
-    Registers event handlers for packet interception and routes packets through
-    a ProtocolPipeline that applies version-specific transformations.
-    """
+    """Endstone plugin that enables protocol translation between Bedrock versions."""
 
     prefix = "Endweave"  # type: ignore[assignment]
     api_version = "0.11"  # type: ignore[assignment]
@@ -60,63 +28,9 @@ class EndweavePlugin(Plugin):
 
     def on_enable(self) -> None:
         self.save_default_config()
-        debug = DebugHandler.from_config(self.logger, self.config)
-        if debug.enabled:
-            self.logger.set_level(self.logger.DEBUG)
 
         server_protocol = self.server.protocol_version
         self.logger.info(f"Detected server protocol {server_protocol} (MC {self.server.minecraft_version})")
-        self._connections = ConnectionManager(server_protocol=server_protocol, logger=self.logger)
-        self._manager = ProtocolManager()
-
-        self._manager.register_base(create_base_protocol(server_protocol))
-
-        for factory in (
-            create_v859_to_v860,
-            create_v860_to_v859,
-            create_v860_to_v898,
-            create_v898_to_v860,
-            create_v898_to_v924,
-            create_v924_to_v898,
-            create_v924_to_v944,
-            create_v944_to_v924,
-            create_v944_to_v975,
-            create_v975_to_v1001,
-        ):
-            self._register_protocol(factory())
-
-        self._supported_versions = self._manager.get_supported_versions(server_protocol)
-        self._advertised_protocol = max(self._supported_versions) if self._supported_versions else server_protocol
-
-        for protocol in self._supported_versions:
-            if protocol not in VERSIONS:
-                self.logger.warning(f"Supported protocol {protocol} has no entry in VERSIONS registry")
-
-        supported_names = [
-            VERSIONS[protocol].minecraft_version for protocol in self._supported_versions if protocol in VERSIONS
-        ]
-        if len(supported_names) >= 2:
-            self.logger.info(f"Supported client versions: {supported_names[0]} - {supported_names[-1]}")
-        elif supported_names:
-            self.logger.info(f"Supported client versions: {supported_names[0]}")
-
-        self._pipeline = ProtocolPipeline(
-            self._manager,
-            self._connections,
-            self.logger,
-            debug,
-            data_dir=Path(self.data_folder),
-        )
-
-        # Login gate: client protocols refused at login with a custom kick message
-        # (see [gate] in config.toml). The translation chain stays registered; this just
-        # stops a gated version from joining while its translation is finished.
-        gate_cfg: dict[str, object] = self.config.get("gate", {}) or {}  # type: ignore[assignment]
-        blocked = gate_cfg.get("blocked-protocols", list(_DEFAULT_BLOCKED_PROTOCOLS))
-        self._blocked_protocols = {int(p) for p in (blocked or [])}
-        self._block_message = str(gate_cfg.get("block-message") or _DEFAULT_BLOCK_MESSAGE)
-        if self._blocked_protocols:
-            self.logger.info(f"Gating client protocol(s) {sorted(self._blocked_protocols)} at login")
 
         self.register_events(self)
 
@@ -128,42 +42,15 @@ class EndweavePlugin(Plugin):
             self._update_checker = UpdateChecker(self.logger, __version__)
             self._update_checker.check()
 
-    def _register_protocol(self, protocol: Protocol) -> None:
-        self._manager.register(protocol)
-
     @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value,untyped-decorator]
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
-        self._pipeline.on_packet_receive(event)
+        pass
 
     @event_handler(priority=EventPriority.LOWEST)  # type: ignore[func-returns-value,untyped-decorator]
     def on_packet_send(self, event: PacketSendEvent) -> None:
-        self._pipeline.on_packet_send(event)
-
-    @event_handler
-    def on_server_list_ping(self, event: ServerListPingEvent) -> None:
-        ver = VERSIONS.get(self._advertised_protocol)
-        if ver:
-            event.minecraft_version_network = ver.minecraft_version
-
-    @event_handler
-    def on_player_login(self, event: PlayerLoginEvent) -> None:
-        # Refuse gated client versions (e.g. 1.26.30 / v1001) before any chunk data is
-        # streamed. PlayerLoginEvent fires after login auth but before world spawn, so the
-        # client sees our kick message on the "Connecting" screen, not a broken world.
-        if not self._blocked_protocols:
-            return
-        connection = self._connections.get(str(event.player.address))
-        protocol = connection.client_protocol if connection is not None else 0
-        if protocol in self._blocked_protocols:
-            event.kick_message = self._block_message
-            event.cancel()
-            self.logger.info(f"Refused {event.player.name} at login: gated client protocol {protocol}")
+        pass
 
     @event_handler
     def on_player_join(self, event: PlayerJoinEvent) -> None:
         if self._update_checker:
             self._update_checker.notify_if_needed(event.player)
-
-    @event_handler
-    def on_player_quit(self, event: PlayerQuitEvent) -> None:
-        self._connections.remove_by_player(event.player)

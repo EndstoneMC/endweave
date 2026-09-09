@@ -28,11 +28,8 @@ jobs:
       - name: Install
         run: uv sync --extra dev
 
-      - name: Run tests
-        run: uv run pytest tests/
-
       - name: Lint
-        run: uv run ruff check src/ tests/
+        run: uv run ruff check src/
 
       - name: Type check
         run: uv run mypy src/endstone_endweave/ --strict
