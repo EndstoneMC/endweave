@@ -1,100 +1,121 @@
-"""Update checker for Endweave plugin.
+"""Update notification for Endweave.
 
-Checks GitHub releases for newer versions on startup and logs a message
-if an update is available. On player join, notifies players with the
-``endweave.update`` permission. Notification-only, no auto-download.
+Checks the newest published release on startup and on player join, and reports
+back through the console or a chat message. Notification only, nothing is
+downloaded.
+
+ViaVersion polls its own update server for a plain ``{"name": ...}`` document;
+Endweave has no such service and reads the tag of the latest GitHub release
+instead. Version comparison is PEP 440 rather than ViaVersion's own semver
+type, so a hatch-vcs ``0.4.4.dev1`` build is recognised where a hand-rolled
+semver parser would reject it. ViaVersion's check for the literal
+``${version}`` placeholder has no counterpart: hatch-vcs never leaves an
+unsubstituted token behind.
 
 See Also:
     com.viaversion.viaversion.update.UpdateUtil
+    com.viaversion.viaversion.bukkit.listeners.UpdateListener
 """
 
-import asyncio
-import json
-import urllib.request
-from typing import Optional
+from __future__ import annotations
 
+import uuid
+from typing import NamedTuple
+
+import aiohttp
 from endstone import Logger, Player
+from endstone.plugin import Plugin
 from packaging.version import InvalidVersion, Version
 
-_GITHUB_API_URL = "https://api.github.com/repos/EndstoneMC/endweave/releases/latest"
-_PERMISSION = "endweave.update"
+from ._version import __version__
+
+__all__ = ["send_update_message"]
+
+PREFIX = "§a§l[Endweave] §a"
+_RELEASES_URL = "https://api.github.com/repos/EndstoneMC/endweave/releases/latest"
 
 
-class UpdateChecker:
-    """Checks for plugin updates and caches the result.
+class _UpdateMessage(NamedTuple):
+    """A log level paired with the text to report at it."""
 
-    See Also:
-        com.viaversion.viaversion.update.UpdateUtil
+    level: Logger.Level
+    text: str
+
+
+def send_update_message(plugin: Plugin, player: Player | None = None) -> None:
+    """Check for a newer release and report it, off the server thread.
+
+    Java's two overloads collapse into one call: with no player the result goes
+    to the console, otherwise it is sent to that player as a chat message.
+    Callers are expected to have checked the ``endweave.update`` permission and
+    the ``check-for-updates`` config option first, as ViaVersion's join listener
+    does.
+
+    Args:
+        plugin: Plugin whose logger, server and scheduler are used.
+        player: Recipient of the message, or None to log it to the console.
     """
+    import endstone.asyncio
 
-    def __init__(self, logger: Logger, current_version: str) -> None:
-        self._logger = logger
-        self._current_version = current_version
-        self._update_message: Optional[str] = None
+    endstone.asyncio.submit(_send_update_message(plugin, player.unique_id if player is not None else None))
 
-    def check(self) -> None:
-        """Initiate an async update check.
 
-        Submits a coroutine to the endstone asyncio background loop that
-        fetches the latest release from GitHub and logs the result.
-        """
-        import endstone.asyncio
+async def _send_update_message(plugin: Plugin, unique_id: uuid.UUID | None) -> None:
+    message = await _get_update_message(console=unique_id is None)
+    if message is None:
+        return
 
-        endstone.asyncio.submit(self._check())
-
-    def notify_if_needed(self, player: Player) -> None:
-        """Send the cached update message to a player if they have permission.
-
-        See Also:
-            com.viaversion.viaversion.bukkit.listeners.UpdateListener
-        """
-        if self._update_message and player.has_permission(_PERMISSION):
-            player.send_message(self._update_message)
-
-    async def _check(self) -> None:
-        newest_string = await _fetch_latest_version()
-        if newest_string is None:
-            self._logger.warning("Could not check for updates, check your connection.")
-            return
-
-        try:
-            current = Version(self._current_version)
-        except InvalidVersion:
-            self._logger.info("You are using a custom version, consider updating.")
-            return
-
-        try:
-            newest = Version(newest_string)
-        except InvalidVersion:
-            return
-
-        if current < newest:
-            message = f"There is a newer version available: {newest}, you're on: {current}"
-            self._logger.warning(message)
-            self._update_message = f"[Endweave] {message}"
-        elif current > newest:
-            if current.is_devrelease or current.is_prerelease:
-                self._logger.info("You are running a development version, please report any bugs to GitHub.")
+    def deliver() -> None:
+        if unique_id is None:
+            if message.level is Logger.Level.WARNING:
+                plugin.logger.warning(message.text)
             else:
-                self._logger.warning("You are running a newer version than is released!")
+                plugin.logger.info(message.text)
+            return
+        player = plugin.server.get_player(unique_id)
+        if player is not None:
+            player.send_message(PREFIX + message.text)
+
+    plugin.server.scheduler.run_task(plugin, deliver)
 
 
-async def _fetch_latest_version() -> Optional[str]:
+async def _get_update_message(*, console: bool) -> _UpdateMessage | None:
     try:
-        return await asyncio.to_thread(_fetch_latest_version_sync)
-    except Exception:
+        newest = Version(await _get_newest_version())
+    except (aiohttp.ClientError, TimeoutError, ValueError, KeyError):
+        if console:
+            return _UpdateMessage(Logger.Level.WARNING, "Could not check for updates, check your connection.")
         return None
 
+    try:
+        current = Version(__version__)
+    except InvalidVersion:
+        return _UpdateMessage(Logger.Level.INFO, "You are using a custom version, consider updating.")
 
-def _fetch_latest_version_sync() -> str:
-    request = urllib.request.Request(
-        _GITHUB_API_URL,
-        headers={
-            "Accept": "application/vnd.github.v3+json",
-            "User-Agent": "Endweave",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=10) as response:
-        data = json.loads(response.read().decode())
-    tag_name: str = data["tag_name"]
+    if current < newest:
+        return _UpdateMessage(
+            Logger.Level.WARNING,
+            f"There is a newer plugin version available: {newest}, you're on: {current}",
+        )
+    if console and current != newest:
+        if current.is_devrelease:
+            return _UpdateMessage(
+                Logger.Level.INFO,
+                "You are running a development version of the plugin, please report any bugs to GitHub.",
+            )
+        return _UpdateMessage(Logger.Level.WARNING, "You are running a newer version of the plugin than is released!")
+    return None
+
+
+async def _get_newest_version() -> str:
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Cache-Control": "no-cache",
+        "User-Agent": f"Endweave {__version__}",
+    }
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+        async with session.get(_RELEASES_URL, headers=headers) as response:
+            response.raise_for_status()
+            release = await response.json()
+    tag_name: str = release["tag_name"]
     return tag_name

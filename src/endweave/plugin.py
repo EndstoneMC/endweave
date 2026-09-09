@@ -9,9 +9,8 @@ from endstone.event import (
 )
 from endstone.plugin import Plugin
 
-from ._version import __version__
 from .metrics import EndweaveMetrics
-from .update import UpdateChecker
+from .update import send_update_message
 
 
 class EndweavePlugin(Plugin):
@@ -37,10 +36,8 @@ class EndweavePlugin(Plugin):
         # bStats metrics (https://bstats.org/plugin/bukkit/Endweave/30345)
         self._metrics = EndweaveMetrics(self, service_id=30345)
 
-        self._update_checker: UpdateChecker | None = None
         if self.config.get("check-for-updates", True):
-            self._update_checker = UpdateChecker(self.logger, __version__)
-            self._update_checker.check()
+            send_update_message(self)
 
     @event_handler(priority=EventPriority.LOWEST)
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
@@ -52,5 +49,6 @@ class EndweavePlugin(Plugin):
 
     @event_handler
     def on_player_join(self, event: PlayerJoinEvent) -> None:
-        if self._update_checker:
-            self._update_checker.notify_if_needed(event.player)
+        player = event.player
+        if player.has_permission("endweave.update") and self.config.get("check-for-updates", True):
+            send_update_message(self, player)
