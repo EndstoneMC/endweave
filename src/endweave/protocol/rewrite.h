@@ -1,8 +1,9 @@
 #pragma once
 
-#include "endweave/protocol/packet.h"
-
+#include <bedrock/protocol/packet.hpp>
 #include <concepts>
+
+namespace bp = bedrock::protocol;
 
 namespace endweave {
 
@@ -16,7 +17,7 @@ template <int From, int To, int Id>
 struct Rewriter;
 
 template <int From, int To, int Id>
-concept Rewritable = requires(packet_of_t<From, Id> &packet) {
+concept Rewritable = requires(bp::packet_of_t<From, Id> &packet) {
     { Rewriter<From, To, Id>::rewrite(packet) } -> std::same_as<void>;
 };
 

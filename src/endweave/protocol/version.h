@@ -16,7 +16,7 @@ constexpr std::array SUPPORTED_VERSIONS{
 };
 
 /** Versions that encode every packet the same as a supported version and are routed as it.
- * `identical.h` checks each entry at compile time. */
+ * `handler.h` checks each entry at compile time. */
 constexpr std::array<std::pair<int, int>, 1> WIRE_IDENTICAL{{
     {2169, 2168}, // 1.26.45
 }};
