@@ -57,27 +57,27 @@ def test_no_players_reports_an_empty_server(mock_sender: MagicMock) -> None:
 
 
 def test_players_on_one_version_are_grouped_and_counted(mock_sender: MagicMock) -> None:
-    add_players(mock_sender, bob="1.26.30", alice="1.26.32")
+    add_players(mock_sender, bob="1.26.30", alice="26.32")
     ListSubCommand().execute(mock_sender, [])
-    assert sent(mock_sender) == ["§8[§61.26.30-1.26.32§8] (§72§8): §balice, bob"]
+    assert sent(mock_sender) == ["§8[§626.30-26.32§8] (§72§8): §balice, bob"]
 
 
 def test_versions_are_listed_oldest_protocol_first(mock_sender: MagicMock) -> None:
-    add_players(mock_sender, carol="1.26.50", alice="1.21.124", bob="1.26.0")
+    add_players(mock_sender, carol="26.50", alice="1.21.124", bob="26.0")
     ListSubCommand().execute(mock_sender, [])
     assert sent(mock_sender) == [
         "§8[§61.21.124§8] (§71§8): §balice",
-        "§8[§61.26.0-1.26.3§8] (§71§8): §bbob",
-        "§8[§61.26.5x§8] (§71§8): §bcarol",
+        "§8[§626.0-26.3§8] (§71§8): §bbob",
+        "§8[§626.5x§8] (§71§8): §bcarol",
     ]
 
 
 def test_an_unregistered_game_version_falls_back_to_unknown(mock_sender: MagicMock) -> None:
-    add_players(mock_sender, alice="1.99.0", bob="1.26.0")
+    add_players(mock_sender, alice="1.99.0", bob="26.0")
     ListSubCommand().execute(mock_sender, [])
     assert sent(mock_sender) == [
         "§8[§6UNKNOWN§8] (§71§8): §balice",
-        "§8[§61.26.0-1.26.3§8] (§71§8): §bbob",
+        "§8[§626.0-26.3§8] (§71§8): §bbob",
     ]
 
 

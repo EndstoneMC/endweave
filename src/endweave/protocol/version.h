@@ -11,14 +11,14 @@ namespace ProtocolVersions {
 
 /** @see Velocity ProtocolVersion#SUPPORTED_VERSIONS. */
 constexpr std::array SUPPORTED_VERSIONS{
-    2168, // 1.26.40
-    2192, // 1.26.50
+    2168, // 26.40
+    2192, // 26.50
 };
 
 /** Versions that encode every packet the same as a supported version and are routed as it.
  * `handler.h` checks each entry at compile time. */
 constexpr std::array<std::pair<int, int>, 1> WIRE_IDENTICAL{{
-    {2169, 2168}, // 1.26.45
+    {2169, 2168}, // 26.45
 }};
 
 constexpr std::size_t indexOf(int version)

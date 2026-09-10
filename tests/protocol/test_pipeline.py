@@ -14,7 +14,7 @@ from endweave._pipeline import (
 
 OLD = 2168
 NEW = 2192
-ALIAS = 2169  # 1.26.45, which puts every modelled packet on the wire exactly as OLD does
+ALIAS = 2169  # 26.45, which puts every modelled packet on the wire exactly as OLD does
 UNSUPPORTED = 975  # a registered protocol the engine has no tables for
 
 CONTAINER_CLOSE = 47

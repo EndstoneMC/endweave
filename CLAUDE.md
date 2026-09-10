@@ -57,7 +57,7 @@ Per packet, `EndweavePlugin._translate` looks the id up in the translator's `act
   the README table mirrors it.
 - `protocol/version.h` `ProtocolVersions::SUPPORTED_VERSIONS` is what the engine translates: 2168
   and 2192, a sorted line that `step(from, to)` routes along one hop at a time, so there is no path
-  search. `WIRE_IDENTICAL` routes 2169 (1.26.45) as 2168, and `handler.h` static-asserts that
+  search. `WIRE_IDENTICAL` routes 2169 (26.45) as 2168, and `handler.h` static-asserts that
   claim against the schema, so a version that stops being identical fails the build.
 
 ### The engine

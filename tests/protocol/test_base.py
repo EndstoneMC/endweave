@@ -58,7 +58,7 @@ def packet(packet_id: int, payload: bytes, address: str = ADDRESS) -> MagicMock:
 def login(
     address: str = ADDRESS,
     name: str = "Steve",
-    game_version: str = "1.26.10",
+    game_version: str = "26.10",
     *,
     cancelled: bool = False,
 ) -> MagicMock:
@@ -320,7 +320,7 @@ class TestNetherNet:
     def test_still_refuses_a_blocked_nethernet_client(self, make_protocol: Callable[..., BaseProtocol]) -> None:
         protocol = make_protocol("block-protocols = [975]\n")
         protocol.transform_serverbound(handshake(975, address=NETHERNET_ADDRESS))
-        event = login(address=NETHERNET_ADDRESS, game_version="1.26.20")
+        event = login(address=NETHERNET_ADDRESS, game_version="26.20")
 
         protocol.on_login(event)
 
@@ -389,7 +389,7 @@ class TestBlockedVersions:
         assert protocol._connection_manager.get_connection(ADDRESS) is None
 
     def test_refuses_a_version_beyond_a_bound(self, make_protocol: Callable[..., BaseProtocol]) -> None:
-        protocol = make_protocol('block-versions = ["<1.26.0"]\n')
+        protocol = make_protocol('block-versions = ["<26.0"]\n')
         protocol.transform_serverbound(handshake(898))
         event = login()
 
@@ -413,7 +413,7 @@ class TestBlockedVersions:
         protocol.transform_serverbound(handshake(975))
         for port in range(1025):
             protocol.transform_serverbound(handshake(944, address=f"127.0.0.1:{port}"))
-        event = login(game_version="1.26.20")
+        event = login(game_version="26.20")
 
         protocol.on_login(event)
 
@@ -430,7 +430,7 @@ class TestBlockedVersions:
     def test_reads_the_handshake_before_the_game_version(self, make_protocol: Callable[..., BaseProtocol]) -> None:
         protocol = make_protocol("block-protocols = [9999]\n")
         protocol.transform_serverbound(handshake(9999))
-        event = login(game_version="1.26.10")
+        event = login(game_version="26.10")
 
         protocol.on_login(event)
 
@@ -439,7 +439,7 @@ class TestBlockedVersions:
     def test_refuses_an_unidentifiable_client_below_a_lower_bound(
         self, make_protocol: Callable[..., BaseProtocol]
     ) -> None:
-        protocol = make_protocol('block-versions = ["<1.26.0"]\n')
+        protocol = make_protocol('block-versions = ["<26.0"]\n')
         event = login(game_version="1.99.0")
 
         protocol.on_login(event)
@@ -483,4 +483,4 @@ class TestBlockedVersions:
 
         protocol.on_login(login())
 
-        mock_logger.info.assert_called_once_with(f"Blocked join due to unsupported version from {ADDRESS} (1.26.20)")
+        mock_logger.info.assert_called_once_with(f"Blocked join due to unsupported version from {ADDRESS} (26.20)")

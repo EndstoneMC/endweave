@@ -7,6 +7,7 @@ times. Bedrock ids only ever go up, so ordering is by protocol id alone.
 """
 
 import functools
+import re
 from collections.abc import Iterator
 from dataclasses import dataclass
 
@@ -26,10 +27,10 @@ __all__ = [
 class SubVersionRange:
     """A run of consecutive Minecraft versions sharing one protocol id.
 
-    ``SubVersionRange("1.26", 0, 3)`` covers 1.26.0 through 1.26.3.
+    ``SubVersionRange("26", 0, 3)`` covers 26.0 through 26.3.
 
     Attributes:
-        base_version: Version prefix shared by the whole range, e.g. "1.26".
+        base_version: Version prefix shared by the whole range, e.g. "26".
         range_from: Lowest included patch number.
         range_to: Highest included patch number, greater than ``range_from``.
     """
@@ -68,19 +69,19 @@ class ProtocolVersion:
         Names derive their own range, so ``version_range`` is only needed for a
         name none of these three shapes fits:
 
-        * "1.26.20", one Minecraft version;
-        * "1.26.0-1.26.3", every version between the two, inclusive;
-        * "1.26.2x", the whole hotfix line 1.26.20 to 1.26.29.
+        * "26.20", one Minecraft version;
+        * "26.0-26.3", every version between the two, inclusive;
+        * "26.2x", the whole hotfix line 26.20 to 26.29.
 
         The wildcard is ViaVersion's, moved one digit along. Bedrock spends the
         last digit of the patch on hotfixes where Java spends a component of its
-        own, so Java's "1.8.x" is Bedrock's "1.26.2x". Both are read the same
+        own, so Java's "1.8.x" is Bedrock's "26.2x". Both are read the same
         way: whatever stands before the "x" is fixed, and the digit it replaces
         runs 0 through 9.
 
         Args:
             version: Numeric protocol id, e.g. 924.
-            name: Version name, e.g. "1.26.0", "1.26.0-1.26.3" or "1.26.2x".
+            name: Version name, e.g. "26.0", "26.0-26.3" or "26.2x".
             version_range: Minecraft versions covered, when the name does not say.
             known: False for placeholders standing in for unregistered ids,
                 whose names are never read as a range.
@@ -115,7 +116,7 @@ class ProtocolVersion:
 
     @property
     def is_version_wildcard(self) -> bool:
-        """Whether the name covers a whole hotfix line, e.g. "1.26.2x"."""
+        """Whether the name covers a whole hotfix line, e.g. "26.2x"."""
         return self.name.endswith("x")
 
     def __eq__(self, other: object) -> bool:
@@ -138,6 +139,8 @@ class ProtocolVersion:
         return f"ProtocolVersion(version={self.version}, name={self.name!r})"
 
 
+_LEGACY_VERSION = re.compile(r"\b1\.(?=(?:2[6-9]|[3-9]\d|\d{3,})\.)")
+
 _VERSIONS: dict[int, ProtocolVersion] = {}
 _VERSION_LIST: list[ProtocolVersion] = []
 
@@ -147,7 +150,7 @@ def register(version: int, name: str, version_range: SubVersionRange | None = No
 
     Args:
         version: Numeric protocol id, e.g. 924.
-        name: Version name, e.g. "1.26.0", "1.26.0-1.26.3" or "1.26.2x".
+        name: Version name, e.g. "26.0", "26.0-26.3" or "26.2x".
         version_range: Minecraft versions covered, when the name does not say.
 
     Returns:
@@ -195,15 +198,16 @@ def get_protocols() -> list[ProtocolVersion]:
 def get_by_name(name: str) -> ProtocolVersion | None:
     """Look up a protocol version by Minecraft version name.
 
-    Accepts registered names such as "1.26.0-1.26.3" as well as the individual
-    versions a range covers.
+    Accepts registered names such as "26.0-26.3" as well as the individual
+    versions a range covers. From 26 on, the legacy "1.26.2" form reads as "26.2".
 
     Args:
-        name: Minecraft version string, e.g. "1.26.2".
+        name: Minecraft version string, e.g. "26.2" or "1.26.2".
 
     Returns:
         The matching protocol version, or None if no registered version covers it.
     """
+    name = _LEGACY_VERSION.sub("", name)
     for protocol_version in _VERSION_LIST:
         if protocol_version.name == name or name in protocol_version.included_versions:
             return protocol_version
@@ -215,10 +219,10 @@ UNKNOWN = ProtocolVersion(-1, "UNKNOWN", known=False)
 v1_21_120 = register(859, "1.21.120-1.21.123")
 v1_21_124 = register(860, "1.21.124")
 v1_21_130 = register(898, "1.21.130-1.21.132")
-v1_26_0 = register(924, "1.26.0-1.26.3")
-v1_26_10 = register(944, "1.26.10-1.26.13")
-v1_26_20 = register(975, "1.26.20")
-v1_26_30 = register(1001, "1.26.30-1.26.32")
-v1_26_40 = register(2168, "1.26.40-1.26.44")
-v1_26_45 = register(2169, "1.26.45")
-v1_26_50 = register(2192, "1.26.5x")
+v26_0 = register(924, "26.0-26.3")
+v26_10 = register(944, "26.10-26.13")
+v26_20 = register(975, "26.20")
+v26_30 = register(1001, "26.30-26.32")
+v26_40 = register(2168, "26.40-26.44")
+v26_45 = register(2169, "26.45")
+v26_50 = register(2192, "26.5x")

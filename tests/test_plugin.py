@@ -86,7 +86,7 @@ def packet(packet_id: int, payload: bytes, address: str = ADDRESS) -> MagicMock:
 def login(
     address: str = ADDRESS,
     name: str = "Steve",
-    game_version: str = "1.26.10",
+    game_version: str = "26.10",
     *,
     cancelled: bool = False,
 ) -> MagicMock:

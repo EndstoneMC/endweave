@@ -11,18 +11,18 @@ different protocol versions by rewriting packets at the network layer. Inspired 
 
 | Minecraft Version | Protocol |
 | ----------------- | -------- |
-| 1.26.40-1.26.44   | 2168     |
-| 1.26.45           | 2169     |
-| 1.26.5x           | 2192     |
+| 26.40-26.44   | 2168     |
+| 26.45           | 2169     |
+| 26.5x           | 2192     |
 
 <!-- Not yet carried by the 0.5.0 engine:
 | 1.21.120-1.21.123 | 859      |
 | 1.21.124          | 860      |
 | 1.21.130-1.21.132 | 898      |
-| 1.26.0-1.26.3     | 924      |
-| 1.26.10-1.26.13   | 944      |
-| 1.26.20           | 975      |
-| 1.26.30-1.26.32   | 1001     |
+| 26.0-26.3     | 924      |
+| 26.10-26.13   | 944      |
+| 26.20           | 975      |
+| 26.30-26.32   | 1001     |
 -->
 
 Since 0.5.0, packet translation has moved from Python into a C++ engine compiled from

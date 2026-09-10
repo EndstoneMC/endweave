@@ -123,13 +123,13 @@ class TestLoading:
         assert "# Whether the thing is on" in config_file.read_text()
 
     def test_keeps_user_added_keys_of_a_modifiable_section(self, config_file: Path, mock_logger: MagicMock) -> None:
-        write(config_file, '[servers]\nlobby = "1.26.20"\n')
+        write(config_file, '[servers]\nlobby = "26.20"\n')
         config = ModifiableKeysConfig(config_file, mock_logger)
         config.reload()
 
         section = config.section("servers")
         assert section is not None
-        assert section.get_string("lobby", "") == "1.26.20"
+        assert section.get_string("lobby", "") == "26.20"
 
     def test_leaves_an_up_to_date_file_alone(
         self, config: StubConfig, config_file: Path, monkeypatch: pytest.MonkeyPatch
@@ -328,18 +328,24 @@ class TestBlockedProtocolVersions:
         assert get_protocol(944) not in blocked
 
     def test_blocks_a_version_name(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-versions = ["1.26.20"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-versions = ["26.20"]\n')
 
         assert blocked.single_blocked_versions == frozenset({get_protocol(975)})
         assert get_protocol(975) in blocked
 
+    def test_blocks_a_legacy_version_name(self, config_file: Path, mock_logger: MagicMock) -> None:
+        blocked = self.load(config_file, mock_logger, 'block-versions = ["1.26.20", "<1.26.0"]\n')
+
+        assert blocked.single_blocked_versions == frozenset({get_protocol(975)})
+        assert blocked.blocks_below == get_protocol(924)
+
     def test_blocks_a_version_covered_by_a_range_name(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-versions = ["1.26.2"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-versions = ["26.2"]\n')
 
         assert get_protocol(924) in blocked
 
     def test_bounds_block_everything_beyond_them(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-versions = ["<1.26.0", ">1.26.30"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-versions = ["<26.0", ">26.30"]\n')
 
         assert blocked.blocks_below == get_protocol(924)
         assert blocked.blocks_above == get_protocol(1001)
@@ -348,13 +354,13 @@ class TestBlockedProtocolVersions:
         assert get_protocol(944) not in blocked
 
     def test_the_lower_bound_itself_is_not_blocked(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-versions = ["<1.26.0"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-versions = ["<26.0"]\n')
 
         assert get_protocol(924) not in blocked
         assert get_protocol(898) in blocked
 
     def test_the_upper_bound_itself_is_not_blocked(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-versions = [">1.26.30"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-versions = [">26.30"]\n')
 
         assert get_protocol(1001) not in blocked
         assert get_protocol(2168) in blocked
@@ -371,25 +377,25 @@ class TestBlockedProtocolVersions:
         mock_logger.warning.assert_called_once_with("Unknown protocol version in block-versions: 1.99.0")
 
     def test_warns_when_a_bound_is_set_twice(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-versions = ["<1.26.0", "<1.26.20"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-versions = ["<26.0", "<26.20"]\n')
 
         assert blocked.blocks_below == get_protocol(975)
         assert "overridden by" in mock_logger.warning.call_args.args[0]
 
     def test_warns_when_the_upper_bound_is_set_twice(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-versions = [">1.26.30", ">1.26.45"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-versions = [">26.30", ">26.45"]\n')
 
         assert blocked.blocks_above == get_protocol(2169)
         assert "overridden by" in mock_logger.warning.call_args.args[0]
 
     def test_warns_about_a_version_blocked_twice(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-protocols = [975]\nblock-versions = ["1.26.20"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-protocols = [975]\nblock-versions = ["26.20"]\n')
 
         assert blocked.single_blocked_versions == frozenset({get_protocol(975)})
         mock_logger.warning.assert_called_once_with(f"Duplicated blocked protocol version {get_protocol(975)}")
 
     def test_drops_a_version_a_bound_already_covers(self, config_file: Path, mock_logger: MagicMock) -> None:
-        blocked = self.load(config_file, mock_logger, 'block-versions = ["1.21.130", "<1.26.0"]\n')
+        blocked = self.load(config_file, mock_logger, 'block-versions = ["1.21.130", "<26.0"]\n')
 
         assert blocked.single_blocked_versions == frozenset()
         assert get_protocol(898) in blocked
@@ -404,7 +410,7 @@ class TestBlockedProtocolVersions:
     def test_unknown_bounds_block_nothing(self) -> None:
         blocked = BlockedProtocolVersions()
 
-        assert get_by_name("1.26.20") not in blocked
+        assert get_by_name("26.20") not in blocked
 
 
 class TestSectionConstruction:

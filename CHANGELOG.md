@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+- Minecraft 26.0 and later are named 26.x rather than 1.26.x, in `/endweave list`, the logs and the shipped config. `block-versions` accepts either form, and so does the version a joining client reports.
+
 ### Added
-- Clients on 1.26.5x can join servers on 1.26.40-1.26.45, and the other way round. Packets are rewritten in both directions, a packet both versions read alike is passed through untouched, and a packet the other side has no counterpart for is dropped rather than forwarded. `/endweave debug` names each packet as it is carried, and `debug pre`/`debug post` show the payload on either side of the rewrite.
+- Clients on 26.5x can join servers on 26.40-26.45, and the other way round. Packets are rewritten in both directions, a packet both versions read alike is passed through untouched, and a packet the other side has no counterpart for is dropped rather than forwarded. `/endweave debug` names each packet as it is carried, and `debug pre`/`debug post` show the payload on either side of the rewrite.
 - `/endweave list` groups the online players by the protocol version they speak. Requires `endweave.command.list`, which `endweave.admin` grants and operators hold by default.
 - `/endweave debug` toggles debug mode, `debug pre` and `debug post` the transform logging phases, and `debug add|remove <packet>` and `debug clear` edit the packet filter. Requires `endweave.command.debug`.
 - `/endweave` on its own lists the subcommands you are allowed to run.
