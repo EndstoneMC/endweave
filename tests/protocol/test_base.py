@@ -207,14 +207,6 @@ class TestPipeline:
         assert first.serverbound is second.serverbound
         assert first.clientbound is second.clientbound
 
-    def test_keeps_a_session_of_its_own_for_every_connection(self, make_protocol: Callable[..., BaseProtocol]) -> None:
-        protocol = make_protocol(server_protocol=CARRIED_SERVER)
-
-        first = protocol.transform_serverbound(handshake(CARRIED_CLIENT.version, address="127.0.0.1:1"))
-        second = protocol.transform_serverbound(handshake(CARRIED_CLIENT.version, address="127.0.0.1:2"))
-
-        assert first.session is not second.session
-
 
 class TestDeclaredVersion:
     """A 2192 client against a 2169 server, which BDS refuses unless it declares 2169."""

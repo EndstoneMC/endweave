@@ -19,9 +19,7 @@ ProtocolInfo is folded in, less its connection state, which Bedrock has no
 counterpart for, and its compression flag, which Endstone handles below this.
 Its pipeline is a pair of translators instead of a chain of Protocol objects,
 since the engine resolves the whole path from one version to another at compile
-time. The StorableObject storage a transform reads lives in the engine's
-Session, which the two directions share. The client side of a connection is
-gone too: ViaVersion draws that line for ViaProxy, which runs Via as a client,
+time. The client side of a connection is gone too: ViaVersion draws that line for ViaProxy, which runs Via as a client,
 where an Endstone plugin is always the server.
 
 See Also:
@@ -68,7 +66,6 @@ class Connection:
         self._address = address
         self._server_protocol_version = server_protocol_version
         self.protocol_version = UNKNOWN
-        self.session = _pipeline.Session()
         self.serverbound: _pipeline.Translator | None = None
         self.clientbound: _pipeline.Translator | None = None
         self.player: Player | None = None

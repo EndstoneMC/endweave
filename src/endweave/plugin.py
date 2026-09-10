@@ -147,7 +147,7 @@ class EndweavePlugin(Plugin):
             self.logger.info(f"[{direction.value}] {label} in: {event.payload.hex()}")
 
         try:
-            payload = translator.translate(connection.session, packet_id, event.payload)
+            payload = translator.translate(packet_id, event.payload)
         except TranslationError as error:
             debug.error(f"Failed to translate {direction.value} packet {packet_name(packet_id) or packet_id}", error)
             event.cancel()

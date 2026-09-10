@@ -69,8 +69,7 @@ void chain(const Context<packet_of_t<To, Id>> &ctx, packet_of_t<Cur, Id> &&from)
 }
 
 template <int From, int To, int Id>
-std::expected<void, std::error_code> handle(Session &session, bool &cancelled, bp::BinaryReader &in,
-                                            bp::BinaryWriter &out)
+std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &in, bp::BinaryWriter &out)
 {
     auto result = bp::deserialize<packet_of_t<From, Id>>(in);
     if (!result) {
@@ -93,7 +92,7 @@ std::expected<void, std::error_code> handle(Session &session, bool &cancelled, b
     }
     else {
         packet_of_t<To, Id> translated_packet;
-        chain<From, To, Id>(Context<packet_of_t<To, Id>>{session, cancelled, translated_packet}, std::move(packet));
+        chain<From, To, Id>(Context<packet_of_t<To, Id>>{cancelled, translated_packet}, std::move(packet));
         // Discard whatever was written before a cancel.
         if (cancelled) {
             return {};
@@ -116,7 +115,7 @@ std::expected<void, std::error_code> handle(Session &session, bool &cancelled, b
 }
 
 /** @see ViaVersion PacketWrapper#cancel. */
-inline std::expected<void, std::error_code> cancel(Session &, bool &cancelled, bp::BinaryReader &, bp::BinaryWriter &)
+inline std::expected<void, std::error_code> cancel(bool &cancelled, bp::BinaryReader &, bp::BinaryWriter &)
 {
     cancelled = true;
     return {};
@@ -132,8 +131,7 @@ enum class Action : char {
 };
 
 /** @see ViaVersion PacketHandler. */
-using PacketHandler = std::expected<void, std::error_code> (*)(Session &, bool &, bp::BinaryReader &,
-                                                               bp::BinaryWriter &);
+using PacketHandler = std::expected<void, std::error_code> (*)(bool &, bp::BinaryReader &, bp::BinaryWriter &);
 
 namespace detail {
 

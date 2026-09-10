@@ -6,7 +6,6 @@ import pytest
 
 from endweave._pipeline import (
     Action,
-    Session,
     TranslationError,
     Translator,
     packet_name,
@@ -26,11 +25,6 @@ LOGIN = 1  # unchanged between the two, so neither table names it
 # Payloads of zeroes that both ends read as a whole packet.
 EMPTY_TRANSACTION = b"\x00\x00\x00\x00"
 EMPTY_CONTAINER_CLOSE = b"\x00\x00\x00"
-
-
-@pytest.fixture
-def session() -> Session:
-    return Session()
 
 
 class TestVersions:
@@ -83,31 +77,31 @@ class TestActions:
 
 
 class TestTranslating:
-    def test_carries_a_packet_the_two_versions_disagree_on(self, session: Session) -> None:
-        translated = Translator(NEW, OLD).translate(session, INVENTORY_TRANSACTION, EMPTY_TRANSACTION)
+    def test_carries_a_packet_the_two_versions_disagree_on(self) -> None:
+        translated = Translator(NEW, OLD).translate(INVENTORY_TRANSACTION, EMPTY_TRANSACTION)
 
         assert translated is not None
         assert translated != EMPTY_TRANSACTION
 
-    def test_carries_a_packet_back_to_where_it_came_from(self, session: Session) -> None:
-        there = Translator(NEW, OLD).translate(session, CONTAINER_CLOSE, EMPTY_CONTAINER_CLOSE)
+    def test_carries_a_packet_back_to_where_it_came_from(self) -> None:
+        there = Translator(NEW, OLD).translate(CONTAINER_CLOSE, EMPTY_CONTAINER_CLOSE)
 
         assert there is not None
-        assert Translator(OLD, NEW).translate(session, CONTAINER_CLOSE, there) == EMPTY_CONTAINER_CLOSE
+        assert Translator(OLD, NEW).translate(CONTAINER_CLOSE, there) == EMPTY_CONTAINER_CLOSE
 
-    def test_hands_back_a_packet_it_does_not_name(self, session: Session) -> None:
-        assert Translator(NEW, OLD).translate(session, LOGIN, b"\x07") == b"\x07"
+    def test_hands_back_a_packet_it_does_not_name(self) -> None:
+        assert Translator(NEW, OLD).translate(LOGIN, b"\x07") == b"\x07"
 
-    def test_refuses_a_packet_the_other_side_has_no_room_for(self, session: Session) -> None:
-        assert Translator(NEW, OLD).translate(session, SET_PLAYER_FURNACE_OPTIONS, b"\x00") is None
+    def test_refuses_a_packet_the_other_side_has_no_room_for(self) -> None:
+        assert Translator(NEW, OLD).translate(SET_PLAYER_FURNACE_OPTIONS, b"\x00") is None
 
-    def test_reports_a_payload_that_does_not_decode(self, session: Session) -> None:
+    def test_reports_a_payload_that_does_not_decode(self) -> None:
         with pytest.raises(TranslationError) as raised:
-            Translator(NEW, OLD).translate(session, INVENTORY_TRANSACTION, b"")
+            Translator(NEW, OLD).translate(INVENTORY_TRANSACTION, b"")
 
         assert raised.value.packet_id == INVENTORY_TRANSACTION
         assert raised.value.stage == "translate"
 
-    def test_reports_a_payload_with_bytes_left_over(self, session: Session) -> None:
+    def test_reports_a_payload_with_bytes_left_over(self) -> None:
         with pytest.raises(TranslationError):
-            Translator(NEW, OLD).translate(session, CONTAINER_CLOSE, EMPTY_CONTAINER_CLOSE + b"\x00")
+            Translator(NEW, OLD).translate(CONTAINER_CLOSE, EMPTY_CONTAINER_CLOSE + b"\x00")

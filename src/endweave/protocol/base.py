@@ -8,8 +8,7 @@ version a second time, which BDS checks as well, so it is rewritten too. A
 connection without translators is left as it is: where the engine reads both
 ends as one version, or does not carry one of them, the server takes or refuses
 the client itself. Translators are shared by every connection between the same
-two versions, as ViaVersion shares its protocols, and each connection keeps its
-own Session.
+two versions, as ViaVersion shares its protocols.
 
 The blocked version gate of ServerboundBaseProtocol1_7 and the login bookkeeping
 of ClientboundBaseProtocol1_7 run on the login event, the last point before the

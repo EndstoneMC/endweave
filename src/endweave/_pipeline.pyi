@@ -19,13 +19,6 @@ def supported_versions() -> list[int]:
 def packet_name(packet_id: int) -> str | None:
     """The packet's name, or None if no version defines that id."""
 
-class Session:
-    """
-    Per-connection state. Pass the same session to both of a connection's translators.
-    """
-
-    def __init__(self) -> None: ...
-
 class Translator:
     """The translation from one protocol version to another."""
 
@@ -43,7 +36,7 @@ class Translator:
         The action for each packet id that needs one. Other ids pass through untouched.
         """
 
-    def translate(self, session: Session, packet_id: int, payload: bytes) -> bytes | None:
+    def translate(self, packet_id: int, payload: bytes) -> bytes | None:
         """The translated payload, or None if the packet was cancelled."""
 
 class TranslationError(RuntimeError):

@@ -23,7 +23,7 @@ concept Transformable = requires(Context<To> &ctx, From &&from) {
     { Transformer<std::remove_cvref_t<From>, To>::transform(ctx, std::forward<From>(from)) } -> std::same_as<void>;
 };
 
-/** Transforms `from` into `out`, sharing the caller's session and cancel flag. */
+/** Transforms `from` into `out`, sharing the caller's cancel flag. */
 template <class To, class From, class Parent>
 constexpr void transform_into(const Context<Parent> &ctx, From &&from, To &out)
 {

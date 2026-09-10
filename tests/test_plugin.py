@@ -118,7 +118,7 @@ class TestTranslation:
 
     def test_carries_a_sent_packet_towards_the_client(self, plugin: StubPlugin) -> None:
         connection = plugin._connection_manager.get_connection(ADDRESS)
-        expected = connection.clientbound.translate(connection.session, CONTAINER_CLOSE, EMPTY_CONTAINER_CLOSE)
+        expected = connection.clientbound.translate(CONTAINER_CLOSE, EMPTY_CONTAINER_CLOSE)
         event = packet(CONTAINER_CLOSE, EMPTY_CONTAINER_CLOSE)
 
         plugin.on_packet_send(event)

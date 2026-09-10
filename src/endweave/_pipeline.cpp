@@ -2,7 +2,6 @@
 // doesn't depend on Endstone's bindings.
 
 #include "endweave/protocol/handler.h"
-#include "endweave/protocol/session.h"
 
 #include <bedrock/protocol/network.h>
 #include <nanobind/nanobind.h>
@@ -70,8 +69,7 @@ struct Translator {
     int to_version = 0;
 };
 
-std::optional<nb::bytes> translate(const Translator &translator, endweave::Session &session, int packet_id,
-                                   nb::bytes payload)
+std::optional<nb::bytes> translate(const Translator &translator, int packet_id, nb::bytes payload)
 {
     const endweave::PacketHandler handler = translator.engine.get(packet_id);
     if (handler == nullptr) {
@@ -83,7 +81,7 @@ std::optional<nb::bytes> translate(const Translator &translator, endweave::Sessi
     bp::BinaryWriter out{translated};
     bp::BinaryReader in{std::string_view{payload.c_str(), payload.size()}};
     bool cancelled = false;
-    const auto result = handler(session, cancelled, in, out);
+    const auto result = handler(cancelled, in, out);
     if (!result) {
         raiseTranslationError(packet_id, "translate", result.error());
     }
@@ -127,10 +125,6 @@ NB_MODULE(_pipeline, m)
         },
         "packet_id"_a, "The packet's name, or None if no version defines that id.");
 
-    nb::class_<endweave::Session>(m, "Session",
-                                  "Per-connection state. Pass the same session to both of a connection's translators.")
-        .def(nb::init<>());
-
     nb::class_<Translator>(m, "Translator", "The translation from one protocol version to another.")
         .def(nb::init<int, int>(), "from_version"_a, "to_version"_a)
         .def_prop_ro("from_version",
@@ -147,6 +141,6 @@ NB_MODULE(_pipeline, m)
                 return self.actions;
             },
             "The action for each packet id that needs one. Other ids pass through untouched.")
-        .def("translate", &translate, "session"_a, "packet_id"_a, "payload"_a,
+        .def("translate", &translate, "packet_id"_a, "payload"_a,
              "The translated payload, or None if the packet was cancelled.");
 }
