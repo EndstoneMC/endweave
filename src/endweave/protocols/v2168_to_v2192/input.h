@@ -12,16 +12,4 @@ struct Transformer<bp::PlayerAuthInputPacket_<2168>::InputData, bp::PlayerAuthIn
     static void transform(Context<bp::PlayerAuthInputPacket_<2192>::InputData> &ctx,
                           bp::PlayerAuthInputPacket_<2168>::InputData &&from);
 };
-
-template <>
-struct Transformer<bp::PackedItemUseLegacyInventoryTransaction_<2168>,
-                   bp::PackedItemUseLegacyInventoryTransaction_<2192>> {
-    static void transform(Context<bp::PackedItemUseLegacyInventoryTransaction_<2192>> &ctx,
-                          bp::PackedItemUseLegacyInventoryTransaction_<2168> &&from);
-};
-
-template <>
-struct Transformer<bp::PlayerAuthInputPacket_<2168>, bp::PlayerAuthInputPacket_<2192>> {
-    static void transform(Context<bp::PlayerAuthInputPacket_<2192>> &ctx, bp::PlayerAuthInputPacket_<2168> &&from);
-};
 } // namespace endweave

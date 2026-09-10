@@ -221,6 +221,12 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
   Matching members alone are not enough: `NormalTransactionData` and `InventoryMismatchData` look
   alike. A hand-written body can call `ew::transform_members` for the bulk and then write only what
   differs.
+- **Never hand-write a pair the generic one covers.** Before declaring a specialization,
+  static-assert `!memberwise_complete_v<From, To>`; if it holds, the body is a copy the compiler
+  already writes. After a schema change, re-probe every existing pair and delete the ones that became
+  complete, along with any module left empty (its header, `.cpp`, `CMakeLists.txt` line and
+  `transform.h` include). A variant-carrying pair qualifies too, provided the alternatives line up by
+  index.
 - **A variant keeps its index.** It is the discriminant BDS writes, so alternatives are matched by
   index, never by shape.
 - **One directory per hop and direction,** `protocols/v<from>_to_v<to>/`, one module per subsystem
@@ -233,8 +239,8 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
   whether the specialization exists.
 - **A transform consumes its source.** It takes an rvalue reference and moves every field that owns
   storage. A `const` source is a compile error rather than a copy.
-- **Assign every field explicitly, in declaration order,** through `auto &to = ctx.out();`. Only a
-  field whose shape actually changed carries logic.
+- **In a hand-written body, assign every field explicitly, in declaration order,** through
+  `auto &to = ctx.out();`. Only a field whose shape actually changed carries logic.
 - **Call through `ew::transform`,** which returns a proxy that takes its destination from the
   assignment target: `to.slots = ew::transform(ctx, std::move(from.slots));`. The `std::move` is not
   optional. Where there is no destination to deduce from, use `ew::transform_to<Dest>(ctx,

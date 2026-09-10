@@ -42,31 +42,6 @@ void Transformer<bp::ItemUseInventoryTransaction_<2168>, bp::ItemUseInventoryTra
     to.client_cooldown_state = from.client_cooldown_state;
 }
 
-void Transformer<bp::ItemUseOnActorInventoryTransaction_<2168>, bp::ItemUseOnActorInventoryTransaction_<2192>>::
-    transform(Context<bp::ItemUseOnActorInventoryTransaction_<2192>> &ctx,
-              bp::ItemUseOnActorInventoryTransaction_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.transaction = ew::transform(ctx, std::move(from.transaction));
-    to.runtime_id = from.runtime_id;
-    to.action_type = from.action_type;
-    to.slot = from.slot;
-    to.item = std::move(from.item);
-    to.from_pos = from.from_pos;
-    to.hit_pos = from.hit_pos;
-}
-
-void Transformer<bp::ItemReleaseInventoryTransaction_<2168>, bp::ItemReleaseInventoryTransaction_<2192>>::transform(
-    Context<bp::ItemReleaseInventoryTransaction_<2192>> &ctx, bp::ItemReleaseInventoryTransaction_<2168> &&from)
-{
-    auto &to = ctx.out();
-    to.transaction = ew::transform(ctx, std::move(from.transaction));
-    to.action_type = from.action_type;
-    to.slot = from.slot;
-    to.item = std::move(from.item);
-    to.from_pos = from.from_pos;
-}
-
 void Transformer<bp::ContainerOpenPacket_<2168>, bp::ContainerOpenPacket_<2192>>::transform(
     Context<bp::ContainerOpenPacket_<2192>> &ctx, bp::ContainerOpenPacket_<2168> &&from)
 {

@@ -10,18 +10,6 @@ namespace bp = bedrock::protocol;
 namespace endweave {
 
 template <>
-struct Transformer<bp::ItemUseOnActorInventoryTransaction_<2192>, bp::ItemUseOnActorInventoryTransaction_<2168>> {
-    static void transform(Context<bp::ItemUseOnActorInventoryTransaction_<2168>> &ctx,
-                          bp::ItemUseOnActorInventoryTransaction_<2192> &&from);
-};
-
-template <>
-struct Transformer<bp::ItemReleaseInventoryTransaction_<2192>, bp::ItemReleaseInventoryTransaction_<2168>> {
-    static void transform(Context<bp::ItemReleaseInventoryTransaction_<2168>> &ctx,
-                          bp::ItemReleaseInventoryTransaction_<2192> &&from);
-};
-
-template <>
 struct Transformer<bp::ItemUseInventoryTransaction_<2192>::ActionType,
                    bp::ItemUseInventoryTransaction_<2168>::ActionType> {
     static void transform(Context<bp::ItemUseInventoryTransaction_<2168>::ActionType> &ctx,

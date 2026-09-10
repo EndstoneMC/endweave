@@ -1,36 +1,8 @@
 #include "inventory.h"
 
 #include <bedrock/protocol/enum.hpp>
-#include <utility>
-
-namespace ew = endweave;
 
 namespace endweave {
-
-void Transformer<bp::ItemUseOnActorInventoryTransaction_<2192>, bp::ItemUseOnActorInventoryTransaction_<2168>>::
-    transform(Context<bp::ItemUseOnActorInventoryTransaction_<2168>> &ctx,
-              bp::ItemUseOnActorInventoryTransaction_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.transaction = ew::transform(ctx, std::move(from.transaction));
-    to.runtime_id = from.runtime_id;
-    to.action_type = from.action_type;
-    to.slot = from.slot;
-    to.item = std::move(from.item);
-    to.from_pos = from.from_pos;
-    to.hit_pos = from.hit_pos;
-}
-
-void Transformer<bp::ItemReleaseInventoryTransaction_<2192>, bp::ItemReleaseInventoryTransaction_<2168>>::transform(
-    Context<bp::ItemReleaseInventoryTransaction_<2168>> &ctx, bp::ItemReleaseInventoryTransaction_<2192> &&from)
-{
-    auto &to = ctx.out();
-    to.transaction = ew::transform(ctx, std::move(from.transaction));
-    to.action_type = from.action_type;
-    to.slot = from.slot;
-    to.item = std::move(from.item);
-    to.from_pos = from.from_pos;
-}
 
 void Transformer<bp::ItemUseInventoryTransaction_<2192>::ActionType,
                  bp::ItemUseInventoryTransaction_<2168>::ActionType>::

@@ -1,5 +1,4 @@
 target_sources(_pipeline PRIVATE
-        attributes.cpp
         boss.cpp
         chunk.cpp
         dimension.cpp
@@ -9,5 +8,4 @@ target_sources(_pipeline PRIVATE
         map.cpp
         network.cpp
         resource_pack.cpp
-        shape.cpp
         trade.cpp)

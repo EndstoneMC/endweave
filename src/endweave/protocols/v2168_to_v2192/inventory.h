@@ -22,18 +22,6 @@ struct Transformer<bp::ItemUseInventoryTransaction_<2168>, bp::ItemUseInventoryT
 };
 
 template <>
-struct Transformer<bp::ItemUseOnActorInventoryTransaction_<2168>, bp::ItemUseOnActorInventoryTransaction_<2192>> {
-    static void transform(Context<bp::ItemUseOnActorInventoryTransaction_<2192>> &ctx,
-                          bp::ItemUseOnActorInventoryTransaction_<2168> &&from);
-};
-
-template <>
-struct Transformer<bp::ItemReleaseInventoryTransaction_<2168>, bp::ItemReleaseInventoryTransaction_<2192>> {
-    static void transform(Context<bp::ItemReleaseInventoryTransaction_<2192>> &ctx,
-                          bp::ItemReleaseInventoryTransaction_<2168> &&from);
-};
-
-template <>
 struct Transformer<bp::ContainerOpenPacket_<2168>, bp::ContainerOpenPacket_<2192>> {
     static void transform(Context<bp::ContainerOpenPacket_<2192>> &ctx, bp::ContainerOpenPacket_<2168> &&from);
 };

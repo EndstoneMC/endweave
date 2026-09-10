@@ -12,10 +12,4 @@ struct Transformer<bp::EnvironmentAttributeData_<2168>, bp::EnvironmentAttribute
     static void transform(Context<bp::EnvironmentAttributeData_<2192>> &ctx,
                           bp::EnvironmentAttributeData_<2168> &&from);
 };
-
-template <>
-struct Transformer<bp::ClientboundAttributeLayerSyncPacket_<2168>, bp::ClientboundAttributeLayerSyncPacket_<2192>> {
-    static void transform(Context<bp::ClientboundAttributeLayerSyncPacket_<2192>> &ctx,
-                          bp::ClientboundAttributeLayerSyncPacket_<2168> &&from);
-};
 } // namespace endweave

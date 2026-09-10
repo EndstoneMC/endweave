@@ -1,6 +1,5 @@
 #pragma once
 
-#include "attributes.h"
 #include "boss.h"
 #include "chunk.h"
 #include "diagnostics.h"
@@ -11,5 +10,4 @@
 #include "map.h"
 #include "network.h"
 #include "resource_pack.h"
-#include "shape.h"
 #include "trade.h"
