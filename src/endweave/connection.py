@@ -16,12 +16,13 @@ hands and never logs in is never quit either, so pending connections are capped
 and the oldest are dropped.
 
 ProtocolInfo is folded in, less its connection state, which Bedrock has no
-counterpart for, and its pipeline and compression flag, which belong to a
-translation layer this does not model. Nothing here translates a packet, and
-the per connection StorableObject storage is left out along with the protocol
-storables behind it. The client side of a connection is gone too: ViaVersion
-draws that line for ViaProxy, which runs Via as a client, where an Endstone
-plugin is always the server.
+counterpart for, and its compression flag, which Endstone handles below this.
+Its pipeline is a pair of translators instead of a chain of Protocol objects,
+since the engine resolves the whole path from one version to another at compile
+time. The StorableObject storage a transform reads lives in the engine's
+Session, which the two directions share. The client side of a connection is
+gone too: ViaVersion draws that line for ViaProxy, which runs Via as a client,
+where an Endstone plugin is always the server.
 
 See Also:
     com.viaversion.viaversion.api.connection.ConnectionManager
@@ -40,6 +41,7 @@ from types import MappingProxyType
 
 from endstone import Player
 
+from . import _pipeline
 from .protocol.version import UNKNOWN, ProtocolVersion
 
 __all__ = ["MAX_PENDING_CONNECTIONS", "Connection", "ConnectionManager"]
@@ -52,6 +54,10 @@ _IDS = itertools.count(1)
 class Connection:
     """One peer's connection and the protocol versions on either end of it.
 
+    Setting ``protocol_version`` resolves the pipeline: ``serverbound`` and
+    ``clientbound`` become translators, or None where the two ends already
+    agree or the engine does not carry one of them.
+
     See Also:
         com.viaversion.viaversion.api.connection.UserConnection
         com.viaversion.viaversion.connection.UserConnectionImpl
@@ -61,7 +67,10 @@ class Connection:
         self._id = next(_IDS)
         self._address = address
         self._server_protocol_version = server_protocol_version
-        self.protocol_version = UNKNOWN
+        self._protocol_version = UNKNOWN
+        self.session = _pipeline.Session()
+        self.serverbound: _pipeline.Translator | None = None
+        self.clientbound: _pipeline.Translator | None = None
         self.player: Player | None = None
         self.active = True
         self.pending_disconnect = False
@@ -77,6 +86,23 @@ class Connection:
     @property
     def server_protocol_version(self) -> ProtocolVersion:
         return self._server_protocol_version
+
+    @property
+    def protocol_version(self) -> ProtocolVersion:
+        return self._protocol_version
+
+    @protocol_version.setter
+    def protocol_version(self, protocol_version: ProtocolVersion) -> None:
+        self._protocol_version = protocol_version
+        client = _pipeline.resolve(protocol_version.version)
+        server = _pipeline.resolve(self._server_protocol_version.version)
+        if client == _pipeline.UNKNOWN or server == _pipeline.UNKNOWN or client == server:
+            self.serverbound = None
+            self.clientbound = None
+            return
+
+        self.serverbound = _pipeline.Translator(client, server)
+        self.clientbound = _pipeline.Translator(server, client)
 
     def disconnect(self, reason: str) -> None:
         if self.player is None or not self.active or self.pending_disconnect:

@@ -181,6 +181,14 @@ std::expected<void, std::error_code> handle(Session &session, bool &cancelled, b
 
 } // namespace detail
 
+/** What a packet costs on a translator, before any buffer is built. The caller answers this by
+ * id first, so a packet that needs nothing never crosses back into the engine. */
+enum class Action : char {
+    Passthrough = 0,
+    Translate = 1,
+    Cancel = 2,
+};
+
 /** @see ViaVersion PacketHandler. */
 using PacketHandler = std::expected<void, std::error_code> (*)(Session &, bool &, bp::BinaryReader &,
                                                                bp::BinaryWriter &);
@@ -207,24 +215,40 @@ consteval std::array<PacketHandler, sizeof...(Ids)> makeHandlers(std::integer_se
 template <ProtocolVersion From, ProtocolVersion To>
 inline constexpr auto kHandlers = makeHandlers<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
 
-template <ProtocolVersion From, ProtocolVersion To, int... Ids>
-consteval std::array<bool, sizeof...(Ids)> makeCancelled(std::integer_sequence<int, Ids...>)
+template <ProtocolVersion From, ProtocolVersion To, int Id>
+consteval Action actionFor()
 {
-    return {shouldCancel<From, To, Ids>()...};
+    if constexpr (shouldCancel<From, To, Id>()) {
+        return Action::Cancel;
+    }
+    else if constexpr (shouldHandle<From, To, Id>()) {
+        return Action::Translate;
+    }
+    else {
+        return Action::Passthrough;
+    }
+}
+
+template <ProtocolVersion From, ProtocolVersion To, int... Ids>
+consteval std::array<Action, sizeof...(Ids)> makeActions(std::integer_sequence<int, Ids...>)
+{
+    return {actionFor<From, To, Ids>()...};
 }
 
 template <ProtocolVersion From, ProtocolVersion To>
-inline constexpr auto kCancelled = makeCancelled<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
+inline constexpr auto kActions = makeActions<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
 
 } // namespace detail
 
-/** @see ViaVersion PacketHandlers, Velocity StateRegistry.PacketRegistry.ProtocolRegistry. */
-class PacketHandlers {
+/** One From-to-To translation, resolved once and then indexed. Both tables are compile-time
+ * constants over the pair, so every connection between the same two versions shares them.
+ * @see ViaVersion Protocol, Velocity StateRegistry.PacketRegistry.ProtocolRegistry. */
+class Translator {
 public:
-    constexpr PacketHandlers() = default;
+    constexpr Translator() = default;
 
-    constexpr PacketHandlers(std::span<const PacketHandler> handlers, std::span<const bool> cancelled)
-        : handlers_(handlers), cancelled_(cancelled)
+    constexpr Translator(std::span<const PacketHandler> handlers, std::span<const Action> actions)
+        : handlers_(handlers), actions_(actions)
     {
     }
 
@@ -233,39 +257,44 @@ public:
         return id >= 0 && std::cmp_less(id, handlers_.size()) ? handlers_[id] : nullptr;
     }
 
-    /** @see ViaVersion Protocol#cancelServerbound, Protocol#cancelClientbound. */
-    [[nodiscard]] constexpr bool isCancelled(int id) const
+    [[nodiscard]] constexpr Action getAction(int id) const
     {
-        return id >= 0 && std::cmp_less(id, cancelled_.size()) && cancelled_[id];
+        return id >= 0 && std::cmp_less(id, actions_.size()) ? actions_[id] : Action::Passthrough;
+    }
+
+    /** Every id's verdict at once, for a caller building its own lookup. */
+    [[nodiscard]] constexpr std::span<const Action> getActions() const
+    {
+        return actions_;
     }
 
 private:
     std::span<const PacketHandler> handlers_;
-    std::span<const bool> cancelled_;
+    std::span<const Action> actions_;
 };
 
 namespace detail {
 
 template <ProtocolVersion From>
-constexpr PacketHandlers getPacketHandlers(ProtocolVersion to)
+constexpr Translator getTranslator(ProtocolVersion to)
 {
-    PacketHandlers handlers;
+    Translator translator;
     ProtocolVersions::visit(to, [&]<ProtocolVersion To>() {
-        handlers = PacketHandlers{kHandlers<From, To>, kCancelled<From, To>};
+        translator = Translator{kHandlers<From, To>, kActions<From, To>};
     });
-    return handlers;
+    return translator;
 }
 
 } // namespace detail
 
 /** @see Velocity StateRegistry.PacketRegistry#getProtocolRegistry. */
-constexpr PacketHandlers getPacketHandlers(ProtocolVersion from, ProtocolVersion to)
+constexpr Translator getTranslator(ProtocolVersion from, ProtocolVersion to)
 {
-    PacketHandlers handlers;
+    Translator translator;
     ProtocolVersions::visit(from, [&]<ProtocolVersion From>() {
-        handlers = detail::getPacketHandlers<From>(to);
+        translator = detail::getTranslator<From>(to);
     });
-    return handlers;
+    return translator;
 }
 
 } // namespace endweave

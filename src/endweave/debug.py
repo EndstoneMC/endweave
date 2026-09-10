@@ -38,7 +38,7 @@ class PacketType:
 
     Attributes:
         packet_id: Bedrock packet ID.
-        name: Name kept consistent across protocol versions, e.g. "START_GAME".
+        name: Name kept consistent across protocol versions, e.g. "STARTGAME".
         direction: Direction the packet travels in.
 
     See Also:
@@ -66,6 +66,19 @@ class LoggablePacket(Protocol):
 
     @property
     def packet_type(self) -> PacketType | None: ...
+
+
+@dataclass(frozen=True)
+class Packet:
+    """A packet as the filter sees it, for an ID whose name may not resolve.
+
+    Attributes:
+        packet_id: Bedrock packet ID read off the wire.
+        packet_type: Resolved packet type, or None when the ID is unknown.
+    """
+
+    packet_id: int
+    packet_type: PacketType | None
 
 
 class DebugHandler:
@@ -102,7 +115,7 @@ class DebugHandler:
         """Log every packet with this type name, whichever direction it travels.
 
         Args:
-            packet_type_name: Packet type name, e.g. "START_GAME".
+            packet_type_name: Packet type name, e.g. "STARTGAME".
         """
         self._packet_type_names.add(packet_type_name)
 

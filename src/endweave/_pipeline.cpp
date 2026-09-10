@@ -2,16 +2,17 @@
 // this module names an Endstone type, which is what keeps it clear of the pybind11 module that
 // binds them.
 
+#include "endweave/protocol/handler.h"
 #include "endweave/protocol/session.h"
 
 #include <bedrock/protocol/network.h>
-#include <exception>
+#include <cstddef>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
-#include <new>
 #include <optional>
+#include <span>
 #include <string>
 #include <string_view>
 #include <system_error>
@@ -40,21 +41,59 @@ PyObject *translation_error = nullptr;
     throw nb::python_error();
 }
 
-std::optional<nb::bytes> translate(endweave::Session &session, const endweave::PacketHandlers &handlers, int packet_id,
+/** One direction's translation, with the engine's per-id verdicts built once as a mapping the
+ * caller holds. An id the mapping does not name costs nothing, so the common packet is a miss
+ * and its payload never crosses into the engine at all. */
+struct Translator {
+    using Actions = nb::typed<nb::mapping, int, endweave::Action>;
+
+    Translator(int from_version, int to_version)
+    {
+        const endweave::ProtocolVersion from = endweave::ProtocolVersions::getProtocolVersion(from_version);
+        const endweave::ProtocolVersion to = endweave::ProtocolVersions::getProtocolVersion(to_version);
+        if (from == endweave::ProtocolVersion::UNKNOWN || to == endweave::ProtocolVersion::UNKNOWN) {
+            throw nb::value_error("endweave: the engine does not translate one of these protocol versions");
+        }
+
+        engine = endweave::getTranslator(from, to);
+        from_version_ = static_cast<int>(from);
+        to_version_ = static_cast<int>(to);
+
+        nb::dict verdicts;
+        const std::span<const endweave::Action> table = engine.getActions();
+        for (std::size_t id = 0; id < table.size(); ++id) {
+            if (table[id] != endweave::Action::Passthrough) {
+                verdicts[nb::int_(static_cast<int>(id))] = nb::cast(table[id]);
+            }
+        }
+        actions = nb::borrow<Actions>(nb::module_::import_("types").attr("MappingProxyType")(verdicts));
+    }
+
+    endweave::Translator engine;
+    Actions actions;
+    int from_version_ = 0;
+    int to_version_ = 0;
+};
+
+std::optional<nb::bytes> translate(const Translator &translator, endweave::Session &session, int packet_id,
                                    nb::bytes payload)
 {
-    const endweave::PacketHandler handler = handlers.get(packet_id);
-    if (handler == nullptr) {
-        // The caller reads the action table before calling, so reaching here means it asked for a
-        // packet with nothing to do. Hand the payload back rather than inventing an error.
+    switch (translator.engine.getAction(packet_id)) {
+    case endweave::Action::Passthrough:
+        // The caller reads `actions` before calling, so reaching here means it asked for a packet
+        // with nothing to do. Hand the payload back rather than inventing an error.
         return payload;
+    case endweave::Action::Cancel:
+        return std::nullopt;
+    case endweave::Action::Translate:
+        break;
     }
 
     std::string translated;
     bp::BinaryWriter out{translated};
     bp::BinaryReader in{std::string_view{payload.c_str(), payload.size()}};
     bool cancelled = false;
-    const auto result = handler(session, cancelled, in, out);
+    const auto result = translator.engine.get(packet_id)(session, cancelled, in, out);
     if (!result) {
         raiseTranslationError(packet_id, "translate", result.error());
     }
@@ -73,11 +112,14 @@ NB_MODULE(_pipeline, m)
     translation_error = PyErr_NewException("endweave._pipeline.TranslationError", PyExc_RuntimeError, nullptr);
     m.attr("TranslationError") = nb::borrow(translation_error);
 
-    m.attr("PASSTHROUGH") = static_cast<int>(endweave::Action::Passthrough);
-    m.attr("TRANSLATE") = static_cast<int>(endweave::Action::Translate);
-    m.attr("CANCEL") = static_cast<int>(endweave::Action::Cancel);
-    m.attr("ACTION_TABLE_SIZE") = static_cast<int>(endweave::kActionTableSize);
     m.attr("UNKNOWN") = static_cast<int>(endweave::ProtocolVersion::UNKNOWN);
+
+    nb::enum_<endweave::Action>(m, "Action",
+                                "What a packet costs on a translator. An id the translator does not name costs "
+                                "nothing and must not be touched at all, since assigning the payload back makes "
+                                "the server rebuild the frame.")
+        .value("TRANSLATE", endweave::Action::Translate)
+        .value("CANCEL", endweave::Action::Cancel);
 
     m.def(
         "supported_versions",
@@ -112,49 +154,27 @@ NB_MODULE(_pipeline, m)
         "packet_id"_a, "The packet's name, or None where no version names that id.");
 
     nb::class_<endweave::Session>(m, "Session",
-                                  "One connection's two directions, resolved once when the client's version "
-                                  "is known.")
-        .def(
-            "__init__",
-            [](endweave::Session *self, int client_version, int server_version) {
-                new (self) endweave::Session(endweave::ProtocolVersions::getProtocolVersion(client_version),
-                                             endweave::ProtocolVersions::getProtocolVersion(server_version));
-            },
-            "client_version"_a, "server_version"_a)
-        .def_prop_ro("client_version",
-                     [](const endweave::Session &self) {
-                         return static_cast<int>(self.getClientVersion());
+                                  "What one connection carries across its packets. Both of a connection's "
+                                  "translators are handed the same session.")
+        .def(nb::init<>());
+
+    nb::class_<Translator>(m, "Translator", "The translation from one protocol version to another.")
+        .def(nb::init<int, int>(), "from_version"_a, "to_version"_a)
+        .def_prop_ro("from_version",
+                     [](const Translator &self) {
+                         return self.from_version_;
                      })
-        .def_prop_ro("server_version",
-                     [](const endweave::Session &self) {
-                         return static_cast<int>(self.getServerVersion());
+        .def_prop_ro("to_version",
+                     [](const Translator &self) {
+                         return self.to_version_;
                      })
         .def_prop_ro(
-            "serverbound_actions",
-            [](const endweave::Session &self) {
-                const std::string table = endweave::actionTable(self.getServerboundHandlers());
-                return nb::bytes(table.data(), table.size());
+            "actions",
+            [](const Translator &self) {
+                return self.actions;
             },
-            "One byte per packet id: PASSTHROUGH, TRANSLATE or CANCEL. Index it before calling in; "
-            "a passthrough packet must not be touched at all, since assigning the payload back "
-            "makes the server rebuild the frame.")
-        .def_prop_ro("clientbound_actions",
-                     [](const endweave::Session &self) {
-                         const std::string table = endweave::actionTable(self.getClientboundHandlers());
-                         return nb::bytes(table.data(), table.size());
-                     })
-        .def(
-            "translate_serverbound",
-            [](endweave::Session &self, int packet_id, nb::bytes payload) {
-                return translate(self, self.getServerboundHandlers(), packet_id, std::move(payload));
-            },
-            "packet_id"_a, "payload"_a,
-            "The payload as the server should read it, or None where a transform refused it.")
-        .def(
-            "translate_clientbound",
-            [](endweave::Session &self, int packet_id, nb::bytes payload) {
-                return translate(self, self.getClientboundHandlers(), packet_id, std::move(payload));
-            },
-            "packet_id"_a, "payload"_a,
-            "The payload as the client should read it, or None where a transform refused it.");
+            "The verdict for every packet id that needs one. Read it before calling in; an id it "
+            "does not name is carried untouched.")
+        .def("translate", &translate, "session"_a, "packet_id"_a, "payload"_a,
+             "The payload as the other side should read it, or None where the packet was refused.");
 }

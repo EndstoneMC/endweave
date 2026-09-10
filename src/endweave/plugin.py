@@ -3,10 +3,12 @@
 Endstone's events stand in for the netty pipeline ViaVersion installs itself
 into. A client states its protocol version in RequestNetworkSettings, the first
 packet of a Bedrock connection, where ViaVersion reads it off the Java
-handshake. The blocked version gate then runs on the login event, the last
-point before the world is streamed, in place of the disconnect packet
-ViaVersion writes into the pipe itself. The connection is tracked from there
-until the player quits.
+handshake. That is also where the connection's two translators are resolved, so
+every packet after it is carried by the packet events: received packets towards
+the server's version, sent packets towards the client's. The blocked version
+gate then runs on the login event, the last point before the world is streamed,
+in place of the disconnect packet ViaVersion writes into the pipe itself. The
+connection is tracked from there until the player quits.
 
 See Also:
     com.viaversion.viaversion.protocols.base.v1_7.ServerboundBaseProtocol1_7
@@ -25,16 +27,18 @@ from endstone.event import (
 )
 from endstone.plugin import Plugin
 
+from ._pipeline import Action, TranslationError, packet_name
 from .commands import CommandHandler
 from .config import ConfigurationProvider, EndweaveConfig
-from .connection import ConnectionManager
-from .debug import DebugHandler
+from .connection import Connection, ConnectionManager
+from .debug import DebugHandler, Direction, Packet, PacketType
 from .metrics import EndweaveMetrics
 from .protocol.version import UNKNOWN, get_by_name, get_protocol
 from .update import send_update_message
 from .util import translate_alternate_color_codes
 
 _REQUEST_NETWORK_SETTINGS = 193
+_TRANSLATION_FAILED = "§cEndweave could not translate a packet for your version."
 
 
 class EndweavePlugin(Plugin):
@@ -91,21 +95,86 @@ class EndweavePlugin(Plugin):
 
     @event_handler(priority=EventPriority.LOWEST)
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
-        if event.packet_id != _REQUEST_NETWORK_SETTINGS:
+        if event.packet_id == _REQUEST_NETWORK_SETTINGS:
+            payload = event.payload
+            if len(payload) < 4:
+                return
+
+            client_network_version = int.from_bytes(payload[:4], "big", signed=True)
+            protocol_version = get_protocol(client_network_version)
+            connection = self._connection_manager.get_or_create(str(event.address))
+            connection.protocol_version = protocol_version
             return
 
-        payload = event.payload
-        if len(payload) < 4:
-            return
-
-        client_network_version = int.from_bytes(payload[:4], "big", signed=True)
-        protocol_version = get_protocol(client_network_version)
-        connection = self._connection_manager.get_or_create(str(event.address))
-        connection.protocol_version = protocol_version
+        connection = self._connection_manager.get_connection(str(event.address))
+        if connection is not None:
+            self._translate(connection, event, Direction.SERVERBOUND)
 
     @event_handler(priority=EventPriority.LOWEST)
     def on_packet_send(self, event: PacketSendEvent) -> None:
-        pass
+        connection = self._connection_manager.get_connection(str(event.address))
+        if connection is not None:
+            self._translate(connection, event, Direction.CLIENTBOUND)
+
+    def _translate(
+        self,
+        connection: Connection,
+        event: PacketReceiveEvent | PacketSendEvent,
+        direction: Direction,
+    ) -> None:
+        """Carry one packet across, where the connection has a translator that names its ID.
+
+        Args:
+            connection: The peer the packet belongs to.
+            event: The packet event, whose payload is replaced in place.
+            direction: Direction the packet travels in.
+        """
+        translator = connection.serverbound if direction is Direction.SERVERBOUND else connection.clientbound
+        if translator is None:
+            return
+
+        packet_id = event.packet_id
+        action = translator.actions.get(packet_id)
+        if action is None:
+            return
+
+        debug = self._debug_handler
+        label: str | int = packet_id
+        logged = False
+        if debug.enabled:
+            name = packet_name(packet_id)
+            packet_type = PacketType(packet_id, name.upper(), direction) if name is not None else None
+            logged = debug.should_log(Packet(packet_id, packet_type), direction)
+            if packet_type is not None:
+                label = packet_type.name
+
+        if action is Action.CANCEL:
+            if logged:
+                self.logger.info(f"[{direction.value}] {label} dropped, the other side has no such packet")
+            event.cancel()
+            return
+
+        if logged and debug.log_pre_packet_transform:
+            self.logger.info(f"[{direction.value}] {label} in: {event.payload.hex()}")
+
+        try:
+            payload = translator.translate(connection.session, packet_id, event.payload)
+        except TranslationError as error:
+            debug.error(f"Failed to translate {direction.value} packet {packet_name(packet_id) or packet_id}", error)
+            event.cancel()
+            connection.disconnect(_TRANSLATION_FAILED)
+            return
+
+        if payload is None:
+            if logged:
+                self.logger.info(f"[{direction.value}] {label} refused by a transform")
+            event.cancel()
+            return
+
+        if logged and debug.log_post_packet_transform:
+            self.logger.info(f"[{direction.value}] {label} out: {payload.hex()}")
+
+        event.payload = payload
 
     @event_handler
     def on_player_login(self, event: PlayerLoginEvent) -> None:
