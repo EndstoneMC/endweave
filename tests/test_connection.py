@@ -13,11 +13,6 @@ CLIENT = get_protocol(975)
 SERVER = get_protocol(944)
 ADDRESS = "127.0.0.1:19132"
 
-# The pair the engine carries, plus the version that is wire-identical to the older one.
-CARRIED_SERVER = get_protocol(2168)
-CARRIED_CLIENT = get_protocol(2192)
-CARRIED_ALIAS = get_protocol(2169)
-
 
 @pytest.fixture
 def manager() -> ConnectionManager:
@@ -34,6 +29,12 @@ class TestConnection:
         assert connection.player is None
         assert connection.active is True
         assert connection.pending_disconnect is False
+
+    def test_carries_nothing_before_the_client_states_its_version(self) -> None:
+        connection = Connection(ADDRESS, SERVER)
+
+        assert connection.serverbound is None
+        assert connection.clientbound is None
 
     def test_every_connection_gets_its_own_id(self) -> None:
         assert Connection(ADDRESS, SERVER).id < Connection(ADDRESS, SERVER).id
@@ -75,73 +76,6 @@ class TestConnection:
 
     def test_repr_names_the_address(self) -> None:
         assert ADDRESS in repr(Connection(ADDRESS, SERVER))
-
-
-class TestPipeline:
-    def test_carries_nothing_before_the_client_states_its_version(self) -> None:
-        connection = Connection(ADDRESS, CARRIED_SERVER)
-
-        assert connection.serverbound is None
-        assert connection.clientbound is None
-
-    def test_resolves_a_translator_for_each_direction(self) -> None:
-        connection = Connection(ADDRESS, CARRIED_SERVER)
-
-        connection.protocol_version = CARRIED_CLIENT
-
-        assert connection.serverbound is not None
-        assert (connection.serverbound.from_version, connection.serverbound.to_version) == (2192, 2168)
-        assert connection.clientbound is not None
-        assert (connection.clientbound.from_version, connection.clientbound.to_version) == (2168, 2192)
-
-    def test_carries_nothing_when_both_ends_agree(self) -> None:
-        connection = Connection(ADDRESS, CARRIED_SERVER)
-
-        connection.protocol_version = CARRIED_SERVER
-
-        assert connection.serverbound is None
-        assert connection.clientbound is None
-
-    def test_reads_a_wire_identical_client_as_the_version_it_speaks(self) -> None:
-        connection = Connection(ADDRESS, CARRIED_CLIENT)
-
-        connection.protocol_version = CARRIED_ALIAS
-
-        assert connection.serverbound is not None
-        assert connection.serverbound.from_version == 2168
-
-    def test_leaves_a_wire_identical_client_alone_on_the_version_it_speaks(self) -> None:
-        connection = Connection(ADDRESS, CARRIED_SERVER)
-
-        connection.protocol_version = CARRIED_ALIAS
-
-        assert connection.serverbound is None
-        assert connection.clientbound is None
-
-    def test_carries_nothing_for_a_client_the_engine_does_not_know(self) -> None:
-        connection = Connection(ADDRESS, CARRIED_SERVER)
-
-        connection.protocol_version = CLIENT
-
-        assert connection.serverbound is None
-        assert connection.clientbound is None
-
-    def test_carries_nothing_for_a_server_the_engine_does_not_know(self) -> None:
-        connection = Connection(ADDRESS, SERVER)
-
-        connection.protocol_version = CARRIED_CLIENT
-
-        assert connection.serverbound is None
-        assert connection.clientbound is None
-
-    def test_re_resolves_when_the_client_version_changes(self) -> None:
-        connection = Connection(ADDRESS, CARRIED_SERVER)
-        connection.protocol_version = CARRIED_CLIENT
-
-        connection.protocol_version = CLIENT
-
-        assert connection.serverbound is None
-        assert connection.clientbound is None
 
 
 class TestTracking:

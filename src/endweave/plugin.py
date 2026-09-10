@@ -1,17 +1,17 @@
 """Endweave plugin - protocol translation for Bedrock Edition.
 
 Endstone's events stand in for the netty pipeline ViaVersion installs itself
-into. A client states its protocol version in RequestNetworkSettings, the first
-packet of a Bedrock connection, where ViaVersion reads it off the Java
-handshake. That is also where the connection's two translators are resolved, so
-every packet after it is carried by the packet events: received packets towards
-the server's version, sent packets towards the client's. The blocked version
-gate then runs on the login event, the last point before the world is streamed,
-in place of the disconnect packet ViaVersion writes into the pipe itself. The
-connection is tracked from there until the player quits.
+into. A received packet runs through the base protocol and then the
+connection's serverbound translator on the lowest priority, so other plugins
+read it as the server's version. A sent packet is carried towards the client's
+version on the highest priority, once other plugins have read it as the
+server's, as ViaVersion's encoder sits below the server's own. The login event
+goes to the base protocol, and the connection is tracked from there until the
+player quits.
 
 See Also:
-    com.viaversion.viaversion.protocols.base.v1_7.ServerboundBaseProtocol1_7
+    com.viaversion.viaversion.platform.ViaDecodeHandler
+    com.viaversion.viaversion.platform.ViaEncodeHandler
 """
 
 from pathlib import Path
@@ -33,11 +33,10 @@ from .config import ConfigurationProvider, EndweaveConfig
 from .connection import Connection, ConnectionManager
 from .debug import DebugHandler, Direction, Packet, PacketType
 from .metrics import EndweaveMetrics
-from .protocol.version import UNKNOWN, get_by_name, get_protocol
+from .protocol.base import BaseProtocol
+from .protocol.version import get_protocol
 from .update import send_update_message
-from .util import translate_alternate_color_codes
 
-_REQUEST_NETWORK_SETTINGS = 193
 _TRANSLATION_FAILED = "§cEndweave could not translate a packet for your version."
 
 
@@ -80,6 +79,7 @@ class EndweavePlugin(Plugin):
         server_protocol = self.server.protocol_version
         self.logger.info(f"Detected server protocol {server_protocol} (MC {self.server.minecraft_version})")
         self._connection_manager = ConnectionManager(get_protocol(server_protocol))
+        self._base_protocol = BaseProtocol(self._connection_manager, self._configuration, self.logger)
 
         self.register_events(self)
         self._debug_handler = DebugHandler(
@@ -95,22 +95,11 @@ class EndweavePlugin(Plugin):
 
     @event_handler(priority=EventPriority.LOWEST)
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
-        if event.packet_id == _REQUEST_NETWORK_SETTINGS:
-            payload = event.payload
-            if len(payload) < 4:
-                return
-
-            client_network_version = int.from_bytes(payload[:4], "big", signed=True)
-            protocol_version = get_protocol(client_network_version)
-            connection = self._connection_manager.get_or_create(str(event.address))
-            connection.protocol_version = protocol_version
-            return
-
-        connection = self._connection_manager.get_connection(str(event.address))
+        connection = self._base_protocol.transform_serverbound(event)
         if connection is not None:
             self._translate(connection, event, Direction.SERVERBOUND)
 
-    @event_handler(priority=EventPriority.LOWEST)
+    @event_handler(priority=EventPriority.HIGHEST, ignore_cancelled=True)
     def on_packet_send(self, event: PacketSendEvent) -> None:
         connection = self._connection_manager.get_connection(str(event.address))
         if connection is not None:
@@ -178,30 +167,7 @@ class EndweavePlugin(Plugin):
 
     @event_handler
     def on_player_login(self, event: PlayerLoginEvent) -> None:
-        player = event.player
-        connection = self._connection_manager.get_connection(str(player.address))
-        if event.is_cancelled:
-            if connection is not None:
-                self._connection_manager.on_disconnect(connection)
-            return
-
-        protocol_version = connection.protocol_version if connection is not None else UNKNOWN
-        if protocol_version == UNKNOWN:
-            protocol_version = get_by_name(player.game_version) or UNKNOWN
-
-        if protocol_version in self._configuration.blocked_protocol_versions:
-            event.kick_message = translate_alternate_color_codes(self._configuration.blocked_disconnect_message)
-            event.cancel()
-            if self._configuration.log_blocked_joins:
-                self.logger.info(
-                    f"Blocked join due to unsupported version from {player.address} ({protocol_version.name})"
-                )
-            if connection is not None:
-                self._connection_manager.on_disconnect(connection)
-            return
-
-        if connection is not None:
-            connection.player = player
+        self._base_protocol.on_login(event)
 
     @event_handler
     def on_player_join(self, event: PlayerJoinEvent) -> None:

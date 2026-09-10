@@ -10,10 +10,10 @@ and no player until login finishes, so across the login sequence the address is
 the only identity to hand, where ViaVersion has a uuid from LOGIN_SUCCESS
 onwards. Two things that key cannot do: tell split screen clients on one
 address apart, and identify a NetherNet peer, whose address comes through empty
-because BDS holds its identity as a NetherNet id rather than an address. Both
-wait on Endstone exposing the NetworkIdentifier itself. A peer that shakes
-hands and never logs in is never quit either, so pending connections are capped
-and the oldest are dropped.
+because BDS holds its identity as a NetherNet id rather than an address, so no
+NetherNet peer is tracked. Both wait on Endstone exposing the NetworkIdentifier
+itself. A peer that shakes hands and never logs in is never quit either, so
+pending connections are capped and the oldest are dropped.
 
 ProtocolInfo is folded in, less its connection state, which Bedrock has no
 counterpart for, and its compression flag, which Endstone handles below this.
@@ -54,9 +54,9 @@ _IDS = itertools.count(1)
 class Connection:
     """One peer's connection and the protocol versions on either end of it.
 
-    Setting ``protocol_version`` resolves the pipeline: ``serverbound`` and
-    ``clientbound`` become translators, or None where the two ends already
-    agree or the engine does not carry one of them.
+    ``serverbound`` and ``clientbound`` are the pipeline the base protocol
+    installs on the handshake: a translator each way, or None where the two
+    ends already agree or the engine does not carry one of them.
 
     See Also:
         com.viaversion.viaversion.api.connection.UserConnection
@@ -67,7 +67,7 @@ class Connection:
         self._id = next(_IDS)
         self._address = address
         self._server_protocol_version = server_protocol_version
-        self._protocol_version = UNKNOWN
+        self.protocol_version = UNKNOWN
         self.session = _pipeline.Session()
         self.serverbound: _pipeline.Translator | None = None
         self.clientbound: _pipeline.Translator | None = None
@@ -86,23 +86,6 @@ class Connection:
     @property
     def server_protocol_version(self) -> ProtocolVersion:
         return self._server_protocol_version
-
-    @property
-    def protocol_version(self) -> ProtocolVersion:
-        return self._protocol_version
-
-    @protocol_version.setter
-    def protocol_version(self, protocol_version: ProtocolVersion) -> None:
-        self._protocol_version = protocol_version
-        client = _pipeline.resolve(protocol_version.version)
-        server = _pipeline.resolve(self._server_protocol_version.version)
-        if client == _pipeline.UNKNOWN or server == _pipeline.UNKNOWN or client == server:
-            self.serverbound = None
-            self.clientbound = None
-            return
-
-        self.serverbound = _pipeline.Translator(client, server)
-        self.clientbound = _pipeline.Translator(server, client)
 
     def disconnect(self, reason: str) -> None:
         if self.player is None or not self.active or self.pending_disconnect:
