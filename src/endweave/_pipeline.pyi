@@ -4,8 +4,6 @@ from collections.abc import Mapping
 import enum
 
 
-UNKNOWN: int = -1
-
 class Action(enum.Enum):
     """
     What a packet costs on a translator. An id the translator does not name costs nothing and must not be touched at all, since assigning the payload back makes the server rebuild the frame.
@@ -17,11 +15,6 @@ class Action(enum.Enum):
 
 def supported_versions() -> list[int]:
     """The protocol versions the engine translates between, oldest first."""
-
-def resolve(protocol_version: int) -> int:
-    """
-    The version a protocol id is translated as, applying the wire-identical aliases, or UNKNOWN where the engine does not translate it.
-    """
 
 def packet_name(packet_id: int) -> str | None:
     """The packet's name, or None where no version names that id."""

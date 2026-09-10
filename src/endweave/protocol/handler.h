@@ -15,6 +15,7 @@
 #include <bedrock/protocol/serializer.hpp>
 #include <bedrock/protocol/stream.hpp>
 #include <concepts>
+#include <cstddef>
 #include <expected>
 #include <span>
 #include <string>
@@ -179,6 +180,13 @@ std::expected<void, std::error_code> handle(Session &session, bool &cancelled, b
     return {};
 }
 
+/** @see ViaVersion PacketWrapper#cancel. */
+inline std::expected<void, std::error_code> cancel(Session &, bool &cancelled, bp::BinaryReader &, bp::BinaryWriter &)
+{
+    cancelled = true;
+    return {};
+}
+
 } // namespace detail
 
 /** What a packet costs on a translator, before any buffer is built. The caller answers this by
@@ -198,7 +206,10 @@ namespace detail {
 template <ProtocolVersion From, ProtocolVersion To, int Id>
 consteval PacketHandler handlerFor()
 {
-    if constexpr (shouldHandle<From, To, Id>()) {
+    if constexpr (shouldCancel<From, To, Id>()) {
+        return &cancel;
+    }
+    else if constexpr (shouldHandle<From, To, Id>()) {
         return &handle<From, To, Id>;
     }
     else {
@@ -215,42 +226,16 @@ consteval std::array<PacketHandler, sizeof...(Ids)> makeHandlers(std::integer_se
 template <ProtocolVersion From, ProtocolVersion To>
 inline constexpr auto kHandlers = makeHandlers<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
-consteval Action actionFor()
-{
-    if constexpr (shouldCancel<From, To, Id>()) {
-        return Action::Cancel;
-    }
-    else if constexpr (shouldHandle<From, To, Id>()) {
-        return Action::Translate;
-    }
-    else {
-        return Action::Passthrough;
-    }
-}
-
-template <ProtocolVersion From, ProtocolVersion To, int... Ids>
-consteval std::array<Action, sizeof...(Ids)> makeActions(std::integer_sequence<int, Ids...>)
-{
-    return {actionFor<From, To, Ids>()...};
-}
-
-template <ProtocolVersion From, ProtocolVersion To>
-inline constexpr auto kActions = makeActions<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
-
 } // namespace detail
 
-/** One From-to-To translation, resolved once and then indexed. Both tables are compile-time
- * constants over the pair, so every connection between the same two versions shares them.
+/** One From-to-To translation, resolved once and then indexed. The table is a compile-time
+ * constant over the pair, so every connection between the same two versions shares it.
  * @see ViaVersion Protocol, Velocity StateRegistry.PacketRegistry.ProtocolRegistry. */
 class Translator {
 public:
     constexpr Translator() = default;
 
-    constexpr Translator(std::span<const PacketHandler> handlers, std::span<const Action> actions)
-        : handlers_(handlers), actions_(actions)
-    {
-    }
+    constexpr explicit Translator(std::span<const PacketHandler> handlers) : handlers_(handlers) {}
 
     [[nodiscard]] constexpr PacketHandler get(int id) const
     {
@@ -259,18 +244,20 @@ public:
 
     [[nodiscard]] constexpr Action getAction(int id) const
     {
-        return id >= 0 && std::cmp_less(id, actions_.size()) ? actions_[id] : Action::Passthrough;
+        const PacketHandler handler = get(id);
+        if (handler == nullptr) {
+            return Action::Passthrough;
+        }
+        return handler == &detail::cancel ? Action::Cancel : Action::Translate;
     }
 
-    /** Every id's verdict at once, for a caller building its own lookup. */
-    [[nodiscard]] constexpr std::span<const Action> getActions() const
+    [[nodiscard]] constexpr std::size_t size() const
     {
-        return actions_;
+        return handlers_.size();
     }
 
 private:
     std::span<const PacketHandler> handlers_;
-    std::span<const Action> actions_;
 };
 
 namespace detail {
@@ -280,7 +267,7 @@ constexpr Translator getTranslator(ProtocolVersion to)
 {
     Translator translator;
     ProtocolVersions::visit(to, [&]<ProtocolVersion To>() {
-        translator = Translator{kHandlers<From, To>, kActions<From, To>};
+        translator = Translator{kHandlers<From, To>};
     });
     return translator;
 }

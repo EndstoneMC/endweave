@@ -6,16 +6,15 @@
 #include "endweave/protocol/session.h"
 
 #include <bedrock/protocol/network.h>
-#include <cstddef>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <optional>
-#include <span>
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 namespace nb = nanobind;
@@ -47,23 +46,23 @@ PyObject *translation_error = nullptr;
 struct Translator {
     using Actions = nb::typed<nb::mapping, int, endweave::Action>;
 
-    Translator(int from_version, int to_version)
+    Translator(int from_protocol, int to_protocol)
     {
-        const endweave::ProtocolVersion from = endweave::ProtocolVersions::getProtocolVersion(from_version);
-        const endweave::ProtocolVersion to = endweave::ProtocolVersions::getProtocolVersion(to_version);
+        const endweave::ProtocolVersion from = endweave::ProtocolVersions::getProtocolVersion(from_protocol);
+        const endweave::ProtocolVersion to = endweave::ProtocolVersions::getProtocolVersion(to_protocol);
         if (from == endweave::ProtocolVersion::UNKNOWN || to == endweave::ProtocolVersion::UNKNOWN) {
             throw nb::value_error("endweave: the engine does not translate one of these protocol versions");
         }
 
         engine = endweave::getTranslator(from, to);
-        from_version_ = static_cast<int>(from);
-        to_version_ = static_cast<int>(to);
+        from_version = static_cast<int>(from);
+        to_version = static_cast<int>(to);
 
         nb::dict verdicts;
-        const std::span<const endweave::Action> table = engine.getActions();
-        for (std::size_t id = 0; id < table.size(); ++id) {
-            if (table[id] != endweave::Action::Passthrough) {
-                verdicts[nb::int_(static_cast<int>(id))] = nb::cast(table[id]);
+        for (int id = 0; std::cmp_less(id, engine.size()); ++id) {
+            const endweave::Action action = engine.getAction(id);
+            if (action != endweave::Action::Passthrough) {
+                verdicts[nb::int_(id)] = nb::cast(action);
             }
         }
         actions = nb::borrow<Actions>(nb::module_::import_("types").attr("MappingProxyType")(verdicts));
@@ -71,29 +70,25 @@ struct Translator {
 
     endweave::Translator engine;
     Actions actions;
-    int from_version_ = 0;
-    int to_version_ = 0;
+    int from_version = 0;
+    int to_version = 0;
 };
 
 std::optional<nb::bytes> translate(const Translator &translator, endweave::Session &session, int packet_id,
                                    nb::bytes payload)
 {
-    switch (translator.engine.getAction(packet_id)) {
-    case endweave::Action::Passthrough:
+    const endweave::PacketHandler handler = translator.engine.get(packet_id);
+    if (handler == nullptr) {
         // The caller reads `actions` before calling, so reaching here means it asked for a packet
         // with nothing to do. Hand the payload back rather than inventing an error.
         return payload;
-    case endweave::Action::Cancel:
-        return std::nullopt;
-    case endweave::Action::Translate:
-        break;
     }
 
     std::string translated;
     bp::BinaryWriter out{translated};
     bp::BinaryReader in{std::string_view{payload.c_str(), payload.size()}};
     bool cancelled = false;
-    const auto result = translator.engine.get(packet_id)(session, cancelled, in, out);
+    const auto result = handler(session, cancelled, in, out);
     if (!result) {
         raiseTranslationError(packet_id, "translate", result.error());
     }
@@ -111,8 +106,6 @@ NB_MODULE(_pipeline, m)
 
     translation_error = PyErr_NewException("endweave._pipeline.TranslationError", PyExc_RuntimeError, nullptr);
     m.attr("TranslationError") = nb::borrow(translation_error);
-
-    m.attr("UNKNOWN") = static_cast<int>(endweave::ProtocolVersion::UNKNOWN);
 
     nb::enum_<endweave::Action>(m, "Action",
                                 "What a packet costs on a translator. An id the translator does not name costs "
@@ -134,15 +127,6 @@ NB_MODULE(_pipeline, m)
         "The protocol versions the engine translates between, oldest first.");
 
     m.def(
-        "resolve",
-        [](int protocol_version) {
-            return static_cast<int>(endweave::ProtocolVersions::getProtocolVersion(protocol_version));
-        },
-        "protocol_version"_a,
-        "The version a protocol id is translated as, applying the wire-identical aliases, or "
-        "UNKNOWN where the engine does not translate it.");
-
-    m.def(
         "packet_name",
         [](int packet_id) -> std::optional<std::string> {
             const std::string_view name = bp::enum_name(static_cast<bp::MinecraftPacketIds>(packet_id));
@@ -162,11 +146,11 @@ NB_MODULE(_pipeline, m)
         .def(nb::init<int, int>(), "from_version"_a, "to_version"_a)
         .def_prop_ro("from_version",
                      [](const Translator &self) {
-                         return self.from_version_;
+                         return self.from_version;
                      })
         .def_prop_ro("to_version",
                      [](const Translator &self) {
-                         return self.to_version_;
+                         return self.to_version;
                      })
         .def_prop_ro(
             "actions",

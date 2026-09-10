@@ -5,13 +5,11 @@ from __future__ import annotations
 import pytest
 
 from endweave._pipeline import (
-    UNKNOWN,
     Action,
     Session,
     TranslationError,
     Translator,
     packet_name,
-    resolve,
     supported_versions,
 )
 
@@ -42,15 +40,6 @@ class TestVersions:
         assert versions == sorted(versions)
         assert {OLD, NEW} <= set(versions)
 
-    def test_resolves_a_carried_version_to_itself(self) -> None:
-        assert resolve(OLD) == OLD
-
-    def test_resolves_a_wire_identical_version_to_the_one_it_speaks(self) -> None:
-        assert resolve(ALIAS) == OLD
-
-    def test_does_not_resolve_a_version_it_cannot_carry(self) -> None:
-        assert resolve(UNSUPPORTED) == UNKNOWN
-
 
 class TestPacketNames:
     def test_names_a_packet_the_wire_carries(self) -> None:
@@ -68,10 +57,13 @@ class TestTranslatorLookup:
 
     def test_reads_an_alias_as_the_version_it_speaks(self) -> None:
         assert Translator(ALIAS, NEW).from_version == OLD
+        assert Translator(NEW, ALIAS).to_version == OLD
 
     def test_refuses_a_version_it_cannot_carry(self) -> None:
         with pytest.raises(ValueError):
             Translator(UNSUPPORTED, OLD)
+        with pytest.raises(ValueError):
+            Translator(OLD, UNSUPPORTED)
 
 
 class TestActions:
