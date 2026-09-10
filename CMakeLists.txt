@@ -28,7 +28,7 @@ set_target_properties(bedrock_protocol PROPERTIES
     VISIBILITY_INLINES_HIDDEN ON
 )
 
-find_package(Python 3.10 
+find_package(Python 3.10
     REQUIRED COMPONENTS Interpreter Development.Module
     OPTIONAL_COMPONENTS Development.SABIModule
 )
