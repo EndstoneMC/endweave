@@ -45,7 +45,6 @@ class StubPlugin(EndweavePlugin):
     ) -> None:
         super().__init__()
         self._stub_logger = logger
-        self._stub_server = MagicMock()
         self._configuration = configuration
         self._connection_manager = ConnectionManager(server_protocol)
         self._base_protocol = BaseProtocol(self._connection_manager, configuration, logger)
@@ -54,10 +53,6 @@ class StubPlugin(EndweavePlugin):
     @property
     def logger(self) -> MagicMock:
         return self._stub_logger
-
-    @property
-    def server(self) -> MagicMock:
-        return self._stub_server
 
 
 @pytest.fixture
@@ -255,17 +250,26 @@ class TestQuit:
         assert connection.active is True
 
 
-class TestReload:
-    def test_kicks_every_online_player(self, make_plugin: Callable[..., StubPlugin], mock_logger: MagicMock) -> None:
-        plugin = make_plugin('reload-disconnect-msg = "&cBack in a moment"\n')
-        players = [MagicMock(), MagicMock()]
-        plugin.server.online_players = players
+class TestDisable:
+    def test_kicks_a_player_whose_connection_is_translated(self, make_plugin: Callable[..., StubPlugin]) -> None:
+        plugin = make_plugin('reload-disconnect-msg = "&cBack in a moment"\n', server_protocol=CARRIED_SERVER)
+        plugin.on_packet_receive(handshake(CARRIED_CLIENT))
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.player = MagicMock()
 
-        plugin.on_reload()
+        plugin.on_disable()
 
-        for player in players:
-            player.kick.assert_called_once_with("§cBack in a moment")
-        mock_logger.error.assert_called_once()
+        connection.player.kick.assert_called_once_with("§cBack in a moment")
+
+    def test_leaves_a_player_on_the_server_version_alone(self, make_plugin: Callable[..., StubPlugin]) -> None:
+        plugin = make_plugin(server_protocol=CARRIED_SERVER)
+        plugin.on_packet_receive(handshake(CARRIED_SERVER.version))
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.player = MagicMock()
+
+        plugin.on_disable()
+
+        connection.player.kick.assert_not_called()
 
 
 class TestDeclaration:
