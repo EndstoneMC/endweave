@@ -1,8 +1,6 @@
 #include "map.h"
 
 #include <bedrock/protocol/enum.hpp>
-#include <bedrock/protocol/map.h>
-#include <cstdint>
 #include <utility>
 
 namespace ew = endweave;

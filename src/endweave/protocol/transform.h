@@ -19,32 +19,17 @@ template <class From, class To>
 struct Transformer;
 
 template <class From, class To>
-struct WireCompatible : std::false_type {};
-
-template <class From, class To>
-inline constexpr bool wire_equal_v = std::is_same_v<From, To> || WireCompatible<From, To>::value;
-
-namespace detail {
-
-template <class Source, class To>
-concept TransformableFrom = requires(Context<To> &ctx, Source &&source) {
-    {
-        Transformer<std::remove_cvref_t<Source>, To>::transform(ctx, std::forward<Source>(source))
-    } -> std::same_as<void>;
+concept Transformable = requires(Context<To> &ctx, From &&from) {
+    { Transformer<std::remove_cvref_t<From>, To>::transform(ctx, std::forward<From>(from)) } -> std::same_as<void>;
 };
 
-} // namespace detail
-
-template <class From, class To>
-concept Transformable = detail::TransformableFrom<From, To>;
-
-/** Fills `out`, through a context of its own over the caller's connection and cancel. */
+/** Transforms `from` into `out`, sharing the caller's session and cancel flag. */
 template <class To, class From, class Parent>
 constexpr void transform_into(const Context<Parent> &ctx, From &&from, To &out)
 {
-    static_assert(detail::TransformableFrom<From, To>,
+    static_assert(Transformable<From, To>,
                   "endweave: no Transformer<From, To>::transform accepting this value category");
-    if constexpr (detail::TransformableFrom<From, To>) {
+    if constexpr (Transformable<From, To>) {
         Context<To> child = ctx.with(out);
         Transformer<std::remove_cvref_t<From>, To>::transform(child, std::forward<From>(from));
     }
@@ -60,10 +45,8 @@ template <class To, class From, class Parent>
 
 namespace detail {
 
-/** Where `To` carries a member named like `From`'s member `I`, moves it across --
- * directly when the two are one type, through their Transformer when they are not.
- * A member the other side does not name is left alone, so a hand-written body can
- * call this for the bulk and then write only what differs. */
+/** Moves member `I` of `from` into the same-named member of `to`, transforming it if the types
+ * differ. Does nothing if `to` has no such member. */
 template <std::size_t I, class From, class To, class Parent>
 constexpr void assign_member(const Context<Parent> &ctx, From &from, To &to)
 {
@@ -102,10 +85,7 @@ consteval bool memberwise_complete()
     if constexpr (!bedrock::protocol::Reflected<From> || !bedrock::protocol::Reflected<To>) {
         return false;
     }
-    // Shape alone does not make two types the same type: NormalTransactionData and
-    // InventoryMismatchData both hold one `transaction` and mean different things, and BDS
-    // puts them in one variant. Only a type meeting itself across snapshots copies member
-    // for member.
+    // Matching members aren't enough: NormalTransactionData and InventoryMismatchData look alike.
     else if constexpr (bedrock::protocol::struct_name<From>() != bedrock::protocol::struct_name<To>()) {
         return false;
     }
@@ -118,16 +98,12 @@ consteval bool memberwise_complete()
 
 } // namespace detail
 
-/** Whether every member the destination carries is named by the source and can reach
- * it. The test is deliberately one-sided. A member the destination drops asks nothing
- * of anyone -- the field is gone and its contents have nowhere to go. A member the
- * destination gained does: something has to say what it holds, and the answer is
- * rarely the default. A rename reads as both at once, so it fails here too. */
+/** Whether every member of `To` can be filled from a same-named member of `From`. Members only
+ * `From` has are ignored; a member only `To` has, or a rename, makes this false. */
 template <class From, class To>
 inline constexpr bool memberwise_complete_v = detail::memberwise_complete<From, To>();
 
-/** Moves every member `To` names alike across. The pack expands, so this costs the
- * member assignments and nothing else. */
+/** Moves each member of `from` into the same-named member of `to`. */
 template <class From, class To, class Parent>
 constexpr void transform_members(const Context<Parent> &ctx, From &&from, To &to)
 {
@@ -137,10 +113,8 @@ constexpr void transform_members(const Context<Parent> &ctx, From &&from, To &to
     }(std::make_index_sequence<bedrock::protocol::field_count<F>()>{});
 }
 
-/** Two snapshots that name the same members need nothing written by hand: only the
- * serialisers differ, which the pair of types already carries. A pair that is not
- * memberwise-complete falls back to the undefined primary, so it stays a build
- * error until someone writes what the difference means. */
+/** Copies member by member when the pair is memberwise complete. Any other pair needs a
+ * hand-written Transformer. */
 template <class From, class To>
     requires memberwise_complete_v<From, To>
 struct Transformer<From, To> {
@@ -167,7 +141,7 @@ public:
     TransformProxy &operator=(TransformProxy &&) = delete;
 
     template <class To>
-        requires detail::TransformableFrom<Source, To>
+        requires Transformable<Source, To>
     [[nodiscard]] constexpr operator To() &&
     {
         return transform_to<To>(ctx_, static_cast<Source &&>(source_));
@@ -209,10 +183,8 @@ struct Transformer<std::vector<From>, std::vector<To>> {
     }
 };
 
-/** An alternative keeps its index across the hop: that index is the discriminant BDS
- * writes, so the arm a packet arrived on is the arm it leaves on. Two arms of one
- * variant can hold the same members -- NormalTransactionData and InventoryMismatchData
- * both hold a `transaction` -- and matching them by shape would swap them silently. */
+/** Keeps the active alternative's index, since BDS writes it as the discriminant. Alternatives are
+ * matched by index, never by shape. */
 template <class... From, class... To>
     requires(sizeof...(From) == sizeof...(To))
 struct Transformer<std::variant<From...>, std::variant<To...>> {

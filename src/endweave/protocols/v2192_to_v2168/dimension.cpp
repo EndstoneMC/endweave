@@ -1,7 +1,5 @@
 #include "dimension.h"
 
-#include <utility>
-
 namespace ew = endweave;
 
 namespace endweave {

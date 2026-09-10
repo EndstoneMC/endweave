@@ -2,34 +2,26 @@
 
 #include <array>
 #include <cstddef>
+#include <optional>
 #include <utility>
 
 namespace endweave {
-
-/** @see ViaVersion ProtocolVersion. */
-enum class ProtocolVersion : int {
-    UNKNOWN = -1,
-    v26_40 = 2168,
-    v26_50 = 2192,
-};
 
 namespace ProtocolVersions {
 
 /** @see Velocity ProtocolVersion#SUPPORTED_VERSIONS. */
 constexpr std::array SUPPORTED_VERSIONS{
-    ProtocolVersion::v26_40,
-    ProtocolVersion::v26_50,
+    2168, // 1.26.40
+    2192, // 1.26.50
 };
 
-/** Versions that reach the wire but encode every modelled packet exactly as a supported one does,
- * and so route as it rather than earning handler tables of their own. The claim is not taken on
- * trust: `identical.h` holds each pair against the schema, so a version that stops being identical
- * fails the build there instead of translating as the wrong era. */
-constexpr std::array<std::pair<int, ProtocolVersion>, 1> WIRE_IDENTICAL{{
-    {2169, ProtocolVersion::v26_40}, // 1.26.45
+/** Versions that encode every packet the same as a supported version and are routed as it.
+ * `identical.h` checks each entry at compile time. */
+constexpr std::array<std::pair<int, int>, 1> WIRE_IDENTICAL{{
+    {2169, 2168}, // 1.26.45
 }};
 
-constexpr std::size_t indexOf(ProtocolVersion version)
+constexpr std::size_t indexOf(int version)
 {
     for (std::size_t i = 0; i < SUPPORTED_VERSIONS.size(); ++i) {
         if (SUPPORTED_VERSIONS[i] == version) {
@@ -40,10 +32,10 @@ constexpr std::size_t indexOf(ProtocolVersion version)
 }
 
 /** @see Velocity ProtocolVersion#getProtocolVersion(int). */
-constexpr ProtocolVersion getProtocolVersion(int protocol_version)
+constexpr std::optional<int> getProtocolVersion(int protocol_version)
 {
-    for (const ProtocolVersion version : SUPPORTED_VERSIONS) {
-        if (static_cast<int>(version) == protocol_version) {
+    for (const int version : SUPPORTED_VERSIONS) {
+        if (version == protocol_version) {
             return version;
         }
     }
@@ -52,11 +44,11 @@ constexpr ProtocolVersion getProtocolVersion(int protocol_version)
             return routes_as;
         }
     }
-    return ProtocolVersion::UNKNOWN;
+    return std::nullopt;
 }
 
 template <class F>
-constexpr bool visit(ProtocolVersion version, F &&visitor)
+constexpr bool visit(int version, F &&visitor)
 {
     return [&]<std::size_t... I>(std::index_sequence<I...>) {
         return (
@@ -67,7 +59,7 @@ constexpr bool visit(ProtocolVersion version, F &&visitor)
 
 } // namespace ProtocolVersions
 
-consteval ProtocolVersion step(ProtocolVersion from, ProtocolVersion to)
+consteval int step(int from, int to)
 {
     const std::size_t here = ProtocolVersions::indexOf(from);
     const std::size_t there = ProtocolVersions::indexOf(to);

@@ -4,8 +4,7 @@ namespace endweave {
 
 class Session;
 
-/** The connection every transform on one packet shares, the cancel any of them may answer
- * with, and the object this one fills in.
+/** What a transform works with: the session, the packet's cancel flag, and the object to fill.
  * @see ViaVersion PacketWrapper.
  */
 template <class To>
@@ -21,22 +20,20 @@ public:
         return session_;
     }
 
-    /** What this transform writes into, in place of returning it. */
+    /** The object this transform fills. */
     [[nodiscard]] To &out() const noexcept
     {
         return out_;
     }
 
-    /** The context a nested field's transform writes through, over this one's connection and
-     * cancel. */
+    /** A context for a nested field, sharing this one's session and cancel flag. */
     template <class Child>
     [[nodiscard]] Context<Child> with(Child &out) const noexcept
     {
         return Context<Child>{session_, cancelled_, out};
     }
 
-    /** Drops the packet rather than translating it, for a source the destination cannot
-     * express. Return straight after; nothing written into the destination is read.
+    /** Drops the packet. Return right after; nothing written to the output is used.
      * @see ViaVersion PacketWrapper#cancel.
      */
     void cancel() const noexcept

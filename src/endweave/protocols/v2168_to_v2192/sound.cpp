@@ -1,11 +1,7 @@
 #include "sound.h"
 
-#include <bedrock/protocol/enum.hpp>
-#include <expected>
 #include <optional>
-#include <system_error>
 #include <utility>
-#include <variant>
 
 namespace endweave {
 void Transformer<bp::PlaySoundPacket_<2168>, bp::PlaySoundPacket_<2192>>::transform(

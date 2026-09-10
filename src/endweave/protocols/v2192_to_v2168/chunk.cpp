@@ -12,8 +12,7 @@ namespace ew = endweave;
 namespace endweave {
 namespace {
 
-/** 2168 writes sixteen values a row behind no length, so a row that arrived shorter leaves the rest
- * of its sixteen at zero rather than putting a row the client cannot read on the wire. */
+/** 2168 rows are exactly sixteen values, so short rows are zero-padded and long ones truncated. */
 std::optional<std::array<std::array<std::int8_t, 16>, 16>> fixedRows(
     std::optional<std::array<std::vector<std::int8_t>, 16>> &&rows)
 {

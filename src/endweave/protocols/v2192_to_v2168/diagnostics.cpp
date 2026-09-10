@@ -1,7 +1,6 @@
 #include "diagnostics.h"
 
 #include <bedrock/protocol/enum.hpp>
-#include <utility>
 
 namespace ew = endweave;
 

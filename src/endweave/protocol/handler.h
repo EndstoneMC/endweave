@@ -1,7 +1,7 @@
 #pragma once
 
-#include "endweave/protocol/cancel.h"
 #include "endweave/protocol/identical.h"
+#include "endweave/protocol/packet.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/transform.h"
 #include "endweave/protocol/version.h"
@@ -11,10 +11,8 @@
 
 #include <array>
 #include <bedrock/protocol.hpp>
-#include <bedrock/protocol/packet.hpp>
 #include <bedrock/protocol/serializer.hpp>
 #include <bedrock/protocol/stream.hpp>
-#include <concepts>
 #include <cstddef>
 #include <expected>
 #include <span>
@@ -27,101 +25,42 @@ namespace bp = bedrock::protocol;
 
 namespace endweave {
 
-template <ProtocolVersion V, int Id>
-using packet_of = bp::packet_of_t<static_cast<int>(V), Id>;
-
-template <ProtocolVersion V, int Id>
-inline constexpr bool has_packet = bp::has_packet_v<static_cast<int>(V), Id>;
-
-template <ProtocolVersion From, ProtocolVersion To, int Id>
-concept Rewritable = requires(packet_of<From, Id> &packet) {
-    { Rewriter<From, To, Id>::rewrite(packet) } -> std::same_as<void>;
-};
-
 namespace detail {
 
 inline constexpr int kSkipBegin = static_cast<int>(bp::MinecraftPacketIds::TitleSpecificPacketsStart);
 inline constexpr int kSkipEnd = static_cast<int>(bp::MinecraftPacketIds::TitleSpecificPacketsEnd);
 
-template <ProtocolVersion V>
-inline constexpr int kPacketIdCount = static_cast<int>(bp::MinecraftPacketIds_<static_cast<int>(V)>::EndId);
+template <int V>
+inline constexpr int kPacketIdCount = static_cast<int>(bp::MinecraftPacketIds_<V>::EndId);
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
-consteval bool pathHasPacket()
-{
-    if constexpr (!has_packet<From, Id>) {
-        return false;
-    }
-    else if constexpr (From == To) {
-        return true;
-    }
-    else {
-        return pathHasPacket<step(From, To), To, Id>();
-    }
-}
+template <int From, int To, int Id>
+inline constexpr bool path_has_packet_v = has_packet_v<From, Id> && path_has_packet_v<step(From, To), To, Id>;
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
-consteval bool cancelledOnPath()
-{
-    if constexpr (From == To) {
-        return false;
-    }
-    else {
-        return cancel_v<From, step(From, To), Id> || cancelledOnPath<step(From, To), To, Id>();
-    }
-}
+template <int V, int Id>
+inline constexpr bool path_has_packet_v<V, V, Id> = has_packet_v<V, Id>;
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
-consteval bool shouldCancel()
-{
-    if constexpr (Id >= kSkipBegin && Id <= kSkipEnd) {
-        return false;
-    }
-    else if constexpr (!has_packet<From, Id>) {
-        return false;
-    }
-    else {
-        return !pathHasPacket<From, To, Id>() || cancel_v<From, To, Id> || cancelledOnPath<From, To, Id>();
-    }
-}
+template <int From, int To, int Id>
+inline constexpr bool should_cancel_v =
+    !(Id >= kSkipBegin && Id <= kSkipEnd) && has_packet_v<From, Id> && !path_has_packet_v<From, To, Id>;
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
-consteval bool rewrites()
-{
-    return Rewritable<From, To, Id>;
-}
+template <int From, int To, int Id>
+inline constexpr bool should_translate_v =
+    From != To && !(Id >= kSkipBegin && Id <= kSkipEnd) && path_has_packet_v<From, To, Id> &&
+    (Rewritable<From, To, Id> || !std::is_same_v<packet_of_t<From, Id>, packet_of_t<To, Id>>);
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
-consteval bool shouldHandle()
-{
-    if constexpr (From == To || (Id >= kSkipBegin && Id <= kSkipEnd)) {
-        return false;
-    }
-    else if constexpr (!pathHasPacket<From, To, Id>() || shouldCancel<From, To, Id>()) {
-        return false;
-    }
-    else {
-        return rewrites<From, To, Id>() || !wire_equal_v<packet_of<From, Id>, packet_of<To, Id>>;
-    }
-}
-
-template <ProtocolVersion Cur, ProtocolVersion To, int Id>
-void chain(const Context<packet_of<To, Id>> &ctx, packet_of<Cur, Id> &&from)
+template <int Cur, int To, int Id>
+void chain(const Context<packet_of_t<To, Id>> &ctx, packet_of_t<Cur, Id> &&from)
 {
     if constexpr (Cur == To) {
         ctx.out() = std::move(from);
     }
-    else if constexpr (std::is_same_v<packet_of<Cur, Id>, packet_of<step(Cur, To), Id>>) {
+    else if constexpr (std::is_same_v<packet_of_t<Cur, Id>, packet_of_t<step(Cur, To), Id>>) {
         chain<step(Cur, To), To, Id>(ctx, std::move(from));
     }
     else {
-        static_assert(!WireCompatible<packet_of<Cur, Id>, packet_of<step(Cur, To), Id>>::value,
-                      "endweave: this hop is declared wire-compatible, yet the chain has to hold the packet as an "
-                      "object across it -- a hop further along that reshapes forces that. Write the Transformer for "
-                      "this pair and drop the WireCompatible.");
-        packet_of<step(Cur, To), Id> next;
+        packet_of_t<step(Cur, To), Id> next;
         endweave::transform_into(ctx, std::move(from), next);
-        // A hop that dropped the packet leaves nothing worth carrying to the one after it.
+        // Stop if a hop cancelled the packet.
         if (ctx.isCancelled()) {
             return;
         }
@@ -129,16 +68,15 @@ void chain(const Context<packet_of<To, Id>> &ctx, packet_of<Cur, Id> &&from)
     }
 }
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
+template <int From, int To, int Id>
 std::expected<void, std::error_code> handle(Session &session, bool &cancelled, bp::BinaryReader &in,
                                             bp::BinaryWriter &out)
 {
-    auto result = bp::deserialize<packet_of<From, Id>>(in);
+    auto result = bp::deserialize<packet_of_t<From, Id>>(in);
     if (!result) {
         return std::unexpected(result.error());
     }
-    // A schema that models only part of a packet still deserialises, and the transform then
-    // builds its answer from half a source. The bytes left over are the only sign of it.
+    // Leftover bytes mean the schema only models part of the packet.
     if (in.getUnreadLength() != 0) {
         return std::unexpected(std::make_error_code(std::errc::protocol_error));
     }
@@ -149,26 +87,23 @@ std::expected<void, std::error_code> handle(Session &session, bool &cancelled, b
     if constexpr (Rewritable<From, To, Id>) {
         Rewriter<From, To, Id>::rewrite(packet);
     }
-    // The rewrite already made the packet mean what To expects, so a pair that encodes the
-    // same bytes needs no destination struct and no Transformer.
-    if constexpr (wire_equal_v<packet_of<From, Id>, packet_of<To, Id>>) {
+    // Already rewritten for To, so an unchanged type is re-encoded as is.
+    if constexpr (std::is_same_v<packet_of_t<From, Id>, packet_of_t<To, Id>>) {
         bp::serialize(writer, packet);
     }
     else {
-        packet_of<To, Id> translated_packet;
-        chain<From, To, Id>(Context<packet_of<To, Id>>{session, cancelled, translated_packet}, std::move(packet));
-        // A transform anywhere on the chain may have dropped the packet, and whatever it wrote
-        // into the destination before that means nothing.
+        packet_of_t<To, Id> translated_packet;
+        chain<From, To, Id>(Context<packet_of_t<To, Id>>{session, cancelled, translated_packet}, std::move(packet));
+        // Discard whatever was written before a cancel.
         if (cancelled) {
             return {};
         }
         bp::serialize(writer, translated_packet);
     }
 
-    // The destination has to be able to read back what was just written for it. Serialiser
-    // and deserialiser are generated apart, so nothing else holds the pair to each other.
+    // Read it back to catch a serializer and deserializer that disagree.
     bp::BinaryReader back{translated};
-    const auto check = bp::deserialize<packet_of<To, Id>>(back);
+    const auto check = bp::deserialize<packet_of_t<To, Id>>(back);
     if (!check) {
         return std::unexpected(check.error());
     }
@@ -189,8 +124,7 @@ inline std::expected<void, std::error_code> cancel(Session &, bool &cancelled, b
 
 } // namespace detail
 
-/** What a packet costs on a translator, before any buffer is built. The caller answers this by
- * id first, so a packet that needs nothing never crosses back into the engine. */
+/** How a translator handles a packet id, so the caller can skip ids that need nothing. */
 enum class Action : char {
     Passthrough = 0,
     Translate = 1,
@@ -203,13 +137,13 @@ using PacketHandler = std::expected<void, std::error_code> (*)(Session &, bool &
 
 namespace detail {
 
-template <ProtocolVersion From, ProtocolVersion To, int Id>
+template <int From, int To, int Id>
 consteval PacketHandler handlerFor()
 {
-    if constexpr (shouldCancel<From, To, Id>()) {
+    if constexpr (should_cancel_v<From, To, Id>) {
         return &cancel;
     }
-    else if constexpr (shouldHandle<From, To, Id>()) {
+    else if constexpr (should_translate_v<From, To, Id>) {
         return &handle<From, To, Id>;
     }
     else {
@@ -217,19 +151,18 @@ consteval PacketHandler handlerFor()
     }
 }
 
-template <ProtocolVersion From, ProtocolVersion To, int... Ids>
+template <int From, int To, int... Ids>
 consteval std::array<PacketHandler, sizeof...(Ids)> makeHandlers(std::integer_sequence<int, Ids...>)
 {
     return {handlerFor<From, To, Ids>()...};
 }
 
-template <ProtocolVersion From, ProtocolVersion To>
+template <int From, int To>
 inline constexpr auto kHandlers = makeHandlers<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
 
 } // namespace detail
 
-/** One From-to-To translation, resolved once and then indexed. The table is a compile-time
- * constant over the pair, so every connection between the same two versions shares it.
+/** The handler table for one From-to-To pair, built at compile time and shared by every connection.
  * @see ViaVersion Protocol, Velocity StateRegistry.PacketRegistry.ProtocolRegistry. */
 class Translator {
 public:
@@ -262,11 +195,11 @@ private:
 
 namespace detail {
 
-template <ProtocolVersion From>
-constexpr Translator getTranslator(ProtocolVersion to)
+template <int From>
+constexpr Translator getTranslator(int to)
 {
     Translator translator;
-    ProtocolVersions::visit(to, [&]<ProtocolVersion To>() {
+    ProtocolVersions::visit(to, [&]<int To>() {
         translator = Translator{kHandlers<From, To>};
     });
     return translator;
@@ -275,10 +208,10 @@ constexpr Translator getTranslator(ProtocolVersion to)
 } // namespace detail
 
 /** @see Velocity StateRegistry.PacketRegistry#getProtocolRegistry. */
-constexpr Translator getTranslator(ProtocolVersion from, ProtocolVersion to)
+constexpr Translator getTranslator(int from, int to)
 {
     Translator translator;
-    ProtocolVersions::visit(from, [&]<ProtocolVersion From>() {
+    ProtocolVersions::visit(from, [&]<int From>() {
         translator = detail::getTranslator<From>(to);
     });
     return translator;

@@ -1,9 +1,8 @@
 #include "inventory.h"
 
 #include <bedrock/protocol/enum.hpp>
-#include <bedrock/protocol/transaction.h>
+#include <bedrock/protocol/item.h>
 #include <utility>
-#include <variant>
 
 namespace ew = endweave;
 

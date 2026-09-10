@@ -4,7 +4,6 @@
 
 #include <bedrock/protocol/enum.hpp>
 #include <bedrock/protocol/transaction.h>
-#include <cstddef>
 #include <utility>
 
 namespace ew = endweave;

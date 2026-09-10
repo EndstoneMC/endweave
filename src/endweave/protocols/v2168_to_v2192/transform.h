@@ -15,9 +15,3 @@
 #include "shape.h"
 #include "sound.h"
 #include "trade.h"
-
-namespace bp = bedrock::protocol;
-
-namespace endweave {
-
-} // namespace endweave

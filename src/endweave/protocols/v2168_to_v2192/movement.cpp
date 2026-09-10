@@ -1,5 +1,6 @@
 #include "movement.h"
 
+#include <bedrock/protocol/item.h>
 #include <cstdint>
 #include <utility>
 

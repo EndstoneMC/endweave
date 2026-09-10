@@ -7,10 +7,9 @@
 
 namespace endweave {
 
-/** What one connection carries across its packets, for a transform that needs more than the
- * packet in front of it. Holds no version and no tables: which translation runs is the
- * translator's business, and one connection hands the same session to both of its directions.
- * @see ViaVersion UserConnection (api) and UserConnectionImpl (common). */
+/** Per-connection state that transforms keep across packets. Both directions of a connection
+ * share one session.
+ * @see ViaVersion UserConnection, UserConnectionImpl. */
 class Session {
 public:
     Session() = default;

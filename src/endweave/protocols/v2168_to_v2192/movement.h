@@ -1,11 +1,8 @@
 #pragma once
 
 #include "endweave/protocol/transform.h"
-#include "inventory.h"
 
-#include <bedrock/protocol/actor.h>
 #include <bedrock/protocol/movement.h>
-#include <bedrock/protocol/player.h>
 
 namespace bp = bedrock::protocol;
 

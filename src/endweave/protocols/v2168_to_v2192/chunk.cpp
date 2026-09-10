@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <string>
 #include <utility>
 #include <vector>
 
@@ -13,8 +12,7 @@ namespace ew = endweave;
 namespace endweave {
 namespace {
 
-/** 2192 gives each row a length of its own where 2168 writes sixteen behind none. The rows are the
- * same sixteen values either way, so only the spelling changes. */
+/** 2168 writes sixteen fixed-size rows; 2192 length-prefixes each row. */
 std::optional<std::array<std::vector<std::int8_t>, 16>> rowsOf(
     std::optional<std::array<std::array<std::int8_t, 16>, 16>> &&fixed)
 {
