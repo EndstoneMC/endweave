@@ -10,7 +10,12 @@ different protocol versions by rewriting packets at the network layer. Inspired 
 ## Supported Versions
 
 | Minecraft Version | Protocol |
-|-------------------|----------|
+| ----------------- | -------- |
+| 1.26.40-1.26.44   | 2168     |
+| 1.26.45           | 2169     |
+| 1.26.5x           | 2192     |
+
+<!-- Not yet carried by the 0.5.0 engine:
 | 1.21.120-1.21.123 | 859      |
 | 1.21.124          | 860      |
 | 1.21.130-1.21.132 | 898      |
@@ -18,13 +23,24 @@ different protocol versions by rewriting packets at the network layer. Inspired 
 | 1.26.10-1.26.13   | 944      |
 | 1.26.20           | 975      |
 | 1.26.30-1.26.32   | 1001     |
-| 1.26.40-1.26.44   | 2168     |
-| 1.26.45           | 2169     |
-| 1.26.5x           | 2192     |
+-->
 
 The names in the left column are the ones Endweave uses everywhere: `/endweave list` prints them, and
 `block-versions` in `config.toml` accepts them as well as any single version they cover. `1.26.5x` is the whole hotfix
 line, 1.26.50 through 1.26.59.
+
+Since 0.5.0, packet translation has moved from Python into a C++ engine compiled from
+[bedrock-protocol](https://github.com/EndstoneMC/bedrock-protocol).
+
+Time Endweave spends on each packet:
+
+| Packet                    | 0.4.0      | 0.5.0      | Speedup |
+| ------------------------- | ---------- | ---------- | ------- |
+| Unchanged, 16 B           | 1.2 µs     | 0.36 µs    | 3.4×    |
+| Unchanged, 64 KB chunk    | 5.9 µs     | 0.37 µs    | 16×     |
+| Small translated packet   | 3.4–7.3 µs | 1.0–1.4 µs | ~4×     |
+| SetActorData, 32 entries  | 67 µs      | 5.4 µs     | 12×     |
+| SetActorData, 256 entries | 490 µs     | 35 µs      | 14×     |
 
 ## Quick Start
 
