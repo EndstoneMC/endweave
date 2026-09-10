@@ -25,10 +25,6 @@ different protocol versions by rewriting packets at the network layer. Inspired 
 | 1.26.30-1.26.32   | 1001     |
 -->
 
-The names in the left column are the ones Endweave uses everywhere: `/endweave list` prints them, and
-`block-versions` in `config.toml` accepts them as well as any single version they cover. `1.26.5x` is the whole hotfix
-line, 1.26.50 through 1.26.59.
-
 Since 0.5.0, packet translation has moved from Python into a C++ engine compiled from
 [bedrock-protocol](https://github.com/EndstoneMC/bedrock-protocol).
 
