@@ -291,7 +291,7 @@ uv sync --extra dev                                    # build the engine and in
 uv run pytest                                          # tests
 uv run ruff check src tests && uv run ruff format --check src tests
 uv run mypy src/endweave/ --strict                     # CI type-checks src only
-uv build --wheel                                       # the wheel CI checks and releases publish
+uvx cibuildwheel --platform linux                      # the manylinux wheels CI tests and releases publish
 ```
 
 - **Rebuild the engine after editing C++** with
@@ -310,7 +310,10 @@ uv build --wheel                                       # the wheel CI checks and
   the base protocol, the version registry and the engine's Python surface. `tests/` mirrors
   `src/endweave/`: add a case to the file that owns the subject, or start one.
 - **Releases** run the `Release` workflow by hand with a version. It stamps `## [Unreleased]` in
-  `CHANGELOG.md`, tags, and publishes the wheel to PyPI.
+  `CHANGELOG.md`, tags, and publishes the sdist and wheels to PyPI. It calls `build.yml`, which lints and builds them with
+  cibuildwheel (cp310, cp311 and a cp312 abi3 wheel, manylinux_2_28 and win_amd64) and tests each
+  wheel on the runner, since endstone does not install in the manylinux container. A dry run builds
+  and tests them without publishing.
 
 ## Code Style
 

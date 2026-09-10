@@ -111,28 +111,14 @@ jobs:
             --notes-file /tmp/release_body.md
 
   build:
-    if: ${{ !inputs.dry_run }}
+    name: Build
     needs: [ release ]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          ref: v${{ inputs.version }}
-          fetch-depth: 0
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          python-version: "3.10"
-
-      - name: Install
-        run: uv sync --extra dev
-
-      - name: Run tests
-        run: uv run pytest tests/
+    uses: ./.github/workflows/build.yml
+    with:
+      ref: ${{ !inputs.dry_run && format('v{0}', inputs.version) || '' }}
 
   publish:
+    if: ${{ !inputs.dry_run }}
     needs: [ build ]
     runs-on: ubuntu-latest
     environment: pypi
@@ -140,30 +126,31 @@ jobs:
       id-token: write
       contents: write
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
+      - name: Download distributions
+        uses: actions/download-artifact@v8
         with:
-          ref: v${{ inputs.version }}
-          fetch-depth: 0
+          pattern: endstone_endweave-*
+          path: dist
+          merge-multiple: true
+          skip-decompress: true
 
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v7
-
-      - name: Build
-        run: uv build
-
-      - name: Check wheel contents
+      - name: Check versions
         run: |
-          WHEEL=$(ls dist/*.whl)
-          if ! unzip -l "$WHEEL" | grep -q ' endweave/config.toml$'; then
-            echo "::error::endweave/config.toml is missing from $WHEEL, the plugin cannot load its defaults at runtime"
-            exit 1
-          fi
+          ls -l dist
+          for f in dist/*; do
+            case "$(basename "$f")" in
+              endstone_endweave-${{ inputs.version }}-*.whl | endstone_endweave-${{ inputs.version }}.tar.gz) ;;
+              *) echo "::error::$f was not built as ${{ inputs.version }}"; exit 1 ;;
+            esac
+          done
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          # A partial upload is recoverable by re-running this job.
+          skip-existing: true
 
-      - name: Attach wheel to GitHub Release
+      - name: Attach distributions to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "v${{ inputs.version }}" dist/*.whl
+        run: gh release upload "v${{ inputs.version }}" dist/* --repo "${{ github.repository }}" --clobber

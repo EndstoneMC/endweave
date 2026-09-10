@@ -61,6 +61,16 @@ wheel.exclude = ["**/*.cpp", "**/*.h", "**/*.pat", "**/CMakeLists.txt"]
 install.components = ["python"]
 sdist.exclude = [".github", "build", "tests"]
 
+[tool.cibuildwheel]
+# cp312 builds the abi3 wheel that 3.13 and later install
+build = ["cp310-*", "cp311-*", "cp312-*"]
+skip = ["*-musllinux_*"]
+archs = ["auto64"]
+config-settings = { "build-dir" = "build/cibuildwheel/{wheel_tag}" }
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+
 [[tool.dynamic-metadata]]
 field = "version"
 provider = "scikit_build_core.metadata.setuptools_scm"
