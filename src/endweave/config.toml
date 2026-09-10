@@ -18,6 +18,10 @@ block-protocols = []
 # Message shown to a player kicked for using a blocked version.
 # A '&' in front of a colour or format code is read as the section sign.
 block-disconnect-msg = "You are using an unsupported Minecraft version!"
+# A connection open across a reload is no longer translated, so every player is kicked when Endweave is reloaded.
+# (We don't suggest using reload either, restart the server instead.)
+# Message they are kicked with. A '&' in front of a colour or format code is read as the section sign.
+reload-disconnect-msg = "Server reload, please rejoin!"
 
 # Logging behaviour. When debugging issues, we may ask you to change some of these.
 # Most are off by default so bad input cannot spam the log.

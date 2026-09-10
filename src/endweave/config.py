@@ -391,6 +391,7 @@ class EndweaveConfig(Config):
     _check_for_updates: bool
     _blocked_protocol_versions: BlockedProtocolVersions
     _blocked_disconnect_message: str
+    _reload_disconnect_message: str
     _log_blocked_joins: bool
     _log_entity_data_errors: bool
     _log_other_conversion_warnings: bool
@@ -423,6 +424,7 @@ class EndweaveConfig(Config):
         self._blocked_disconnect_message = self.get_string(
             "block-disconnect-msg", "You are using an unsupported Minecraft version!"
         )
+        self._reload_disconnect_message = self.get_string("reload-disconnect-msg", "Server reload, please rejoin!")
 
         logging_section = self.section("logging") or ConfigSection(self, "logging")
         self._log_blocked_joins = logging_section.get_bool("log-blocked-joins", False)
@@ -492,6 +494,11 @@ class EndweaveConfig(Config):
     def blocked_disconnect_message(self) -> str:
         """Message shown to a player kicked for speaking a blocked version."""
         return self._blocked_disconnect_message
+
+    @property
+    def reload_disconnect_message(self) -> str:
+        """Message shown to the players kicked when the plugin is reloaded."""
+        return self._reload_disconnect_message
 
     @property
     def log_blocked_joins(self) -> bool:

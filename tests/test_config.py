@@ -266,6 +266,7 @@ class TestEndweaveOptions:
     def test_reads_the_packaged_defaults(self, endweave_config: EndweaveConfig) -> None:
         assert endweave_config.check_for_updates is True
         assert endweave_config.blocked_disconnect_message == "You are using an unsupported Minecraft version!"
+        assert endweave_config.reload_disconnect_message == "Server reload, please rejoin!"
         assert endweave_config.log_blocked_joins is False
         assert endweave_config.log_entity_data_errors is True
         assert endweave_config.log_other_conversion_warnings is False

@@ -45,6 +45,7 @@ class StubPlugin(EndweavePlugin):
     ) -> None:
         super().__init__()
         self._stub_logger = logger
+        self._stub_server = MagicMock()
         self._configuration = configuration
         self._connection_manager = ConnectionManager(server_protocol)
         self._base_protocol = BaseProtocol(self._connection_manager, configuration, logger)
@@ -53,6 +54,10 @@ class StubPlugin(EndweavePlugin):
     @property
     def logger(self) -> MagicMock:
         return self._stub_logger
+
+    @property
+    def server(self) -> MagicMock:
+        return self._stub_server
 
 
 @pytest.fixture
@@ -248,6 +253,19 @@ class TestQuit:
         assert plugin._connection_manager.get_connection(ADDRESS) is connection
         assert connection.player is staying.player
         assert connection.active is True
+
+
+class TestReload:
+    def test_kicks_every_online_player(self, make_plugin: Callable[..., StubPlugin], mock_logger: MagicMock) -> None:
+        plugin = make_plugin('reload-disconnect-msg = "&cBack in a moment"\n')
+        players = [MagicMock(), MagicMock()]
+        plugin.server.online_players = players
+
+        plugin.on_reload()
+
+        for player in players:
+            player.kick.assert_called_once_with("§cBack in a moment")
+        mock_logger.error.assert_called_once()
 
 
 class TestDeclaration:

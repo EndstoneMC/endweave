@@ -9,7 +9,15 @@ server's, as ViaVersion's encoder sits below the server's own. The login event
 goes to the base protocol, and the connection is tracked from there until the
 player quits.
 
+Endstone's reload enables the plugin a second time in the same process, which
+ViaVersion detects through a system property and Endweave through a module
+global, as the loader keeps this module across a reload. Every online player
+is then kicked, as ViaVersion's Bukkit platform does alongside ProtocolLib: the
+connections tracked before the reload are gone, so none of them would be
+translated any further.
+
 See Also:
+    com.viaversion.viaversion.ViaManagerImpl
     com.viaversion.viaversion.platform.ViaDecodeHandler
     com.viaversion.viaversion.platform.ViaEncodeHandler
 """
@@ -36,8 +44,11 @@ from .metrics import EndweaveMetrics
 from .protocol.base import BaseProtocol
 from .protocol.version import get_protocol
 from .update import send_update_message
+from .util import translate_alternate_color_codes
 
 _TRANSLATION_FAILED = "§cEndweave could not translate a packet for your version."
+
+_loaded = False
 
 
 class EndweavePlugin(Plugin):
@@ -71,10 +82,14 @@ class EndweavePlugin(Plugin):
     }
 
     def on_enable(self) -> None:
+        global _loaded
         self._configuration = EndweaveConfig(Path(self.data_folder) / "config.toml", self.logger)
         self._configuration_provider = ConfigurationProvider()
         self._configuration_provider.register(self._configuration)
         self._configuration_provider.reload_configs()
+
+        if _loaded:
+            self.on_reload()
 
         server_protocol = self.server.protocol_version
         self.logger.info(f"Detected server protocol {server_protocol} (MC {self.server.minecraft_version})")
@@ -82,6 +97,7 @@ class EndweavePlugin(Plugin):
         self._base_protocol = BaseProtocol(self._connection_manager, self._configuration, self.logger)
 
         self.register_events(self)
+        _loaded = True
         self._debug_handler = DebugHandler(
             self.logger, log_conversion_warnings=self._configuration.log_other_conversion_warnings
         )
@@ -92,6 +108,20 @@ class EndweavePlugin(Plugin):
 
         if self._configuration.check_for_updates:
             send_update_message(self)
+
+    def on_reload(self) -> None:
+        """Kick every online player, once the plugin has been enabled a second time in this process.
+
+        See Also:
+            com.viaversion.viaversion.api.platform.ViaPlatform#onReload
+            com.viaversion.viaversion.ViaVersionPlugin#onReload
+        """
+        self.logger.error(
+            "Endweave is already loaded, we're going to kick all the players... "
+            "because otherwise their connections would no longer be translated."
+        )
+        for player in self.server.online_players:
+            player.kick(translate_alternate_color_codes(self._configuration.reload_disconnect_message))
 
     @event_handler(priority=EventPriority.LOWEST)
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:

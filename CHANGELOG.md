@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `config.toml` is merged against the packaged defaults on startup: options added in a release show up in a config written by an older one, options that are no longer shipped are dropped, and the comments are brought back up to date. Values you have already set are kept.
 - A `[logging]` section. `log-other-conversion-warnings` turns the conversion warnings on and off, and `log-blocked-joins` reports every refused join. `log-entity-data-errors` and `max-error-length` are read but not yet acted on.
 - `block-versions` and `block-protocols` refuse a client at login, before any world data is streamed, with the kick message from `block-disconnect-msg`. The check reads the protocol the client announced in its RequestNetworkSettings, and falls back to the version the client reports on joining when that handshake was never seen, so a connection already open when the plugin was enabled is still checked. Entries that name no known version are reported on startup, and `&` colour codes in the message are translated.
+- Reloading the server kicks every online player with the message from `reload-disconnect-msg`, as their connections would no longer be translated afterwards. `&` colour codes in the message are translated.
 
 ## [0.4.3] - 2026-05-08
 
