@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Changed
-- Minecraft 26.0 and later are named 26.x rather than 1.26.x, in `/endweave list`, the logs and the shipped config. `block-versions` accepts either form, and so does the version a joining client reports.
+- Minecraft 26.0 and later are named 26.x rather than 1.26.x, in `/endweave list`, the logs and the shipped config. `block-versions` accepts either form, and so does the version a joining client reports, including a preview's build number such as 1.26.50.27.
 
 ### Added
 - Clients on 26.5x can join servers on 26.40-26.45, and the other way round. Packets are rewritten in both directions, a packet both versions read alike is passed through untouched, and a packet the other side has no counterpart for is dropped rather than forwarded. `/endweave debug` names each packet as it is carried, and `debug pre`/`debug post` show the payload on either side of the rewrite.

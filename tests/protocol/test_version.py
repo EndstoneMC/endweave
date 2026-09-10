@@ -20,6 +20,7 @@ from endweave.protocol.version import (
     v26_10,
     v26_20,
     v26_30,
+    v26_50,
 )
 
 UNREGISTERED_VERSION = max(get_protocols()).version + 1
@@ -182,11 +183,26 @@ def test_get_by_name_resolves_the_registered_name() -> None:
     assert get_by_name("26.20") is v26_20
 
 
-@pytest.mark.parametrize("name", ["1.26.2", "1.26.0-1.26.3", "1.26.5x", "1.26.55"])
+@pytest.mark.parametrize("name", ["1.26.2", "1.26.0-1.26.3", "1.26.5x", "1.26.55", "1.26.50.27"])
 def test_get_by_name_reads_the_legacy_form(name: str) -> None:
     """Clients and older Endstone releases still report 26 and later as 1.26."""
     assert get_by_name(name) is get_by_name(name[2:])
     assert get_by_name(name) is not None
+
+
+@pytest.mark.parametrize("name", ["26.50.27", "1.26.50.27"])
+def test_get_by_name_drops_a_preview_build_number(name: str) -> None:
+    assert get_by_name(name) is v26_50
+
+
+def test_get_by_name_prefers_a_registered_preview_name(isolated_registry: None) -> None:
+    preview = register(UNREGISTERED_VERSION, "26.50.26-26.50.28")
+
+    assert get_by_name("26.50.27") is preview
+
+
+def test_get_by_name_does_not_widen_a_release_to_its_line() -> None:
+    assert get_by_name("26.4") is None
 
 
 def test_get_by_name_leaves_versions_before_26_alone() -> None:

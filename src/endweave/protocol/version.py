@@ -200,17 +200,20 @@ def get_by_name(name: str) -> ProtocolVersion | None:
 
     Accepts registered names such as "26.0-26.3" as well as the individual
     versions a range covers. From 26 on, the legacy "1.26.2" form reads as "26.2".
+    A name that matches nothing is tried again without its last component, so a
+    preview's build number, as in "26.50.27", falls back to its release.
 
     Args:
-        name: Minecraft version string, e.g. "26.2" or "1.26.2".
+        name: Minecraft version string, e.g. "26.2", "1.26.2" or "1.26.50.27".
 
     Returns:
         The matching protocol version, or None if no registered version covers it.
     """
     name = _LEGACY_VERSION.sub("", name)
-    for protocol_version in _VERSION_LIST:
-        if protocol_version.name == name or name in protocol_version.included_versions:
-            return protocol_version
+    for candidate in (name, name.rpartition(".")[0]):
+        for protocol_version in _VERSION_LIST:
+            if protocol_version.name == candidate or candidate in protocol_version.included_versions:
+                return protocol_version
     return None
 
 
