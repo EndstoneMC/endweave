@@ -9,49 +9,62 @@ different protocol versions by rewriting packets at the network layer. Inspired 
 
 ## Supported Versions
 
+Endweave translates between any two of these:
+
 | Minecraft Version | Protocol |
 | ----------------- | -------- |
-| 26.40-26.44   | 2168     |
-| 26.45           | 2169     |
-| 26.5x           | 2192     |
+| 26.40-26.44       | 2168     |
+| 26.45             | 2169     |
+| 26.5x             | 2192     |
 
-<!-- Not yet carried by the 0.5.0 engine:
+26.45 puts the same bytes on the wire as 26.40-26.44, so Endweave carries it as protocol 2168. That does not let a
+26.45 client onto a server running an older Endstone that is still on protocol 2168: the two ends already speak the
+same bytes, so Endweave leaves the handshake alone, and the server turns the version number away itself. Update the
+server to 26.45 first. Going the other way needs nothing from Endweave, as Endstone lets a 26.40-26.44 client into a
+26.45 server on its own.
+
+### Not translated
+
+These versions are known to Endweave but not carried by the 0.5.0 engine:
+
+| Minecraft Version | Protocol |
+| ----------------- | -------- |
 | 1.21.120-1.21.123 | 859      |
 | 1.21.124          | 860      |
 | 1.21.130-1.21.132 | 898      |
-| 26.0-26.3     | 924      |
-| 26.10-26.13   | 944      |
-| 26.20           | 975      |
-| 26.30-26.32   | 1001     |
--->
+| 26.0-26.3         | 924      |
+| 26.10-26.13       | 944      |
+| 26.20             | 975      |
+| 26.30-26.32       | 1001     |
 
-Since 0.5.0, packet translation has moved from Python into a C++ engine compiled from
-[bedrock-protocol](https://github.com/EndstoneMC/bedrock-protocol).
-
-Time Endweave spends on each packet:
-
-| Packet                    | 0.4.0      | 0.5.0      | Speedup |
-| ------------------------- | ---------- | ---------- | ------- |
-| Unchanged, 16 B           | 1.2 µs     | 0.36 µs    | 3.4×    |
-| Unchanged, 64 KB chunk    | 5.9 µs     | 0.37 µs    | 16×     |
-| Small translated packet   | 3.4–7.3 µs | 1.0–1.4 µs | ~4×     |
-| SetActorData, 32 entries  | 67 µs      | 5.4 µs     | 12×     |
-| SetActorData, 256 entries | 490 µs     | 35 µs      | 14×     |
+Endweave up to 0.4.3 translated 1.21.120 through 26.20, and 26.30 was never translated by any release. A client on
+one of these can still join a server speaking the same protocol; it just gets nothing from Endweave.
 
 ## Quick Start
 
-1. Download the latest `.whl` from [Releases](https://github.com/EndstoneMC/endweave/releases)
+1. Open the latest [release](https://github.com/EndstoneMC/endweave/releases) and download the wheel that matches
+   your server. Several are attached, one per platform and Python version:
+    - `win_amd64` for Windows, `manylinux_2_28_x86_64` for Linux on glibc 2.28 or newer.
+    - `cp310` for Python 3.10, `cp311` for 3.11, `cp312-abi3` for 3.12 and later.
 2. Drop it in your server's `plugins/` folder
 3. Restart the server
+
+Endstone installs the file you drop in, so a wheel built for another platform or Python version is refused and the
+plugin does not load. The install also fetches a few dependencies from PyPI, so the server needs network access the
+first time it starts with Endweave in `plugins/`.
 
 Players on newer clients will connect transparently. No additional configuration needed.
 
 ## How It Works
 
-Endweave handles protocol differences between Minecraft versions, allowing players to join servers on different protocol
-versions. Whether a client is newer or older than the server, packets are translated in real time. Only fields that
-actually changed get rewritten, and players already on the server's version go through zero extra processing. When a
-client is multiple versions away from the server, translators are automatically chained together to bridge the gap.
+Endweave handles protocol differences between Minecraft versions, allowing players to join servers on different
+protocol versions. Whether a client is newer or older than the server, packets are translated in real time. Only
+fields that actually changed get rewritten, and players already on the server's version go through zero extra
+processing. A packet the other version has no counterpart for is dropped rather than forwarded, so neither end is
+handed something it cannot read.
+
+Since 0.5.0 the translation runs in a C++ engine compiled from
+[bedrock-protocol](https://github.com/EndstoneMC/bedrock-protocol) rather than in Python.
 
 ## Contributing
 
