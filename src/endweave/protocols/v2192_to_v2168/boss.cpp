@@ -11,7 +11,7 @@ void Transformer<bp::BossEventPacket_<2192>, bp::BossEventPacket_<2168>>::transf
     to.boss_id = from.boss_id;
     // ENDWEAVE: player_id has no source at 2192, which dropped it, so it is invented as the
     // null actor; a 2168 client that keys the bar on the id is handed one no actor holds.
-    to.player_id = {};
+    to.player_id = bp::ActorUniqueID(0);
     to.event_type = from.event_type;
     to.name = std::move(from.name);
     to.filtered_name = std::move(from.filtered_name);

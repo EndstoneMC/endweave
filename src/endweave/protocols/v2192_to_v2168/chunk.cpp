@@ -13,7 +13,7 @@ namespace endweave {
 namespace {
 
 /** 2168 rows are exactly sixteen values, so short rows are zero-padded and long ones truncated. */
-std::optional<std::array<std::array<std::int8_t, 16>, 16>> fixedRows(
+std::optional<std::array<std::array<std::int8_t, 16>, 16>> reshape(
     std::optional<std::array<std::vector<std::int8_t>, 16>> &&rows)
 {
     if (!rows.has_value()) {
@@ -37,9 +37,9 @@ void Transformer<bp::SubChunkPacket_<2192>::HeightmapData, bp::SubChunkPacket_<2
 {
     auto &to = ctx.out();
     to.height_map_type = from.height_map_type;
-    to.subchunk_height_map = fixedRows(std::move(from.subchunk_height_map));
+    to.subchunk_height_map = reshape(std::move(from.subchunk_height_map));
     to.render_height_map_type = from.render_height_map_type;
-    to.subchunk_render_height_map = fixedRows(std::move(from.subchunk_render_height_map));
+    to.subchunk_render_height_map = reshape(std::move(from.subchunk_render_height_map));
 }
 
 } // namespace endweave
