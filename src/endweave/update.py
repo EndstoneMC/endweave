@@ -6,11 +6,14 @@ downloaded.
 
 ViaVersion polls its own update server for a plain ``{"name": ...}`` document;
 Endweave has no such service and reads the tag of the latest GitHub release
-instead. Version comparison is PEP 440 rather than ViaVersion's own semver
-type, so a hatch-vcs ``0.4.4.dev1`` build is recognised where a hand-rolled
-semver parser would reject it. ViaVersion's check for the literal
-``${version}`` placeholder has no counterpart: hatch-vcs never leaves an
-unsubstituted token behind.
+instead. ViaVersion checks once per startup and keeps the answer; here the
+answer is cached with an expiry too, so the join check cannot burn through the
+sixty unauthenticated calls an hour GitHub allows an address.
+Version comparison is PEP 440 rather than ViaVersion's own semver type, so a
+setuptools-scm ``0.4.4.dev1`` build is recognised where a hand-rolled semver
+parser would reject it. ViaVersion's check for the literal ``${version}``
+placeholder has no counterpart: setuptools-scm never leaves an unsubstituted
+token behind.
 
 See Also:
     com.viaversion.viaversion.update.UpdateUtil
@@ -19,6 +22,8 @@ See Also:
 
 from __future__ import annotations
 
+import asyncio
+import time
 import uuid
 from typing import NamedTuple
 
@@ -33,6 +38,12 @@ __all__ = ["send_update_message"]
 
 PREFIX = "§a§l[Endweave] §a"
 _RELEASES_URL = "https://api.github.com/repos/EndstoneMC/endweave/releases/latest"
+_CACHE_TTL = 3600.0
+_FAILURE_TTL = 300.0
+
+_cache_lock = asyncio.Lock()
+_cached_version: Version | None = None
+_cache_expiry = 0.0
 
 
 class _UpdateMessage(NamedTuple):
@@ -80,9 +91,8 @@ async def _send_update_message(plugin: Plugin, unique_id: uuid.UUID | None) -> N
 
 
 async def _get_update_message(*, console: bool) -> _UpdateMessage | None:
-    try:
-        newest = Version(await _get_newest_version())
-    except (aiohttp.ClientError, TimeoutError, ValueError, KeyError):
+    newest = await _get_newest_version()
+    if newest is None:
         if console:
             return _UpdateMessage(Logger.Level.WARNING, "Could not check for updates, check your connection.")
         return None
@@ -93,6 +103,8 @@ async def _get_update_message(*, console: bool) -> _UpdateMessage | None:
         return _UpdateMessage(Logger.Level.INFO, "You are using a custom version, consider updating.")
 
     if current < newest:
+        if newest.is_prerelease and not current.is_prerelease:
+            return None
         return _UpdateMessage(
             Logger.Level.WARNING,
             f"There is a newer plugin version available: {newest}, you're on: {current}",
@@ -103,19 +115,43 @@ async def _get_update_message(*, console: bool) -> _UpdateMessage | None:
                 Logger.Level.INFO,
                 "You are running a development version of the plugin, please report any bugs to GitHub.",
             )
+        if current.is_prerelease:
+            return _UpdateMessage(
+                Logger.Level.INFO,
+                "You are running a pre-release version of the plugin, please report any bugs to GitHub.",
+            )
         return _UpdateMessage(Logger.Level.WARNING, "You are running a newer version of the plugin than is released!")
     return None
 
 
-async def _get_newest_version() -> str:
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "Cache-Control": "no-cache",
-        "User-Agent": f"Endweave {__version__}",
-    }
-    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
-        async with session.get(_RELEASES_URL, headers=headers) as response:
-            response.raise_for_status()
-            release = await response.json()
-    tag_name: str = release["tag_name"]
-    return tag_name
+async def _get_newest_version() -> Version | None:
+    """Read the tag of the latest release, through the cache.
+
+    Every caller within the cache window is answered from the last result, and a
+    check that failed is only remembered until the shorter retry window is up.
+
+    Returns:
+        The newest released version, or None if the check failed.
+    """
+    global _cached_version, _cache_expiry
+
+    async with _cache_lock:
+        now = time.monotonic()
+        if now < _cache_expiry:
+            return _cached_version
+
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "Cache-Control": "no-cache",
+            "User-Agent": f"Endweave {__version__}",
+        }
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+                async with session.get(_RELEASES_URL, headers=headers) as response:
+                    response.raise_for_status()
+                    release = await response.json()
+            _cached_version = Version(release["tag_name"])
+        except (aiohttp.ClientError, asyncio.TimeoutError, TimeoutError, ValueError, KeyError):
+            _cached_version = None
+        _cache_expiry = now + (_CACHE_TTL if _cached_version is not None else _FAILURE_TTL)
+        return _cached_version
