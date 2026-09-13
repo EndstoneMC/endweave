@@ -6,14 +6,14 @@ downloaded.
 
 ViaVersion polls its own update server for a plain ``{"name": ...}`` document;
 Endweave has no such service and reads the tag of the latest GitHub release
-instead. ViaVersion checks once per startup and keeps the answer; here the
-answer is cached with an expiry too, so the join check cannot burn through the
-sixty unauthenticated calls an hour GitHub allows an address. Version
-comparison is PEP 440 rather than ViaVersion's own semver type, so a
-setuptools-scm ``0.4.4.dev1`` build is recognised where a hand-rolled semver
-parser would reject it. ViaVersion's check for the literal ``${version}``
-placeholder has no counterpart: setuptools-scm never leaves an unsubstituted
-token behind.
+instead. ViaVersion requests it afresh on every check with caching turned off;
+here the answer is held for an hour, and a failed check for five minutes, so a
+busy server's joins cannot burn through the sixty unauthenticated calls an hour
+GitHub allows an address. Version comparison is PEP 440 rather than ViaVersion's
+own semver type, so a setuptools-scm ``0.4.4.dev1`` build is recognised where a
+hand-rolled semver parser would reject it. ViaVersion's check for the literal
+``${version}`` placeholder has no counterpart: setuptools-scm never leaves an
+unsubstituted token behind.
 
 See Also:
     com.viaversion.viaversion.update.UpdateUtil
