@@ -202,13 +202,13 @@ class CommandHandler(CommandExecutor):
 
         if not args:
             self._show_help(sender)
-            return False
+            return True
 
         subcommand = self._subcommands.get(args[0].lower())
         if subcommand is None:
             sender.send_message("§cThis command does not exist.")
             self._show_help(sender)
-            return False
+            return True
 
         if not self._is_allowed(sender, subcommand):
             sender.send_message("§cYou are not allowed to use this command!")

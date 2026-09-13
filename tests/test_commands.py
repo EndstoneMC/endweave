@@ -134,7 +134,7 @@ def test_a_known_word_routes_to_its_subcommand(handler: CommandHandler, mock_sen
 
 
 def test_no_arguments_shows_the_help_listing(handler: CommandHandler, mock_sender: MagicMock) -> None:
-    assert handler.on_command(mock_sender, MagicMock(), []) is False
+    assert handler.on_command(mock_sender, MagicMock(), []) is True
     assert sent(mock_sender) == [
         f"§aEndweave §c{__version__}",
         "§6Commands:",
@@ -145,7 +145,7 @@ def test_no_arguments_shows_the_help_listing(handler: CommandHandler, mock_sende
 
 
 def test_an_unknown_word_says_so_then_shows_the_help(handler: CommandHandler, mock_sender: MagicMock) -> None:
-    assert handler.on_command(mock_sender, MagicMock(), ["nope"]) is False
+    assert handler.on_command(mock_sender, MagicMock(), ["nope"]) is True
     assert sent(mock_sender)[0] == "§cThis command does not exist."
     assert "§6Commands:" in sent(mock_sender)
 
@@ -181,7 +181,7 @@ def test_the_help_lists_only_the_subcommands_the_sender_may_run(
     handler: CommandHandler, mock_sender: MagicMock
 ) -> None:
     grant(mock_sender, "endweave.command.list")
-    assert handler.on_command(mock_sender, MagicMock(), []) is False
+    assert handler.on_command(mock_sender, MagicMock(), []) is True
     assert sent(mock_sender) == [
         f"§aEndweave §c{__version__}",
         "§6Commands:",
