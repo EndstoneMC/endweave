@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-13
+
 ### Added
 - Clients on 26.5x can join servers on 26.40-26.45, and the other way round. Packets are rewritten in both directions, a packet both versions read alike is passed through untouched, and a packet the other side has no counterpart for is dropped rather than forwarded. `/endweave debug` names each packet it rewrites, drops or refuses, and `debug pre`/`debug post` show the payload on either side of the rewrite.
 - `/endweave list` groups the online players by the protocol version they speak. Requires `endweave.command.list`, which `endweave.admin` grants and operators hold by default.
@@ -152,7 +154,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Protocol chaining support for future multi-version translation
 - CI/CD with GitHub Actions
 
-[Unreleased]: https://github.com/EndstoneMC/endweave/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/EndstoneMC/endweave/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/EndstoneMC/endweave/compare/v0.4.3...v0.5.0
 [0.4.3]: https://github.com/EndstoneMC/endweave/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/EndstoneMC/endweave/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/EndstoneMC/endweave/compare/v0.4.0...v0.4.1
