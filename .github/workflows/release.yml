@@ -106,7 +106,7 @@ jobs:
         run: |
           DATE=$(date -u +%Y-%m-%d)
           REPO="https://github.com/${{ github.repository }}"
-          PREV_TAG=$(sed -n 's|^\[Unreleased\]: .*/compare/\(v[0-9][0-9.]*\)\.\.\.HEAD$|\1|p' CHANGELOG.md)
+          PREV_TAG=$(sed -n 's|^\[Unreleased\]: .*/compare/\(v[0-9][^ ]*\)\.\.\.HEAD$|\1|p' CHANGELOG.md)
           if [ -n "$PREV_TAG" ]; then
             NEW_LINK="[$VERSION]: $REPO/compare/$PREV_TAG...v$VERSION"
           else
@@ -132,7 +132,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PREV_TAG=$(git tag --sort=-v:refname | sed -n '2p')
+          PREV_TAG=$(git describe --tags --abbrev=0 "v$VERSION^" 2>/dev/null || true)
           if [ -n "$PREV_TAG" ]; then
             printf '\n**Full Changelog**: https://github.com/%s/compare/%s...v%s\n' \
               "${{ github.repository }}" "$PREV_TAG" "$VERSION" >> /tmp/release_body.md
