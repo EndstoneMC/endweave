@@ -62,6 +62,9 @@ constexpr void assign_member(const Context<Parent> &ctx, From &from, To &to)
         else if constexpr (Transformable<S, T>) {
             transform_into(ctx, std::move(source), target);
         }
+        else {
+            static_assert(Transformable<S, T>, "endweave: no Transformer<From, To> for this member's types");
+        }
     }
 }
 
