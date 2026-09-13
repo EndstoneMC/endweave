@@ -47,6 +47,12 @@ from .util import translate_alternate_color_codes
 _TRANSLATION_FAILED = "§cEndweave could not translate a packet for your version."
 
 
+def _packet_label(packet_id: int) -> str:
+    """The packet's name as the debug filter spells it, or its ID where no version defines it."""
+    name = packet_name(packet_id)
+    return name.upper() if name is not None else str(packet_id)
+
+
 class EndweavePlugin(Plugin):
     """Endstone plugin that enables protocol translation between Bedrock versions."""
 
@@ -167,7 +173,12 @@ class EndweavePlugin(Plugin):
         try:
             payload = translator.translate(packet_id, event.payload)
         except TranslationError as error:
-            debug.error(f"Failed to translate {direction.value} packet {packet_name(packet_id) or packet_id}", error)
+            debug.error(
+                f"Failed to translate {direction.value} packet {_packet_label(packet_id)} "
+                f"at {error.stage} for {connection.address} "
+                f"({connection.protocol_version} against {connection.server_protocol_version})",
+                error,
+            )
             event.cancel()
             connection.disconnect(_TRANSLATION_FAILED)
             return
@@ -175,6 +186,11 @@ class EndweavePlugin(Plugin):
         if payload is None:
             if logged:
                 self.logger.info(f"[{direction.value}] {label} refused by a transform")
+            elif debug.log_conversion_warnings:
+                self.logger.warning(
+                    f"Dropped {direction.value} packet {_packet_label(packet_id)} for "
+                    f"{connection.address}, a transform could not carry it to the other version"
+                )
             event.cancel()
             return
 

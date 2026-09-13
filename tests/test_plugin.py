@@ -11,6 +11,7 @@ import pytest
 from endstone.command import Command
 from endstone.event import EventPriority
 
+from endweave._pipeline import Action
 from endweave.commands import CommandHandler
 from endweave.config import ConfigurationProvider, EndweaveConfig
 from endweave.connection import ConnectionManager
@@ -50,7 +51,7 @@ class StubPlugin(EndweavePlugin):
         self._configuration = configuration
         self._connection_manager = ConnectionManager(server_protocol)
         self._base_protocol = BaseProtocol(self._connection_manager, configuration, logger)
-        self._debug_handler = DebugHandler(logger)
+        self._debug_handler = DebugHandler(logger, log_conversion_warnings=configuration.log_other_conversion_warnings)
 
     @property
     def logger(self) -> MagicMock:
@@ -83,6 +84,15 @@ def packet(packet_id: int, payload: bytes, address: str = ADDRESS) -> MagicMock:
     event.payload = payload
     event.address = address
     return event
+
+
+class RefusingTranslator:
+    """A translator whose transform gives the packet up, as ``translate`` returning None."""
+
+    actions = {INVENTORY_TRANSACTION: Action.TRANSLATE}
+
+    def translate(self, packet_id: int, payload: bytes) -> bytes | None:
+        return None
 
 
 def login(
@@ -153,6 +163,41 @@ class TestTranslation:
         event.cancel.assert_called_once()
         connection.player.kick.assert_called_once()
         mock_logger.error.assert_called_once()
+
+    def test_reports_a_failure_though_the_packaged_config_mutes_warnings(
+        self, plugin: StubPlugin, mock_logger: MagicMock
+    ) -> None:
+        assert plugin._debug_handler.log_conversion_warnings is False
+
+        plugin.on_packet_receive(packet(INVENTORY_TRANSACTION, b""))
+
+        message = mock_logger.error.call_args.args[0]
+        assert "INVENTORYTRANSACTION" in message
+        assert ADDRESS in message
+        assert "Traceback (most recent call last)" in message
+
+    def test_says_nothing_about_a_refused_packet_while_warnings_are_muted(
+        self, plugin: StubPlugin, mock_logger: MagicMock
+    ) -> None:
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.serverbound = RefusingTranslator()
+        event = packet(INVENTORY_TRANSACTION, EMPTY_TRANSACTION)
+
+        plugin.on_packet_receive(event)
+
+        event.cancel.assert_called_once()
+        mock_logger.warning.assert_not_called()
+
+    def test_warns_about_a_refused_packet_when_warnings_are_on(
+        self, plugin: StubPlugin, mock_logger: MagicMock
+    ) -> None:
+        plugin._debug_handler.log_conversion_warnings = True
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.serverbound = RefusingTranslator()
+
+        plugin.on_packet_receive(packet(INVENTORY_TRANSACTION, EMPTY_TRANSACTION))
+
+        assert "INVENTORYTRANSACTION" in mock_logger.warning.call_args.args[0]
 
     def test_ignores_a_peer_that_never_shook_hands(self, make_plugin: Callable[..., StubPlugin]) -> None:
         plugin = make_plugin(server_protocol=CARRIED_SERVER)

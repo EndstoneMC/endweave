@@ -30,7 +30,9 @@ reload-disconnect-msg = "Server reload, please rejoin!"
 log-blocked-joins = false
 # Log errors while converting entity data
 log-entity-data-errors = true
-# Warn about other problems while converting items, blocks or anything else between versions
+# Warn when a packet is dropped because a transform cannot carry it to the version on the other side.
+# This covers the packets Endweave gives up on quietly; a translation that fails outright is always
+# reported, and the player is kicked, whatever this is set to.
 log-other-conversion-warnings = false
 # Longest error message written to the console
 max-error-length = 1500

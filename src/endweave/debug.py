@@ -89,7 +89,9 @@ class DebugHandler:
             ``should_log`` only applies the packet filter.
         log_pre_packet_transform: Log packets before they are transformed.
         log_post_packet_transform: Log packets after they are transformed.
-        log_conversion_warnings: Log conversion errors even with debug off.
+        log_conversion_warnings: Warn about a packet a transform refused, even
+            with debug off. A translation that fails outright is reported
+            whatever this is set to.
 
     See Also:
         com.viaversion.viaversion.api.debug.DebugHandler
@@ -208,12 +210,11 @@ class DebugHandler:
             self.add_packet_type_to_log(packet_type)
 
     def error(self, error: str, exception: BaseException) -> None:
-        """Log a translation error, unless conversion warnings are muted.
+        """Log a translation failure, whatever the logging options are set to.
 
         Args:
             error: Message describing what failed.
             exception: The exception that was raised.
         """
-        if self.log_conversion_warnings or self.enabled:
-            trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-            self._logger.error(f"{error}\n{trace}")
+        trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+        self._logger.error(f"{error}\n{trace}")

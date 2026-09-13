@@ -131,10 +131,10 @@ class TestErrorLogging:
         handler.error("Failed to translate START_GAME", failure)
         mock_logger.error.assert_called_once()
 
-    def test_stays_quiet_when_muted_and_disabled(self, mock_logger: MagicMock, failure: ValueError) -> None:
+    def test_logs_a_failure_though_muted_and_disabled(self, mock_logger: MagicMock, failure: ValueError) -> None:
         handler = DebugHandler(mock_logger, log_conversion_warnings=False)
         handler.error("Failed to translate START_GAME", failure)
-        mock_logger.error.assert_not_called()
+        mock_logger.error.assert_called_once()
 
     def test_message_carries_the_traceback(self, mock_logger: MagicMock, failure: ValueError) -> None:
         DebugHandler(mock_logger).error("Failed to translate START_GAME", failure)
