@@ -176,6 +176,18 @@ class TestTranslation:
         assert ADDRESS in message
         assert "Traceback (most recent call last)" in message
 
+    def test_stops_translating_for_a_peer_whose_packet_failed(self, plugin: StubPlugin, mock_logger: MagicMock) -> None:
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.player = MagicMock()
+        plugin.on_packet_receive(packet(INVENTORY_TRANSACTION, b""))
+
+        event = packet(INVENTORY_TRANSACTION, EMPTY_TRANSACTION)
+        plugin.on_packet_receive(event)
+
+        event.cancel.assert_not_called()
+        assert event.payload == EMPTY_TRANSACTION
+        mock_logger.error.assert_called_once()
+
     def test_says_nothing_about_a_refused_packet_while_warnings_are_muted(
         self, plugin: StubPlugin, mock_logger: MagicMock
     ) -> None:

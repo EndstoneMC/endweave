@@ -179,6 +179,8 @@ class EndweavePlugin(Plugin):
                 f"({connection.protocol_version} against {connection.server_protocol_version})",
                 error,
             )
+            connection.serverbound = None
+            connection.clientbound = None
             event.cancel()
             connection.disconnect(_TRANSLATION_FAILED)
             return
