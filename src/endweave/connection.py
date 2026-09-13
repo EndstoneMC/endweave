@@ -53,8 +53,9 @@ class Connection:
     """One peer's connection and the protocol versions on either end of it.
 
     ``serverbound`` and ``clientbound`` are the pipeline the base protocol
-    installs on the handshake: a translator each way, or None where the two
-    ends already agree or the engine does not carry one of them.
+    installs on the handshake: a translator each way, or None where the client
+    is already on the server's number or the engine does not carry it. Two
+    numbers that name one wire shape get translators with no actions at all.
 
     See Also:
         com.viaversion.viaversion.api.connection.UserConnection

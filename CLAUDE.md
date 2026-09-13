@@ -35,8 +35,10 @@ to the client's, as ViaVersion's encoder sits below the server's own.
 `Translator` each way on the `Connection`, and writes the server's protocol number over the
 client's; `Login` (1) gets the same rewrite, since BDS checks it again. Translators come from a
 `functools.cache` over `_pipeline.Translator`, so every connection between the same two versions
-shares one. Ends the engine reads as one version, or does not carry, get no translators and no
-rewrite. The blocked version gate runs on `PlayerLoginEvent`.
+shares one. A client on the server's own number, or one the engine does not carry, gets neither
+pipeline nor rewrite: the server takes or refuses it itself. Where the two numbers name one wire
+shape, as 26.45 and 26.40-26.44 do, the pipeline translates nothing and the rewrite is the whole of
+the work. The blocked version gate runs on `PlayerLoginEvent`.
 
 `connection.py` keys connections by the peer's address string, so a NetherNet peer (empty hostname)
 is never tracked, and pending connections are capped at `MAX_PENDING_CONNECTIONS`.
@@ -173,8 +175,10 @@ and `com.viaversion.viabackwards`.
   on when both sides are one type, so it needs no `Transformer<T, T>`. Do not add one: it would
   collide with the container partial specializations in `transform.h`.
 - **A client already on the server's protocol is left alone.** `should_translate_v` is false when
-  `From == To`, and `BaseProtocol` installs no translators when both ends resolve to one version.
-  The guard is load-bearing because a `Rewriter` can force translation on its own.
+  `From == To`, and `BaseProtocol` installs nothing for a client announcing the server's own number.
+  A client whose different number names the same wire shape gets a pipeline with empty `actions`, so
+  no packet of its own crosses into C++ either. The guard is load-bearing because a `Rewriter` can
+  force translation on its own.
 - **Ids 200-299 are skipped** as the vendor extension range, off `MinecraftPacketIds`'
   `TitleSpecificPacketsStart` / `TitleSpecificPacketsEnd` rather than literals.
 

@@ -156,15 +156,16 @@ class TestPipeline:
         assert connection.serverbound is not None
         assert connection.serverbound.from_version == 2168
 
-    def test_leaves_a_wire_identical_client_alone_on_the_version_it_speaks(
-        self, make_protocol: Callable[..., BaseProtocol]
-    ) -> None:
+    def test_translates_nothing_for_a_wire_identical_client(self, make_protocol: Callable[..., BaseProtocol]) -> None:
         protocol = make_protocol(server_protocol=CARRIED_SERVER)
 
         connection = protocol.transform_serverbound(handshake(CARRIED_ALIAS.version))
 
-        assert connection.serverbound is None
-        assert connection.clientbound is None
+        assert connection.serverbound is not None
+        assert (connection.serverbound.from_version, connection.serverbound.to_version) == (2168, 2168)
+        assert not connection.serverbound.actions
+        assert connection.clientbound is not None
+        assert not connection.clientbound.actions
 
     def test_carries_nothing_for_a_client_the_engine_does_not_know(
         self, make_protocol: Callable[..., BaseProtocol]
@@ -209,7 +210,11 @@ class TestPipeline:
 
 
 class TestDeclaredVersion:
-    """A 2192 client against a 2169 server, which BDS refuses unless it declares 2169."""
+    """A 2192 client against a 2169 server, which BDS refuses unless it declares 2169.
+
+    A wire-identical client is refused the same way, over nothing but the number, so it is
+    written over too.
+    """
 
     @pytest.fixture
     def protocol(self, make_protocol: Callable[..., BaseProtocol]) -> BaseProtocol:
@@ -238,15 +243,30 @@ class TestDeclaredVersion:
 
         assert event.payload is declared
 
-    def test_leaves_a_client_on_the_wire_identical_version_to_endstone(self, protocol: BaseProtocol) -> None:
+    def test_writes_the_server_version_for_a_wire_identical_client(self, protocol: BaseProtocol) -> None:
         handshake_event = handshake(2168)
         login_event = packet(LOGIN, (2168).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST)
 
         connection = protocol.transform_serverbound(handshake_event)
         protocol.transform_serverbound(login_event)
 
-        assert connection.serverbound is None
-        assert connection.clientbound is None
+        assert connection.serverbound is not None
+        assert not connection.serverbound.actions
+        assert handshake_event.payload == (2169).to_bytes(4, "big", signed=True)
+        assert login_event.payload == (2169).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST
+
+    def test_writes_the_server_version_for_a_wire_identical_client_on_an_older_server(
+        self, make_protocol: Callable[..., BaseProtocol]
+    ) -> None:
+        older = make_protocol(server_protocol=CARRIED_SERVER)
+        handshake_event = handshake(2169)
+        login_event = packet(LOGIN, (2169).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST)
+
+        connection = older.transform_serverbound(handshake_event)
+        older.transform_serverbound(login_event)
+
+        assert connection.serverbound is not None
+        assert not connection.serverbound.actions
         assert handshake_event.payload == (2168).to_bytes(4, "big", signed=True)
         assert login_event.payload == (2168).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST
 

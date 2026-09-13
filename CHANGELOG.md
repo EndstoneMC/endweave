@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- A 26.45 client could not join a 26.40-26.44 server, and the other way round. The two put the same bytes on the wire under different version numbers, so the server turned the number away before Endweave had anything to translate. Endweave now writes the server's number into the handshake for such a client and carries the connection untranslated.
+
 ## [0.5.0] - 2026-09-13
 
 ### Added

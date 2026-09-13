@@ -144,7 +144,7 @@ class EndweavePlugin(Plugin):
 
         message = translate_alternate_color_codes(self._configuration.reload_disconnect_message)
         for connection in connection_manager.connections.values():
-            if connection.clientbound is not None:
+            if connection.clientbound is not None and connection.clientbound.actions:
                 connection.disconnect(message)
 
     @event_handler(priority=EventPriority.LOWEST)

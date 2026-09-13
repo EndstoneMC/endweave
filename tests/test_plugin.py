@@ -27,6 +27,7 @@ USAGES = EndweavePlugin.commands["endweave"]["usages"]
 # The pair the engine carries, so a connection between them has translators.
 CARRIED_SERVER = get_protocol(2168)
 CARRIED_CLIENT = 2192
+CARRIED_ALIAS = 2169
 
 CONTAINER_CLOSE = 47
 INVENTORY_TRANSACTION = 30
@@ -339,6 +340,18 @@ class TestDisable:
         plugin.on_disable()
 
         connection.player.kick.assert_called_once_with("§cBack in a moment")
+
+    def test_leaves_a_player_whose_connection_translates_nothing_alone(
+        self, make_plugin: Callable[..., StubPlugin]
+    ) -> None:
+        plugin = make_plugin(server_protocol=CARRIED_SERVER)
+        plugin.on_packet_receive(handshake(CARRIED_ALIAS))
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.player = MagicMock()
+
+        plugin.on_disable()
+
+        connection.player.kick.assert_not_called()
 
     def test_leaves_a_player_on_the_server_version_alone(self, make_plugin: Callable[..., StubPlugin]) -> None:
         plugin = make_plugin(server_protocol=CARRIED_SERVER)

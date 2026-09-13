@@ -5,10 +5,12 @@ packet of a Bedrock connection, where ViaVersion's InitialBaseProtocol reads it
 off the Java handshake. The pipeline is installed there, and the server's own
 version written over the client's, as InitialBaseProtocol does. Login states the
 version a second time, which BDS checks as well, so it is rewritten too. A
-connection without translators is left as it is: where the engine reads both
-ends as one version, or does not carry one of them, the server takes or refuses
-the client itself. Translators are shared by every connection between the same
-two versions, as ViaVersion shares its protocols.
+client already on the server's number, or one the engine does not carry, gets
+neither pipeline nor rewrite: the server takes or refuses it itself. Where the
+two numbers name one wire shape, as 26.45 and 26.40-26.44 do, the pipeline
+translates nothing and the rewrite is the whole of the work. Translators are
+shared by every connection between the same two versions, as ViaVersion shares
+its protocols.
 
 The blocked version gate of ServerboundBaseProtocol1_7 and the login bookkeeping
 of ClientboundBaseProtocol1_7 run on the login event, the last point before the
@@ -85,15 +87,17 @@ class BaseProtocol:
         connection.clientbound = None
         client = protocol_version.version
         server = connection.server_protocol_version.version
+        if client == server:
+            return connection
+
         try:
             serverbound = _translator(client, server)
         except ValueError:
             return connection
 
-        if serverbound.from_version != serverbound.to_version:
-            connection.serverbound = serverbound
-            connection.clientbound = _translator(server, client)
-            event.payload = server.to_bytes(4, "big", signed=True) + payload[4:]
+        connection.serverbound = serverbound
+        connection.clientbound = _translator(server, client)
+        event.payload = server.to_bytes(4, "big", signed=True) + payload[4:]
         return connection
 
     def on_login(self, event: PlayerLoginEvent) -> None:
