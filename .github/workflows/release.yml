@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to release (e.g. 0.3.0)"
+        description: "Version to release (e.g. 0.3.0, or a pre-release such as 0.3.0rc1)"
         required: true
         type: string
       dry_run:
@@ -30,8 +30,8 @@ jobs:
 
       - name: Validate version
         run: |
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid version format: $VERSION (expected X.Y.Z)"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+((a|b|rc)[0-9]+)?$ ]]; then
+            echo "::error::Invalid version format: $VERSION (expected X.Y.Z, or X.Y.Zrc1 as PyPI spells it)"
             exit 1
           fi
           if git tag -l "v$VERSION" | grep -q .; then
@@ -137,9 +137,14 @@ jobs:
             printf '\n**Full Changelog**: https://github.com/%s/compare/%s...v%s\n' \
               "${{ github.repository }}" "$PREV_TAG" "$VERSION" >> /tmp/release_body.md
           fi
+          ARGS=()
+          if [[ "$VERSION" =~ (a|b|rc)[0-9]+$ ]]; then
+            ARGS+=(--prerelease)
+          fi
           gh release create "v$VERSION" \
             --title "v$VERSION" \
-            --notes-file /tmp/release_body.md
+            --notes-file /tmp/release_body.md \
+            "${ARGS[@]}"
 
   publish:
     if: ${{ !inputs.dry_run }}
