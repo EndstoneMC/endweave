@@ -104,9 +104,9 @@ class EndweavePlugin(Plugin):
         carried = [version for version in get_protocols() if _carries(version.version)]
         self.logger.info(f"Translating between {', '.join(str(version) for version in carried)}")
         if not _carries(server_protocol):
+            self.logger.warning("Endweave does not have any compatible versions for this server version!")
             self.logger.warning(
-                f"Endweave does not translate protocol {server_protocol}, the one this server speaks, so no "
-                "client is carried to it. Every packet passes through untouched until Endweave is updated."
+                f"Every packet passes through untouched until Endweave supports protocol {server_protocol}."
             )
 
         self._connection_manager = ConnectionManager(get_protocol(server_protocol))
