@@ -11,14 +11,14 @@ import pytest
 from endstone.command import Command
 from endstone.event import EventPriority
 
-from endweave._pipeline import Action
+from endweave._pipeline import Action, supported_versions
 from endweave.commands import CommandHandler
 from endweave.config import ConfigurationProvider, EndweaveConfig
 from endweave.connection import ConnectionManager
 from endweave.debug import DebugHandler
-from endweave.plugin import EndweavePlugin
+from endweave.plugin import EndweavePlugin, _carries
 from endweave.protocol.base import BaseProtocol
-from endweave.protocol.version import ProtocolVersion, get_protocol
+from endweave.protocol.version import ProtocolVersion, get_protocol, get_protocols
 
 SERVER_PROTOCOL = get_protocol(944)
 ADDRESS = "127.0.0.1:19132"
@@ -261,6 +261,22 @@ class TestTranslation:
         plugin.on_packet_receive(packet(INVENTORY_TRANSACTION, EMPTY_TRANSACTION))
 
         mock_logger.info.assert_not_called()
+
+
+class TestCarriedVersions:
+    def test_carries_every_version_the_engine_names(self) -> None:
+        assert all(_carries(version) for version in supported_versions())
+
+    def test_carries_a_version_the_engine_routes_as_another(self) -> None:
+        assert _carries(2169)
+
+    def test_does_not_carry_a_version_the_engine_left_out(self) -> None:
+        assert not _carries(975)
+
+    def test_names_a_routed_version_among_the_carried_ones(self) -> None:
+        carried = [version.name for version in get_protocols() if _carries(version.version)]
+
+        assert "26.45" in carried
 
 
 class TestPriority:

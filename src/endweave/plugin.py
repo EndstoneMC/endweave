@@ -33,18 +33,27 @@ from endstone.event import (
 )
 from endstone.plugin import Plugin
 
-from ._pipeline import Action, TranslationError, packet_name
+from ._pipeline import Action, TranslationError, Translator, packet_name
 from .commands import CommandHandler
 from .config import ConfigurationProvider, EndweaveConfig
 from .connection import Connection, ConnectionManager
 from .debug import DebugHandler, Direction, Packet, PacketType
 from .metrics import EndweaveMetrics
 from .protocol.base import BaseProtocol
-from .protocol.version import get_protocol
+from .protocol.version import get_protocol, get_protocols
 from .update import send_update_message
 from .util import translate_alternate_color_codes
 
 _TRANSLATION_FAILED = "§cEndweave could not translate a packet for your version."
+
+
+def _carries(protocol_version: int) -> bool:
+    """Whether the engine translates a protocol version, the ones it routes as another included."""
+    try:
+        Translator(protocol_version, protocol_version)
+    except ValueError:
+        return False
+    return True
 
 
 def _packet_label(packet_id: int) -> str:
@@ -91,6 +100,15 @@ class EndweavePlugin(Plugin):
 
         server_protocol = self.server.protocol_version
         self.logger.info(f"Detected server protocol {server_protocol} (MC {self.server.minecraft_version})")
+
+        carried = [version for version in get_protocols() if _carries(version.version)]
+        self.logger.info(f"Translating between {', '.join(str(version) for version in carried)}")
+        if not _carries(server_protocol):
+            self.logger.warning(
+                f"Endweave does not translate protocol {server_protocol}, the one this server speaks, so no "
+                "client is carried to it. Every packet passes through untouched until Endweave is updated."
+            )
+
         self._connection_manager = ConnectionManager(get_protocol(server_protocol))
         self._base_protocol = BaseProtocol(self._connection_manager, self._configuration, self.logger)
 
