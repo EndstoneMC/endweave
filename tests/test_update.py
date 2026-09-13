@@ -174,11 +174,11 @@ def test_release_ahead_of_the_latest_release_warns_the_console() -> None:
     assert "newer version of the plugin than is released" in message.text
 
 
-def test_pre_release_ahead_of_the_latest_release_does_not_warn() -> None:
+def test_pre_release_ahead_of_the_latest_release_is_reported_as_a_development_build() -> None:
     message = get_update_message("v0.4.3", "0.5.0rc1", console=True)
     assert message is not None
     assert message.level is Logger.Level.INFO
-    assert "pre-release version" in message.text
+    assert "development version" in message.text
     assert get_update_message("v0.4.3", "0.5.0rc1", console=False) is None
 
 

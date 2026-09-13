@@ -110,15 +110,10 @@ async def _get_update_message(*, console: bool) -> _UpdateMessage | None:
             f"There is a newer plugin version available: {newest}, you're on: {current}",
         )
     if console and current != newest:
-        if current.is_devrelease:
+        if current.is_devrelease or current.is_prerelease:
             return _UpdateMessage(
                 Logger.Level.INFO,
                 "You are running a development version of the plugin, please report any bugs to GitHub.",
-            )
-        if current.is_prerelease:
-            return _UpdateMessage(
-                Logger.Level.INFO,
-                "You are running a pre-release version of the plugin, please report any bugs to GitHub.",
             )
         return _UpdateMessage(Logger.Level.WARNING, "You are running a newer version of the plugin than is released!")
     return None
