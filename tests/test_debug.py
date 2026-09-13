@@ -142,37 +142,37 @@ class TestConversionWarnings:
 class TestErrorLogging:
     def test_logs_a_failure_though_muted_and_disabled(self, mock_logger: MagicMock, failure: ValueError) -> None:
         handler = DebugHandler(mock_logger, log_conversion_warnings=False)
-        handler.error("Failed to translate START_GAME", failure)
+        handler.log_translation_failure("Failed to translate START_GAME", failure)
         mock_logger.error.assert_called_once()
 
     def test_message_carries_the_traceback(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger).error("Failed to translate START_GAME", failure)
+        DebugHandler(mock_logger).log_translation_failure("Failed to translate START_GAME", failure)
         message = mock_logger.error.call_args[0][0]
         assert "Failed to translate START_GAME" in message
         assert "ValueError: truncated varint" in message
         assert "Traceback (most recent call last)" in message
 
     def test_cuts_a_message_past_the_length_limit(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, max_error_length=30).error("Failed to translate START_GAME", failure)
+        DebugHandler(mock_logger, max_error_length=30).log_translation_failure("Failed to translate START_GAME", failure)
         message = mock_logger.error.call_args[0][0]
         assert message == "Failed to translate START_GAME..."
 
     def test_keeps_a_message_within_the_limit_whole(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, max_error_length=10_000).error("Failed to translate START_GAME", failure)
+        DebugHandler(mock_logger, max_error_length=10_000).log_translation_failure("Failed to translate START_GAME", failure)
         message = mock_logger.error.call_args[0][0]
         assert not message.endswith("...")
         assert "ValueError: truncated varint" in message
 
     def test_debug_mode_keeps_the_whole_message(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, enabled=True, max_error_length=30).error("Failed to translate", failure)
+        DebugHandler(mock_logger, enabled=True, max_error_length=30).log_translation_failure("Failed to translate", failure)
         message = mock_logger.error.call_args[0][0]
         assert not message.endswith("...")
         assert "ValueError: truncated varint" in message
 
     def test_a_zero_limit_cuts_the_message_to_nothing(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, max_error_length=0).error("Failed to translate START_GAME", failure)
+        DebugHandler(mock_logger, max_error_length=0).log_translation_failure("Failed to translate START_GAME", failure)
         assert mock_logger.error.call_args[0][0] == "..."
 
     def test_a_negative_limit_cuts_the_message_to_nothing(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, max_error_length=-20).error("Failed to translate START_GAME", failure)
+        DebugHandler(mock_logger, max_error_length=-20).log_translation_failure("Failed to translate START_GAME", failure)
         assert mock_logger.error.call_args[0][0] == "..."

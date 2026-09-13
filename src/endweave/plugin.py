@@ -203,7 +203,7 @@ class EndweavePlugin(Plugin):
         try:
             payload = translator.translate(packet_id, event.payload)
         except TranslationError as error:
-            debug.error(
+            debug.log_translation_failure(
                 f"Failed to translate {direction.value} packet {_packet_label(packet_id)} "
                 f"at {error.stage} for {connection.address} "
                 f"({connection.protocol_version} against {connection.server_protocol_version})",

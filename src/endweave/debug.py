@@ -226,7 +226,7 @@ class DebugHandler:
         for packet_type in packet_types:
             self.add_packet_type_to_log(packet_type)
 
-    def error(self, error: str, exception: BaseException) -> None:
+    def log_translation_failure(self, error: str, exception: BaseException) -> None:
         """Log a translation failure, whatever the logging options are set to.
 
         The message is cut to ``max_error_length`` unless debug mode is on.
