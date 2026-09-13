@@ -510,5 +510,5 @@ class EndweaveConfig(Config):
 
     @property
     def max_error_length(self) -> int:
-        """Longest error message written to the console, 0 for no limit."""
+        """Longest error message written to the console, unless debug mode is on."""
         return self._max_error_length

@@ -25,9 +25,10 @@ reload-disconnect-msg = "Server reload, please rejoin!"
 [logging]
 # Log more about kicks caused by a blocked protocol version
 log-blocked-joins = false
-# Warn when a packet is dropped because a transform cannot carry it to the version on the other side.
-# This covers the packets Endweave gives up on quietly; a translation that fails outright is always
-# reported, and the player is kicked, whatever this is set to.
+# Whether to warn for other issues when converting packets between server and client: a packet a
+# transform cannot carry to the version on the other side is dropped, and this reports the drop.
+# A translation that fails outright is always reported, and the player kicked, whatever this is set
+# to. Debug mode turns this on by itself.
 log-other-conversion-warnings = false
-# Longest error message written to the console, 0 to keep the whole thing
+# Maximum length of error messages in the console. They are written whole while debug mode is on.
 max-error-length = 1500

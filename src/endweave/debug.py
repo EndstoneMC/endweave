@@ -89,10 +89,11 @@ class DebugHandler:
             ``should_log`` only applies the packet filter.
         log_pre_packet_transform: Log packets before they are transformed.
         log_post_packet_transform: Log packets after they are transformed.
-        log_conversion_warnings: Warn about a packet a transform refused, even
-            with debug off. A translation that fails outright is reported
-            whatever this is set to.
-        max_error_length: Longest message ``error`` writes, 0 for no limit.
+        log_conversion_warnings: Warn about a packet a transform refused.
+            Debug mode turns it on whatever it is set to. A translation that
+            fails outright is reported either way.
+        max_error_length: Longest message ``error`` writes, written whole while
+            debug mode is on.
 
     See Also:
         com.viaversion.viaversion.api.debug.DebugHandler
@@ -104,17 +105,30 @@ class DebugHandler:
         logger: Logger,
         *,
         enabled: bool = False,
-        log_conversion_warnings: bool = True,
+        log_conversion_warnings: bool = False,
         max_error_length: int = 1500,
     ) -> None:
         self._logger = logger
         self.enabled = enabled
         self.log_pre_packet_transform = True
         self.log_post_packet_transform = False
-        self.log_conversion_warnings = log_conversion_warnings
+        self._log_conversion_warnings = log_conversion_warnings
         self.max_error_length = max_error_length
         self._packet_type_names: set[str] = set()
         self._packet_types: dict[Direction, set[PacketType]] = {direction: set() for direction in Direction}
+
+    @property
+    def log_conversion_warnings(self) -> bool:
+        """Whether a packet a transform refused is warned about.
+
+        See Also:
+            com.viaversion.viaversion.configuration.AbstractViaConfig#logOtherConversionWarnings
+        """
+        return self._log_conversion_warnings or self.enabled
+
+    @log_conversion_warnings.setter
+    def log_conversion_warnings(self, log_conversion_warnings: bool) -> None:
+        self._log_conversion_warnings = log_conversion_warnings
 
     def add_packet_type_name_to_log(self, packet_type_name: str) -> None:
         """Log every packet with this type name, whichever direction it travels.
@@ -215,12 +229,17 @@ class DebugHandler:
     def error(self, error: str, exception: BaseException) -> None:
         """Log a translation failure, whatever the logging options are set to.
 
+        The message is cut to ``max_error_length`` unless debug mode is on.
+
         Args:
             error: Message describing what failed.
             exception: The exception that was raised.
+
+        See Also:
+            com.viaversion.viaversion.exception.InformativeException#getMessage
         """
         trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         message = f"{error}\n{trace}"
-        if 0 < self.max_error_length < len(message):
-            message = f"{message[: self.max_error_length]}..."
+        if not self.enabled and len(message) > self.max_error_length:
+            message = f"{message[: max(0, self.max_error_length)]}..."
         self._logger.error(message)
