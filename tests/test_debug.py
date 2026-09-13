@@ -153,18 +153,24 @@ class TestErrorLogging:
         assert "Traceback (most recent call last)" in message
 
     def test_cuts_a_message_past_the_length_limit(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, max_error_length=30).log_translation_failure("Failed to translate START_GAME", failure)
+        DebugHandler(mock_logger, max_error_length=30).log_translation_failure(
+            "Failed to translate START_GAME", failure
+        )
         message = mock_logger.error.call_args[0][0]
         assert message == "Failed to translate START_GAME..."
 
     def test_keeps_a_message_within_the_limit_whole(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, max_error_length=10_000).log_translation_failure("Failed to translate START_GAME", failure)
+        DebugHandler(mock_logger, max_error_length=10_000).log_translation_failure(
+            "Failed to translate START_GAME", failure
+        )
         message = mock_logger.error.call_args[0][0]
         assert not message.endswith("...")
         assert "ValueError: truncated varint" in message
 
     def test_debug_mode_keeps_the_whole_message(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, enabled=True, max_error_length=30).log_translation_failure("Failed to translate", failure)
+        DebugHandler(mock_logger, enabled=True, max_error_length=30).log_translation_failure(
+            "Failed to translate", failure
+        )
         message = mock_logger.error.call_args[0][0]
         assert not message.endswith("...")
         assert "ValueError: truncated varint" in message
@@ -174,5 +180,7 @@ class TestErrorLogging:
         assert mock_logger.error.call_args[0][0] == "..."
 
     def test_a_negative_limit_cuts_the_message_to_nothing(self, mock_logger: MagicMock, failure: ValueError) -> None:
-        DebugHandler(mock_logger, max_error_length=-20).log_translation_failure("Failed to translate START_GAME", failure)
+        DebugHandler(mock_logger, max_error_length=-20).log_translation_failure(
+            "Failed to translate START_GAME", failure
+        )
         assert mock_logger.error.call_args[0][0] == "..."
