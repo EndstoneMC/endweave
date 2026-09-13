@@ -73,6 +73,7 @@ class EndweavePlugin(Plugin):
                 "endweave.command.list": True,
                 "endweave.command.debug": True,
                 "endweave.command.reload": True,
+                "endweave.update": True,
             },
         },
     }

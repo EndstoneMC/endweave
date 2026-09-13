@@ -283,5 +283,10 @@ class TestDeclaration:
 
         assert children["endweave.command"] is True
 
+    def test_declares_every_permission_it_checks(self) -> None:
+        children = EndweavePlugin.permissions["endweave.admin"]["children"]
+
+        assert children["endweave.update"] is True
+
     def test_offers_a_usage_with_no_subcommand(self) -> None:
         assert "/endweave" in EndweavePlugin.commands["endweave"]["usages"]
