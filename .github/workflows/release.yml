@@ -14,11 +14,14 @@ on:
         default: false
 
 jobs:
-  release:
+  check:
+    name: Check
     if: github.repository == 'EndstoneMC/endweave'
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+    outputs:
+      body: ${{ steps.changelog.outputs.body }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
@@ -27,7 +30,6 @@ jobs:
 
       - name: Validate version
         run: |
-          VERSION="${{ inputs.version }}"
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "::error::Invalid version format: $VERSION (expected X.Y.Z)"
             exit 1
@@ -36,9 +38,9 @@ jobs:
             echo "::error::Tag v$VERSION already exists"
             exit 1
           fi
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Extract unreleased changelog
+        id: changelog
         run: |
           BODY=$(sed -n '/^## \[Unreleased\]/,/^## \[/{/^## \[/d; p}' CHANGELOG.md)
           BODY=$(echo "$BODY" | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba}')
@@ -46,12 +48,18 @@ jobs:
             echo "::error::Unreleased section in CHANGELOG.md is empty"
             exit 1
           fi
-          echo "$BODY" > /tmp/release_body.md
+          {
+            echo "body<<RELEASE_BODY"
+            echo "$BODY"
+            echo "RELEASE_BODY"
+          } >> "$GITHUB_OUTPUT"
           echo "Extracted changelog:"
           echo "$BODY"
 
       - name: Preview
         if: inputs.dry_run
+        env:
+          BODY: ${{ steps.changelog.outputs.body }}
         run: |
           DATE=$(date -u +%Y-%m-%d)
           echo "=== Dry Run ==="
@@ -60,15 +68,41 @@ jobs:
           echo "Date: $DATE"
           echo ""
           echo "=== Release Body ==="
-          cat /tmp/release_body.md
+          echo "$BODY"
           echo ""
           echo "=== CHANGELOG.md will become ==="
           echo "## [Unreleased]"
           echo ""
           echo "## [$VERSION] - $DATE"
 
+  build:
+    name: Build
+    needs: [ check ]
+    uses: ./.github/workflows/build.yml
+    with:
+      version: ${{ inputs.version }}
+
+  release:
+    name: Release
+    needs: [ check, build ]
+    if: ${{ !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Write release notes
+        env:
+          BODY: ${{ needs.check.outputs.body }}
+        run: printf '%s\n' "$BODY" > /tmp/release_body.md
+
       - name: Update CHANGELOG.md
-        if: ${{ !inputs.dry_run }}
         run: |
           DATE=$(date -u +%Y-%m-%d)
           REPO="https://github.com/${{ github.repository }}"
@@ -82,7 +116,6 @@ jobs:
           sed -i "s|^\[Unreleased\]: .*|[Unreleased]: $REPO/compare/v$VERSION...HEAD\n$NEW_LINK|" CHANGELOG.md
 
       - name: Commit and tag
-        if: ${{ !inputs.dry_run }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -91,13 +124,11 @@ jobs:
           git tag "v$VERSION"
 
       - name: Push
-        if: ${{ !inputs.dry_run }}
         run: |
           git push origin main
           git push origin "v$VERSION"
 
       - name: Create GitHub release
-        if: ${{ !inputs.dry_run }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -110,16 +141,9 @@ jobs:
             --title "v$VERSION" \
             --notes-file /tmp/release_body.md
 
-  build:
-    name: Build
-    needs: [ release ]
-    uses: ./.github/workflows/build.yml
-    with:
-      ref: ${{ !inputs.dry_run && format('v{0}', inputs.version) || '' }}
-
   publish:
     if: ${{ !inputs.dry_run }}
-    needs: [ build ]
+    needs: [ release ]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
