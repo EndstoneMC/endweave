@@ -7,8 +7,8 @@ on:
     branches: [ "main", "develop" ]
   workflow_call:
     inputs:
-      ref:
-        description: "Ref to build, defaults to the caller's"
+      version:
+        description: "Version to build as, defaults to the version setuptools-scm derives"
         required: false
         type: string
         default: ""
@@ -24,7 +24,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}
           fetch-depth: 0
 
       - name: Set up uv
@@ -58,14 +57,32 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}
           fetch-depth: 0
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
 
+      # setuptools-scm reads the version off a tag. The Release workflow pushes
+      # this one only once the whole build has passed.
+      - name: Tag the version being released
+        if: inputs.version != ''
+        env:
+          VERSION: ${{ inputs.version }}
+        run: git tag "v$VERSION"
+
       - name: Build sdist
         run: uv build --sdist --out-dir dist/
+
+      - name: Check sdist version
+        if: inputs.version != ''
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [ ! -f "dist/endstone_endweave-$VERSION.tar.gz" ]; then
+            echo "::error::the sdist was not built as $VERSION"
+            ls -l dist
+            exit 1
+          fi
 
       - uses: actions/upload-artifact@v7
         with:
@@ -90,8 +107,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
-          ref: ${{ inputs.ref }}
           fetch-depth: 0
+
+      # setuptools-scm reads the version off a tag. The Release workflow pushes
+      # this one only once the whole build has passed.
+      - name: Tag the version being released
+        if: inputs.version != ''
+        shell: bash
+        env:
+          VERSION: ${{ inputs.version }}
+        run: git tag "v$VERSION"
 
       - name: Set up MSVC (Windows)
         if: runner.os == 'Windows'
@@ -105,14 +130,21 @@ jobs:
           CIBW_BUILD: ${{ matrix.python-tag }}-${{ matrix.platform }}
           CIBW_BUILD_VERBOSITY: 1
 
-      - name: Check wheel contents
+      - name: Check wheel
         shell: python
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
+          import os
           import pathlib
           import sys
           import zipfile
 
           (wheel,) = pathlib.Path("wheelhouse").glob("*.whl")
+          version = os.environ["VERSION"]
+          if version and not wheel.name.startswith(f"endstone_endweave-{version}-"):
+              print(f"::error::{wheel.name} was not built as {version}")
+              sys.exit(1)
           names = zipfile.ZipFile(wheel).namelist()
           missing = [n for n in ("endweave/config.toml", "endweave/_pipeline.pyi", "endweave/py.typed") if n not in names]
           if not any(n.startswith("endweave/_pipeline.") and n.endswith((".so", ".pyd")) for n in names):
@@ -139,8 +171,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.ref }}
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
