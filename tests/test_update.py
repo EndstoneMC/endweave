@@ -195,8 +195,9 @@ def test_a_newer_pre_release_is_offered_to_someone_already_on_one(console: bool)
 
 
 @pytest.mark.parametrize("console", [True, False])
-def test_a_release_user_is_never_nudged_onto_a_pre_release(console: bool) -> None:
-    assert get_update_message("v0.5.0rc1", "0.4.3", console=console) is None
+def test_whatever_github_calls_the_latest_release_is_offered(console: bool) -> None:
+    message = get_update_message("v0.5.0rc1", "0.4.3", console=console)
+    assert message == (Logger.Level.WARNING, "There is a newer plugin version available: 0.5.0rc1, you're on: 0.4.3")
 
 
 def test_unparsable_local_version_asks_the_user_to_update() -> None:

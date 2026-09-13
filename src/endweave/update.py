@@ -103,8 +103,6 @@ async def _get_update_message(*, console: bool) -> _UpdateMessage | None:
         return _UpdateMessage(Logger.Level.INFO, "You are using a custom version, consider updating.")
 
     if current < newest:
-        if newest.is_prerelease and not current.is_prerelease:
-            return None
         return _UpdateMessage(
             Logger.Level.WARNING,
             f"There is a newer plugin version available: {newest}, you're on: {current}",
