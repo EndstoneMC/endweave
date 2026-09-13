@@ -346,6 +346,17 @@ class TestDisable:
 
         connection.player.kick.assert_not_called()
 
+    def test_stops_the_metrics_submitter(self, make_plugin: Callable[..., StubPlugin]) -> None:
+        plugin = make_plugin()
+        plugin._metrics = MagicMock()
+
+        plugin.on_disable()
+
+        plugin._metrics.shutdown.assert_called_once()
+
+    def test_survives_an_enable_that_never_finished(self) -> None:
+        EndweavePlugin().on_disable()
+
 
 class TestDeclaration:
     def test_gates_the_command_behind_a_permission_endstone_reads(self) -> None:

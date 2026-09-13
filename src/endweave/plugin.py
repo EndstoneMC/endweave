@@ -125,13 +125,23 @@ class EndweavePlugin(Plugin):
             send_update_message(self)
 
     def on_disable(self) -> None:
-        """Kick every player whose connection is translated.
+        """Stop the metrics submitter and kick every player whose connection is translated.
+
+        Safe to call when ``on_enable`` did not finish.
 
         See Also:
             com.viaversion.viaversion.ViaVersionPlugin#onReload
         """
+        metrics: EndweaveMetrics | None = getattr(self, "_metrics", None)
+        if metrics is not None:
+            metrics.shutdown()  # type: ignore[no-untyped-call]
+
+        connection_manager: ConnectionManager | None = getattr(self, "_connection_manager", None)
+        if connection_manager is None:
+            return
+
         message = translate_alternate_color_codes(self._configuration.reload_disconnect_message)
-        for connection in self._connection_manager.connections.values():
+        for connection in connection_manager.connections.values():
             if connection.clientbound is not None:
                 connection.disconnect(message)
 
