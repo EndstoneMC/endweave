@@ -9,6 +9,7 @@
 #include <bedrock/protocol/player.h>
 #include <bedrock/protocol/sound.h>
 #include <cstdint>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -28,6 +29,9 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::StartGame)> {
 };
 
 namespace detail {
+
+template <int From, int To>
+inline constexpr bool sound_renumbered_v = !std::is_same_v<bp::LevelSoundEvent_<From>, bp::LevelSoundEvent_<To>>;
 
 // ENDWEAVE: this key holds a LevelSoundEvent, whose Undefined sentinel is renumbered every
 // version. Left alone, an actor meaning "no heartbeat sound" names a real one at the other end
@@ -52,6 +56,7 @@ void rewriteActorData(std::vector<bp::DataItemEntry_<From>> &entries)
 } // namespace detail
 
 template <int From, int To>
+    requires detail::sound_renumbered_v<From, To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddActor)> {
     static void rewrite(bp::AddActorPacket_<From> &packet)
     {
@@ -60,6 +65,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddActor)> {
 };
 
 template <int From, int To>
+    requires detail::sound_renumbered_v<From, To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddItemActor)> {
     static void rewrite(bp::AddItemActorPacket_<From> &packet)
     {
@@ -68,6 +74,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddItemActor)
 };
 
 template <int From, int To>
+    requires detail::sound_renumbered_v<From, To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddPlayer)> {
     static void rewrite(bp::AddPlayerPacket_<From> &packet)
     {
@@ -76,6 +83,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddPlayer)> {
 };
 
 template <int From, int To>
+    requires detail::sound_renumbered_v<From, To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SetActorData)> {
     static void rewrite(bp::SetActorDataPacket_<From> &packet)
     {
