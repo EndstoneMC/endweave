@@ -43,6 +43,9 @@ nanobind_add_module(_pipeline STABLE_ABI NB_STATIC src/endweave/_pipeline.cpp)
 target_include_directories(_pipeline PRIVATE src)
 target_link_libraries(_pipeline PRIVATE bedrock::protocol)
 set_target_properties(_pipeline PROPERTIES CXX_VISIBILITY_PRESET hidden VISIBILITY_INLINES_HIDDEN ON)
+if (NOT MSVC)
+    target_compile_options(_pipeline PRIVATE -Wall -Wextra)
+endif ()
 
 add_subdirectory(src/endweave/protocols)
 
