@@ -58,8 +58,7 @@ class EndweavePlugin(Plugin):
             "usages": [
                 "/endweave",
                 "/endweave list",
-                "/endweave debug [clear|pre|post]",
-                "/endweave debug <add|remove> <packet: string>",
+                "/endweave debug [clear|pre|post|add|remove] [packet: string]",
                 "/endweave reload",
             ],
             "permissions": ["endweave.command"],

@@ -11,7 +11,8 @@ import pytest
 from endstone.command import Command
 from endstone.event import EventPriority
 
-from endweave.config import EndweaveConfig
+from endweave.commands import CommandHandler
+from endweave.config import ConfigurationProvider, EndweaveConfig
 from endweave.connection import ConnectionManager
 from endweave.debug import DebugHandler
 from endweave.plugin import EndweavePlugin
@@ -20,6 +21,7 @@ from endweave.protocol.version import ProtocolVersion, get_protocol
 
 SERVER_PROTOCOL = get_protocol(944)
 ADDRESS = "127.0.0.1:19132"
+USAGES = EndweavePlugin.commands["endweave"]["usages"]
 
 # The pair the engine carries, so a connection between them has translators.
 CARRIED_SERVER = get_protocol(2168)
@@ -290,3 +292,14 @@ class TestDeclaration:
 
     def test_offers_a_usage_with_no_subcommand(self) -> None:
         assert "/endweave" in EndweavePlugin.commands["endweave"]["usages"]
+
+    def test_names_each_subcommand_in_a_single_usage(self) -> None:
+        words = [usage.split()[1] for usage in USAGES if len(usage.split()) > 1]
+
+        assert sorted(words) == sorted(set(words))
+
+    def test_offers_a_usage_for_every_subcommand(self) -> None:
+        handler = CommandHandler(DebugHandler(MagicMock()), ConfigurationProvider())
+
+        for subcommand in handler.subcommands:
+            assert any(usage.startswith(f"/endweave {subcommand.name}") for usage in USAGES)
