@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **BREAKING**: The `[debug]` section is gone from `config.toml`, and an existing config file loses it on the first start with this release. Debug logging is turned on with `/endweave debug` and filtered with `/endweave debug add|remove <packet>` instead, and it always starts off again after a restart.
 
 ### Removed
-- **BREAKING**: Translation for protocols 859 (1.21.120-1.21.123), 860 (1.21.124), 898 (1.21.130-1.21.132), 924 (26.0-26.3), 944 (26.10-26.13) and 975 (26.20). A client on one of these versions can still join a server speaking the same protocol, but it can no longer be carried to a server on a different one. The wire formats are still modelled in bedrock-protocol, which the engine is generated from, so what is missing is the translation between them.
+- **BREAKING**: Translation for protocols 859 (1.21.120-1.21.123), 860 (1.21.124), 898 (1.21.130-1.21.132), 924 (26.0-26.3), 944 (26.10-26.13) and 975 (26.20). A client on one of these versions can still join a server speaking the same protocol, but it can no longer be carried to a server on a different one. These versions are not yet carried by the 0.5.0 engine.
 - Failing packet payloads are no longer written to `<plugin-data>/crashes/*.bin`.
 - A server-reported PacketViolationWarning is no longer surfaced as a warning in the log.
 
