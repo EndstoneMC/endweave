@@ -124,9 +124,7 @@ jobs:
           git tag "v$VERSION"
 
       - name: Push
-        run: |
-          git push origin main
-          git push origin "v$VERSION"
+        run: git push --atomic origin main "v$VERSION"
 
       - name: Create GitHub release
         env:
