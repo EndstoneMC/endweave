@@ -393,7 +393,6 @@ class EndweaveConfig(Config):
     _blocked_disconnect_message: str
     _reload_disconnect_message: str
     _log_blocked_joins: bool
-    _log_entity_data_errors: bool
     _log_other_conversion_warnings: bool
     _max_error_length: int
 
@@ -410,7 +409,7 @@ class EndweaveConfig(Config):
         """Bring an existing config up to date where merging cannot.
 
         Renamed options and changed defaults are handled here, keyed off
-        ``original_root_section`` and the ``config-version`` it carries. There
+        ``original_root_section``, the file as it was before the merge. There
         is nothing to migrate yet.
 
         Returns:
@@ -428,7 +427,6 @@ class EndweaveConfig(Config):
 
         logging_section = self.section("logging") or ConfigSection(self, "logging")
         self._log_blocked_joins = logging_section.get_bool("log-blocked-joins", False)
-        self._log_entity_data_errors = logging_section.get_bool("log-entity-data-errors", True)
         self._log_other_conversion_warnings = logging_section.get_bool("log-other-conversion-warnings", False)
         self._max_error_length = logging_section.get_int("max-error-length", 1500)
 
@@ -506,16 +504,11 @@ class EndweaveConfig(Config):
         return self._log_blocked_joins
 
     @property
-    def log_entity_data_errors(self) -> bool:
-        """Whether errors while converting entity data are logged."""
-        return self._log_entity_data_errors
-
-    @property
     def log_other_conversion_warnings(self) -> bool:
-        """Whether other conversion problems are warned about."""
+        """Whether a packet a transform gave up on is warned about."""
         return self._log_other_conversion_warnings
 
     @property
     def max_error_length(self) -> int:
-        """Longest error message written to the console."""
+        """Longest error message written to the console, 0 for no limit."""
         return self._max_error_length

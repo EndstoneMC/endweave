@@ -268,7 +268,6 @@ class TestEndweaveOptions:
         assert endweave_config.blocked_disconnect_message == "You are using an unsupported Minecraft version!"
         assert endweave_config.reload_disconnect_message == "Server reload, please rejoin!"
         assert endweave_config.log_blocked_joins is False
-        assert endweave_config.log_entity_data_errors is True
         assert endweave_config.log_other_conversion_warnings is False
         assert endweave_config.max_error_length == 1500
 
@@ -295,6 +294,15 @@ class TestEndweaveOptions:
 
         assert config.max_error_length == 20
         assert config.log_blocked_joins is True
+
+    def test_drops_the_options_nothing_acts_on(self, config_file: Path, mock_logger: MagicMock) -> None:
+        write(config_file, "config-version = 1\n\n[logging]\nlog-entity-data-errors = true\n")
+        config = EndweaveConfig(config_file, mock_logger)
+        config.reload()
+
+        text = config_file.read_text()
+        assert "config-version" not in text
+        assert "log-entity-data-errors" not in text
 
     def test_a_value_in_place_of_the_logging_table_keeps_the_defaults(
         self, config_file: Path, mock_logger: MagicMock
