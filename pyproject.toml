@@ -70,6 +70,9 @@ config-settings = { "build-dir" = "build/cibuildwheel/{wheel_tag}" }
 
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
+# Tag the wheel manylinux_2_28 alone. endstone itself needs glibc 2.31, so the
+# lower policies auditwheel would add on top are compatibility nothing can use.
+repair-wheel-command = "auditwheel repair --only-plat -w {dest_dir} {wheel}"
 
 [[tool.dynamic-metadata]]
 field = "version"
