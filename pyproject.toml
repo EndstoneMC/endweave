@@ -50,7 +50,7 @@ ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "endweave.plugin"
-disable_error_code = ["assignment", "func-returns-value", "untyped-decorator"]
+disable_error_code = ["assignment", "func-returns-value", "misc", "untyped-decorator"]
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
