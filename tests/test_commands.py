@@ -138,7 +138,7 @@ def test_no_arguments_shows_the_help_listing(handler: CommandHandler, mock_sende
     assert sent(mock_sender) == [
         f"§aEndweave §c{__version__}",
         "§6Commands:",
-        "§2/endweave list §7- §6Shows lists of the versions from logged in players.",
+        "§2/endweave list §7- §6List the online players by version.",
         "§2/endweave debug §7- §6Toggle various debug modes.",
         "§2/endweave reload §7- §6Reload the config from the disk.",
     ]
@@ -146,7 +146,7 @@ def test_no_arguments_shows_the_help_listing(handler: CommandHandler, mock_sende
 
 def test_an_unknown_word_says_so_then_shows_the_help(handler: CommandHandler, mock_sender: MagicMock) -> None:
     assert handler.on_command(mock_sender, MagicMock(), ["nope"]) is True
-    assert sent(mock_sender)[0] == "§cThis command does not exist."
+    assert sent(mock_sender)[0] == "§cThis subcommand does not exist."
     assert "§6Commands:" in sent(mock_sender)
 
 
@@ -185,7 +185,7 @@ def test_the_help_lists_only_the_subcommands_the_sender_may_run(
     assert sent(mock_sender) == [
         f"§aEndweave §c{__version__}",
         "§6Commands:",
-        "§2/endweave list §7- §6Shows lists of the versions from logged in players.",
+        "§2/endweave list §7- §6List the online players by version.",
     ]
 
 
@@ -218,8 +218,8 @@ def test_debug_with_no_arguments_toggles_the_master_switch(
 @pytest.mark.parametrize(
     ("word", "attribute", "message"),
     [
-        ("pre", "log_pre_packet_transform", "Pre transform packet logging is now"),
-        ("post", "log_post_packet_transform", "Post transform packet logging is now"),
+        ("pre", "log_pre_packet_transform", "Pre-transform packet logging is now"),
+        ("post", "log_post_packet_transform", "Post-transform packet logging is now"),
     ],
 )
 def test_debug_toggles_a_transform_phase(
@@ -298,7 +298,7 @@ def test_reload_rereads_every_config(
     assert handler.on_command(mock_sender, MagicMock(), ["reload"]) is True
     configuration_provider.reload_configs.assert_called_once_with()
     assert sent(mock_sender) == [
-        "§6Configuration successfully reloaded! Some config options may require a restart to take effect."
+        "§6Configuration successfully reloaded! Changing log-other-conversion-warnings still needs a restart."
     ]
 
 

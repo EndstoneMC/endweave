@@ -67,7 +67,7 @@ class ListSubCommand(SubCommand):
 
     @property
     def description(self) -> str:
-        return "Shows lists of the versions from logged in players."
+        return "List the online players by version."
 
     def execute(self, sender: CommandSender, args: list[str]) -> bool:
         players_by_version: defaultdict[ProtocolVersion, set[str]] = defaultdict(set)
@@ -114,12 +114,12 @@ class DebugSubCommand(SubCommand):
             if action == "pre":
                 debug.log_pre_packet_transform = not debug.log_pre_packet_transform
                 state = "§aenabled" if debug.log_pre_packet_transform else "§cdisabled"
-                sender.send_message(f"§6Pre transform packet logging is now {state}")
+                sender.send_message(f"§6Pre-transform packet logging is now {state}")
                 return True
             if action == "post":
                 debug.log_post_packet_transform = not debug.log_post_packet_transform
                 state = "§aenabled" if debug.log_post_packet_transform else "§cdisabled"
-                sender.send_message(f"§6Post transform packet logging is now {state}")
+                sender.send_message(f"§6Post-transform packet logging is now {state}")
                 return True
         elif len(args) == 2:
             packet_type_name = args[1].upper()
@@ -161,7 +161,7 @@ class ReloadSubCommand(SubCommand):
             return True
 
         sender.send_message(
-            "§6Configuration successfully reloaded! Some config options may require a restart to take effect."
+            "§6Configuration successfully reloaded! Changing log-other-conversion-warnings still needs a restart."
         )
         return True
 
@@ -206,7 +206,7 @@ class CommandHandler(CommandExecutor):
 
         subcommand = self._subcommands.get(args[0].lower())
         if subcommand is None:
-            sender.send_message("§cThis command does not exist.")
+            sender.send_message("§cThis subcommand does not exist.")
             self._show_help(sender)
             return True
 
