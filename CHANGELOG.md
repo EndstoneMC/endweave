@@ -2,12 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
-
-### Changed
-- Minecraft 26.0 and later are named 26.x rather than 1.26.x, in `/endweave list`, the logs and the shipped config. `block-versions` accepts either form, and so does the version a joining client reports, including a preview's build number such as 1.26.50.27.
 
 ### Added
 - Clients on 26.5x can join servers on 26.40-26.45, and the other way round. Packets are rewritten in both directions, a packet both versions read alike is passed through untouched, and a packet the other side has no counterpart for is dropped rather than forwarded. `/endweave debug` names each packet as it is carried, and `debug pre`/`debug post` show the payload on either side of the rewrite.
@@ -19,6 +16,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - A `[logging]` section. `log-other-conversion-warnings` turns the conversion warnings on and off, and `log-blocked-joins` reports every refused join. `log-entity-data-errors` and `max-error-length` are read but not yet acted on.
 - `block-versions` and `block-protocols` refuse a client at login, before any world data is streamed, with the kick message from `block-disconnect-msg`. The check reads the protocol the client announced in its RequestNetworkSettings, and falls back to the version the client reports on joining when that handshake was never seen, so a connection already open when the plugin was enabled is still checked. Entries that name no known version are reported on startup, and `&` colour codes in the message are translated.
 - Players whose connection Endweave translates are kicked with the message from `reload-disconnect-msg` when Endweave is disabled, as it is on a reload, rather than being sent packets their version cannot read. `&` colour codes in the message are translated.
+
+### Changed
+- **BREAKING**: Packet translation now runs in a compiled C++ engine instead of in Python, and the import package is renamed from `endstone_endweave` to `endweave`. Endstone still knows the plugin as `endweave`, so `plugins/endweave/` and the config in it are kept as they are, but `import endstone_endweave` no longer works.
+- **BREAKING**: Endweave now ships as one wheel per platform and Python version, where every earlier release shipped a single wheel that installed anywhere. A release carries Windows x86_64 and Linux x86_64 (glibc 2.28 or newer) builds for Python 3.10, for 3.11, and one for 3.12 and later. Alpine and other musl systems, machines that are not x86_64, and Linux distributions on an older glibc can no longer install it. The README says which file to drop in `plugins/`.
+- Installing the plugin now fetches `aiohttp`, `packaging` and `tomlkit` from PyPI, so the server needs outbound network access the first time it loads Endweave.
+- Minecraft 26.0 and later are named 26.x rather than 1.26.x, in `/endweave list`, the logs and the shipped config. `block-versions` accepts either form, and so does the version a joining client reports, including a preview's build number such as 1.26.50.27.
+- **BREAKING**: The `[debug]` section is gone from `config.toml`, and an existing config file loses it on the first start with this release. Debug logging is turned on with `/endweave debug` and filtered with `/endweave debug add|remove <packet>` instead, and it always starts off again after a restart.
+
+### Removed
+- **BREAKING**: Translation for protocols 859 (1.21.120-1.21.123), 860 (1.21.124), 898 (1.21.130-1.21.132), 924 (26.0-26.3), 944 (26.10-26.13) and 975 (26.20). A client on one of these versions can still join a server speaking the same protocol, but it can no longer be carried to a server on a different one. The wire formats are still modelled in bedrock-protocol, which the engine is generated from, so what is missing is the translation between them.
+- Failing packet payloads are no longer written to `<plugin-data>/crashes/*.bin`.
+- A server-reported PacketViolationWarning is no longer surfaced as a warning in the log.
 
 ## [0.4.3] - 2026-05-08
 
