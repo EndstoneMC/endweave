@@ -142,3 +142,19 @@ class TestErrorLogging:
         assert "Failed to translate START_GAME" in message
         assert "ValueError: truncated varint" in message
         assert "Traceback (most recent call last)" in message
+
+    def test_cuts_a_message_past_the_length_limit(self, mock_logger: MagicMock, failure: ValueError) -> None:
+        DebugHandler(mock_logger, max_error_length=30).error("Failed to translate START_GAME", failure)
+        message = mock_logger.error.call_args[0][0]
+        assert message == "Failed to translate START_GAME..."
+
+    def test_keeps_a_message_within_the_limit_whole(self, mock_logger: MagicMock, failure: ValueError) -> None:
+        DebugHandler(mock_logger, max_error_length=10_000).error("Failed to translate START_GAME", failure)
+        message = mock_logger.error.call_args[0][0]
+        assert not message.endswith("...")
+        assert "ValueError: truncated varint" in message
+
+    def test_no_limit_keeps_the_whole_message(self, mock_logger: MagicMock, failure: ValueError) -> None:
+        DebugHandler(mock_logger, max_error_length=0).error("Failed to translate START_GAME", failure)
+        message = mock_logger.error.call_args[0][0]
+        assert "ValueError: truncated varint" in message

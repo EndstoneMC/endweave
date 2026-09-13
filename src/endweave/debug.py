@@ -92,6 +92,7 @@ class DebugHandler:
         log_conversion_warnings: Warn about a packet a transform refused, even
             with debug off. A translation that fails outright is reported
             whatever this is set to.
+        max_error_length: Longest message ``error`` writes, 0 for no limit.
 
     See Also:
         com.viaversion.viaversion.api.debug.DebugHandler
@@ -104,12 +105,14 @@ class DebugHandler:
         *,
         enabled: bool = False,
         log_conversion_warnings: bool = True,
+        max_error_length: int = 1500,
     ) -> None:
         self._logger = logger
         self.enabled = enabled
         self.log_pre_packet_transform = True
         self.log_post_packet_transform = False
         self.log_conversion_warnings = log_conversion_warnings
+        self.max_error_length = max_error_length
         self._packet_type_names: set[str] = set()
         self._packet_types: dict[Direction, set[PacketType]] = {direction: set() for direction in Direction}
 
@@ -217,4 +220,7 @@ class DebugHandler:
             exception: The exception that was raised.
         """
         trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-        self._logger.error(f"{error}\n{trace}")
+        message = f"{error}\n{trace}"
+        if 0 < self.max_error_length < len(message):
+            message = f"{message[: self.max_error_length]}..."
+        self._logger.error(message)

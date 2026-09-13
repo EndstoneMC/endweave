@@ -114,7 +114,9 @@ class EndweavePlugin(Plugin):
 
         self.register_events(self)
         self._debug_handler = DebugHandler(
-            self.logger, log_conversion_warnings=self._configuration.log_other_conversion_warnings
+            self.logger,
+            log_conversion_warnings=self._configuration.log_other_conversion_warnings,
+            max_error_length=self._configuration.max_error_length,
         )
         self.get_command("endweave").executor = CommandHandler(self._debug_handler, self._configuration_provider)
 

@@ -51,7 +51,11 @@ class StubPlugin(EndweavePlugin):
         self._configuration = configuration
         self._connection_manager = ConnectionManager(server_protocol)
         self._base_protocol = BaseProtocol(self._connection_manager, configuration, logger)
-        self._debug_handler = DebugHandler(logger, log_conversion_warnings=configuration.log_other_conversion_warnings)
+        self._debug_handler = DebugHandler(
+            logger,
+            log_conversion_warnings=configuration.log_other_conversion_warnings,
+            max_error_length=configuration.max_error_length,
+        )
 
     @property
     def logger(self) -> MagicMock:
