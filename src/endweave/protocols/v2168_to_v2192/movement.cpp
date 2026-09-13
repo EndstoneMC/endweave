@@ -1,33 +1,6 @@
 #include "movement.h"
 
-#include <bedrock/protocol/item.h>
-#include <cstdint>
-#include <utility>
-
 namespace ew = endweave;
-
-namespace {
-
-// ENDWEAVE: not a Transformer -- the 2168 descriptor downgrades to two different 1001 types
-// depending on whether the containing packet had cerealised yet, and one key cannot hold both.
-bp::NetworkItemStackDescriptor downgradeLegacyItemStack(bp::SerializedNetworkItemStackDescriptor_<2168> &&from)
-{
-    bp::NetworkItemStackDescriptor to;
-    to.id = from.id;
-    to.stack_size = from.stack_size;
-    to.aux_value = from.aux_value;
-    // ENDWEAVE: 2168 codes a request id as -2n-1 and a legacy request id as -2n, and the
-    // legacy descriptor holds only a bare net id, so both negative cases are dropped.
-    if (from.net_id_variant.has_value() && from.net_id_variant.value() >= 0) {
-        to.net_id = bp::ItemStackNetId{from.net_id_variant.value()};
-    }
-    // ENDWEAVE: 1001 reads the block runtime id signed and 2168 unsigned, same bits.
-    to.block_runtime_id = static_cast<std::int32_t>(from.block_runtime_id);
-    to.user_data_buffer = std::move(from.user_data_buffer);
-    return to;
-}
-
-} // namespace
 
 namespace endweave {
 void Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2192>>::transform(
