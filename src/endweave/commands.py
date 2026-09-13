@@ -1,5 +1,11 @@
 """Subcommands of the Endweave command.
 
+Endstone prints the command's usage block whenever the executor returns false,
+where Bukkit prints one only if the plugin declared it and ViaVersion declares
+none. Returning true is therefore what upstream's false means here, and false
+is kept for the one case upstream answers with a usage line of its own: a
+subcommand that could not read the arguments it was given.
+
 See Also:
     com.viaversion.viaversion.api.command.ViaSubCommand
     com.viaversion.viaversion.commands.ViaCommandHandler
@@ -67,7 +73,7 @@ class ListSubCommand(SubCommand):
 
     @property
     def description(self) -> str:
-        return "List the online players by version."
+        return "Shows lists of the versions from logged in players."
 
     def execute(self, sender: CommandSender, args: list[str]) -> bool:
         players_by_version: defaultdict[ProtocolVersion, set[str]] = defaultdict(set)
@@ -114,12 +120,12 @@ class DebugSubCommand(SubCommand):
             if action == "pre":
                 debug.log_pre_packet_transform = not debug.log_pre_packet_transform
                 state = "§aenabled" if debug.log_pre_packet_transform else "§cdisabled"
-                sender.send_message(f"§6Pre-transform packet logging is now {state}")
+                sender.send_message(f"§6Pre transform packet logging is now {state}")
                 return True
             if action == "post":
                 debug.log_post_packet_transform = not debug.log_post_packet_transform
                 state = "§aenabled" if debug.log_post_packet_transform else "§cdisabled"
-                sender.send_message(f"§6Post-transform packet logging is now {state}")
+                sender.send_message(f"§6Post transform packet logging is now {state}")
                 return True
         elif len(args) == 2:
             packet_type_name = args[1].upper()
@@ -161,7 +167,7 @@ class ReloadSubCommand(SubCommand):
             return True
 
         sender.send_message(
-            "§6Configuration successfully reloaded! Changing log-other-conversion-warnings still needs a restart."
+            "§6Configuration successfully reloaded! Some config options may require a restart to take effect."
         )
         return True
 
@@ -198,7 +204,7 @@ class CommandHandler(CommandExecutor):
     def on_command(self, sender: CommandSender, command: Command, args: list[str]) -> bool:
         if not any(self._is_allowed(sender, subcommand) for subcommand in self._subcommands.values()):
             sender.send_message("§cYou are not allowed to use this command!")
-            return False
+            return True
 
         if not args:
             self._show_help(sender)
@@ -212,7 +218,7 @@ class CommandHandler(CommandExecutor):
 
         if not self._is_allowed(sender, subcommand):
             sender.send_message("§cYou are not allowed to use this command!")
-            return False
+            return True
 
         return subcommand.execute(sender, args[1:])
 
