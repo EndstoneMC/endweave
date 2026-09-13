@@ -17,12 +17,6 @@ Endweave translates between any two of these:
 | 26.45             | 2169     |
 | 26.5x             | 2192     |
 
-26.45 puts the same bytes on the wire as 26.40-26.44, so Endweave carries it as protocol 2168. That does not let a
-26.45 client onto a server running an older Endstone that is still on protocol 2168: the two ends already speak the
-same bytes, so Endweave leaves the handshake alone, and the server turns the version number away itself. Update the
-server to 26.45 first. Going the other way needs nothing from Endweave, as Endstone lets a 26.40-26.44 client into a
-26.45 server on its own.
-
 ### Not translated
 
 These versions are known to Endweave but not carried by the 0.5.0 engine:
