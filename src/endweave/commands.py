@@ -16,12 +16,17 @@ from collections import defaultdict
 
 from endstone.command import Command, CommandExecutor, CommandSender
 
+from ._pipeline import packet_name
 from ._version import __version__
 from .config import ConfigurationProvider
 from .debug import DebugHandler
 from .protocol.version import UNKNOWN, ProtocolVersion, get_by_name
 
 __all__ = ["CommandHandler", "DebugSubCommand", "ListSubCommand", "ReloadSubCommand", "SubCommand"]
+
+_PACKET_ID_LIMIT = 1024
+
+_PACKET_TYPE_NAMES = frozenset(name.upper() for name in map(packet_name, range(_PACKET_ID_LIMIT)) if name is not None)
 
 
 class SubCommand(ABC):
@@ -117,13 +122,19 @@ class DebugSubCommand(SubCommand):
                 sender.send_message(f"§6Post transform packet logging is now {state}")
                 return True
         elif len(args) == 2:
+            packet_type_name = args[1].upper()
             if action == "add":
-                debug.add_packet_type_name_to_log(args[1].upper())
-                sender.send_message(f"§6Added packet type {args[1]} to debug logging")
+                if packet_type_name not in _PACKET_TYPE_NAMES:
+                    sender.send_message(f"§cUnknown packet type {packet_type_name}.")
+                    return True
+                debug.add_packet_type_name_to_log(packet_type_name)
+                sender.send_message(f"§6Added packet type {packet_type_name} to debug logging")
                 return True
             if action == "remove":
-                debug.remove_packet_type_name_to_log(args[1].upper())
-                sender.send_message(f"§6Removed packet type {args[1]} from debug logging")
+                if not debug.remove_packet_type_name_to_log(packet_type_name):
+                    sender.send_message(f"§cPacket type {packet_type_name} was not being logged.")
+                    return True
+                sender.send_message(f"§6Removed packet type {packet_type_name} from debug logging")
                 return True
         return False
 

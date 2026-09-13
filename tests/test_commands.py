@@ -13,7 +13,7 @@ from endweave.commands import CommandHandler, DebugSubCommand, ListSubCommand, R
 from endweave.debug import DebugHandler, Direction, PacketType
 from endweave.plugin import EndweavePlugin
 
-START_GAME = PacketType(11, "START_GAME", Direction.CLIENTBOUND)
+START_GAME = PacketType(11, "STARTGAME", Direction.CLIENTBOUND)
 TEXT = PacketType(9, "TEXT", Direction.CLIENTBOUND)
 
 
@@ -240,7 +240,7 @@ def test_debug_toggles_a_transform_phase(
 def test_debug_clear_empties_the_packet_filter(
     handler: CommandHandler, debug_handler: DebugHandler, mock_sender: MagicMock
 ) -> None:
-    debug_handler.add_packet_type_name_to_log("START_GAME")
+    debug_handler.add_packet_type_name_to_log("STARTGAME")
     assert handler.on_command(mock_sender, MagicMock(), ["debug", "clear"]) is True
     assert debug_handler.should_log(StubPacket(9, TEXT), Direction.CLIENTBOUND)
     assert sent(mock_sender) == ["§6Cleared packet types to log"]
@@ -249,15 +249,35 @@ def test_debug_clear_empties_the_packet_filter(
 def test_debug_add_and_remove_upper_case_the_packet_name(
     handler: CommandHandler, debug_handler: DebugHandler, mock_sender: MagicMock
 ) -> None:
-    assert handler.on_command(mock_sender, MagicMock(), ["debug", "add", "start_game"]) is True
+    assert handler.on_command(mock_sender, MagicMock(), ["debug", "add", "startgame"]) is True
     assert debug_handler.should_log(StubPacket(11, START_GAME), Direction.CLIENTBOUND)
     assert not debug_handler.should_log(StubPacket(9, TEXT), Direction.CLIENTBOUND)
-    assert handler.on_command(mock_sender, MagicMock(), ["debug", "remove", "start_game"]) is True
+    assert handler.on_command(mock_sender, MagicMock(), ["debug", "remove", "StartGame"]) is True
     assert debug_handler.should_log(StubPacket(9, TEXT), Direction.CLIENTBOUND)
     assert sent(mock_sender) == [
-        "§6Added packet type start_game to debug logging",
-        "§6Removed packet type start_game from debug logging",
+        "§6Added packet type STARTGAME to debug logging",
+        "§6Removed packet type STARTGAME from debug logging",
     ]
+
+
+def test_debug_remove_reports_a_name_that_was_never_added(handler: CommandHandler, mock_sender: MagicMock) -> None:
+    assert handler.on_command(mock_sender, MagicMock(), ["debug", "remove", "startgame"]) is True
+    assert sent(mock_sender) == ["§cPacket type STARTGAME was not being logged."]
+
+
+def test_debug_add_rejects_a_packet_name_the_engine_does_not_know(
+    handler: CommandHandler, mock_sender: MagicMock
+) -> None:
+    assert handler.on_command(mock_sender, MagicMock(), ["debug", "add", "startgane"]) is True
+    assert sent(mock_sender) == ["§cUnknown packet type STARTGANE."]
+
+
+def test_a_rejected_packet_name_leaves_every_packet_logged(
+    handler: CommandHandler, debug_handler: DebugHandler, mock_sender: MagicMock
+) -> None:
+    handler.on_command(mock_sender, MagicMock(), ["debug", "add", "startgane"])
+    assert debug_handler.should_log(StubPacket(11, START_GAME), Direction.CLIENTBOUND)
+    assert debug_handler.should_log(StubPacket(9, TEXT), Direction.CLIENTBOUND)
 
 
 def test_an_unrecognised_debug_word_fails_without_a_message(handler: CommandHandler, mock_sender: MagicMock) -> None:
