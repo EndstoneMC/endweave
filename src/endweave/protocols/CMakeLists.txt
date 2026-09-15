@@ -1,2 +1,2 @@
-add_subdirectory(v2168_to_v2192)
-add_subdirectory(v2192_to_v2168)
+add_subdirectory(v2168_to_v2193)
+add_subdirectory(v2193_to_v2168)

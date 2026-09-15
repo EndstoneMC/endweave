@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Fixed
+- Endweave translated nothing on a 26.50 server, and a 26.50 client could not join a 26.40-26.45 server. Endweave knew 26.50 by the protocol number its preview builds used, and the release build ships a different one. Both ends now speak the number 26.50 released with.
 - A 26.45 client could not join a 26.40-26.44 server, and the other way round. The two put the same bytes on the wire under different version numbers, so the server turned the number away before Endweave had anything to translate. Endweave now writes the server's number into the handshake for such a client and carries the connection untranslated.
 
 ## [0.5.0] - 2026-09-13

@@ -1,0 +1,14 @@
+#pragma once
+
+#include "endweave/protocol/transform.h"
+
+#include <bedrock/protocol/script.h>
+
+namespace bp = bedrock::protocol;
+
+namespace endweave {
+template <>
+struct Transformer<bp::TextDataPayload_<2168>, bp::TextDataPayload_<2193>> {
+    static void transform(Context<bp::TextDataPayload_<2193>> &ctx, bp::TextDataPayload_<2168> &&from);
+};
+} // namespace endweave

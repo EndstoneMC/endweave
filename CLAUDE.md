@@ -58,7 +58,7 @@ Per packet, `EndweavePlugin._translate` looks the id up in the translator's `act
   name, with the Minecraft versions each covers. `/endweave list` and `block-versions` read it, and
   the README table mirrors it.
 - `protocol/version.h` `ProtocolVersions::SUPPORTED_VERSIONS` is what the engine translates: 2168
-  and 2192, a sorted line that `step(from, to)` routes along one hop at a time, so there is no path
+  and 2193, a sorted line that `step(from, to)` routes along one hop at a time, so there is no path
   search. `WIRE_IDENTICAL` routes 2169 (26.45) as 2168, and `handler.h` static-asserts that
   claim against the schema, so a version that stops being identical fails the build.
 
@@ -151,7 +151,7 @@ and `com.viaversion.viabackwards`.
   parse. Forwarding an id the peer does not know desynchronises or disconnects it.
 - **Cancellation reaches only as far as the schema does.** `has_packet_v` means "bedrock-protocol
   models this", not "this exists on the wire", so an id modelled at neither end passes through.
-  `SetPlayerFurnaceOptions` (351) is modelled at 2192 alone, so 2192 towards 2168 cancels it.
+  `SetPlayerFurnaceOptions` (351) is modelled at 2193 alone, so 2193 towards 2168 cancels it.
 - **Null means passthrough, and the caller sees it before building anything.** `Translator::get(id)`
   answers without a reader or writer, and the binding publishes the non-null entries as `actions`,
   so a passthrough packet never crosses into C++. Keep the id lookup free of buffers.
@@ -216,7 +216,7 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
   the flag and the transform returns immediately; whatever it wrote is never read. `chain` stops at
   the hop that cancelled, `handle` skips the encode, and `translate` returns `None`. A refusal is a
   deliberate drop, not an error. The live cases are an inventory action or container type the other
-  version has no name for, and a `ServerboundPackSettingChangePacket` whose 2192 value is a list of
+  version has no name for, and a `ServerboundPackSettingChangePacket` whose 2193 value is a list of
   strings, which 2168 has no arm for.
   @see ViaVersion `PacketWrapper#cancel`.
 - **Most pairs write themselves.** Where both types have the same `struct_name` and every member of
@@ -346,7 +346,7 @@ uvx cibuildwheel --platform linux                      # the manylinux wheels CI
   `bp::packet_of_t` is `void` for an id whose module is not included, and two `void`s compare equal,
   so a lone module include makes unmodelled packets read as unchanged.
 - `namespace bp = bedrock::protocol;`, declared after the includes and above `namespace endweave`.
-  Versioned types are spelled through it, `bp::StartGamePacket_<2192>`. `namespace ew = endweave;`
+  Versioned types are spelled through it, `bp::StartGamePacket_<2193>`. `namespace ew = endweave;`
   follows the same placement, but only in a `.cpp`, never a header.
 
 ### Python

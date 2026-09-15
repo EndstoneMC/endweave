@@ -1,0 +1,13 @@
+#include "input.h"
+
+#include <bedrock/protocol/enum.hpp>
+
+namespace endweave {
+void Transformer<bp::PlayerAuthInputPacket_<2168>::InputData, bp::PlayerAuthInputPacket_<2193>::InputData>::transform(
+    Context<bp::PlayerAuthInputPacket_<2193>::InputData> &ctx, bp::PlayerAuthInputPacket_<2168>::InputData &&from)
+{
+    using To = bp::PlayerAuthInputPacket_<2193>::InputData;
+    ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::InputNum);
+}
+
+} // namespace endweave

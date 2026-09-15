@@ -26,12 +26,12 @@ USAGES = EndweavePlugin.commands["endweave"]["usages"]
 
 # The pair the engine carries, so a connection between them has translators.
 CARRIED_SERVER = get_protocol(2168)
-CARRIED_CLIENT = 2192
+CARRIED_CLIENT = 2193
 CARRIED_ALIAS = 2169
 
 CONTAINER_CLOSE = 47
 INVENTORY_TRANSACTION = 30
-SET_PLAYER_FURNACE_OPTIONS = 351  # 2168 has no such packet, so a 2192 client loses it
+SET_PLAYER_FURNACE_OPTIONS = 351  # 2168 has no such packet, so a 2193 client loses it
 TEXT = 9  # unchanged between the two, so neither table names it
 
 EMPTY_TRANSACTION = b"\x00\x00\x00\x00"
@@ -117,7 +117,7 @@ def login(
 
 
 class TestTranslation:
-    """A 2192 client against a 2168 server, the one pair the engine carries."""
+    """A 2193 client against a 2168 server, the one pair the engine carries."""
 
     @pytest.fixture
     def plugin(self, make_plugin: Callable[..., StubPlugin]) -> StubPlugin:

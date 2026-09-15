@@ -20,7 +20,7 @@ NETHERNET_ADDRESS = ":0"
 
 # The pair the engine carries, plus the version that is wire-identical to the older one.
 CARRIED_SERVER = get_protocol(2168)
-CARRIED_CLIENT = get_protocol(2192)
+CARRIED_CLIENT = get_protocol(2193)
 CARRIED_ALIAS = get_protocol(2169)
 
 LOGIN = 1
@@ -134,9 +134,9 @@ class TestPipeline:
         connection = protocol.transform_serverbound(handshake(CARRIED_CLIENT.version))
 
         assert connection.serverbound is not None
-        assert (connection.serverbound.from_version, connection.serverbound.to_version) == (2192, 2168)
+        assert (connection.serverbound.from_version, connection.serverbound.to_version) == (2193, 2168)
         assert connection.clientbound is not None
-        assert (connection.clientbound.from_version, connection.clientbound.to_version) == (2168, 2192)
+        assert (connection.clientbound.from_version, connection.clientbound.to_version) == (2168, 2193)
 
     def test_carries_nothing_when_both_ends_agree(self, make_protocol: Callable[..., BaseProtocol]) -> None:
         protocol = make_protocol(server_protocol=CARRIED_SERVER)
@@ -210,7 +210,7 @@ class TestPipeline:
 
 
 class TestDeclaredVersion:
-    """A 2192 client against a 2169 server, which BDS refuses unless it declares 2169.
+    """A 2193 client against a 2169 server, which BDS refuses unless it declares 2169.
 
     A wire-identical client is refused the same way, over nothing but the number, so it is
     written over too.
@@ -221,15 +221,15 @@ class TestDeclaredVersion:
         return make_protocol(server_protocol=CARRIED_ALIAS)
 
     def test_writes_the_server_version_into_the_handshake(self, protocol: BaseProtocol) -> None:
-        event = handshake(2192)
+        event = handshake(2193)
 
         protocol.transform_serverbound(event)
 
         assert event.payload == (2169).to_bytes(4, "big", signed=True)
 
     def test_writes_the_server_version_into_the_login(self, protocol: BaseProtocol) -> None:
-        protocol.transform_serverbound(handshake(2192))
-        event = packet(LOGIN, (2192).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST)
+        protocol.transform_serverbound(handshake(2193))
+        event = packet(LOGIN, (2193).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST)
 
         protocol.transform_serverbound(event)
 
@@ -289,7 +289,7 @@ class TestDeclaredVersion:
         assert event.payload == b"\x00\x03"
 
     def test_leaves_a_login_too_short_to_hold_a_version_alone(self, protocol: BaseProtocol) -> None:
-        protocol.transform_serverbound(handshake(2192))
+        protocol.transform_serverbound(handshake(2193))
         event = packet(LOGIN, b"\x00\x03")
 
         protocol.transform_serverbound(event)
@@ -297,11 +297,11 @@ class TestDeclaredVersion:
         assert event.payload == b"\x00\x03"
 
     def test_leaves_the_login_of_a_peer_that_never_shook_hands_alone(self, protocol: BaseProtocol) -> None:
-        event = packet(LOGIN, (2192).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST)
+        event = packet(LOGIN, (2193).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST)
 
         protocol.transform_serverbound(event)
 
-        assert event.payload == (2192).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST
+        assert event.payload == (2193).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST
 
 
 class TestNetherNet:
@@ -309,17 +309,17 @@ class TestNetherNet:
 
     def test_tracks_no_nethernet_peer(self, make_protocol: Callable[..., BaseProtocol]) -> None:
         protocol = make_protocol(server_protocol=CARRIED_SERVER)
-        event = handshake(2192, address=NETHERNET_ADDRESS)
+        event = handshake(2193, address=NETHERNET_ADDRESS)
 
         connection = protocol.transform_serverbound(event)
 
         assert connection is None
         assert not protocol._connection_manager.connections
-        assert event.payload == (2192).to_bytes(4, "big", signed=True)
+        assert event.payload == (2193).to_bytes(4, "big", signed=True)
 
     def test_still_tracks_an_ipv6_peer(self, make_protocol: Callable[..., BaseProtocol]) -> None:
         protocol = make_protocol(server_protocol=CARRIED_SERVER)
-        event = handshake(2192, address="::1:19132")
+        event = handshake(2193, address="::1:19132")
 
         connection = protocol.transform_serverbound(event)
 
