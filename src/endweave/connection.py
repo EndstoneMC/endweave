@@ -72,6 +72,7 @@ class Connection:
         self.player: Player | None = None
         self.active = True
         self.pending_disconnect = False
+        self.sending_block_updates = False
 
     @property
     def id(self) -> int:

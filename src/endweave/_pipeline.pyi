@@ -1,6 +1,6 @@
 """Compile-time protocol translation between Bedrock versions."""
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 import enum
 
 
@@ -34,6 +34,11 @@ class Translator:
     def actions(self) -> Mapping[int, Action]:
         """
         The action for each packet id that needs one. Other ids pass through untouched.
+        """
+
+    def translate_world(self, packet_id: int, payload: bytes, lookup: Callable[[int, int, int, int], int], dimension: int) -> tuple[bytes | None, list[bytes]]:
+        """
+        Translate blocks using a dimension/x/y/z lookup; return payload and neighbor UpdateBlock payloads.
         """
 
     def translate(self, packet_id: int, payload: bytes) -> bytes | None:

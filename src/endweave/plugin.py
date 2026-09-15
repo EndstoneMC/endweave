@@ -157,6 +157,8 @@ class EndweavePlugin(Plugin):
     def on_packet_send(self, event: PacketSendEvent) -> None:
         connection = self._connection_manager.get_connection(str(event.address))
         if connection is not None:
+            if connection.sending_block_updates and event.packet_id == 21:
+                return
             self._translate(connection, event, Direction.CLIENTBOUND)
 
     def _translate(
@@ -200,8 +202,25 @@ class EndweavePlugin(Plugin):
         if logged and debug.log_pre_packet_transform:
             self.logger.info(f"[{direction.value}] {label} in: {event.payload.hex()}")
 
+        neighbor_updates: list[bytes] = []
         try:
-            payload = translator.translate(packet_id, event.payload)
+            if (
+                direction is Direction.CLIENTBOUND
+                and translator.from_version < 2193 <= translator.to_version
+                and packet_id in (21, 58, 110, 172, 174)
+                and connection.player is not None
+            ):
+                player_dimension = connection.player.dimension
+                dimensions = {dimension.type.value: dimension for dimension in player_dimension.level.dimensions}
+
+                def lookup_block(dimension_id: int, x: int, y: int, z: int) -> int:
+                    return dimensions[dimension_id].get_block_at(x, y, z).data.runtime_id
+
+                payload, neighbor_updates = translator.translate_world(
+                    packet_id, event.payload, lookup_block, player_dimension.type.value
+                )
+            else:
+                payload = translator.translate(packet_id, event.payload)
         except TranslationError as error:
             debug.log_translation_failure(
                 f"Failed to translate {direction.value} packet {_packet_label(packet_id)} "
@@ -230,6 +249,13 @@ class EndweavePlugin(Plugin):
             self.logger.info(f"[{direction.value}] {label} out: {payload.hex()}")
 
         event.payload = payload
+        if neighbor_updates and connection.player is not None:
+            connection.sending_block_updates = True
+            try:
+                for update in neighbor_updates:
+                    connection.player.send_packet(21, update)
+            finally:
+                connection.sending_block_updates = False
 
     @event_handler
     def on_player_login(self, event: PlayerLoginEvent) -> None:

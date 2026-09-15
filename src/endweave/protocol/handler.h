@@ -3,6 +3,7 @@
 #include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/transform.h"
 #include "endweave/protocol/version.h"
+#include "endweave/protocols/blocks.h"
 #include "endweave/protocols/rewriters.h"
 #include "endweave/protocols/v2168_to_v2193/transform.h"
 #include "endweave/protocols/v2193_to_v2168/transform.h"
@@ -45,7 +46,8 @@ inline constexpr bool should_cancel_v =
 template <int From, int To, int Id>
 inline constexpr bool should_translate_v =
     From != To && !(Id >= kSkipBegin && Id <= kSkipEnd) && path_has_packet_v<From, To, Id> &&
-    (Rewritable<From, To, Id> || !std::is_same_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>>);
+    (Rewritable<From, To, Id> || blocks::needs_rewrite<From, To, Id> ||
+     !std::is_same_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>>);
 
 template <int Cur, int To, int Id>
 void chain(const Context<bp::packet_of_t<To, Id>> &ctx, bp::packet_of_t<Cur, Id> &&from)
@@ -68,7 +70,8 @@ void chain(const Context<bp::packet_of_t<To, Id>> &ctx, bp::packet_of_t<Cur, Id>
 }
 
 template <int From, int To, int Id>
-std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &in, bp::BinaryWriter &out)
+std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &in, bp::BinaryWriter &out,
+                                            blocks::WorldContext *world)
 {
     auto result = bp::deserialize<bp::packet_of_t<From, Id>>(in);
     if (!result) {
@@ -82,6 +85,12 @@ std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &i
     std::string translated;
     bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
+    if constexpr (blocks::needs_rewrite<From, To, Id>) {
+        auto rewritten = blocks::rewrite<From, To, Id>(packet, world);
+        if (!rewritten) {
+            return std::unexpected(rewritten.error());
+        }
+    }
     if constexpr (Rewritable<From, To, Id>) {
         Rewriter<From, To, Id>::rewrite(packet);
     }
@@ -114,7 +123,8 @@ std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &i
 }
 
 /** @see ViaVersion PacketWrapper#cancel. */
-inline std::expected<void, std::error_code> cancel(bool &cancelled, bp::BinaryReader &, bp::BinaryWriter &)
+inline std::expected<void, std::error_code> cancel(bool &cancelled, bp::BinaryReader &, bp::BinaryWriter &,
+                                                   blocks::WorldContext *)
 {
     cancelled = true;
     return {};
@@ -130,7 +140,8 @@ enum class Action : char {
 };
 
 /** @see ViaVersion PacketHandler. */
-using PacketHandler = std::expected<void, std::error_code> (*)(bool &, bp::BinaryReader &, bp::BinaryWriter &);
+using PacketHandler = std::expected<void, std::error_code> (*)(bool &, bp::BinaryReader &, bp::BinaryWriter &,
+                                                               blocks::WorldContext *);
 
 namespace detail {
 
