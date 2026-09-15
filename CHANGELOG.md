@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Stairs, fences, panes, bars, and tripwire could disappear for 26.50 clients on 26.40-26.45 servers. Existing blocks now load with the correct states, stair corners and connections follow neighboring blocks, and placing or removing blocks refreshes nearby shapes.
+
 ## [0.5.1] - 2026-09-15
 
 ### Fixed

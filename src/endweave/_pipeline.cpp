@@ -5,7 +5,9 @@
 
 #include <bedrock/protocol/network.h>
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/function.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <optional>
@@ -69,7 +71,8 @@ struct Translator {
     int to_version = 0;
 };
 
-std::optional<nb::bytes> translate(const Translator &translator, int packet_id, nb::bytes payload)
+std::optional<nb::bytes> translateImpl(const Translator &translator, int packet_id, nb::bytes payload,
+                                       endweave::blocks::WorldContext *world)
 {
     const endweave::PacketHandler handler = translator.engine.get(packet_id);
     if (handler == nullptr) {
@@ -81,7 +84,7 @@ std::optional<nb::bytes> translate(const Translator &translator, int packet_id, 
     bp::BinaryWriter out{translated};
     bp::BinaryReader in{std::string_view{payload.c_str(), payload.size()}};
     bool cancelled = false;
-    const auto result = handler(cancelled, in, out);
+    const auto result = handler(cancelled, in, out, world);
     if (!result) {
         raiseTranslationError(packet_id, "translate", result.error());
     }
@@ -89,6 +92,27 @@ std::optional<nb::bytes> translate(const Translator &translator, int packet_id, 
         return std::nullopt;
     }
     return nb::bytes(translated.data(), translated.size());
+}
+
+std::optional<nb::bytes> translate(const Translator &translator, int packet_id, nb::bytes payload)
+{
+    return translateImpl(translator, packet_id, payload, nullptr);
+}
+
+std::pair<std::optional<nb::bytes>, std::vector<nb::bytes>> translateWorld(const Translator &translator, int packet_id,
+                                                                           nb::bytes payload,
+                                                                           endweave::blocks::Lookup lookup,
+                                                                           int dimension)
+{
+    endweave::blocks::WorldContext world{std::move(lookup), dimension, {}, {}};
+    auto result = translateImpl(translator, packet_id, payload, &world);
+    std::vector<nb::bytes> updates;
+    if (result) {
+        for (const auto &update : endweave::blocks::neighborUpdates(world)) {
+            updates.emplace_back(update.data(), update.size());
+        }
+    }
+    return {std::move(result), std::move(updates)};
 }
 
 } // namespace
@@ -141,6 +165,8 @@ NB_MODULE(_pipeline, m)
                 return self.actions;
             },
             "The action for each packet id that needs one. Other ids pass through untouched.")
+        .def("translate_world", &translateWorld, "packet_id"_a, "payload"_a, "lookup"_a, "dimension"_a,
+             "Translate blocks using a dimension/x/y/z lookup; return payload and neighbor UpdateBlock payloads.")
         .def("translate", &translate, "packet_id"_a, "payload"_a,
              "The translated payload, or None if the packet was cancelled.");
 }
