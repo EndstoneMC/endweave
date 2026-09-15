@@ -190,15 +190,20 @@ def test_get_by_name_reads_the_legacy_form(name: str) -> None:
     assert get_by_name(name) is not None
 
 
-@pytest.mark.parametrize("name", ["26.50.27", "1.26.50.27"])
-def test_get_by_name_drops_a_preview_build_number(name: str) -> None:
+@pytest.mark.parametrize("name", ["26.50.4", "1.26.50.5"])
+def test_get_by_name_drops_a_retail_build_number(name: str) -> None:
     assert get_by_name(name) is v26_50
 
 
-def test_get_by_name_prefers_a_registered_preview_name(isolated_registry: None) -> None:
-    preview = register(UNREGISTERED_VERSION, "26.50.26-26.50.28")
+def test_retail_26_50_and_preview_have_distinct_protocol_ids() -> None:
+    assert get_by_name("26.50").version == 2193
+    assert get_by_name("1.26.50.27").version == 2192
 
-    assert get_by_name("26.50.27") is preview
+
+def test_get_by_name_prefers_a_registered_preview_name(isolated_registry: None) -> None:
+    preview = register(UNREGISTERED_VERSION, "26.60.26-26.60.28")
+
+    assert get_by_name("26.60.27") is preview
 
 
 def test_get_by_name_does_not_widen_a_release_to_its_line() -> None:

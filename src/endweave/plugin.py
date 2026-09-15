@@ -20,6 +20,7 @@ See Also:
     com.viaversion.viaversion.platform.ViaEncodeHandler
 """
 
+import functools
 from pathlib import Path
 
 from endstone.event import (
@@ -29,6 +30,7 @@ from endstone.event import (
     PlayerJoinEvent,
     PlayerLoginEvent,
     PlayerQuitEvent,
+    ServerListPingEvent,
     event_handler,
 )
 from endstone.plugin import Plugin
@@ -47,6 +49,7 @@ from .util import translate_alternate_color_codes
 _TRANSLATION_FAILED = "§cEndweave could not translate a packet for your version."
 
 
+@functools.cache
 def _carries(protocol_version: int) -> bool:
     """Whether the engine translates a protocol version, the ones it routes as another included."""
     try:
@@ -152,6 +155,21 @@ class EndweavePlugin(Plugin):
         connection = self._base_protocol.transform_serverbound(event)
         if connection is not None:
             self._translate(connection, event, Direction.SERVERBOUND)
+
+    @event_handler(priority=EventPriority.HIGHEST, ignore_cancelled=True)
+    def on_server_list_ping(self, event: ServerListPingEvent) -> None:
+        """Advertise the newest allowed client version the engine can carry."""
+        if not _carries(event.network_protocol_version):
+            return
+
+        for version in reversed(get_protocols()):
+            if version.version <= event.network_protocol_version:
+                return
+            if version in self._configuration.blocked_protocol_versions or not _carries(version.version):
+                continue
+            name = min(version.included_versions, key=lambda value: tuple(map(int, value.split("."))))
+            event.minecraft_version_network = f"1.{name}" if int(name.split(".")[0]) >= 26 else name
+            return
 
     @event_handler(priority=EventPriority.HIGHEST, ignore_cancelled=True)
     def on_packet_send(self, event: PacketSendEvent) -> None:

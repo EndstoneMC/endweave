@@ -274,6 +274,7 @@ class TestCarriedVersions:
 
     def test_carries_a_version_the_engine_routes_as_another(self) -> None:
         assert _carries(2169)
+        assert _carries(2193)
 
     def test_does_not_carry_a_version_the_engine_left_out(self) -> None:
         assert not _carries(975)
@@ -282,6 +283,56 @@ class TestCarriedVersions:
         carried = [version.name for version in get_protocols() if _carries(version.version)]
 
         assert "26.45" in carried
+
+
+class TestServerListPing:
+    @pytest.mark.parametrize("server_protocol", [2168, 2169])
+    def test_advertises_new_clients_on_an_older_server(
+        self, make_plugin: Callable[..., StubPlugin], server_protocol: int
+    ) -> None:
+        plugin = make_plugin(server_protocol=get_protocol(server_protocol))
+        event = MagicMock(network_protocol_version=server_protocol, minecraft_version_network="1.26.44")
+
+        plugin.on_server_list_ping(event)
+
+        assert event.minecraft_version_network == "1.26.50"
+        assert event.network_protocol_version == server_protocol
+        event.cancel.assert_not_called()
+
+    @pytest.mark.parametrize("server_protocol, name", [(975, "1.26.20"), (2193, "1.26.50"), (9999, "1.99.0")])
+    def test_keeps_the_advertisement_when_no_newer_client_is_carried(
+        self, make_plugin: Callable[..., StubPlugin], server_protocol: int, name: str
+    ) -> None:
+        plugin = make_plugin(server_protocol=get_protocol(server_protocol))
+        event = MagicMock(network_protocol_version=server_protocol, minecraft_version_network=name)
+
+        plugin.on_server_list_ping(event)
+
+        assert event.minecraft_version_network == name
+
+    def test_excludes_blocked_clients_and_uses_reloaded_configuration(
+        self, make_plugin: Callable[..., StubPlugin], tmp_path: Path
+    ) -> None:
+        plugin = make_plugin("block-protocols = [2192, 2193]\n", server_protocol=CARRIED_SERVER)
+        event = MagicMock(network_protocol_version=2168, minecraft_version_network="1.26.44")
+
+        plugin.on_server_list_ping(event)
+        assert event.minecraft_version_network == "1.26.45"
+
+        (tmp_path / "config.toml").write_text("block-protocols = []\n", encoding="utf-8")
+        plugin._configuration.reload()
+        plugin.on_server_list_ping(event)
+        assert event.minecraft_version_network == "1.26.50"
+
+    def test_keeps_the_server_version_when_all_newer_clients_are_blocked(
+        self, make_plugin: Callable[..., StubPlugin]
+    ) -> None:
+        plugin = make_plugin('block-versions = ["26.45", "26.50.27", "26.5x"]\n', server_protocol=CARRIED_SERVER)
+        event = MagicMock(network_protocol_version=2168, minecraft_version_network="1.26.44")
+
+        plugin.on_server_list_ping(event)
+
+        assert event.minecraft_version_network == "1.26.44"
 
 
 class TestPriority:
@@ -293,6 +344,10 @@ class TestPriority:
 
     def test_leaves_a_send_another_plugin_cancelled_alone(self) -> None:
         assert EndweavePlugin.on_packet_send._ignore_cancelled is True
+
+    def test_respects_a_cancelled_ping(self) -> None:
+        assert EndweavePlugin.on_server_list_ping._priority == EventPriority.HIGHEST
+        assert EndweavePlugin.on_server_list_ping._ignore_cancelled is True
 
 
 class TestQuit:

@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Fixed
+
+- Accept retail 26.50 clients on protocol 2193. The previous build supported preview protocol 2192 only, so retail clients received the Chain/outdated-server error. Retail BDS 1.26.50.5 has the same reflected packet schemas as preview 1.26.50.27 apart from the handshake protocol constraint; route 2193 through the existing 2192 codec and rewrite both handshake version fields.
+- Restore the supported Minecraft version in server-list responses on older servers. The 0.5.0 rewrite removed this advertisement, leaving newer clients seeing only the server's original version before the connection handshake. Blocked client versions are excluded, including after a configuration reload.
 - A 26.45 client could not join a 26.40-26.44 server, and the other way round. The two put the same bytes on the wire under different version numbers, so the server turned the number away before Endweave had anything to translate. Endweave now writes the server's number into the handshake for such a client and carries the connection untranslated.
 
 ## [0.5.0] - 2026-09-13

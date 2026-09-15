@@ -16,9 +16,9 @@ The blocked version gate of ServerboundBaseProtocol1_7 and the login bookkeeping
 of ClientboundBaseProtocol1_7 run on the login event, the last point before the
 world is streamed, in place of the disconnect packet ViaVersion writes into the
 pipe itself. Left out are the connection state all three track, which Bedrock
-has no counterpart for, the status response, since the server list ping never
-reaches a packet event, and the compression threshold, which Endstone handles
-below this.
+has no counterpart for, and the compression threshold, which Endstone handles
+below this. The plugin advertises the supported version through the separate
+server list ping event.
 
 See Also:
     com.viaversion.viaversion.protocols.base.InitialBaseProtocol

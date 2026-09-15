@@ -220,6 +220,37 @@ class TestDeclaredVersion:
     def protocol(self, make_protocol: Callable[..., BaseProtocol]) -> BaseProtocol:
         return make_protocol(server_protocol=CARRIED_ALIAS)
 
+    @pytest.mark.parametrize("server_version", [2168, 2169, 2192])
+    def test_retail_26_50_rewrites_both_handshakes_without_touching_authentication(
+        self, make_protocol: Callable[..., BaseProtocol], server_version: int
+    ) -> None:
+        protocol = make_protocol(server_protocol=get_protocol(server_version))
+        request = handshake(2193)
+        connection = protocol.transform_serverbound(request)
+        login_event = packet(LOGIN, (2193).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST)
+
+        protocol.transform_serverbound(login_event)
+
+        assert connection.protocol_version.version == 2193
+        assert connection.serverbound.from_version == 2192
+        assert request.payload == server_version.to_bytes(4, "big", signed=True)
+        assert login_event.payload == server_version.to_bytes(4, "big", signed=True) + CONNECTION_REQUEST
+
+    @pytest.mark.parametrize("client_version", [2168, 2169, 2192])
+    def test_older_clients_declare_2193_to_a_retail_server(
+        self, make_protocol: Callable[..., BaseProtocol], client_version: int
+    ) -> None:
+        protocol = make_protocol(server_protocol=get_protocol(2193))
+        request = handshake(client_version)
+        connection = protocol.transform_serverbound(request)
+        login_event = packet(LOGIN, client_version.to_bytes(4, "big", signed=True) + CONNECTION_REQUEST)
+
+        protocol.transform_serverbound(login_event)
+
+        assert connection.serverbound.to_version == 2192
+        assert request.payload == (2193).to_bytes(4, "big", signed=True)
+        assert login_event.payload == (2193).to_bytes(4, "big", signed=True) + CONNECTION_REQUEST
+
     def test_writes_the_server_version_into_the_handshake(self, protocol: BaseProtocol) -> None:
         event = handshake(2192)
 

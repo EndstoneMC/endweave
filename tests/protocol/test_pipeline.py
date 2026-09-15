@@ -53,6 +53,13 @@ class TestTranslatorLookup:
         assert Translator(ALIAS, NEW).from_version == OLD
         assert Translator(NEW, ALIAS).to_version == OLD
 
+    def test_retail_26_50_uses_the_preview_wire_shape_in_both_directions(self) -> None:
+        assert Translator(2193, OLD).from_version == NEW
+        assert Translator(OLD, 2193).to_version == NEW
+        assert Translator(2193, OLD).actions == Translator(NEW, OLD).actions
+        assert Translator(OLD, 2193).actions == Translator(OLD, NEW).actions
+        assert not Translator(2193, NEW).actions
+
     def test_refuses_a_version_it_cannot_carry(self) -> None:
         with pytest.raises(ValueError):
             Translator(UNSUPPORTED, OLD)
