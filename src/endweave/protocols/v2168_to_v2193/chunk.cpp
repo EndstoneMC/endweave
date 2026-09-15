@@ -1,6 +1,7 @@
 #include "chunk.h"
 
 #include <array>
+#include <bedrock/protocol/enum.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -31,10 +32,13 @@ std::optional<std::array<std::vector<std::int8_t>, 16>> rowsOf(
 void Transformer<bp::SubChunkPacket_<2168>::HeightmapData, bp::SubChunkPacket_<2193>::HeightmapData>::transform(
     Context<bp::SubChunkPacket_<2193>::HeightmapData> &ctx, bp::SubChunkPacket_<2168>::HeightmapData &&from)
 {
+    using Type = bp::SubChunkPacket_<2193>::HeightMapDataType;
     auto &to = ctx.out();
-    to.height_map_type = from.height_map_type;
+    // ENDWEAVE: the enumerators match either side, but the type is re-emitted per packet era.
+    to.height_map_type = bp::enum_cast<Type>(bp::enum_name(from.height_map_type)).value_or(Type::NoData);
     to.subchunk_height_map = rowsOf(std::move(from.subchunk_height_map));
-    to.render_height_map_type = from.render_height_map_type;
+    to.render_height_map_type =
+        bp::enum_cast<Type>(bp::enum_name(from.render_height_map_type)).value_or(Type::NoData);
     to.subchunk_render_height_map = rowsOf(std::move(from.subchunk_render_height_map));
 }
 
