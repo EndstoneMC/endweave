@@ -120,8 +120,10 @@ Upstream stays valuable for three things.
    the `@see` names both halves.
 
 5. **Leave out what only Java Edition needs.** The `State` machine (Bedrock has one flat id space),
-   per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable), `MappingData`,
-   the rewriter hierarchy, `Type<T>`, and the platform-split config options. Of `PacketWrapper`,
+   per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable), the item,
+   sound and entity halves of `MappingData`, the rewriter hierarchy, `Type<T>`, and the
+   platform-split config options. Block states are the exception: every version renumbers them, so
+   `getNewBlockStateId` carries the block half of `MappingData` (see **Block states**). Of `PacketWrapper`,
    only the cancel half exists, as `Context`; the buffer half has no place because the schema
    derives the codec. Of `UserConnection`, there is no `StorableObject` store: no transform keeps
    state across packets, so none is carried.
@@ -196,8 +198,46 @@ and it is not `Transformer`'s job.
   field across untouched, which is what a transform does with a field it does not reshape.
 - **Pair-agnostic rewriters are partial specializations over `From` and `To`,** in
   `protocols/rewriters.h`: `StartGamePacket`'s block registry checksum, which is zeroed because no
-  translation reproduces it, and the heartbeat `LevelSoundEvent` inside actor data. A rewriter for
-  one pair goes in that pair's directory.
+  translation reproduces it, the heartbeat `LevelSoundEvent` inside actor data, and the block states
+  the schema cannot type (see **Block states**). A rewriter for one pair goes in that pair's
+  directory.
+- **One that parses bytes the schema leaves opaque returns `std::expected<void, std::error_code>`,**
+  and `handle` fails the packet on an error, as it does a decode error. The rest return `void`.
+
+## Block states
+
+Every version renumbers some block states, so every hop carries the block types whose states
+change across it. A block's network id is BDS's `Block::computeRawSerializationIdHashForNetwork`:
+FNV-1a over its name and states written as little-endian NBT. `protocol/block.h` computes it the
+same way, so a hop is stated as readable rules and the ids follow from them.
+
+- **The rules are generated C++, committed.** `protocols/v<from>_to_v<to>/block_states.h` lists one
+  `BlockStateUpdate` per block type that changes: every value of each of its states, then the name
+  it takes (`rename`), the states it gains (`add`) and the ones it loses (`remove`). It is
+  `// clang-format off`, and it is never edited by hand. `getNewBlockStateId` hashes every state of
+  those blocks once per hop and looks ids up hop by hop; a block no hop changes keeps its id, which
+  is what an add-on block needs.
+- **`tools/generate_block_states.py` writes it from two bedrock-dumper palettes**, which are inputs
+  and are not committed. Pin each version's `block_palette.json` and `block_types.json` in
+  `tools/blocks.toml` and run `uv run tools/generate_block_states.py <dumps>`. The script mirrors
+  BDS's classes and methods (`Block`, `CompoundTag`, `NbtIo`, `StringByteOutput`) and checks its hash
+  against every id in the dump. Going up, a block gains the states the newer version added, at that
+  version's default, and loses the ones it removed. Going down, it loses what the older version
+  lacks, and a block type the older version lacks is renamed to the fallback `blocks.toml` names
+  for it, which should keep the block's shape so the client's movement prediction agrees with the
+  server. A state whose values change stops the generator rather than being guessed.
+- **`rewriter/block.h` is `BlockRewriter`.** `rewriteBlockIds` finds every block id by its type,
+  `bp::BlockRuntimeId`, which bedrock-protocol gives every member BDS types `BlockRuntimeId`, and
+  `should_translate_v` covers every packet that carries one. `SerializedNetworkItemInstanceDescriptor`
+  is the one member BDS types `int32_t`, and the walker finds it by name.
+- **Ids the schema cannot type are `Rewriter`s** in `rewriter/block.h`: the particle `LevelEvent`s,
+  the block sound events, and the sub-chunk palettes in `LevelChunkPacket` and `SubChunkPacket`,
+  whose packed indices, biomes and block actors are copied as they are. Actor data keys 16 and 23,
+  and `Variant` on a falling block, go through `BlockRewriter::rewriteActorData` from the actor
+  rewriters in `protocols/rewriters.h`.
+- **The client cache is turned off.** The server's blob ids hash the sub-chunks it serializes, so
+  they stop naming what the client is sent once a palette is rewritten. `ClientCacheStatus` is
+  rewritten to off for every pair.
 
 ## Transformers
 
@@ -279,6 +319,8 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocol/context.h` `Context` | `PacketWrapper` |
 | `protocol/transform.h` `Transformer` | `ValueTransformer` |
 | `protocol/rewrite.h` `Rewriter` | none by name; the job is ViaVersion's per-packet `PacketHandler` lambda |
+| `protocol/block.h` `getNewBlockStateId` | `MappingData#getNewBlockStateId` |
+| `rewriter/block.h` `BlockRewriter` | `BlockRewriter` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |
 | `protocol/handler.h` `Translator` | `Protocol` by role, Velocity `ProtocolRegistry` by behaviour |
 | `protocol/handler.h` `getTranslator` | Velocity `StateRegistry.PacketRegistry#getProtocolRegistry` |

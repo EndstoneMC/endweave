@@ -1,6 +1,7 @@
 #pragma once
 
 #include "endweave/protocol/rewrite.h"
+#include "endweave/rewriter/block.h"
 
 #include <bedrock/protocol/actor.h>
 #include <bedrock/protocol/enum.hpp>
@@ -56,11 +57,13 @@ void rewriteActorData(std::vector<bp::DataItemEntry_<From>> &entries)
 } // namespace detail
 
 template <int From, int To>
-    requires detail::sound_renumbered_v<From, To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddActor)> {
     static void rewrite(bp::AddActorPacket_<From> &packet)
     {
-        detail::rewriteActorData<From, To>(packet.data.data);
+        if constexpr (detail::sound_renumbered_v<From, To>) {
+            detail::rewriteActorData<From, To>(packet.data.data);
+        }
+        BlockRewriter<From, To>::rewriteActorData(packet.data.data, packet.actor_type == "minecraft:falling_block");
     }
 };
 
@@ -83,11 +86,13 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddPlayer)> {
 };
 
 template <int From, int To>
-    requires detail::sound_renumbered_v<From, To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SetActorData)> {
     static void rewrite(bp::SetActorDataPacket_<From> &packet)
     {
-        detail::rewriteActorData<From, To>(packet.packed_items.data);
+        if constexpr (detail::sound_renumbered_v<From, To>) {
+            detail::rewriteActorData<From, To>(packet.packed_items.data);
+        }
+        BlockRewriter<From, To>::rewriteActorData(packet.packed_items.data, false);
     }
 };
 

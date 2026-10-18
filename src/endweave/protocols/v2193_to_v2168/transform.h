@@ -1,5 +1,6 @@
 #pragma once
 
+#include "block_states.h"
 #include "boss.h"
 #include "chunk.h"
 #include "dimension.h"

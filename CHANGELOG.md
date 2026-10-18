@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Fixed stairs, fences, glass panes, chorus plants, fire and redstone wire disappearing for clients on a newer version than the server.
+- Fixed blocks only a newer server has, such as 26.50's wool and concrete stairs and slabs, being invisible to older clients.
+
 ## [0.6.0] - 2026-10-18
 
 ### Added

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "attributes.h"
+#include "block_states.h"
 #include "camera.h"
 #include "chunk.h"
 #include "diagnostics.h"

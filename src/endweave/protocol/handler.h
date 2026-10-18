@@ -9,6 +9,7 @@
 #include "endweave/protocols/v2193_to_v2168/transform.h"
 #include "endweave/protocols/v2193_to_v2225/transform.h"
 #include "endweave/protocols/v2225_to_v2193/transform.h"
+#include "endweave/rewriter/block.h"
 
 #include <array>
 #include <bedrock/protocol.hpp>
@@ -48,7 +49,8 @@ inline constexpr bool should_cancel_v =
 template <int From, int To, int Id>
 inline constexpr bool should_translate_v =
     From != To && !(Id >= kSkipBegin && Id <= kSkipEnd) && path_has_packet_v<From, To, Id> &&
-    (Rewritable<From, To, Id> || !std::is_same_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>>);
+    (Rewritable<From, To, Id> || !std::is_same_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>> ||
+     carries_block_ids_v<bp::packet_of_t<From, Id>>);
 
 template <int Cur, int To, int Id>
 void chain(const Context<bp::packet_of_t<To, Id>> &ctx, bp::packet_of_t<Cur, Id> &&from)
@@ -86,8 +88,14 @@ std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &i
     bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
     if constexpr (Rewritable<From, To, Id>) {
-        Rewriter<From, To, Id>::rewrite(packet);
+        if constexpr (std::is_void_v<decltype(Rewriter<From, To, Id>::rewrite(packet))>) {
+            Rewriter<From, To, Id>::rewrite(packet);
+        }
+        else if (auto rewritten = Rewriter<From, To, Id>::rewrite(packet); !rewritten) {
+            return rewritten;
+        }
     }
+    BlockRewriter<From, To>::rewriteBlockIds(packet);
     // Already rewritten for To, so an unchanged type is re-encoded as is.
     if constexpr (std::is_same_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>>) {
         bp::serialize(writer, packet);
