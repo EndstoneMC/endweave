@@ -145,7 +145,7 @@ class EndweavePlugin(Plugin):
         message = translate_alternate_color_codes(self._configuration.reload_disconnect_message)
         for connection in connection_manager.connections.values():
             if connection.clientbound is not None and connection.clientbound.actions:
-                connection.disconnect(message)
+                connection.disconnect(self.server, message)
 
     @event_handler(priority=EventPriority.LOWEST)
     def on_packet_receive(self, event: PacketReceiveEvent) -> None:
@@ -212,7 +212,7 @@ class EndweavePlugin(Plugin):
             connection.serverbound = None
             connection.clientbound = None
             event.cancel()
-            connection.disconnect(_TRANSLATION_FAILED)
+            connection.disconnect(self.server, _TRANSLATION_FAILED)
             return
 
         if payload is None:
@@ -243,9 +243,6 @@ class EndweavePlugin(Plugin):
 
     @event_handler
     def on_player_quit(self, event: PlayerQuitEvent) -> None:
-        player = event.player
-        connection = self._connection_manager.get_connection(str(player.address))
-        if connection is None or connection.player is None or connection.player.unique_id != player.unique_id:
-            return
-
-        self._connection_manager.on_disconnect(connection)
+        connection = self._connection_manager.get_by_unique_id(event.player.unique_id)
+        if connection is not None:
+            self._connection_manager.on_disconnect(connection)

@@ -49,6 +49,7 @@ class StubPlugin(EndweavePlugin):
     ) -> None:
         super().__init__()
         self._stub_logger = logger
+        self._stub_server = MagicMock()
         self._configuration = configuration
         self._connection_manager = ConnectionManager(server_protocol)
         self._base_protocol = BaseProtocol(self._connection_manager, configuration, logger)
@@ -61,6 +62,10 @@ class StubPlugin(EndweavePlugin):
     @property
     def logger(self) -> MagicMock:
         return self._stub_logger
+
+    @property
+    def server(self) -> MagicMock:
+        return self._stub_server
 
 
 @pytest.fixture
@@ -160,13 +165,14 @@ class TestTranslation:
 
     def test_kicks_a_peer_whose_packet_will_not_translate(self, plugin: StubPlugin, mock_logger: MagicMock) -> None:
         connection = plugin._connection_manager.get_connection(ADDRESS)
-        connection.player = MagicMock()
+        connection.unique_id = uuid4()
         event = packet(INVENTORY_TRANSACTION, b"")
 
         plugin.on_packet_receive(event)
 
         event.cancel.assert_called_once()
-        connection.player.kick.assert_called_once()
+        plugin.server.get_player.assert_called_once_with(connection.unique_id)
+        plugin.server.get_player.return_value.kick.assert_called_once()
         mock_logger.error.assert_called_once()
 
     def test_reports_a_failure_though_the_packaged_config_mutes_warnings(
@@ -183,7 +189,7 @@ class TestTranslation:
 
     def test_stops_translating_for_a_peer_whose_packet_failed(self, plugin: StubPlugin, mock_logger: MagicMock) -> None:
         connection = plugin._connection_manager.get_connection(ADDRESS)
-        connection.player = MagicMock()
+        connection.unique_id = uuid4()
         plugin.on_packet_receive(packet(INVENTORY_TRANSACTION, b""))
 
         event = packet(INVENTORY_TRANSACTION, EMPTY_TRANSACTION)
@@ -310,6 +316,21 @@ class TestQuit:
         assert plugin._connection_manager.get_connection(ADDRESS) is None
         assert connection.active is False
 
+    def test_drops_the_connection_of_a_player_whose_address_is_gone_by_the_quit(
+        self, make_plugin: Callable[..., StubPlugin]
+    ) -> None:
+        plugin = make_plugin()
+        plugin.on_packet_receive(handshake(975))
+        event = login()
+        plugin.on_player_login(event)
+
+        quit_event = MagicMock()
+        quit_event.player.unique_id = event.player.unique_id
+        quit_event.player.address = ""
+        plugin.on_player_quit(quit_event)
+
+        assert plugin._connection_manager.get_connection(ADDRESS) is None
+
     def test_keeps_the_connection_of_a_player_still_on_the_same_address(
         self, make_plugin: Callable[..., StubPlugin]
     ) -> None:
@@ -326,7 +347,7 @@ class TestQuit:
         plugin.on_player_quit(quit_event)
 
         assert plugin._connection_manager.get_connection(ADDRESS) is connection
-        assert connection.player is staying.player
+        assert connection.unique_id == staying.player.unique_id
         assert connection.active is True
 
 
@@ -335,11 +356,22 @@ class TestDisable:
         plugin = make_plugin('reload-disconnect-msg = "&cBack in a moment"\n', server_protocol=CARRIED_SERVER)
         plugin.on_packet_receive(handshake(CARRIED_CLIENT))
         connection = plugin._connection_manager.get_connection(ADDRESS)
-        connection.player = MagicMock()
+        connection.unique_id = uuid4()
 
         plugin.on_disable()
 
-        connection.player.kick.assert_called_once_with("§cBack in a moment")
+        plugin.server.get_player.return_value.kick.assert_called_once_with("§cBack in a moment")
+
+    def test_leaves_a_player_who_already_left_alone(self, make_plugin: Callable[..., StubPlugin]) -> None:
+        plugin = make_plugin(server_protocol=CARRIED_SERVER)
+        plugin.on_packet_receive(handshake(CARRIED_CLIENT))
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.unique_id = uuid4()
+        plugin.server.get_player.return_value = None
+
+        plugin.on_disable()
+
+        assert connection.pending_disconnect is False
 
     def test_leaves_a_player_whose_connection_translates_nothing_alone(
         self, make_plugin: Callable[..., StubPlugin]
@@ -347,21 +379,21 @@ class TestDisable:
         plugin = make_plugin(server_protocol=CARRIED_SERVER)
         plugin.on_packet_receive(handshake(CARRIED_ALIAS))
         connection = plugin._connection_manager.get_connection(ADDRESS)
-        connection.player = MagicMock()
+        connection.unique_id = uuid4()
 
         plugin.on_disable()
 
-        connection.player.kick.assert_not_called()
+        plugin.server.get_player.return_value.kick.assert_not_called()
 
     def test_leaves_a_player_on_the_server_version_alone(self, make_plugin: Callable[..., StubPlugin]) -> None:
         plugin = make_plugin(server_protocol=CARRIED_SERVER)
         plugin.on_packet_receive(handshake(CARRIED_SERVER.version))
         connection = plugin._connection_manager.get_connection(ADDRESS)
-        connection.player = MagicMock()
+        connection.unique_id = uuid4()
 
         plugin.on_disable()
 
-        connection.player.kick.assert_not_called()
+        plugin.server.get_player.return_value.kick.assert_not_called()
 
     def test_stops_the_metrics_submitter(self, make_plugin: Callable[..., StubPlugin]) -> None:
         plugin = make_plugin()

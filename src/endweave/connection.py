@@ -34,10 +34,11 @@ See Also:
 from __future__ import annotations
 
 import itertools
+import uuid
 from collections.abc import Mapping
 from types import MappingProxyType
 
-from endstone import Player
+from endstone import Server
 
 from . import _pipeline
 from .protocol.version import UNKNOWN, ProtocolVersion
@@ -69,7 +70,7 @@ class Connection:
         self.protocol_version = UNKNOWN
         self.serverbound: _pipeline.Translator | None = None
         self.clientbound: _pipeline.Translator | None = None
-        self.player: Player | None = None
+        self.unique_id: uuid.UUID | None = None
         self.active = True
         self.pending_disconnect = False
 
@@ -85,12 +86,21 @@ class Connection:
     def server_protocol_version(self) -> ProtocolVersion:
         return self._server_protocol_version
 
-    def disconnect(self, reason: str) -> None:
-        if self.player is None or not self.active or self.pending_disconnect:
+    def disconnect(self, server: Server, reason: str) -> None:
+        """Kick the player on this connection, if they are still online.
+
+        See Also:
+            com.viaversion.viaversion.api.platform.ViaPlatform#disconnect
+        """
+        if self.unique_id is None or not self.active or self.pending_disconnect:
+            return
+
+        player = server.get_player(self.unique_id)
+        if player is None:
             return
 
         self.pending_disconnect = True
-        self.player.kick(reason)
+        player.kick(reason)
 
     def __repr__(self) -> str:
         return f"Connection(id={self._id}, address={self._address!r}, protocol_version={self.protocol_version!r})"
@@ -119,6 +129,9 @@ class ConnectionManager:
     def get_connection(self, address: str) -> Connection | None:
         return self._connections.get(address)
 
+    def get_by_unique_id(self, unique_id: uuid.UUID) -> Connection | None:
+        return next((tracked for tracked in self._connections.values() if tracked.unique_id == unique_id), None)
+
     def get_or_create(self, address: str) -> Connection:
         connection = self._connections.get(address)
         if connection is not None:
@@ -127,7 +140,7 @@ class ConnectionManager:
         connection = Connection(address, self._server_protocol_version)
         self._connections[address] = connection
 
-        pending = [tracked for tracked in self._connections.values() if tracked.player is None]
+        pending = [tracked for tracked in self._connections.values() if tracked.unique_id is None]
         for stale in pending[:-MAX_PENDING_CONNECTIONS]:
             del self._connections[stale.address]
         return connection

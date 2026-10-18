@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from unittest.mock import MagicMock
+from uuid import uuid4
 
 import pytest
 
@@ -26,7 +27,7 @@ class TestConnection:
         assert connection.address == ADDRESS
         assert connection.server_protocol_version == SERVER
         assert connection.protocol_version is UNKNOWN
-        assert connection.player is None
+        assert connection.unique_id is None
         assert connection.active is True
         assert connection.pending_disconnect is False
 
@@ -41,38 +42,54 @@ class TestConnection:
 
     def test_disconnect_kicks_the_player(self) -> None:
         connection = Connection(ADDRESS, SERVER)
-        connection.player = MagicMock()
+        connection.unique_id = uuid4()
+        server = MagicMock()
 
-        connection.disconnect("§cUnsupported version")
+        connection.disconnect(server, "§cUnsupported version")
 
         assert connection.pending_disconnect is True
-        connection.player.kick.assert_called_once_with("§cUnsupported version")
+        server.get_player.assert_called_once_with(connection.unique_id)
+        server.get_player.return_value.kick.assert_called_once_with("§cUnsupported version")
 
     def test_disconnect_kicks_only_once(self) -> None:
         connection = Connection(ADDRESS, SERVER)
-        connection.player = MagicMock()
+        connection.unique_id = uuid4()
+        server = MagicMock()
 
-        connection.disconnect("first")
-        connection.disconnect("second")
+        connection.disconnect(server, "first")
+        connection.disconnect(server, "second")
 
-        connection.player.kick.assert_called_once_with("first")
+        server.get_player.return_value.kick.assert_called_once_with("first")
 
     def test_disconnect_does_nothing_before_a_player_is_attached(self) -> None:
         connection = Connection(ADDRESS, SERVER)
+        server = MagicMock()
 
-        connection.disconnect("too early")
+        connection.disconnect(server, "too early")
 
         assert connection.pending_disconnect is False
+        server.get_player.assert_not_called()
 
     def test_disconnect_does_nothing_once_the_player_is_gone(self) -> None:
         connection = Connection(ADDRESS, SERVER)
-        connection.player = MagicMock()
+        connection.unique_id = uuid4()
         connection.active = False
+        server = MagicMock()
 
-        connection.disconnect("too late")
+        connection.disconnect(server, "too late")
 
         assert connection.pending_disconnect is False
-        connection.player.kick.assert_not_called()
+        server.get_player.assert_not_called()
+
+    def test_disconnect_does_nothing_once_the_player_left_the_server(self) -> None:
+        connection = Connection(ADDRESS, SERVER)
+        connection.unique_id = uuid4()
+        server = MagicMock()
+        server.get_player.return_value = None
+
+        connection.disconnect(server, "too late")
+
+        assert connection.pending_disconnect is False
 
     def test_repr_names_the_address(self) -> None:
         assert ADDRESS in repr(Connection(ADDRESS, SERVER))
@@ -97,6 +114,14 @@ class TestTracking:
     def test_an_unknown_address_has_no_connection(self, manager: ConnectionManager) -> None:
         assert manager.has_connection(ADDRESS) is False
         assert manager.get_connection(ADDRESS) is None
+
+    def test_finds_a_connection_by_its_player(self, manager: ConnectionManager) -> None:
+        connection = manager.get_or_create(ADDRESS)
+        connection.unique_id = uuid4()
+        manager.get_or_create("127.0.0.1:19133")
+
+        assert manager.get_by_unique_id(connection.unique_id) is connection
+        assert manager.get_by_unique_id(uuid4()) is None
 
 
 class TestDisconnecting:
@@ -137,7 +162,7 @@ class TestPendingCap:
 
     def test_keeps_a_peer_that_has_a_player(self, manager: ConnectionManager) -> None:
         first = manager.get_or_create("127.0.0.1:0")
-        first.player = MagicMock()
+        first.unique_id = uuid4()
 
         for port in range(1, MAX_PENDING_CONNECTIONS + 2):
             manager.get_or_create(f"127.0.0.1:{port}")

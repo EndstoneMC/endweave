@@ -124,4 +124,4 @@ class BaseProtocol:
             return
 
         if connection is not None:
-            connection.player = player
+            connection.unique_id = player.unique_id

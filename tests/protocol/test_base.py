@@ -358,7 +358,7 @@ class TestLogin:
         event.cancel.assert_not_called()
         connection = protocol._connection_manager.get_connection(ADDRESS)
         assert connection is not None
-        assert connection.player is event.player
+        assert connection.unique_id == event.player.unique_id
         assert connection.protocol_version == get_protocol(975)
         assert connection.server_protocol_version == SERVER_PROTOCOL
 
@@ -392,7 +392,7 @@ class TestLogin:
         protocol.on_login(login(cancelled=True))
 
         assert protocol._connection_manager.get_connection(ADDRESS) is None
-        assert connection.player is None
+        assert connection.unique_id is None
         assert connection.active is False
 
 
