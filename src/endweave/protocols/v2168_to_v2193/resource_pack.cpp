@@ -11,14 +11,14 @@ void Transformer<bp::ServerboundPackSettingChangePacket_<2168>, bp::ServerboundP
 {
     auto &to = ctx.out();
     to.pack_id = from.pack_id;
-    to.pack_setting_name = std::move(from.pack_setting_name);
+    to.setting_name = std::move(from.setting_name);
     // ENDWEAVE: 2193 added a list of strings as a fourth setting shape. 2168 can never send one, so
     // the three arms it does have carry across as themselves and the fourth is simply never written.
     std::visit(
         [&to]<class Alt>(Alt &&value) {
-            to.pack_setting_value = std::forward<Alt>(value);
+            to.setting_value = std::forward<Alt>(value);
         },
-        std::move(from.pack_setting_value));
+        std::move(from.setting_value));
 }
 
 } // namespace endweave

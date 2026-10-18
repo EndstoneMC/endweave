@@ -11,7 +11,7 @@ void Transformer<bp::DimensionDefinitionGroup_<2168>::DimensionDefinition,
     auto &to = ctx.out();
     // ENDWEAVE: 2193 keeps the two leading members in place and stops meaning by them what 2168 did:
     // a maximum and a minimum became a floor and the span above it.
-    to.minimum_y = from.height_minimum;
+    to.min_y = from.height_minimum;
     to.height_range = from.height_maximum - from.height_minimum;
     to.generator_type = from.generator_type;
     to.dimension_type = from.dimension_type;

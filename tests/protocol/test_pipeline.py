@@ -14,17 +14,29 @@ from endweave._pipeline import (
 
 OLD = 2168
 NEW = 2193
+NEWEST = 2225
 ALIAS = 2169  # 26.45, which puts every modelled packet on the wire exactly as OLD does
 UNSUPPORTED = 975  # a registered protocol the engine has no tables for
 
 CONTAINER_CLOSE = 47
 INVENTORY_TRANSACTION = 30
+ANIMATE = 44
+COMMAND_REQUEST = 77
 SET_PLAYER_FURNACE_OPTIONS = 351  # OLD has no such packet, so NEW towards OLD drops it
+SET_PASSENGER_OF_BLOCK = 357  # NEWEST alone has it
 LOGIN = 1  # unchanged between the two, so neither table names it
 
 # Payloads of zeroes that both ends read as a whole packet.
 EMPTY_TRANSACTION = b"\x00\x00\x00\x00"
 EMPTY_CONTAINER_CLOSE = b"\x00\x00\x00"
+
+# A critical hit on actor 7 with no swing source; NEWEST adds the hand that swung.
+CRITICAL_HIT = b"\x04\x07\x00\x00\x00\x00\x00"
+MAINHAND = b"\x00"
+OFFHAND = b"\x01"
+
+# An empty command from a player, on the version a client names for its newest.
+LATEST_COMMAND = b"\x00\x06player" + bytes(16) + b"\x00" + bytes(8) + b"\x00\x06latest"
 
 
 class TestVersions:
@@ -105,3 +117,26 @@ class TestTranslating:
     def test_reports_a_payload_with_bytes_left_over(self) -> None:
         with pytest.raises(TranslationError):
             Translator(NEW, OLD).translate(CONTAINER_CLOSE, EMPTY_CONTAINER_CLOSE + b"\x00")
+
+
+class TestNewestHop:
+    def test_carries_the_oldest_version_across_both_hops(self) -> None:
+        assert (Translator(OLD, NEWEST).from_version, Translator(OLD, NEWEST).to_version) == (OLD, NEWEST)
+        assert Translator(ALIAS, NEWEST).from_version == OLD
+
+    def test_drops_a_packet_only_the_newest_version_has(self) -> None:
+        assert Translator(NEWEST, NEW).actions[SET_PASSENGER_OF_BLOCK] is Action.CANCEL
+        assert Translator(NEWEST, OLD).actions[SET_PASSENGER_OF_BLOCK] is Action.CANCEL
+
+    def test_swings_the_main_hand_for_a_version_that_names_none(self) -> None:
+        assert Translator(NEW, NEWEST).translate(ANIMATE, CRITICAL_HIT) == CRITICAL_HIT + MAINHAND
+
+    def test_carries_a_main_hand_swing_back(self) -> None:
+        assert Translator(NEWEST, NEW).translate(ANIMATE, CRITICAL_HIT + MAINHAND) == CRITICAL_HIT
+
+    def test_drops_an_off_hand_swing_the_older_version_cannot_name(self) -> None:
+        assert Translator(NEWEST, NEW).translate(ANIMATE, CRITICAL_HIT + OFFHAND) is None
+
+    def test_carries_a_command_on_the_latest_version_down(self) -> None:
+        assert Translator(NEWEST, NEW).translate(COMMAND_REQUEST, LATEST_COMMAND) is not None
+        assert Translator(NEWEST, OLD).translate(COMMAND_REQUEST, LATEST_COMMAND) is not None

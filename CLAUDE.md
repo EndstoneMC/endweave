@@ -57,8 +57,8 @@ Per packet, `EndweavePlugin._translate` looks the id up in the translator's `act
 - `protocol/version.py` is ViaVersion's `ProtocolVersion`: every Bedrock protocol endweave can
   name, with the Minecraft versions each covers. `/endweave list` and `block-versions` read it, and
   the README table mirrors it.
-- `protocol/version.h` `ProtocolVersions::SUPPORTED_VERSIONS` is what the engine translates: 2168
-  and 2193, a sorted line that `step(from, to)` routes along one hop at a time, so there is no path
+- `protocol/version.h` `ProtocolVersions::SUPPORTED_VERSIONS` is what the engine translates: 2168,
+  2193 and 2225, a sorted line that `step(from, to)` routes along one hop at a time, so there is no path
   search. `WIRE_IDENTICAL` routes 2169 (26.45) as 2168, and `handler.h` static-asserts that
   claim against the schema, so a version that stops being identical fails the build.
 
@@ -255,6 +255,10 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
   sentinel, so numbers move every version. Map with
   `bp::enum_cast<To>(bp::enum_name(from)).value_or(<To's sentinel>)`, or cancel where no fallback is
   honest. Do not add a shift table.
+- **An enum that changes every version is mapped once, for every pair,** as its own partial
+  specialization in `protocols/enums.h`, keyed on `bp::enum_type_name` and carrying its own fallback.
+  Add a case there only for an enum that keeps moving; there is no default, so any other enum still
+  fails the build until its hop writes a `Transformer`.
 - **Establish what changed by static-asserting `is_same_v` on every field pair,** not by reading the
   two structs side by side. A versioned type can be nested where the packet's own name gives no sign.
 - **A field can migrate into a nested type rather than be renamed.** A name that vanishes from the

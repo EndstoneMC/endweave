@@ -183,7 +183,7 @@ def test_get_by_name_resolves_the_registered_name() -> None:
     assert get_by_name("26.20") is v26_20
 
 
-@pytest.mark.parametrize("name", ["1.26.2", "1.26.0-1.26.3", "1.26.5x", "1.26.55", "1.26.50.27"])
+@pytest.mark.parametrize("name", ["1.26.2", "1.26.0-1.26.3", "1.26.50-1.26.52", "1.26.52", "1.26.50.27"])
 def test_get_by_name_reads_the_legacy_form(name: str) -> None:
     """Clients and older Endstone releases still report 26 and later as 1.26."""
     assert get_by_name(name) is get_by_name(name[2:])

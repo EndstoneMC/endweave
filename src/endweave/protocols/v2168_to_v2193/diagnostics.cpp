@@ -1,23 +1,9 @@
 #include "diagnostics.h"
 
-#include <bedrock/protocol/enum.hpp>
 #include <optional>
 #include <utility>
 
-namespace ew = endweave;
-
 namespace endweave {
-void Transformer<bp::MemoryCategoryCounter_<2168>, bp::MemoryCategoryCounter_<2193>>::transform(
-    Context<bp::MemoryCategoryCounter_<2193>> &ctx, bp::MemoryCategoryCounter_<2168> &&from)
-{
-    auto &to = ctx.out();
-    // ENDWEAVE: 2193 dropped Persona_Textures and shifted every category above it down one, so the name
-    // carries the meaning. The dropped one has no 2193 counterpart and lands on Unknown.
-    to.category = bp::enum_cast<bp::MemoryCategory_<2193>>(bp::enum_name(from.category))
-                      .value_or(bp::MemoryCategory_<2193>::Unknown);
-    to.current_bytes = from.current_bytes;
-}
-
 void Transformer<bp::EntityDiagnosticTimingInfo_<2168>, bp::EntityDiagnosticTimingInfo_<2193>>::transform(
     Context<bp::EntityDiagnosticTimingInfo_<2193>> &ctx, bp::EntityDiagnosticTimingInfo_<2168> &&from)
 {

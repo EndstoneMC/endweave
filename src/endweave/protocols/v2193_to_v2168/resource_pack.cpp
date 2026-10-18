@@ -16,7 +16,7 @@ void Transformer<bp::ServerboundPackSettingChangePacket_<2193>, bp::ServerboundP
 {
     auto &to = ctx.out();
     to.pack_id = from.pack_id;
-    to.pack_setting_name = std::move(from.pack_setting_name);
+    to.setting_name = std::move(from.setting_name);
     // ENDWEAVE: 2193 added a list of strings as a fourth setting shape, and 2168 has no arm to put it
     // in. The setting is the whole of the packet, so a change carrying one is dropped rather than
     // delivered as some other value.
@@ -26,10 +26,10 @@ void Transformer<bp::ServerboundPackSettingChangePacket_<2193>, bp::ServerboundP
                 ctx.cancel();
             }
             else {
-                to.pack_setting_value = std::forward<Alt>(value);
+                to.setting_value = std::forward<Alt>(value);
             }
         },
-        std::move(from.pack_setting_value));
+        std::move(from.setting_value));
 }
 
 } // namespace endweave

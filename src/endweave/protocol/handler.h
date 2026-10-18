@@ -3,9 +3,12 @@
 #include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/transform.h"
 #include "endweave/protocol/version.h"
+#include "endweave/protocols/enums.h"
 #include "endweave/protocols/rewriters.h"
 #include "endweave/protocols/v2168_to_v2193/transform.h"
 #include "endweave/protocols/v2193_to_v2168/transform.h"
+#include "endweave/protocols/v2193_to_v2225/transform.h"
+#include "endweave/protocols/v2225_to_v2193/transform.h"
 
 #include <array>
 #include <bedrock/protocol.hpp>

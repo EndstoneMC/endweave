@@ -68,7 +68,7 @@ def test_versions_are_listed_oldest_protocol_first(mock_sender: MagicMock) -> No
     assert sent(mock_sender) == [
         "§8[§61.21.124§8] (§71§8): §balice",
         "§8[§626.0-26.3§8] (§71§8): §bbob",
-        "§8[§626.5x§8] (§71§8): §bcarol",
+        "§8[§626.50-26.52§8] (§71§8): §bcarol",
     ]
 
 

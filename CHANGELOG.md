@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- Clients on the 26.60 preview can join servers on 26.40-26.52, and the other way round.
+
 ## [0.5.1] - 2026-09-15
 
 ### Fixed

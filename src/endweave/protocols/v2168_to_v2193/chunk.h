@@ -1,6 +1,7 @@
 #pragma once
 
 #include "endweave/protocol/transform.h"
+#include "endweave/protocols/enums.h"
 
 #include <bedrock/protocol/chunk.h>
 

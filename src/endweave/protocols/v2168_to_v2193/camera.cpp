@@ -35,7 +35,7 @@ void Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2193>>::transform(Co
     // ENDWEAVE: 2168 has no starting rotation to inherit or to send, and false with an absent pair is
     // what 2193 writes for a preset that sets neither.
     to.apply_inherited_starting_rotation = false;
-    to.starting_rotation = std::nullopt;
+    to.starting_rot = std::nullopt;
 }
 
 } // namespace endweave
