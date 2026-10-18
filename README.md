@@ -43,7 +43,7 @@ one of these can still join a server speaking the same protocol; it just gets no
 1. Open the latest [release](https://github.com/EndstoneMC/endweave/releases) and download the wheel that matches
    your server. Several are attached, one per platform and Python version:
     - `win_amd64` for Windows, `manylinux_2_28_x86_64` for Linux on glibc 2.28 or newer.
-    - `cp310` for Python 3.10, `cp311` for 3.11, `cp312-abi3` for 3.12 and later.
+    - `cp311` for Python 3.11, `cp312-abi3` for 3.12 and later.
 2. Drop it in your server's `plugins/` folder
 3. Restart the server
 

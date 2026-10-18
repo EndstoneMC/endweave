@@ -9,6 +9,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 - Clients on the 26.60 preview can join servers on 26.40-26.52, and the other way round.
 
+### Removed
+- **BREAKING**: Removed support for Python 3.10.
+
 ### Fixed
 - Fixed the server crashing on stop after a player whose connection Endweave translated had left (#55).
 

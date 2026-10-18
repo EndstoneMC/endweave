@@ -14,10 +14,6 @@ from packaging.version import Version
 from endweave import update
 
 
-class Py310TimeoutError(Exception):
-    """``asyncio.TimeoutError`` as Python 3.10 defines it, unrelated to the builtin ``TimeoutError``."""
-
-
 class FakeResponse:
     def __init__(self, outcome: object) -> None:
         self._outcome = outcome
@@ -111,11 +107,6 @@ def test_a_rate_limited_check_reads_as_a_failed_check() -> None:
 
 def test_a_total_timeout_reads_as_a_failed_check() -> None:
     assert get_newest_version(FakeGitHub(asyncio.TimeoutError())) == [None]
-
-
-def test_the_timeout_python_3_10_raises_is_caught_as_well() -> None:
-    with patch.object(asyncio, "TimeoutError", Py310TimeoutError):
-        assert get_newest_version(FakeGitHub(Py310TimeoutError())) == [None]
 
 
 def test_a_successful_check_is_answered_from_the_cache_next_time() -> None:

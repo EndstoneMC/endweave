@@ -295,7 +295,7 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 
 ## Building and testing
 
-Requires Python 3.10+, [uv](https://docs.astral.sh/uv/) and a C++23 compiler. scikit-build-core
+Requires Python 3.11+, [uv](https://docs.astral.sh/uv/) and a C++23 compiler. scikit-build-core
 drives CMake (3.28+) and nanobind; bedrock-protocol is fetched as the release pinned by
 `BEDROCK_PROTOCOL_VERSION` in `CMakeLists.txt`. The standard library only has to agree with itself,
 so the compiler's default is used and linked statically.
@@ -325,7 +325,7 @@ uvx cibuildwheel --platform linux                      # the manylinux wheels CI
   `src/endweave/`: add a case to the file that owns the subject, or start one.
 - **Releases** run the `Release` workflow by hand with a version. It stamps `## [Unreleased]` in
   `CHANGELOG.md`, tags, and publishes the sdist and wheels to PyPI. It calls `build.yml`, which lints and builds them with
-  cibuildwheel (cp310, cp311 and a cp312 abi3 wheel, manylinux_2_28 and win_amd64) and tests each
+  cibuildwheel (a cp311 and a cp312 abi3 wheel, manylinux_2_28 and win_amd64) and tests each
   wheel on the runner, since endstone does not install in the manylinux container. A dry run builds
   and tests them without publishing.
 

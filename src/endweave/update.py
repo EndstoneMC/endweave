@@ -144,7 +144,7 @@ async def _get_newest_version() -> Version | None:
                     response.raise_for_status()
                     release = await response.json()
             _cached_version = Version(release["tag_name"])
-        except (aiohttp.ClientError, asyncio.TimeoutError, TimeoutError, ValueError, KeyError):
+        except (aiohttp.ClientError, TimeoutError, ValueError, KeyError):
             _cached_version = None
         _cache_expiry = now + (_CACHE_TTL if _cached_version is not None else _FAILURE_TTL)
         return _cached_version

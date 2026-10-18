@@ -10,13 +10,12 @@ description = "Protocol translation plugin for Endstone - lets clients join serv
 readme = "README.md"
 license = { file = "LICENSE" }
 keywords = ["endstone", "plugin", "protocol", "translation"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 authors = [{ name = "Vincent", email = "magicdroidx@gmail.com" }]
 classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -63,7 +62,7 @@ sdist.exclude = [".github", "build", "tests"]
 
 [tool.cibuildwheel]
 # cp312 builds the abi3 wheel that 3.13 and later install
-build = ["cp310-*", "cp311-*", "cp312-*"]
+build = ["cp311-*", "cp312-*"]
 skip = ["*-musllinux_*"]
 archs = ["auto64"]
 config-settings = { "build-dir" = "build/cibuildwheel/{wheel_tag}" }
