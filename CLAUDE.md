@@ -362,7 +362,19 @@ uvx cibuildwheel --platform linux                      # the manylinux wheels CI
 
 ### Prose
 
-- CHANGELOG.md follows Keep a Changelog. Entries state what was broken and what is fixed, for server
-  admins, not why or how.
+- CHANGELOG.md strictly follows [Keep a Changelog 1.1.0](https://keepachangelog.com/en/1.1.0/):
+  - Write for server admins, not machines.
+  - Every version gets an entry, latest first, with its release date and a reference-style link at
+    the bottom.
+  - Group changes by type: Added, Changed, Deprecated, Removed, Fixed, Security.
+  - Include only what a server admin sees, such as which clients can join, config keys and fixes.
+    Omit internal implementation details: refactors, engine plumbing, build and tooling changes.
+  - One short sentence per entry: state what changed, not why or how. The why and how belong in the
+    commit message.
+  - Append the issue number when a fix closes an issue, e.g. `(#55)`.
+  - Do not list fixes for bugs introduced by unreleased work.
+  - Do not add caveats that read as restrictions.
+  - Prefix breaking changes with `**BREAKING**:` in the Changed or Removed section.
+  - Plain declarative sentences. No em-dash pivots, mirrored clauses or other rhetorical flourishes.
 - No double dashes (`--`) in user-facing prose.
 - No `Co-Authored-By` trailer on commits.
