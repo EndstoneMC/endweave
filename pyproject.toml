@@ -58,7 +58,7 @@ wheel.packages = ["src/endweave"]
 wheel.py-api = "cp312"
 wheel.exclude = ["**/*.cpp", "**/*.h", "**/*.pat", "**/CMakeLists.txt"]
 install.components = ["python"]
-sdist.exclude = [".github", "build", "tests"]
+sdist.exclude = [".github", "build", "data", "tests"]
 
 [tool.cibuildwheel]
 # cp312 builds the abi3 wheel that 3.13 and later install

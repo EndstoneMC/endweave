@@ -158,9 +158,6 @@ src/endweave/_version.py
 # Protocol docs (fetched by tools/)
 protocol_docs/
 
-# Generated protocol data (regenerate via tools/)
-data/
-
 # PyCharm
 #  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
 #  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore

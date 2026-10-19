@@ -217,15 +217,20 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   `// clang-format off`, and it is never edited by hand. `getNewBlockStateId` hashes every state of
   those blocks once per hop and looks ids up hop by hop; a block no hop changes keeps its id, which
   is what an add-on block needs.
-- **`tools/generate_block_states.py` writes it from two bedrock-dumper palettes**, which are inputs
-  and are not committed. Pin each version's `block_palette.json` and `block_types.json` in
-  `tools/blocks.toml` and run `uv run tools/generate_block_states.py <dumps>`. The script mirrors
+- **`data/` holds each version's block data, committed**, laid out as ViaVersion's Mappings repo
+  lays out its own. `data/v<protocol>.json` is the fields endweave reads from one version's
+  bedrock-dumper `block_types.json` and `block_palette.json`, one entry per line, sorted, each state
+  a JSON value (bool for a `ByteTag`, number for an `IntTag`, string for a `StringTag`) and each
+  field left out at its default. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
+  writes it. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the
+  fallback for each block type the `to` version lacks. `data/` stays out of the sdist and the wheel.
+- **`uv run tools/generate_block_states.py` writes the rules from `data/`.** The script mirrors
   BDS's classes and methods (`Block`, `CompoundTag`, `NbtIo`, `StringByteOutput`) and checks its hash
-  against every id in the dump. Going up, a block gains the states the newer version added, at that
+  against every id in the data. Going up, a block gains the states the newer version added, at that
   version's default, and loses the ones it removed. Going down, it loses what the older version
-  lacks, and a block type the older version lacks is renamed to the fallback `blocks.toml` names
-  for it, which should keep the block's shape so the client's movement prediction agrees with the
-  server. A state whose values change stops the generator rather than being guessed.
+  lacks, and a block type the older version lacks is renamed to its fallback, which should keep the
+  block's shape so the client's movement prediction agrees with the server. A state whose values
+  change stops the generator rather than being guessed.
 - **`rewriter/block.h` is `BlockRewriter`.** `rewriteBlockIds` finds every block id by its type,
   `bp::BlockRuntimeId`, which bedrock-protocol gives every member BDS types `BlockRuntimeId`, and
   `should_translate_v` covers every packet that carries one. `SerializedNetworkItemInstanceDescriptor`
@@ -321,6 +326,8 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocol/rewrite.h` `Rewriter` | none by name; the job is ViaVersion's per-packet `PacketHandler` lambda |
 | `protocol/block.h` `getNewBlockStateId` | `MappingData#getNewBlockStateId` |
 | `rewriter/block.h` `BlockRewriter` | `BlockRewriter` |
+| `data/v<protocol>.json`, `data/fallbacks/v<from>_to_v<to>.json` | Mappings repo `mappings/mapping-<version>.json`, `mappings/diff/` |
+| `tools/import_bedrock_data.py`, `tools/generate_block_states.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |
 | `protocol/handler.h` `Translator` | `Protocol` by role, Velocity `ProtocolRegistry` by behaviour |
 | `protocol/handler.h` `getTranslator` | Velocity `StateRegistry.PacketRegistry#getProtocolRegistry` |
