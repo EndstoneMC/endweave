@@ -2,7 +2,6 @@
 
 #include "attributes.h"
 #include "block_connections.h"
-#include "block_states.h"
 #include "camera.h"
 #include "chunk.h"
 #include "diagnostics.h"
@@ -10,6 +9,7 @@
 #include "endweave/protocol/transform.h"
 #include "inventory.h"
 #include "map.h"
+#include "mappings.h"
 #include "movement.h"
 #include "resource_pack.h"
 #include "shape.h"

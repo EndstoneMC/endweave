@@ -222,14 +222,16 @@ change across it. A block's network id is BDS's `Block::computeRawSerializationI
 FNV-1a over its name and states written as little-endian NBT. `protocol/block.h` computes it the
 same way, so a hop is stated as readable rules and the ids follow from them.
 
-- **The rules are generated C++, committed.** `protocols/v<from>_to_v<to>/block_states.h` lists one
-  `BlockStateUpdate` per block type that changes: every value of each of its states, then the name
-  it takes (`rename`), the states it gains (`add`) and the ones it loses (`remove`), each in SNBT,
-  which `protocol/tag_parser.h` reads. The records are `static constexpr` data with no code to build
-  them, which keeps the translation unit quick to compile. It is `// clang-format off`, and it is
-  never edited by hand. `MappingDataBase<From, To>::getBlockStateMappings` (`protocol/mapping.h`)
-  hashes every state of a hop's blocks once, and `MappingData<From, To>::getNewBlockStateId` looks
-  ids up hop by hop; a block no hop changes keeps its id, which is what an add-on block needs.
+- **The rules are generated C++, committed.** `protocols/v<from>_to_v<to>/mappings.h` is the hop's
+  `Mappings` specialisation, one section per kind as ViaVersion's mapping file has: `block_states`
+  lists one `BlockStateUpdate` per block type that changes: every value of each of its states, then
+  the name it takes (`rename`), the states it gains (`add`) and the ones it loses (`remove`), each in
+  SNBT, which `protocol/tag_parser.h` reads. The records are `static constexpr` data with no code to
+  build them, which keeps the translation unit quick to compile. It is `// clang-format off`, and it
+  is never edited by hand. `MappingDataBase<From, To>` (`protocol/mapping.h`) reads the hop's
+  sections, hashing every state of its `block_states` once, and
+  `MappingData<From, To>::getNewBlockStateId` looks ids up hop by hop; a block no hop changes keeps
+  its id, which is what an add-on block needs.
 - **`neighbor_blocks.h` is generated for a hop that gives blocks states**: a `NeighborBlock` for
   every block the older version can send, as the newer version has it, holding what BDS reads off a
   block when it works out a neighbour's connections: its `BlockConnectionRuleComponent` and connection
@@ -243,7 +245,8 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   field left out at its default, then the item names from its `items.json`. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
   writes it. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the
   fallback for each block type the `to` version lacks. `data/` stays out of the sdist and the wheel.
-- **`uv run tools/generate_block_states.py` writes the rules from `data/`.** The script mirrors
+- **`uv run tools/generate_mappings.py` writes each hop's `mappings.h` and `neighbor_blocks.h` from
+  `data/`.** The script mirrors
   BDS's classes and methods (`Block`, `CompoundTag`, `NbtIo`, `StringByteOutput`) and checks its hash
   against every id in the data. Going up, a block gains the states the newer version added, at that
   version's default, and loses the ones it removed. Going down, it loses what the older version
@@ -305,13 +308,12 @@ same way, so a hop is stated as readable rules and the ids follow from them.
 ## Items
 
 The server's `ItemRegistryPacket` gives every item its numeric id, so ids need no mapping; a client
-older than the server is only offered items its version lacks.
+older than the server is just not offered the items its version lacks.
 
-- **`uv run tools/generate_items.py` writes `protocols/v<from>_to_v<to>/item_mappings.h`** from the
-  item names in `data/`, for a hop whose `from` has items its `to` lacks: an `ItemMappings`
-  specialisation listing them, which `MappingData<From, To>::getNewItemName` (`protocol/mapping.h`)
-  reads hop by hop, as ViaVersion's `MappingData#getNewItemId` does, returning none for a missing
-  item.
+- **A hop whose `from` has items its `to` lacks lists them in `items`** in its `mappings.h`, sorted,
+  from the item names in `data/`. `MappingDataBase` searches them, and
+  `MappingData<From, To>::getNewItemName` reads them hop by hop, as ViaVersion's
+  `MappingData#getNewItemId` does, returning none for a missing item.
 - **The registry keeps every item**, so a stack of one the client lacks still resolves, and the
   `ItemRegistryPacket` rewriter notes their ids in the translator's `ItemRegistryStorage`. The
   `CreativeContent` rewriter leaves those items out, and any group they leave empty, and the
@@ -410,8 +412,8 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocols/v2168_to_v2193/block_connections.h` `StandardConnectionHandler` | `AbstractFenceConnectionHandler` and its subclasses |
 | `protocols/v2193_to_v2225/block_connections.h` `ChorusPlantConnectionHandler`, `FireConnectionHandler`, `RedstoneConnectionHandler` | the handlers of the same names |
 | `data/v<protocol>.json`, `data/fallbacks/v<from>_to_v<to>.json` | Mappings repo `mappings/mapping-<version>.json`, `mappings/diff/` |
-| `tools/import_bedrock_data.py`, `tools/generate_block_states.py`, `tools/generate_items.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
-| `protocol/mapping.h` `ItemMappings` | ViaBackwards `ItemMappings` |
+| `tools/import_bedrock_data.py`, `tools/generate_mappings.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
+| `protocols/v<from>_to_v<to>/mappings.h` `Mappings` | Mappings repo `mappings-<from>to<to>.nbt`, its `blockstates` and `items` sections |
 | `rewriter/item.h` `ItemRewriter` | `ItemRewriter` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |
 | `protocol/handler.h` `Translator` | `Protocol` by role, Velocity `ProtocolRegistry` by behaviour |

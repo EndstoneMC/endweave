@@ -1,7 +1,7 @@
 #pragma once
 
-#include "block_states.h"
 #include "endweave/protocol/block_connection.h"
+#include "mappings.h"
 #include "neighbor_blocks.h"
 
 #include <array>
@@ -50,7 +50,7 @@ private:
 
     static const ConnectedBlocks &getBlocks()
     {
-        static const ConnectedBlocks blocks{getBlockStateUpdates<2193, 2225>(),
+        static const ConnectedBlocks blocks{Mappings<2193, 2225>::block_states,
                                             [](const BlockStateUpdate &update) {
                                                 return update.name == "minecraft:chorus_plant";
                                             },
@@ -94,7 +94,7 @@ private:
 
     static const ConnectedBlocks &getBlocks()
     {
-        static const ConnectedBlocks blocks{getBlockStateUpdates<2193, 2225>(),
+        static const ConnectedBlocks blocks{Mappings<2193, 2225>::block_states,
                                             [](const BlockStateUpdate &update) {
                                                 return update.name == "minecraft:fire";
                                             },
@@ -207,7 +207,7 @@ private:
 
     static const ConnectedBlocks &getBlocks()
     {
-        static const ConnectedBlocks blocks{getBlockStateUpdates<2193, 2225>(),
+        static const ConnectedBlocks blocks{Mappings<2193, 2225>::block_states,
                                             [](const BlockStateUpdate &update) {
                                                 return update.name == "minecraft:redstone_wire";
                                             },

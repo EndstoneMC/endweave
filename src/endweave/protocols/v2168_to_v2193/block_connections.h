@@ -1,7 +1,7 @@
 #pragma once
 
-#include "block_states.h"
 #include "endweave/protocol/block_connection.h"
+#include "mappings.h"
 #include "neighbor_blocks.h"
 
 #include <algorithm>
@@ -147,7 +147,7 @@ private:
     {
         static const auto stairs = [] {
             std::vector<std::pair<std::uint32_t, Stair>> result;
-            for (const auto &update : getBlockStateUpdates<2168, 2193>()) {
+            for (const auto &update : Mappings<2168, 2193>::block_states) {
                 if (!parseSnbt<bp::CompoundTag>(update.add).contains("minecraft:corner")) {
                     continue;
                 }
@@ -241,7 +241,7 @@ private:
 
     static const ConnectedBlocks &getBlocks()
     {
-        static const ConnectedBlocks blocks{getBlockStateUpdates<2168, 2193>(),
+        static const ConnectedBlocks blocks{Mappings<2168, 2193>::block_states,
                                             [](const BlockStateUpdate &update) {
                                                 const auto add = parseSnbt<bp::CompoundTag>(update.add);
                                                 return std::ranges::all_of(STATES, [&](std::string_view state) {
