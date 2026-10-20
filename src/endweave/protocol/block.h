@@ -1,14 +1,11 @@
 #pragma once
 
 #include "endweave/protocol/tag_parser.h"
-#include "endweave/protocol/version.h"
 
-#include <algorithm>
 #include <bedrock/protocol/nbt.hpp>
 #include <bedrock/protocol/stream.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <span>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -41,10 +38,6 @@ struct BlockStateUpdate {
     std::string_view add = {};
     std::string_view remove = {};
 };
-
-/** The block types whose states change across one hop. */
-template <int From, int To>
-std::span<const BlockStateUpdate> getBlockStateUpdates();
 
 namespace detail {
 
@@ -148,56 +141,6 @@ void forEachBlock(const BlockStateUpdate &update, Visit &&visit)
         }
         visit(states, updated);
     });
-}
-
-namespace detail {
-
-using BlockMappings = std::vector<std::pair<std::uint32_t, std::uint32_t>>;
-
-inline void addBlockMappings(const BlockStateUpdate &update, BlockMappings &mappings)
-{
-    forEachBlock(update, [&](const bp::CompoundTag &states, const bp::CompoundTag &updated) {
-        const auto old_id = computeRawSerializationIdHashForNetwork(update.name, states);
-        const auto new_id =
-            computeRawSerializationIdHashForNetwork(update.rename.empty() ? update.name : update.rename, updated);
-        if (old_id != new_id) {
-            mappings.emplace_back(old_id, new_id);
-        }
-    });
-}
-
-/** Every block one hop renumbers, sorted by its id at `From`. */
-template <int From, int To>
-const BlockMappings &getBlockMappings()
-{
-    static const BlockMappings mappings = [] {
-        BlockMappings result;
-        for (const auto &update : getBlockStateUpdates<From, To>()) {
-            addBlockMappings(update, result);
-        }
-        std::ranges::sort(result);
-        return result;
-    }();
-    return mappings;
-}
-
-} // namespace detail
-
-/** The id `To` gives the block `From` calls `id`, one hop at a time. A block no hop changes, such
- * as an add-on's, keeps its id.
- * @see ViaVersion MappingData#getNewBlockStateId. */
-template <int From, int To>
-std::uint32_t getNewBlockStateId(std::uint32_t id)
-{
-    if constexpr (From == To) {
-        return id;
-    }
-    else {
-        constexpr int next = step(From, To);
-        const auto &mappings = detail::getBlockMappings<From, next>();
-        const auto it = std::ranges::lower_bound(mappings, id, {}, &detail::BlockMappings::value_type::first);
-        return getNewBlockStateId<next, To>(it != mappings.end() && it->first == id ? it->second : id);
-    }
 }
 
 } // namespace endweave

@@ -125,13 +125,15 @@ Upstream stays valuable for three things.
    the `@see` names both halves.
 
 5. **Leave out what only Java Edition needs.** The `State` machine (Bedrock has one flat id space),
-   per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable), the item,
-   sound and entity halves of `MappingData`, the rewriter hierarchy, `Type<T>`, and the
-   platform-split config options. Block states are the exception: every version renumbers them, so
-   `getNewBlockStateId` carries the block half of `MappingData` (see **Block states**). Of `PacketWrapper`,
+   per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable), the sound
+   and entity halves of `MappingData`, the rewriter hierarchy, `Type<T>`, and the platform-split
+   config options. Block states and items are the exception: every version renumbers blocks and
+   adds items, so `protocol/mapping.h` has `MappingDataBase` for one hop and `MappingData` across
+   hops, with `getNewBlockStateId` and `getNewItemName` (see **Block states** and **Items**). Of `PacketWrapper`,
    only the cancel half exists, as `Context`; the buffer half has no place because the schema
-   derives the codec. Of `UserConnection`, there is no `StorableObject` store: no transform keeps
-   state across packets, so none is carried.
+   derives the codec. Of `UserConnection`, there is no `StorableObject` store: the pipeline
+   `Translator` owns the state a rewriter keeps across packets, `BlockConnectionStorage` and
+   `ItemRegistryStorage`, and `handle` passes each by reference to the rewriters that take it.
 
 Upstream lives under `com.viaversion.viaversion` (api in the `api/` module, impls in `common/`)
 and `com.viaversion.viabackwards`.
@@ -225,8 +227,9 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   it takes (`rename`), the states it gains (`add`) and the ones it loses (`remove`), each in SNBT,
   which `protocol/tag_parser.h` reads. The records are `static constexpr` data with no code to build
   them, which keeps the translation unit quick to compile. It is `// clang-format off`, and it is
-  never edited by hand. `getNewBlockStateId` hashes every state of those blocks once per hop and
-  looks ids up hop by hop; a block no hop changes keeps its id, which is what an add-on block needs.
+  never edited by hand. `MappingDataBase<From, To>::getBlockStateMappings` (`protocol/mapping.h`)
+  hashes every state of a hop's blocks once, and `MappingData<From, To>::getNewBlockStateId` looks
+  ids up hop by hop; a block no hop changes keeps its id, which is what an add-on block needs.
 - **`neighbor_blocks.h` is generated for a hop that gives blocks states**: a `NeighborBlock` for
   every block the older version can send, as the newer version has it, holding what BDS reads off a
   block when it works out a neighbour's connections: its `BlockConnectionRuleComponent` and connection
@@ -306,8 +309,9 @@ older than the server is only offered items its version lacks.
 
 - **`uv run tools/generate_items.py` writes `protocols/v<from>_to_v<to>/item_mappings.h`** from the
   item names in `data/`, for a hop whose `from` has items its `to` lacks: an `ItemMappings`
-  specialisation listing them, which `getNewItemName` (`protocol/item.h`) reads hop by hop, as
-  ViaVersion's `MappingData#getNewItemId` does, returning none for a missing item.
+  specialisation listing them, which `MappingData<From, To>::getNewItemName` (`protocol/mapping.h`)
+  reads hop by hop, as ViaVersion's `MappingData#getNewItemId` does, returning none for a missing
+  item.
 - **The registry keeps every item**, so a stack of one the client lacks still resolves, and the
   `ItemRegistryPacket` rewriter notes their ids in the translator's `ItemRegistryStorage`. The
   `CreativeContent` rewriter leaves those items out, and any group they leave empty, and the
@@ -395,7 +399,7 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocol/context.h` `Context` | `PacketWrapper` |
 | `protocol/transform.h` `Transformer` | `ValueTransformer` |
 | `protocol/rewrite.h` `Rewriter` | none by name; the job is ViaVersion's per-packet `PacketHandler` lambda |
-| `protocol/block.h` `getNewBlockStateId` | `MappingData#getNewBlockStateId` |
+| `protocol/mapping.h` `MappingDataBase`, `MappingData` | `MappingDataBase`, `MappingData` |
 | `rewriter/block.h` `BlockRewriter` | `BlockRewriter` |
 | `protocol/block_connection.h` `BlockConnectionStorage` | `BlockConnectionStorage`, read as `PacketBlockConnectionProvider` reads it |
 | `protocol/sub_chunk.h` `SubChunk`, `SubChunkStorage` | `ChunkSection`, `DataPalette` |
@@ -407,7 +411,7 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocols/v2193_to_v2225/block_connections.h` `ChorusPlantConnectionHandler`, `FireConnectionHandler`, `RedstoneConnectionHandler` | the handlers of the same names |
 | `data/v<protocol>.json`, `data/fallbacks/v<from>_to_v<to>.json` | Mappings repo `mappings/mapping-<version>.json`, `mappings/diff/` |
 | `tools/import_bedrock_data.py`, `tools/generate_block_states.py`, `tools/generate_items.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
-| `protocol/item.h` `ItemMappings`, `getNewItemName` | ViaBackwards `ItemMappings`, `MappingData#getNewItemId` |
+| `protocol/mapping.h` `ItemMappings` | ViaBackwards `ItemMappings` |
 | `rewriter/item.h` `ItemRewriter` | `ItemRewriter` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |
 | `protocol/handler.h` `Translator` | `Protocol` by role, Velocity `ProtocolRegistry` by behaviour |

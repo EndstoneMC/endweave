@@ -1,7 +1,7 @@
 #pragma once
 
-#include "endweave/protocol/block.h"
 #include "endweave/protocol/block_connection.h"
+#include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/sub_chunk.h"
 
@@ -149,7 +149,7 @@ template <int From, int To>
 struct BlockRewriter {
     static std::int32_t rewrite(std::int32_t id)
     {
-        return static_cast<std::int32_t>(getNewBlockStateId<From, To>(static_cast<std::uint32_t>(id)));
+        return static_cast<std::int32_t>(MappingData<From, To>::getNewBlockStateId(static_cast<std::uint32_t>(id)));
     }
 
     /** Every `BlockRuntimeId` inside `value`. */
@@ -160,7 +160,7 @@ struct BlockRewriter {
             return;
         }
         else if constexpr (std::is_same_v<T, bp::BlockRuntimeId>) {
-            value = bp::BlockRuntimeId{getNewBlockStateId<From, To>(value)};
+            value = bp::BlockRuntimeId{MappingData<From, To>::getNewBlockStateId(value)};
         }
         else if constexpr (detail::isItemInstanceDescriptor<T>()) {
             value.block_runtime_id = rewrite(value.block_runtime_id);
@@ -238,7 +238,7 @@ struct BlockRewriter {
             return connected;
         }
         else {
-            return getNewBlockStateId<From, To>(id);
+            return MappingData<From, To>::getNewBlockStateId(id);
         }
     }
 
@@ -336,7 +336,7 @@ private:
         if (!sent) {
             return;
         }
-        const auto connected = connectBlock<From, To>(pos, getNewBlockStateId<To, From>(*sent), storage);
+        const auto connected = connectBlock<From, To>(pos, MappingData<To, From>::getNewBlockStateId(*sent), storage);
         if (connected != *sent) {
             storage.setUnsent(pos, connected);
         }
@@ -352,7 +352,7 @@ private:
         else {
             constexpr int next = step(A, B);
             if constexpr (HasConnections<A, next>) {
-                if (ConnectionData<A, next>::connects(getNewBlockStateId<To, next>(id))) {
+                if (ConnectionData<A, next>::connects(MappingData<To, next>::getNewBlockStateId(id))) {
                     return true;
                 }
             }
@@ -365,7 +365,7 @@ private:
     static std::optional<std::uint32_t> getSent(const BlockConnectionStorage &storage, const bp::BlockPos &pos)
     {
         const auto id = storage.get(pos);
-        return id ? std::optional{getNewBlockStateId<To, B>(*id)} : std::nullopt;
+        return id ? std::optional{MappingData<To, B>::getNewBlockStateId(*id)} : std::nullopt;
     }
 
     template <int A, int B>
@@ -376,7 +376,7 @@ private:
             for (auto &placed : sub_chunks) {
                 for (auto &blocks : placed.sub_chunk.storages) {
                     for (auto &id : blocks.getPalette()) {
-                        id = getNewBlockStateId<A, next>(id);
+                        id = MappingData<A, next>::getNewBlockStateId(id);
                     }
                 }
             }
@@ -395,7 +395,7 @@ private:
         }
         else {
             constexpr int next = step(A, B);
-            auto mapped = getNewBlockStateId<A, next>(id);
+            auto mapped = MappingData<A, next>::getNewBlockStateId(id);
             if constexpr (HasConnections<A, next>) {
                 if (ConnectionData<A, next>::connects(mapped)) {
                     const auto get = [&](const bp::BlockPos &at) {
@@ -600,7 +600,7 @@ template <int From, int To, class Packet>
 void rewriteUpdateBlock(Packet &packet, BlockConnectionStorage &storage)
 {
     if (packet.layer != 0) {
-        packet.runtime_id = bp::BlockRuntimeId{getNewBlockStateId<From, To>(packet.runtime_id)};
+        packet.runtime_id = bp::BlockRuntimeId{MappingData<From, To>::getNewBlockStateId(packet.runtime_id)};
         return;
     }
     const bp::BlockPos pos{packet.pos.x, packet.pos.y, packet.pos.z};
@@ -642,7 +642,8 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::UpdateSubChun
         // Every changed block first, so each one reads the others as they now are.
         if constexpr (connectsBlocks<From, To>()) {
             for (const auto &block : packet.blocks_changed.standards) {
-                storage.set({block.pos.x, block.pos.y, block.pos.z}, getNewBlockStateId<From, To>(block.runtime_id));
+                storage.set({block.pos.x, block.pos.y, block.pos.z},
+                            MappingData<From, To>::getNewBlockStateId(block.runtime_id));
             }
         }
         std::vector<bp::BlockPos> changed;
@@ -654,7 +655,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::UpdateSubChun
         }
         BlockRewriter<From, To>::updateNeighbors(changed, storage);
         for (auto &block : packet.blocks_changed.extras) {
-            block.runtime_id = bp::BlockRuntimeId{getNewBlockStateId<From, To>(block.runtime_id)};
+            block.runtime_id = bp::BlockRuntimeId{MappingData<From, To>::getNewBlockStateId(block.runtime_id)};
         }
     }
 };

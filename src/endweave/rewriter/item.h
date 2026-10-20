@@ -1,6 +1,6 @@
 #pragma once
 
-#include "endweave/protocol/item.h"
+#include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/rewriter/block.h"
 
@@ -14,6 +14,7 @@
 #include <map>
 #include <optional>
 #include <ranges>
+#include <set>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -23,6 +24,24 @@
 namespace bp = bedrock::protocol;
 
 namespace endweave {
+
+/** The items of the server's ItemRegistryPacket that the client's version lacks, by the network id
+ * the server gave them, which creative content and recipes name them by. */
+class ItemRegistryStorage {
+public:
+    void setMissing(std::int32_t id)
+    {
+        missing_.insert(id);
+    }
+
+    [[nodiscard]] bool isMissing(std::int32_t id) const
+    {
+        return missing_.contains(id);
+    }
+
+private:
+    std::set<std::int32_t> missing_;
+};
 
 /** Keeps the items a client's version lacks out of what it is offered.
  * @see ViaVersion ItemRewriter. */
@@ -38,7 +57,7 @@ struct ItemRewriter {
         }
         else if constexpr (std::is_same_v<T, std::map<std::string, std::string>>) {
             return std::ranges::any_of(value, [](const auto &entry) {
-                return !getNewItemName<From, To>(entry.second);
+                return !MappingData<From, To>::getNewItemName(entry.second);
             });
         }
         else if constexpr (bp::Reflected<T>) {
@@ -63,13 +82,13 @@ struct ItemRewriter {
 /** The client is still given every item the server registers, so an item it lacks that it comes
  * to hold resolves, but the ones it lacks are noted for creative content and recipes. */
 template <int From, int To>
-    requires(mapsItems<From, To>())
+    requires(MappingData<From, To>::mapsItems())
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::ItemRegistryPacket)> {
     static void rewrite(bp::packet_of_t<From, static_cast<int>(bp::MinecraftPacketIds::ItemRegistryPacket)> &packet,
                         ItemRegistryStorage &storage)
     {
         for (const auto &item : packet.items) {
-            if (!getNewItemName<From, To>(item.name)) {
+            if (!MappingData<From, To>::getNewItemName(item.name)) {
                 storage.setMissing(item.id);
             }
         }
@@ -78,7 +97,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::ItemRegistryP
 
 /** The creative items the client lacks are left out, and so is a group they leave empty. */
 template <int From, int To>
-    requires(mapsItems<From, To>())
+    requires(MappingData<From, To>::mapsItems())
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::CreativeContent)> {
     static void rewrite(bp::packet_of_t<From, static_cast<int>(bp::MinecraftPacketIds::CreativeContent)> &packet,
                         ItemRegistryStorage &storage)
@@ -126,7 +145,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::CreativeConte
 
 /** The recipes and mixes that take or make an item the client lacks are left out. */
 template <int From, int To>
-    requires(mapsItems<From, To>())
+    requires(MappingData<From, To>::mapsItems())
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::CraftingData)> {
     static void rewrite(bp::packet_of_t<From, static_cast<int>(bp::MinecraftPacketIds::CraftingData)> &packet,
                         ItemRegistryStorage &storage)

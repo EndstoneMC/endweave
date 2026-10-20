@@ -398,7 +398,7 @@ def write(
 def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) -> None:
     updates = diff(source, target, fallbacks)
     records = [cpp_update(update) for update in updates]
-    write(source, target, "block_states.h", "block.h", "getBlockStateUpdates", records)
+    write(source, target, "block_states.h", "mapping.h", "getBlockStateUpdates", records)
     if (blocks := neighbor_blocks(source, target, updates)) is not None:
         records = [cpp_neighbor(block) for block in blocks]
         write(source, target, "neighbor_blocks.h", "block_connection.h", "getNeighborBlocks", records)

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "endweave/protocol/block.h"
+#include "endweave/protocol/mapping.h"
 
 #include <array>
 #include <span>

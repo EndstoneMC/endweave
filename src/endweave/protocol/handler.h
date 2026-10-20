@@ -1,7 +1,7 @@
 #pragma once
 
 #include "endweave/protocol/block_connection.h"
-#include "endweave/protocol/item.h"
+#include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/transform.h"
 #include "endweave/protocol/version.h"
