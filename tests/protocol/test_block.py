@@ -517,6 +517,43 @@ class TestNeighborUpdates:
 
         assert translator.take_scheduled_packets() == []
 
+    def test_defers_a_block_sent_before_its_sub_chunk_until_the_sub_chunk_comes(self) -> None:
+        translator = Translator(NEW, NEWEST)
+        wires = [(x, 0, 53) for x in (36, 37, 38)]
+        translator.translate(
+            UPDATE_SUB_CHUNK_BLOCKS,
+            update_sub_chunk_blocks(*(sub_chunk_block(REDSTONE_WIRE_NEW, pos) for pos in wires)),
+        )
+        assert translator.take_scheduled_packets() == []
+
+        translator.translate(
+            FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(x - 32, 0, 5): REDSTONE_WIRE_NEW for x, _, _ in wires}))
+        )
+
+        line = REDSTONE_WIRE["none", "side", "none", "side"]
+        assert translator.take_scheduled_packets() == [(UPDATE_BLOCK, update_block(line, pos)) for pos in wires]
+
+    def test_defers_a_kept_block_that_a_later_sub_chunk_joins(self) -> None:
+        translator = Translator(NEW, NEWEST)
+        north = sub_chunk_entry(placed_sub_chunk({(5, 0, 15): REDSTONE_WIRE_NEW}), (0, -2, 0))
+        south = sub_chunk_entry(placed_sub_chunk({(5, 0, 0): REDSTONE_WIRE_NEW}), (0, -2, 1))
+        translator.translate(SUB_CHUNK, sub_chunk_packet(north))
+
+        payload = translator.translate(SUB_CHUNK, sub_chunk_packet(south))
+
+        line = REDSTONE_WIRE["side", "none", "side", "none"]
+        assert read_sub_chunk(read_sub_chunk_entries(payload)[0])[5, 0, 0] == line
+        assert translator.take_scheduled_packets() == [(UPDATE_BLOCK, update_block(line, (21, 0, 63)))]
+
+    def test_defers_nothing_for_sub_chunks_sent_together(self) -> None:
+        translator = Translator(NEW, NEWEST)
+        north = sub_chunk_entry(placed_sub_chunk({(5, 0, 15): REDSTONE_WIRE_NEW}), (0, -2, 0))
+        south = sub_chunk_entry(placed_sub_chunk({(5, 0, 0): REDSTONE_WIRE_NEW}), (0, -2, 1))
+
+        translator.translate(SUB_CHUNK, sub_chunk_packet(north, south))
+
+        assert translator.take_scheduled_packets() == []
+
     def test_forgets_deferred_blocks_on_changing_dimension(self) -> None:
         translator = Translator(OLD, NEW)
         translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): OAK_FENCE_OLD})))

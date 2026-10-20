@@ -217,11 +217,14 @@ struct BlockRewriter {
     {
         rewriteHops<From, To>(sub_chunks, storage);
         if constexpr (connectsBlocks<From, To>()) {
+            std::vector<bp::BlockPos> stored;
             for (const auto &placed : sub_chunks) {
                 if (!placed.sub_chunk.storages.empty()) {
                     storage.store(placed.pos, placed.sub_chunk.storages.front());
+                    stored.push_back(placed.pos);
                 }
             }
+            updateBorders(stored, storage);
         }
     }
 
@@ -260,14 +263,48 @@ struct BlockRewriter {
                 neighbors.erase({pos.x, pos.y, pos.z});
             }
             for (const auto &[x, y, z] : neighbors) {
-                const bp::BlockPos pos{x, y, z};
-                const auto sent = storage.get(pos);
-                if (!sent) {
-                    continue;
-                }
-                const auto connected = connectBlock<From, To>(pos, getNewBlockStateId<To, From>(*sent), storage);
-                if (connected != *sent) {
-                    storage.setUnsent(pos, connected);
+                reconnectBlock({x, y, z}, storage);
+            }
+        }
+    }
+
+    /** Works out again the kept blocks along the `stored` sub-chunks in the sub-chunks beside them,
+     * which the client was sent first, with the stored ones' blocks counted as air, and keeps those
+     * whose states change to send later. */
+    static void updateBorders(std::span<const bp::BlockPos> stored, BlockConnectionStorage &storage)
+    {
+        std::set<std::array<int, 3>> fresh;
+        for (const auto &pos : stored) {
+            fresh.insert({pos.x, pos.y, pos.z});
+        }
+        const auto edge = [](int side) {
+            return side < 0 ? std::pair{15, 15} : side > 0 ? std::pair{0, 0} : std::pair{0, 15};
+        };
+        for (const auto &pos : stored) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                for (int dy = -1; dy <= 1; ++dy) {
+                    for (int dz = -1; dz <= 1; ++dz) {
+                        const bp::BlockPos beside{pos.x + dx, pos.y + dy, pos.z + dz};
+                        if (fresh.contains({beside.x, beside.y, beside.z})) {
+                            continue;
+                        }
+                        const auto *blocks = storage.getSubChunk(beside);
+                        if (blocks == nullptr || std::ranges::none_of(blocks->getPalette(), [](std::uint32_t id) {
+                                return connectsBlock<From, To>(id);
+                            })) {
+                            continue;
+                        }
+                        const auto [x0, x1] = edge(dx);
+                        const auto [y0, y1] = edge(dy);
+                        const auto [z0, z1] = edge(dz);
+                        for (int x = x0; x <= x1; ++x) {
+                            for (int y = y0; y <= y1; ++y) {
+                                for (int z = z0; z <= z1; ++z) {
+                                    reconnectBlock({beside.x * 16 + x, beside.y * 16 + y, beside.z * 16 + z}, storage);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -291,6 +328,37 @@ struct BlockRewriter {
 
 private:
     static constexpr std::uint8_t UPDATE_ALL = 3;
+
+    /** Works out again the kept block at `pos`, and keeps it to send later if its states change. */
+    static void reconnectBlock(const bp::BlockPos &pos, BlockConnectionStorage &storage)
+    {
+        const auto sent = storage.get(pos);
+        if (!sent) {
+            return;
+        }
+        const auto connected = connectBlock<From, To>(pos, getNewBlockStateId<To, From>(*sent), storage);
+        if (connected != *sent) {
+            storage.setUnsent(pos, connected);
+        }
+    }
+
+    /** Whether a hop between `A` and `B` gives the block `To` calls `id` states from its neighbours. */
+    template <int A, int B>
+    static bool connectsBlock(std::uint32_t id)
+    {
+        if constexpr (A == B) {
+            return false;
+        }
+        else {
+            constexpr int next = step(A, B);
+            if constexpr (HasConnections<A, next>) {
+                if (ConnectionData<A, next>::connects(getNewBlockStateId<To, next>(id))) {
+                    return true;
+                }
+            }
+            return connectsBlock<next, B>(id);
+        }
+    }
 
     /** The block `To` has at `pos` that the client was sent, as the hop to `B` calls it. */
     template <int B>
@@ -572,8 +640,10 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::UpdateSubChun
                         BlockConnectionStorage &storage)
     {
         // Every changed block first, so each one reads the others as they now are.
-        for (const auto &block : packet.blocks_changed.standards) {
-            storage.set({block.pos.x, block.pos.y, block.pos.z}, getNewBlockStateId<From, To>(block.runtime_id));
+        if constexpr (connectsBlocks<From, To>()) {
+            for (const auto &block : packet.blocks_changed.standards) {
+                storage.set({block.pos.x, block.pos.y, block.pos.z}, getNewBlockStateId<From, To>(block.runtime_id));
+            }
         }
         std::vector<bp::BlockPos> changed;
         for (auto &block : packet.blocks_changed.standards) {

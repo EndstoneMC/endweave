@@ -184,11 +184,11 @@ class EndweavePlugin(Plugin):
             translator = connection.clientbound
             if translator is None or connection.unique_id is None:
                 continue
-            packets = translator.take_scheduled_packets()
-            if not packets:
-                continue
             player = self.server.get_player(connection.unique_id)
             if player is None:
+                continue
+            packets = translator.take_scheduled_packets()
+            if not packets:
                 continue
             self._sending_deferred = True
             try:

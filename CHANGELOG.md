@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Fixed redstone wire, fences and other connected blocks sometimes showing the wrong shape after joining, along chunk borders and where redstone powered up as its chunk loaded.
+- Fixed connected blocks taking the wrong shape when several players on the same newer version were online.
+
 ## [0.6.1] - 2026-10-20
 
 ### Added

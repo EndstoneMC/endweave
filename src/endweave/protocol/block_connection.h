@@ -138,20 +138,41 @@ public:
         return it->second.getElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15));
     }
 
-    /** Keeps the blocks of the sub-chunk at `sub_chunk`, counted in sub-chunks. */
+    /** The blocks kept of the sub-chunk at `sub_chunk`, counted in sub-chunks, or null. */
+    [[nodiscard]] const SubChunkStorage *getSubChunk(const bp::BlockPos &sub_chunk) const
+    {
+        const auto it = sections_.find({sub_chunk.x, sub_chunk.y, sub_chunk.z});
+        return it != sections_.end() ? &it->second : nullptr;
+    }
+
+    /** Keeps the blocks of the sub-chunk at `sub_chunk`, counted in sub-chunks. A block in it that
+     * the client was sent before it is sent again later, as the client lays the earlier block over
+     * the sub-chunk. */
     void store(const bp::BlockPos &sub_chunk, SubChunkStorage blocks)
     {
         blocks.compact();
-        sections_.insert_or_assign({sub_chunk.x, sub_chunk.y, sub_chunk.z}, std::move(blocks));
+        const std::array<int, 3> section{sub_chunk.x, sub_chunk.y, sub_chunk.z};
+        sections_.insert_or_assign(section, std::move(blocks));
+        std::erase_if(early_, [&](const std::array<int, 3> &pos) {
+            if (std::array{pos[0] >> 4, pos[1] >> 4, pos[2] >> 4} != section) {
+                return false;
+            }
+            unsent_.insert(pos);
+            return true;
+        });
     }
 
+    /** Keeps `id` at `pos` for a block the client is sent, or, before its sub-chunk, notes that the
+     * client was sent it early. */
     void set(const bp::BlockPos &pos, std::uint32_t id)
     {
         const auto it = sections_.find({pos.x >> 4, pos.y >> 4, pos.z >> 4});
-        if (it != sections_.end()) {
-            it->second.setElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15), id);
-            it->second.compact();
+        if (it == sections_.end()) {
+            early_.insert({pos.x, pos.y, pos.z});
+            return;
         }
+        it->second.setElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15), id);
+        it->second.compact();
     }
 
     /** Keeps `id` at `pos` for a block the server will not send, so the client is sent it later. */
@@ -159,11 +180,6 @@ public:
     {
         set(pos, id);
         unsent_.insert({pos.x, pos.y, pos.z});
-    }
-
-    [[nodiscard]] bool hasUnsent() const
-    {
-        return !unsent_.empty();
     }
 
     /** The blocks kept with `setUnsent` since the last call, as they are now. */
@@ -184,21 +200,29 @@ public:
      * client lets go of too. */
     void unloadOutside(const bp::BlockPos &center, std::int64_t radius)
     {
-        std::erase_if(sections_, [&](const auto &section) {
-            const std::int64_t dx = section.first[0] * 16 + 8 - center.x;
-            const std::int64_t dz = section.first[2] * 16 + 8 - center.z;
+        const auto outside = [&](int x, int z) {
+            const std::int64_t dx = x * 16 + 8 - center.x;
+            const std::int64_t dz = z * 16 + 8 - center.z;
             return dx * dx + dz * dz > radius * radius;
+        };
+        std::erase_if(sections_, [&](const auto &section) {
+            return outside(section.first[0], section.first[2]);
+        });
+        std::erase_if(early_, [&](const std::array<int, 3> &pos) {
+            return outside(pos[0] >> 4, pos[2] >> 4);
         });
     }
 
     void clear()
     {
         sections_.clear();
+        early_.clear();
         unsent_.clear();
     }
 
 private:
     std::map<std::array<int, 3>, SubChunkStorage> sections_;
+    std::set<std::array<int, 3>> early_;
     std::set<std::array<int, 3>> unsent_;
 };
 

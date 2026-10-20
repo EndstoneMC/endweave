@@ -119,6 +119,11 @@ public:
         return palette_;
     }
 
+    [[nodiscard]] const std::vector<std::uint32_t> &getPalette() const
+    {
+        return palette_;
+    }
+
     [[nodiscard]] std::optional<std::uint32_t> getElement(std::uint16_t index) const
     {
         if (bits_ == EMPTY) {

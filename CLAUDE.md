@@ -33,9 +33,9 @@ to the client's, as ViaVersion's encoder sits below the server's own.
 `protocol/base.py` `BaseProtocol` runs first on every received packet. On
 `RequestNetworkSettings` (193) it reads the client's protocol off the first four bytes, installs a
 `Translator` each way on the `Connection`, and writes the server's protocol number over the
-client's; `Login` (1) gets the same rewrite, since BDS checks it again. Translators come from a
-`functools.cache` over `_pipeline.Translator`, so every connection between the same two versions
-shares one. A client on the server's own number, or one the engine does not carry, gets neither
+client's; `Login` (1) gets the same rewrite, since BDS checks it again. Each connection gets
+`_pipeline.Translator`s of its own, never shared or cached, since a translator keeps the blocks its
+client was sent. A client on the server's own number, or one the engine does not carry, gets neither
 pipeline nor rewrite: the server takes or refuses it itself. Where the two numbers name one wire
 shape, as 26.45 and 26.40-26.44 do, the pipeline translates nothing and the rewrite is the whole of
 the work. The blocked version gate runs on `PlayerLoginEvent`.
@@ -278,6 +278,14 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   fill it, `UpdateBlock`, `UpdateBlockSynced` and `UpdateSubChunkBlocks` give a block in layer 0 the
   states its kept neighbours make it and record the result, `NetworkChunkPublisherUpdate` drops the
   columns the client lets go of, and `ChangeDimension` drops everything.
+- **A block sent before its sub-chunk is sent again after it.** BDS sends the block changes of a
+  chunk that just loaded around its `LevelChunkPacket`, before the client has asked for the
+  sub-chunks, so such a block is connected with no neighbours. The client lays it over the sub-chunk that comes
+  later, so the storage notes it, and storing that sub-chunk queues it to be sent again as unsent.
+- **A sub-chunk reshapes the kept blocks along its border.** One connected before its neighbour
+  sub-chunk arrived read that neighbour as air, so `BlockRewriter::updateBorders` works out again the
+  border blocks of the kept sub-chunks beside each stored one, skipping any whose palette holds no
+  block a hop connects, and queues those that change.
 - **A changed block reconnects the kept blocks around it.** `BlockRewriter::updateNeighbors` works
   out again every kept block in the 3×3×3 around a block those three packets change, since redstone
   reads the wire a block up or down on each side, past ViaVersion's six faces. The server sends

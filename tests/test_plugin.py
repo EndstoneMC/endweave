@@ -408,6 +408,14 @@ class TestDeferredPackets:
 
         assert translator.translated == [UPDATE_BLOCK]
 
+    def test_holds_them_while_the_server_has_no_such_player(self, plugin: StubPlugin) -> None:
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        plugin.server.get_player.return_value = None
+
+        plugin._schedule_send()
+
+        assert connection.clientbound.packets == [(UPDATE_BLOCK, b"\x01")]
+
     def test_holds_them_until_the_player_logs_in(self, plugin: StubPlugin) -> None:
         connection = plugin._connection_manager.get_connection(ADDRESS)
         connection.unique_id = None

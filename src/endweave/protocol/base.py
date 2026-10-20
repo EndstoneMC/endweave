@@ -11,9 +11,9 @@ two numbers name one wire shape, as 26.45 and 26.40-26.44 do, the pipeline
 translates nothing and the rewrite is the whole of the work. A number one past
 one the engine knows is carried as that one, with a warning the first time,
 since Bedrock adds one for a release or hotfix that has mostly left every
-packet alone. Translators are
-shared by every connection between the same two versions, as ViaVersion shares
-its protocols.
+packet alone. Each connection gets translators of its own, as they keep the
+blocks its client was sent, where ViaVersion shares its protocols and keeps
+that per user.
 
 The blocked version gate of ServerboundBaseProtocol1_7 and the login bookkeeping
 of ClientboundBaseProtocol1_7 run on the login event, the last point before the
@@ -31,8 +31,6 @@ See Also:
 
 from __future__ import annotations
 
-import functools
-
 from endstone import Logger
 from endstone.event import PacketReceiveEvent, PlayerLoginEvent
 
@@ -46,8 +44,6 @@ __all__ = ["BaseProtocol"]
 
 _REQUEST_NETWORK_SETTINGS = 193
 _LOGIN = 1
-
-_translator = functools.cache(_pipeline.Translator)
 
 
 class BaseProtocol:
@@ -95,12 +91,12 @@ class BaseProtocol:
             return connection
 
         try:
-            serverbound = _translator(client, server)
+            serverbound = _pipeline.Translator(client, server)
         except ValueError:
             return connection
 
         connection.serverbound = serverbound
-        connection.clientbound = _translator(server, client)
+        connection.clientbound = _pipeline.Translator(server, client)
         event.payload = server.to_bytes(4, "big", signed=True) + payload[4:]
         if not protocol_version.known and client not in self._guessed_versions:
             self._guessed_versions.add(client)

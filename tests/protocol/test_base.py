@@ -228,17 +228,14 @@ class TestPipeline:
         assert connection.serverbound is None
         assert connection.clientbound is None
 
-    def test_shares_translators_between_connections_on_the_same_versions(
-        self, make_protocol: Callable[..., BaseProtocol]
-    ) -> None:
+    def test_gives_each_connection_translators_of_its_own(self, make_protocol: Callable[..., BaseProtocol]) -> None:
         protocol = make_protocol(server_protocol=CARRIED_SERVER)
 
         first = protocol.transform_serverbound(handshake(CARRIED_CLIENT.version, address="127.0.0.1:1"))
         second = protocol.transform_serverbound(handshake(CARRIED_CLIENT.version, address="127.0.0.1:2"))
 
-        assert first is not second
-        assert first.serverbound is second.serverbound
-        assert first.clientbound is second.clientbound
+        assert first.serverbound is not second.serverbound
+        assert first.clientbound is not second.clientbound
 
 
 class TestDeclaredVersion:
