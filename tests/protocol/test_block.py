@@ -17,6 +17,7 @@ UPDATE_BLOCK = 21
 LEVEL_EVENT = 25
 FULL_CHUNK_DATA = 58
 CHANGE_DIMENSION = 61
+DIMENSION_DATA = 180
 NETWORK_CHUNK_PUBLISHER_UPDATE = 121
 UPDATE_BLOCK_SYNCED = 110
 LEVEL_SOUND_EVENT = 123
@@ -64,6 +65,7 @@ FIRE_NEW = 2464443264
 FIRE = {None: 4017481181, "east": 2040385194}
 CHORUS_PLANT_NEW = 2740383245
 CHORUS_PLANT = {"down": 869150687, "up down": 4274678426}
+CHORUS_FLOWER = 1448507239
 END_STONE = 3041101143
 OAK_PLANKS = 1921718966
 
@@ -158,9 +160,17 @@ def read_sub_chunk(data: bytes) -> dict[tuple[int, int, int], int]:
     return blocks
 
 
-def level_chunk(serialized: bytes, count: int = 1, request_limit: int | None = None) -> bytes:
+def level_chunk(serialized: bytes, count: int = 1, request_limit: int | None = None, dimension: int = 0) -> bytes:
     limit = b"\x00" if request_limit is None else b"\x01" + varint(request_limit)
-    return varint(2) + varint(3) + varint(0) + uvarint(count) + limit + b"\x00" + uvarint(0) + string(serialized)
+    return (
+        varint(2) + varint(3) + varint(dimension) + uvarint(count) + limit + b"\x00" + uvarint(0) + string(serialized)
+    )
+
+
+def dimension_data(dimension: int, height_minimum: int, height_maximum: int) -> bytes:
+    """A 2168 DimensionDataPacket defining one dimension, of the overworld generator."""
+    definition = varint(height_maximum) + varint(height_minimum) + varint(1) + varint(dimension) + bytes(16)
+    return uvarint(1) + string(b"endstone:custom") + definition
 
 
 def sub_chunk_entry(serialized: bytes, offset: tuple[int, int, int] = (-1, 0, 1)) -> bytes:
@@ -544,6 +554,58 @@ class TestNeighborUpdates:
         line = REDSTONE_WIRE["side", "none", "side", "none"]
         assert read_sub_chunk(read_sub_chunk_entries(payload)[0])[5, 0, 0] == line
         assert translator.take_scheduled_packets() == [(UPDATE_BLOCK, update_block(line, (21, 0, 63)))]
+
+    def test_defers_a_block_that_one_above_its_sent_sub_chunks_joins(self) -> None:
+        translator = Translator(NEW, NEWEST)
+        translator.translate(
+            FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 14, 5): END_STONE, (5, 15, 5): CHORUS_PLANT_NEW}))
+        )
+
+        translator.translate(UPDATE_BLOCK, update_block(CHORUS_FLOWER, (37, 16, 53)))
+
+        assert translator.take_scheduled_packets() == [
+            (UPDATE_BLOCK, update_block(CHORUS_PLANT["up down"], (37, 15, 53)))
+        ]
+
+    def test_joins_blocks_placed_above_the_sub_chunks_the_client_asks_for(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(b"", count=0, request_limit=5))
+        translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (37, 20, 53)))
+
+        payload = translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, 20, 53)))
+
+        assert payload == update_block(OAK_FENCE["west"], (38, 20, 53))
+        assert translator.take_scheduled_packets() == [(UPDATE_BLOCK, update_block(OAK_FENCE["east"], (37, 20, 53)))]
+
+    def test_reads_where_a_dimension_starts_from_its_definition(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(DIMENSION_DATA, dimension_data(3, -128, 256))
+        translator.translate(FULL_CHUNK_DATA, level_chunk(b"", count=0, request_limit=1, dimension=3))
+        translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (37, -100, 53)))
+
+        payload = translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, -100, 53)))
+
+        assert payload == update_block(OAK_FENCE["west"], (38, -100, 53))
+
+    def test_waits_for_every_sub_chunk_of_a_dimension_it_has_no_definition_for(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(b"", count=0, request_limit=1, dimension=3))
+        translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (37, -100, 53)))
+
+        payload = translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, -100, 53)))
+
+        assert payload == update_block(OAK_FENCE_NEW, (38, -100, 53))
+
+    def test_defers_a_block_sent_while_its_requested_sub_chunk_is_on_the_way(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(b"", count=0, request_limit=5))
+        translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (37, 0, 53)))
+        assert translator.take_scheduled_packets() == []
+
+        fences = placed_sub_chunk({(5, 0, 5): OAK_FENCE_OLD, (6, 0, 5): OAK_FENCE_OLD})
+        translator.translate(SUB_CHUNK, sub_chunk_packet(sub_chunk_entry(fences, (1, -2, 0))))
+
+        assert translator.take_scheduled_packets() == [(UPDATE_BLOCK, update_block(OAK_FENCE["east"], (37, 0, 53)))]
 
     def test_defers_nothing_for_sub_chunks_sent_together(self) -> None:
         translator = Translator(NEW, NEWEST)

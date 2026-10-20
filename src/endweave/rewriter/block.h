@@ -4,6 +4,7 @@
 #include "endweave/protocol/chunk.h"
 #include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
+#include "endweave/rewriter/dimension.h"
 
 #include <algorithm>
 #include <array>
@@ -19,6 +20,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
+#include <limits>
 #include <map>
 #include <optional>
 #include <ranges>
@@ -502,16 +504,35 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::LevelSoundEve
 template <int From, int To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::FullChunkData)> {
     static std::expected<void, std::error_code> rewrite(bp::LevelChunkPacket_<From> &packet,
-                                                        BlockConnectionStorage &storage)
+                                                        BlockConnectionStorage &storage,
+                                                        [[maybe_unused]] const DimensionDataStorage &dimensions)
     {
-        // A request limit means the client asks for the sub-chunks, which then come in SubChunkPacket.
-        if (packet.cache_enabled || packet.client_request_sub_chunk_limit.has_value()) {
+        if (packet.cache_enabled) {
+            return {};
+        }
+        // A request limit means the client asks for that many sub-chunks from the bottom of the
+        // dimension, or for all of them if it is negative, which then come in SubChunkPacket.
+        if (packet.client_request_sub_chunk_limit.has_value()) {
+            if constexpr (connectsBlocks<From, To>()) {
+                const auto limit = *packet.client_request_sub_chunk_limit;
+                const auto dimension = dimensions.getDimensionData(packet.dimension_id);
+                storage.loadChunk(packet.pos.x, packet.pos.z,
+                                  limit < 0 || !dimension ? std::numeric_limits<std::int32_t>::max()
+                                                          : (dimension->min_y >> 4) + limit);
+            }
             return {};
         }
         bp::BinaryReader in{packet.serialized_chunk};
         auto chunk = ChunkType::read(in, packet.pos.x, 0, packet.pos.z, packet.sub_chunks_count);
         if (!chunk) {
             return std::unexpected(chunk.error());
+        }
+        if constexpr (connectsBlocks<From, To>()) {
+            auto top = std::numeric_limits<std::int32_t>::min();
+            for (const auto &sub_chunk : chunk->getSubChunks()) {
+                top = std::max(top, sub_chunk.getY() + 1);
+            }
+            storage.loadChunk(packet.pos.x, packet.pos.z, top);
         }
         BlockRewriter<From, To>::handleChunks(std::span{&*chunk, 1}, storage);
         std::string data;

@@ -67,6 +67,7 @@ struct Translator {
     endweave::Translator engine;
     endweave::BlockConnectionStorage block_connections;
     endweave::ItemRegistryStorage item_registry;
+    endweave::DimensionDataStorage dimension_data;
     Actions actions;
     int from_version = 0;
     int to_version = 0;
@@ -84,7 +85,9 @@ std::optional<nb::bytes> translate(Translator &translator, int packet_id, nb::by
     bp::BinaryWriter out{translated};
     bp::BinaryReader in{std::string_view{payload.c_str(), payload.size()}};
     bool cancelled = false;
-    const auto result = handler(cancelled, translator.block_connections, translator.item_registry, in, out);
+    const auto result = handler(
+        cancelled,
+        endweave::Storages{translator.block_connections, translator.item_registry, translator.dimension_data}, in, out);
     if (!result) {
         raiseTranslationError(packet_id, "translate", result.error());
     }

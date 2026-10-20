@@ -12,6 +12,7 @@
 #include "endweave/protocols/v2193_to_v2225/transform.h"
 #include "endweave/protocols/v2225_to_v2193/transform.h"
 #include "endweave/rewriter/block.h"
+#include "endweave/rewriter/dimension.h"
 #include "endweave/rewriter/item.h"
 
 #include <array>
@@ -77,8 +78,8 @@ void chain(const Context<bp::packet_of_t<To, Id>> &ctx, bp::packet_of_t<Cur, Id>
 }
 
 template <int From, int To, int Id>
-std::expected<void, std::error_code> handle(bool &cancelled, BlockConnectionStorage &blocks, ItemRegistryStorage &items,
-                                            bp::BinaryReader &in, bp::BinaryWriter &out)
+std::expected<void, std::error_code> handle(bool &cancelled, const Storages &storages, bp::BinaryReader &in,
+                                            bp::BinaryWriter &out)
 {
     auto result = bp::deserialize<bp::packet_of_t<From, Id>>(in);
     if (!result) {
@@ -94,15 +95,10 @@ std::expected<void, std::error_code> handle(bool &cancelled, BlockConnectionStor
     auto &&packet = std::move(result).value();
     if constexpr (Rewritable<From, To, Id>) {
         const auto rewrite = [&] {
-            if constexpr (RewritesWith<From, To, Id, BlockConnectionStorage>) {
-                return Rewriter<From, To, Id>::rewrite(packet, blocks);
-            }
-            else if constexpr (RewritesWith<From, To, Id, ItemRegistryStorage>) {
-                return Rewriter<From, To, Id>::rewrite(packet, items);
-            }
-            else {
-                return Rewriter<From, To, Id>::rewrite(packet);
-            }
+            return [&]<RewriteResult Result, class... Storage>(
+                       Result (*function)(bp::packet_of_t<From, Id> &, Storage &...)) {
+                return function(packet, std::get<std::remove_const_t<Storage> &>(storages)...);
+            }(&Rewriter<From, To, Id>::rewrite);
         };
         if constexpr (std::is_void_v<decltype(rewrite())>) {
             rewrite();
@@ -143,8 +139,8 @@ std::expected<void, std::error_code> handle(bool &cancelled, BlockConnectionStor
 }
 
 /** @see ViaVersion PacketWrapper#cancel. */
-inline std::expected<void, std::error_code> cancel(bool &cancelled, BlockConnectionStorage &, ItemRegistryStorage &,
-                                                   bp::BinaryReader &, bp::BinaryWriter &)
+inline std::expected<void, std::error_code> cancel(bool &cancelled, const Storages &, bp::BinaryReader &,
+                                                   bp::BinaryWriter &)
 {
     cancelled = true;
     return {};
@@ -160,8 +156,8 @@ enum class Action : char {
 };
 
 /** @see ViaVersion PacketHandler. */
-using PacketHandler = std::expected<void, std::error_code> (*)(bool &, BlockConnectionStorage &, ItemRegistryStorage &,
-                                                               bp::BinaryReader &, bp::BinaryWriter &);
+using PacketHandler = std::expected<void, std::error_code> (*)(bool &, const Storages &, bp::BinaryReader &,
+                                                               bp::BinaryWriter &);
 
 namespace detail {
 

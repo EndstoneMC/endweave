@@ -132,8 +132,9 @@ Upstream stays valuable for three things.
    hops, with `getNewBlockStateId` and `getNewItemName` (see **Block states** and **Items**). Of `PacketWrapper`,
    only the cancel half exists, as `Context`; the buffer half has no place because the schema
    derives the codec. Of `UserConnection`, there is no `StorableObject` store: the pipeline
-   `Translator` owns the state a rewriter keeps across packets, `BlockConnectionStorage` and
-   `ItemRegistryStorage`, and `handle` passes each by reference to the rewriters that take it.
+   `Translator` owns the state a rewriter keeps across packets, `BlockConnectionStorage`,
+   `ItemRegistryStorage` and `DimensionDataStorage`, together the `Storages`, and `handle` hands a
+   rewriter the ones its `rewrite` takes, by type, as `UserConnection#get` does.
 
 Upstream lives under `com.viaversion.viaversion` (api in the `api/` module, impls in `common/`)
 and `com.viaversion.viabackwards`.
@@ -210,8 +211,10 @@ and it is not `Transformer`'s job.
   directory.
 - **One that parses bytes the schema leaves opaque returns `std::expected<void, std::error_code>`,**
   and `handle` fails the packet on an error, as it does a decode error. The rest return `void`.
-- **One that needs the blocks the client was sent takes the translator's `BlockConnectionStorage &`**
-  as a second argument, and one that needs the items the client lacks its `ItemRegistryStorage &`.
+- **One that keeps state across packets takes the storages it needs after the packet,** any of
+  `Storages` in any order: the `BlockConnectionStorage &` for the blocks the client was sent, the
+  `ItemRegistryStorage &` for the items it lacks, the `DimensionDataStorage &` for how far each
+  dimension reaches. `handle` reads them off the signature.
   One that gives the packet's block ids itself sets `static constexpr bool rewrites_block_ids = true`,
   so `handle` skips `rewriteBlockIds` for it.
 
@@ -298,6 +301,15 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   fill it, `UpdateBlock`, `UpdateBlockSynced` and `UpdateSubChunkBlocks` give a block in layer 0 the
   states its kept neighbours make it and record the result, `NetworkChunkPublisherUpdate` drops the
   columns the client lets go of, and `ChangeDimension` drops everything.
+- **The storage knows which sub-chunks a client is sent.** A `LevelChunkPacket` with a request limit
+  has the client ask for that many sub-chunks up from the bottom of the dimension, and one without
+  carries them itself. The bottom is the dimension's `DimensionData` (`rewriter/dimension.h`, ViaVersion's
+  `DimensionData`): the overworld, the nether and the end as the client has them built in, and every
+  dimension a `DimensionDataPacket` defines, by its dimension type. A chunk in a dimension neither
+  gives counts every sub-chunk as one the client is still to be sent. The
+  client has every sub-chunk above those as air and is never sent it, so `loadChunk` keeps the
+  chunk's top, and a block stored above it is kept on air, as ViaVersion's `store` keeps one in a
+  section it lacks. Below the top, a sub-chunk the storage lacks is one the client is still to be sent.
 - **A block sent before its sub-chunk is sent again after it.** BDS sends the block changes of a
   chunk that just loaded around its `LevelChunkPacket`, before the client has asked for the
   sub-chunks, so such a block is connected with no neighbours. The client lays it over the sub-chunk that comes
@@ -419,6 +431,8 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `rewriter/block.h` `BlockRewriter` | `BlockRewriter` |
 | `protocol/block_connection.h` `BlockConnectionStorage` | `BlockConnectionStorage`, read as `PacketBlockConnectionProvider` reads it |
 | `protocol/chunk.h` `Chunk`, `SubChunk`, `DataPalette` | `Chunk`, `ChunkSection`, `DataPalette` |
+| `rewriter/dimension.h` `DimensionData`, `DimensionDataStorage` | `DimensionData`, `EntityTracker#dimensionData` |
+| `protocol/rewrite.h` `Storages` | `UserConnection#get` |
 | `protocol/chunk.h` `ChunkType`, `SubChunkType`, `PaletteType` | `ChunkType1_18`, `ChunkSectionType1_18`, `PaletteType1_18` |
 | `rewriter/block.h` `BlockRewriter::handleChunks` | `BlockRewriter#handleChunk` |
 | `protocol/block_connection.h` `ConnectionData`, `ConnectionHandlers` | `ConnectionData`, its `connectionHandlerMap` and `init` |

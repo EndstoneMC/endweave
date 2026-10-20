@@ -222,14 +222,29 @@ public:
         });
     }
 
-    /** Keeps `id` at `pos` for a block the client is sent, or, before its sub-chunk, notes that the
-     * client was sent it early. */
+    /** Notes that the client loads the chunk at `x`, `z`, counted in chunks, and is sent its sub-chunks
+     * below `top`. It has the ones from `top` up as air, and is never sent them. */
+    void loadChunk(std::int32_t x, std::int32_t z, std::int32_t top)
+    {
+        chunks_.insert_or_assign({x, z}, top);
+    }
+
+    /** Keeps `id` at `pos` for a block the client is sent. A block in a sub-chunk the client is still to
+     * be sent is only noted as sent early, and a block above the sub-chunks it is sent is kept on air.
+     * @see ViaVersion BlockConnectionStorage#store. */
     void store(const bp::BlockPos &pos, std::uint32_t id)
     {
-        const auto it = sections_.find({pos.x >> 4, pos.y >> 4, pos.z >> 4});
+        const std::array<int, 3> section{pos.x >> 4, pos.y >> 4, pos.z >> 4};
+        auto it = sections_.find(section);
         if (it == sections_.end()) {
-            early_.insert({pos.x, pos.y, pos.z});
-            return;
+            const auto chunk = chunks_.find({section[0], section[2]});
+            if (chunk == chunks_.end() || section[1] < chunk->second) {
+                early_.insert({pos.x, pos.y, pos.z});
+                return;
+            }
+            DataPalette air;
+            air.addId(computeRawSerializationIdHashForNetwork("minecraft:air", {}));
+            it = sections_.emplace(section, std::move(air)).first;
         }
         it->second.setIdAt(SubChunk::index(pos.x & 15, pos.y & 15, pos.z & 15), id);
         it->second.compact();
@@ -268,6 +283,9 @@ public:
         std::erase_if(sections_, [&](const auto &section) {
             return outside(section.first[0], section.first[2]);
         });
+        std::erase_if(chunks_, [&](const auto &chunk) {
+            return outside(chunk.first[0], chunk.first[1]);
+        });
         std::erase_if(early_, [&](const std::array<int, 3> &pos) {
             return outside(pos[0] >> 4, pos[2] >> 4);
         });
@@ -276,12 +294,14 @@ public:
     void clear()
     {
         sections_.clear();
+        chunks_.clear();
         early_.clear();
         unsent_.clear();
     }
 
 private:
     std::map<std::array<int, 3>, DataPalette> sections_;
+    std::map<std::array<int, 2>, std::int32_t> chunks_;
     std::set<std::array<int, 3>> early_;
     std::set<std::array<int, 3>> unsent_;
 };
