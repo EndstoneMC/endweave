@@ -236,10 +236,21 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   `should_translate_v` covers every packet that carries one. `SerializedNetworkItemInstanceDescriptor`
   is the one member BDS types `int32_t`, and the walker finds it by name.
 - **Ids the schema cannot type are `Rewriter`s** in `rewriter/block.h`: the particle `LevelEvent`s,
-  the block sound events, and the sub-chunk palettes in `LevelChunkPacket` and `SubChunkPacket`,
-  whose packed indices, biomes and block actors are copied as they are. Actor data keys 16 and 23,
-  and `Variant` on a falling block, go through `BlockRewriter::rewriteActorData` from the actor
-  rewriters in `protocols/rewriters.h`.
+  the block sound events, and the sub-chunks in `LevelChunkPacket` and `SubChunkPacket`. Actor data
+  keys 16 and 23, and `Variant` on a falling block, go through `BlockRewriter::rewriteActorData` from
+  the actor rewriters in `protocols/rewriters.h`.
+- **`protocol/sub_chunk.h` reads and writes network sub-chunks**, BDS's `SubChunk` and
+  `SubChunkStorage<Block>`. A storage keeps its packed indices as they were read until a block in it
+  is set, so a hop that only renumbers rewrites the palette and copies the rest. Biomes, border
+  blocks and block actors after the sub-chunks are copied as they are.
+- **States BDS works out from neighbouring blocks are `ConnectionData<From, To>`**, specialised in
+  the hop that adds them, as ViaVersion's `ConnectionData` dispatches to its `ConnectionHandler`s.
+  `BlockRewriter::rewriteSubChunks` takes a packet's sub-chunks a hop at a time: it renumbers the
+  palettes, then gives every block the hop connects the id its neighbours make it, reading only the
+  sub-chunks in the same packet. A neighbour outside them counts as air. Each handler is BDS's rule
+  as written, and builds its tables from the hop's `BlockStateUpdate`s.
+  `protocols/v2168_to_v2193/block_connections.h` has `StairConnectionHandler`, BDS's
+  `CornerConnectionCallback`, for `minecraft:corner`.
 - **The client cache is turned off.** The server's blob ids hash the sub-chunks it serializes, so
   they stop naming what the client is sent once a palette is rewritten. `ClientCacheStatus` is
   rewritten to off for every pair.
@@ -326,6 +337,9 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocol/rewrite.h` `Rewriter` | none by name; the job is ViaVersion's per-packet `PacketHandler` lambda |
 | `protocol/block.h` `getNewBlockStateId` | `MappingData#getNewBlockStateId` |
 | `rewriter/block.h` `BlockRewriter` | `BlockRewriter` |
+| `protocol/sub_chunk.h` `SubChunk`, `SubChunkStorage` | `ChunkSection`, `DataPalette` |
+| `protocol/block.h` `ConnectionData` | `ConnectionData` |
+| `protocols/v2168_to_v2193/block_connections.h` `StairConnectionHandler` | `StairConnectionHandler` |
 | `data/v<protocol>.json`, `data/fallbacks/v<from>_to_v<to>.json` | Mappings repo `mappings/mapping-<version>.json`, `mappings/diff/` |
 | `tools/import_bedrock_data.py`, `tools/generate_block_states.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |

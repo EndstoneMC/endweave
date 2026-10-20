@@ -84,11 +84,10 @@ inline std::uint32_t computeRawSerializationIdHashForNetwork(std::string_view na
     return hash;
 }
 
-namespace detail {
-
-using BlockMappings = std::vector<std::pair<std::uint32_t, std::uint32_t>>;
-
-inline void addBlockMappings(const BlockStateUpdate &update, BlockMappings &mappings)
+/** Calls `visit(states, updated)` for every block of `update`'s type, with its states before the hop
+ * and after it. */
+template <class Visit>
+void forEachBlock(const BlockStateUpdate &update, Visit &&visit)
 {
     std::vector<std::size_t> value(update.states.size());
     while (true) {
@@ -103,12 +102,7 @@ inline void addBlockMappings(const BlockStateUpdate &update, BlockMappings &mapp
         for (const auto &state : update.remove) {
             updated.erase(state);
         }
-        const auto old_id = computeRawSerializationIdHashForNetwork(update.name, states);
-        const auto new_id =
-            computeRawSerializationIdHashForNetwork(update.rename.empty() ? update.name : update.rename, updated);
-        if (old_id != new_id) {
-            mappings.emplace_back(old_id, new_id);
-        }
+        visit(states, updated);
 
         std::size_t i = 0;
         while (i < value.size() && ++value[i] == update.states[i].second.size()) {
@@ -118,6 +112,22 @@ inline void addBlockMappings(const BlockStateUpdate &update, BlockMappings &mapp
             return;
         }
     }
+}
+
+namespace detail {
+
+using BlockMappings = std::vector<std::pair<std::uint32_t, std::uint32_t>>;
+
+inline void addBlockMappings(const BlockStateUpdate &update, BlockMappings &mappings)
+{
+    forEachBlock(update, [&](const bp::CompoundTag &states, const bp::CompoundTag &updated) {
+        const auto old_id = computeRawSerializationIdHashForNetwork(update.name, states);
+        const auto new_id =
+            computeRawSerializationIdHashForNetwork(update.rename.empty() ? update.name : update.rename, updated);
+        if (old_id != new_id) {
+            mappings.emplace_back(old_id, new_id);
+        }
+    });
 }
 
 /** Every block one hop renumbers, sorted by its id at `From`. */
@@ -153,5 +163,15 @@ std::uint32_t getNewBlockStateId(std::uint32_t id)
         return getNewBlockStateId<next, To>(it != mappings.end() && it->first == id ? it->second : id);
     }
 }
+
+/** The states a hop adds that BDS works out from the blocks around them. A hop that adds any
+ * specialises it with `connects(id)`, and `connect(pos, id, get)`, which gives the id the block at
+ * `pos` takes from its neighbours, read through `get(pos)`.
+ * @see ViaVersion ConnectionData. */
+template <int From, int To>
+struct ConnectionData {};
+
+template <int From, int To>
+concept HasConnections = requires(std::uint32_t id) { ConnectionData<From, To>::connects(id); };
 
 } // namespace endweave

@@ -37,7 +37,14 @@ OAK_FENCE_JOINED = 480702495
 FIRE_OLD = 2280018795
 FIRE_NEWEST = 3997454090
 STONE = 2150698529
+AIR = 3690217760
 CUSTOM = 0x12345678  # in no vanilla palette, as an add-on block's id is
+# minecraft:oak_stairs facing east and north, at OLD and at NEW with each corner.
+EAST_STAIRS_OLD = 3240922889
+EAST_STAIRS = {"none": 4172483059, "inner_left": 705466535, "outer_left": 1289467210}
+NORTH_STAIRS_OLD = 3179448066
+NORTH_STAIRS = {"none": 61940232}
+UPSIDE_DOWN_NORTH_STAIRS_OLD = 1718578519
 
 DESTROY_BLOCK = 2001
 START_BLOCK_CRACKING = 3600
@@ -84,14 +91,69 @@ def sub_chunk(*palette: int) -> bytes:
     return bytes([9, 1, 0, (1 << 1) | 1]) + bytes(512) + varint(len(palette)) + entries
 
 
+def placed_sub_chunk(blocks: dict[tuple[int, int, int], int]) -> bytes:
+    """A version 9 sub-chunk with one storage: air, and `blocks` at their x, y, z."""
+    palette = [AIR, *dict.fromkeys(blocks.values())]
+    bits = next(b for b in (1, 2, 3, 4, 5, 6, 8, 16) if 1 << b >= len(palette))
+    per_word = 32 // bits
+    words = [0] * -(-4096 // per_word)
+    for (x, y, z), runtime_id in blocks.items():
+        index = (x << 8) | (z << 4) | y
+        words[index // per_word] |= palette.index(runtime_id) << (index % per_word * bits)
+    entries = b"".join(varint(signed(i)) for i in palette)
+    return bytes([9, 1, 0, (bits << 1) | 1]) + struct.pack(f"<{len(words)}I", *words) + varint(len(palette)) + entries
+
+
+def read_uvarint(data: bytes, pos: int) -> tuple[int, int]:
+    value = shift = 0
+    while True:
+        byte = data[pos]
+        pos += 1
+        value |= (byte & 0x7F) << shift
+        shift += 7
+        if not byte & 0x80:
+            return value, pos
+
+
+def read_sub_chunk(data: bytes) -> dict[tuple[int, int, int], int]:
+    """The block at each x, y, z of the first storage of a version 9 sub-chunk."""
+    bits, pos = data[3] >> 1, 4
+    per_word = 32 // bits
+    count = -(-4096 // per_word)
+    words = struct.unpack_from(f"<{count}I", data, pos)
+    size, pos = read_uvarint(data, pos + count * 4)
+    palette = []
+    for _ in range(size >> 1):
+        value, pos = read_uvarint(data, pos)
+        palette.append(((value >> 1) ^ -(value & 1)) & 0xFFFFFFFF)
+    blocks = {}
+    for x, y, z in ((x, y, z) for x in range(16) for y in range(16) for z in range(16)):
+        index = (x << 8) | (z << 4) | y
+        blocks[x, y, z] = palette[(words[index // per_word] >> (index % per_word * bits)) & ((1 << bits) - 1)]
+    return blocks
+
+
 def level_chunk(serialized: bytes, count: int = 1, request_limit: int | None = None) -> bytes:
     limit = b"\x00" if request_limit is None else b"\x01" + varint(request_limit)
     return varint(2) + varint(3) + varint(0) + uvarint(count) + limit + b"\x00" + uvarint(0) + string(serialized)
 
 
-def sub_chunk_packet(serialized: bytes) -> bytes:
-    entry = bytes([0xFF, 0x00, 0x01, 0x01]) + b"\x01" + string(serialized) + bytes(4) + b"\x00"
-    return b"\x00" + varint(0) + struct.pack("<iii", 1, 2, 3) + uvarint(1) + entry
+def sub_chunk_entry(serialized: bytes, offset: tuple[int, int, int] = (-1, 0, 1)) -> bytes:
+    return struct.pack("<bbb", *offset) + b"\x01\x01" + string(serialized) + bytes(4) + b"\x00"
+
+
+def sub_chunk_packet(*entries: bytes) -> bytes:
+    return b"\x00" + varint(0) + struct.pack("<iii", 1, 2, 3) + uvarint(len(entries)) + b"".join(entries)
+
+
+def read_sub_chunk_entries(payload: bytes) -> list[bytes]:
+    count, pos = read_uvarint(payload, 14)
+    entries = []
+    for _ in range(count):
+        size, pos = read_uvarint(payload, pos + 5)
+        entries.append(payload[pos : pos + size])
+        pos += size + 5
+    return entries
 
 
 def sub_chunk_block(runtime_id: int) -> bytes:
@@ -195,12 +257,65 @@ class TestChunkPalettes:
         assert Translator(OLD, NEW).translate(FULL_CHUNK_DATA, payload) == payload
 
     def test_rewrites_a_requested_sub_chunk(self) -> None:
-        payload = sub_chunk_packet(sub_chunk(OAK_FENCE_JOINED, WOOL_STAIRS))
+        payload = sub_chunk_packet(sub_chunk_entry(sub_chunk(OAK_FENCE_JOINED, WOOL_STAIRS)))
 
         assert Translator(NEW, OLD).translate(SUB_CHUNK, payload) == sub_chunk_packet(
-            sub_chunk(OAK_FENCE_OLD, QUARTZ_STAIRS)
+            sub_chunk_entry(sub_chunk(OAK_FENCE_OLD, QUARTZ_STAIRS))
         )
 
     def test_refuses_a_sub_chunk_it_cannot_read(self) -> None:
         with pytest.raises(TranslationError):
             Translator(OLD, NEW).translate(FULL_CHUNK_DATA, level_chunk(bytes([7, 1, 0])))
+
+
+def translate_chunk(
+    blocks: dict[tuple[int, int, int], int], source: int = OLD, target: int = NEW
+) -> dict[tuple[int, int, int], int]:
+    payload = Translator(source, target).translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk(blocks)))
+    size, pos = read_uvarint(payload, len(level_chunk(b"")) - 1)
+    return read_sub_chunk(payload[pos : pos + size])
+
+
+class TestStairCorners:
+    def test_turns_a_stair_behind_into_an_outer_corner(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): EAST_STAIRS_OLD, (6, 0, 5): NORTH_STAIRS_OLD})
+
+        assert blocks[5, 0, 5] == EAST_STAIRS["outer_left"]
+        assert blocks[6, 0, 5] == NORTH_STAIRS["none"]
+        assert blocks[0, 0, 0] == AIR
+
+    def test_turns_a_stair_in_front_into_an_inner_corner(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): EAST_STAIRS_OLD, (4, 0, 5): NORTH_STAIRS_OLD})
+
+        assert blocks[5, 0, 5] == EAST_STAIRS["inner_left"]
+
+    def test_keeps_a_run_of_the_same_stair_straight(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): EAST_STAIRS_OLD, (6, 0, 5): NORTH_STAIRS_OLD, (5, 0, 6): EAST_STAIRS_OLD})
+
+        assert blocks[5, 0, 5] == EAST_STAIRS["none"]
+
+    def test_ignores_a_stair_on_the_other_half(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): EAST_STAIRS_OLD, (6, 0, 5): UPSIDE_DOWN_NORTH_STAIRS_OLD})
+
+        assert blocks[5, 0, 5] == EAST_STAIRS["none"]
+
+    def test_keeps_the_corner_through_a_newer_hop(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): EAST_STAIRS_OLD, (6, 0, 5): NORTH_STAIRS_OLD}, target=NEWEST)
+
+        assert blocks[5, 0, 5] == EAST_STAIRS["outer_left"]
+
+    def test_reads_neighbours_from_other_requested_sub_chunks(self) -> None:
+        payload = sub_chunk_packet(
+            sub_chunk_entry(placed_sub_chunk({(15, 0, 5): EAST_STAIRS_OLD}), (0, 0, 0)),
+            sub_chunk_entry(placed_sub_chunk({(0, 0, 5): NORTH_STAIRS_OLD}), (1, 0, 0)),
+        )
+
+        here, east = read_sub_chunk_entries(Translator(OLD, NEW).translate(SUB_CHUNK, payload))
+
+        assert read_sub_chunk(here)[15, 0, 5] == EAST_STAIRS["outer_left"]
+        assert read_sub_chunk(east)[0, 0, 5] == NORTH_STAIRS["none"]
+
+    def test_leaves_the_corners_a_newer_server_sent(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): EAST_STAIRS["outer_left"]}, NEW, NEWEST)
+
+        assert blocks[5, 0, 5] == EAST_STAIRS["outer_left"]
