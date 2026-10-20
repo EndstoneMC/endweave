@@ -50,6 +50,20 @@ OAK_FENCE = {None: OAK_FENCE_NEW, "east": 3720363220, "west": 3665119106}
 GLASS_PANE_OLD = 1848427078
 GLASS_PANE = {None: 1582595964, "north": 3519003817}
 GLASS = 927668178
+# At NEW and at NEWEST, by what joins on north, east, south and west, or on the sides that connect.
+REDSTONE_WIRE_NEW = 3994633841
+REDSTONE_WIRE = {
+    ("side", "side", "side", "side"): 4081498377,
+    ("none", "side", "none", "side"): 4133834223,
+    ("side", "none", "side", "none"): 3271599493,
+    ("up", "none", "side", "none"): 3702360077,
+}
+FIRE_NEW = 2464443264
+FIRE = {None: 4017481181, "east": 2040385194}
+CHORUS_PLANT_NEW = 2740383245
+CHORUS_PLANT = {"down": 869150687, "up down": 4274678426}
+END_STONE = 3041101143
+OAK_PLANKS = 1921718966
 
 DESTROY_BLOCK = 2001
 START_BLOCK_CRACKING = 3600
@@ -354,3 +368,36 @@ class TestFenceConnections:
 
         assert blocks[6, 0, 5] == OAK_FENCE["west"]
         assert blocks[4, 0, 5] == OAK_FENCE[None]
+
+
+class TestNewestConnections:
+    def test_spreads_fire_toward_what_burns(self) -> None:
+        blocks = translate_chunk({(5, 1, 5): FIRE_NEW, (6, 1, 5): OAK_PLANKS, (5, 0, 5): STONE}, NEW, NEWEST)
+
+        assert blocks[5, 1, 5] == FIRE["east"]
+
+    def test_grows_chorus_from_chorus_and_end_stone(self) -> None:
+        blocks = translate_chunk(
+            {(5, 0, 5): END_STONE, (5, 1, 5): CHORUS_PLANT_NEW, (5, 2, 5): CHORUS_PLANT_NEW}, NEW, NEWEST
+        )
+
+        assert blocks[5, 1, 5] == CHORUS_PLANT["up down"]
+        assert blocks[5, 2, 5] == CHORUS_PLANT["down"]
+
+    def test_draws_a_lone_wire_as_a_cross(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): REDSTONE_WIRE_NEW}, NEW, NEWEST)
+
+        assert blocks[5, 0, 5] == REDSTONE_WIRE["side", "side", "side", "side"]
+
+    def test_joins_a_run_of_wire(self) -> None:
+        wire = {(x, 0, 5): REDSTONE_WIRE_NEW for x in (4, 5, 6)}
+
+        assert translate_chunk(wire, NEW, NEWEST)[5, 0, 5] == REDSTONE_WIRE["none", "side", "none", "side"]
+
+    def test_climbs_a_block_to_the_wire_on_top(self) -> None:
+        blocks = translate_chunk(
+            {(5, 0, 5): REDSTONE_WIRE_NEW, (5, 0, 4): STONE, (5, 1, 4): REDSTONE_WIRE_NEW}, NEW, NEWEST
+        )
+
+        assert blocks[5, 0, 5] == REDSTONE_WIRE["up", "none", "side", "none"]
+        assert blocks[5, 1, 4] == REDSTONE_WIRE["side", "none", "side", "none"]

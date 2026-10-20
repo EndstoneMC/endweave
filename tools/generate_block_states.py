@@ -172,18 +172,28 @@ class BlockPalette:
         self.blocks: dict[tuple, Block] = {}
         # Every value each state of each block type takes.
         self.states: dict[str, dict[str, list[Tag]]] = {}
-        # Each block's BlockConnectionRuleComponent and connection id.
-        self.connections: dict[tuple, tuple[tuple[int, int] | None, int | None]] = {}
+        # What each block is to the blocks beside it, in the order NeighborBlock declares it.
+        self.neighbors: dict[tuple, tuple] = {}
+        block_types = {block_type["name"]: block_type for block_type in mapping["block_types"]}
         by_runtime_id: dict[int, Block] = {}
         for entry in mapping["blocks"]:
             block = Block(entry["name"], {name: to_tag(value) for name, value in entry["states"].items()})
             if block.get_runtime_id() != entry["id"] & 0xFFFFFFFF:
                 sys.exit(f"{block} does not hash to its id {entry['id']}")
             self.blocks[block.key()] = block
-            rule = entry.get("connection_rule")
-            self.connections[block.key()] = (
-                (rule["connections_from"], rule["enabled_directions"]) if rule is not None else None,
+            rule = entry.get("connection_rule", {})
+            block_type = block_types[block.name]
+            self.neighbors[block.key()] = (
+                rule.get("connections_from"),
+                rule.get("enabled_directions", 0),
                 entry.get("connection_id"),
+                entry.get("flame_odds", 0),
+                entry.get("redstone", {}).get("redstone_conductor", False),
+                entry.get("redstone_producer", {}).get("connected_faces"),
+                sum(1 << i for i, connects in enumerate(entry.get("should_connect_to_redstone", [])) if connects),
+                entry.get("full_support_faces", 0),
+                block_type.get("signal_source", False),
+                block_type.get("consumer_component", False),
             )
             by_runtime_id[block.get_runtime_id()] = block
             values = self.states.setdefault(block.name, {})
@@ -249,14 +259,28 @@ def diff(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) 
     return updates
 
 
+# NeighborBlock's fields after its name and states, and how each is written when it is not its default.
+NEIGHBOR_FIELDS = {
+    "connections_from": (None, "0b{:05b}"),
+    "enabled_directions": (0, "0b{:06b}"),
+    "connection_id": (None, "{}"),
+    "flame_odds": (0, "{}"),
+    "redstone_conductor": (False, "true"),
+    "redstone_producer_faces": (None, "0b{:06b}"),
+    "should_connect_to_redstone": (0, "0b{:05b}"),
+    "full_support_faces": (0, "0b{:06b}"),
+    "signal_source": (False, "true"),
+    "consumer_component": (False, "true"),
+}
+
+
 @dataclass
-class BlockConnectionRule:
-    """The blocks of one type that share a BlockConnectionRuleComponent and a connection id."""
+class NeighborBlock:
+    """The blocks of one type that are the same to the blocks beside them."""
 
     name: str
     states: dict[str, list[Tag]]
-    rule: tuple[int, int] | None
-    connection_id: int | None
+    fields: tuple
 
 
 def products(blocks: list[dict[str, Tag]]) -> list[dict[str, list[Tag]]]:
@@ -268,24 +292,21 @@ def products(blocks: list[dict[str, Tag]]) -> list[dict[str, list[Tag]]]:
     return [states for tag in values[split] for states in products([b for b in blocks if b[split] == tag])]
 
 
-def connection_rules(
+def neighbor_blocks(
     source: BlockPalette, target: BlockPalette, updates: list[BlockStateUpdate]
-) -> list[BlockConnectionRule] | None:
-    """The connection rule of every block `source` can send, as `target` has it, when the hop gives
-    fences, panes, bars or tripwire their minecraft:connection_* states."""
-    connected = {u.name for u in updates if any(state.startswith("minecraft:connection_") for state in u.add)}
-    connectors = (block for name in connected for block in target.permutations(name))
-    if not any(target.connections[block.key()][1] is not None for block in connectors):
+) -> list[NeighborBlock] | None:
+    """What every block `source` can send is to the blocks beside it, as `target` has it, for a hop
+    that gives blocks states."""
+    if not any(update.add for update in updates):
         return None
-    rules = []
+    blocks = []
     for name in sorted(source.states.keys() & target.states.keys()):
         groups: dict[tuple, list[dict[str, Tag]]] = {}
         for block in target.permutations(name):
-            if (connection := target.connections[block.key()]) != (None, None):
-                groups.setdefault(connection, []).append(block.states)
-        for (rule, connection_id), blocks in sorted(groups.items(), key=lambda group: repr(group[0])):
-            rules += [BlockConnectionRule(name, states, rule, connection_id) for states in products(blocks)]
-    return rules
+            groups.setdefault(target.neighbors[block.key()], []).append(block.states)
+        for fields, states in sorted(groups.items(), key=lambda group: repr(group[0])):
+            blocks += [NeighborBlock(name, product, fields) for product in products(states)]
+    return blocks
 
 
 def snbt_string(value: str) -> str:
@@ -317,13 +338,11 @@ def cpp_states(states: dict[str, list[Tag]]) -> list[str]:
     return cpp_snbt("states", f"{{{', '.join(values)}}}")
 
 
-def cpp_rule(rule: BlockConnectionRule) -> list[str]:
-    lines = ["        {", f'            .name = "{rule.name}",', *cpp_states(rule.states)]
-    if rule.rule is not None:
-        lines.append(f"            .connections_from = 0b{rule.rule[0]:05b},")
-        lines.append(f"            .enabled_directions = 0b{rule.rule[1]:06b},")
-    if rule.connection_id is not None:
-        lines.append(f"            .connection_id = {rule.connection_id},")
+def cpp_neighbor(block: NeighborBlock) -> list[str]:
+    lines = ["        {", f'            .name = "{block.name}",', *cpp_states(block.states)]
+    for (member, (default, form)), value in zip(NEIGHBOR_FIELDS.items(), block.fields):
+        if value != default:
+            lines.append(f"            .{member} = {form.format(value)},")
     lines.append("        },")
     return lines
 
@@ -341,7 +360,9 @@ def cpp_update(update: BlockStateUpdate) -> list[str]:
     return lines
 
 
-def write(source: BlockPalette, target: BlockPalette, file: str, function: str, records: list[list[str]]) -> None:
+def write(
+    source: BlockPalette, target: BlockPalette, file: str, header: str, function: str, records: list[list[str]]
+) -> None:
     path = PROTOCOLS / f"v{source.protocol}_to_v{target.protocol}" / file
     record_type = function.removeprefix("get").removesuffix("s")
     lines = [
@@ -351,7 +372,7 @@ def write(source: BlockPalette, target: BlockPalette, file: str, function: str, 
         "",
         "#pragma once",
         "",
-        '#include "endweave/protocol/block.h"',
+        f'#include "endweave/protocol/{header}"',
         "",
         "#include <array>",
         "#include <span>",
@@ -376,9 +397,11 @@ def write(source: BlockPalette, target: BlockPalette, file: str, function: str, 
 
 def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) -> None:
     updates = diff(source, target, fallbacks)
-    write(source, target, "block_states.h", "getBlockStateUpdates", [cpp_update(update) for update in updates])
-    if (rules := connection_rules(source, target, updates)) is not None:
-        write(source, target, "connection_rules.h", "getBlockConnectionRules", [cpp_rule(rule) for rule in rules])
+    records = [cpp_update(update) for update in updates]
+    write(source, target, "block_states.h", "block.h", "getBlockStateUpdates", records)
+    if (blocks := neighbor_blocks(source, target, updates)) is not None:
+        records = [cpp_neighbor(block) for block in blocks]
+        write(source, target, "neighbor_blocks.h", "block_connection.h", "getNeighborBlocks", records)
 
 
 def load_fallbacks(source: BlockPalette, target: BlockPalette) -> dict[str, str]:

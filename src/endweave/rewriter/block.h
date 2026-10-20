@@ -1,6 +1,7 @@
 #pragma once
 
 #include "endweave/protocol/block.h"
+#include "endweave/protocol/block_connection.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/sub_chunk.h"
 

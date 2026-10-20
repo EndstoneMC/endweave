@@ -2,6 +2,7 @@
 
 #include "actor.h"
 #include "attributes.h"
+#include "block_connections.h"
 #include "block_states.h"
 #include "chunk.h"
 #include "dimension.h"
