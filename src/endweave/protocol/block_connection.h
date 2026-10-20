@@ -1,7 +1,7 @@
 #pragma once
 
 #include "endweave/protocol/block.h"
-#include "endweave/protocol/sub_chunk.h"
+#include "endweave/protocol/chunk.h"
 
 #include <algorithm>
 #include <array>
@@ -195,11 +195,11 @@ public:
         if (it == sections_.end()) {
             return std::nullopt;
         }
-        return it->second.getElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15));
+        return it->second.idAt(SubChunk::index(pos.x & 15, pos.y & 15, pos.z & 15));
     }
 
     /** The blocks kept of the sub-chunk at `sub_chunk`, counted in sub-chunks, or null. */
-    [[nodiscard]] const SubChunkStorage *getSubChunk(const bp::BlockPos &sub_chunk) const
+    [[nodiscard]] const DataPalette *getSubChunk(const bp::BlockPos &sub_chunk) const
     {
         const auto it = sections_.find({sub_chunk.x, sub_chunk.y, sub_chunk.z});
         return it != sections_.end() ? &it->second : nullptr;
@@ -208,7 +208,7 @@ public:
     /** Keeps the blocks of the sub-chunk at `sub_chunk`, counted in sub-chunks. A block in it that
      * the client was sent before it is sent again later, as the client lays the earlier block over
      * the sub-chunk. */
-    void storeSection(const bp::BlockPos &sub_chunk, SubChunkStorage blocks)
+    void storeSection(const bp::BlockPos &sub_chunk, DataPalette blocks)
     {
         blocks.compact();
         const std::array<int, 3> section{sub_chunk.x, sub_chunk.y, sub_chunk.z};
@@ -231,7 +231,7 @@ public:
             early_.insert({pos.x, pos.y, pos.z});
             return;
         }
-        it->second.setElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15), id);
+        it->second.setIdAt(SubChunk::index(pos.x & 15, pos.y & 15, pos.z & 15), id);
         it->second.compact();
     }
 
@@ -281,7 +281,7 @@ public:
     }
 
 private:
-    std::map<std::array<int, 3>, SubChunkStorage> sections_;
+    std::map<std::array<int, 3>, DataPalette> sections_;
     std::set<std::array<int, 3>> early_;
     std::set<std::array<int, 3>> unsent_;
 };

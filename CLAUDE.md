@@ -264,10 +264,14 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   the block sound events, and the sub-chunks in `LevelChunkPacket` and `SubChunkPacket`. Actor data
   keys 16 and 23, and `Variant` on a falling block, go through `BlockRewriter::rewriteActorData` from
   the actor rewriters in `protocols/rewriters.h`.
-- **`protocol/sub_chunk.h` reads and writes network sub-chunks**, BDS's `SubChunk` and
-  `SubChunkStorage<Block>`. A storage keeps its packed indices as they were read until a block in it
-  is set, so a hop that only renumbers rewrites the palette and copies the rest. Biomes, border
-  blocks and block actors after the sub-chunks are copied as they are.
+- **`protocol/chunk.h` holds chunks as ViaVersion does.** `DataPalette` is one block layer, BDS's
+  `SubChunkStorage<Block>`: `idAt` and `setIdAt` by `SubChunk::index`, `idByIndex`, `replaceIds` and
+  `forEachMatchingCoordinate`. `SubChunk` is ViaVersion's `ChunkSection` and gives a layer's palette
+  through `palette(layer)`, and `Chunk` is the sub-chunks of a column that one packet carries. A
+  palette keeps its packed indices as they were read until a block in it is set, so a hop that only
+  renumbers rewrites the palette and copies the rest. `PaletteType`, `SubChunkType` (formats 8 and
+  9) and `ChunkType` read and write them as the network carries them, as ViaVersion's `Type`s do.
+  Biomes, border blocks and block actors after the sub-chunks are copied as they are.
 - **States BDS works out from neighbouring blocks are `ConnectionData<From, To>`**
   (`protocol/block_connection.h`), shaped as ViaVersion's. A hop that adds them lists its handlers in
   a `ConnectionHandlers` specialisation (`protocols/v<from>_to_v<to>/connection_data.h`), as
@@ -278,8 +282,8 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   `getBlockConnectionData(id)` gives a block's `BlockData` from the hop's `profiles`, and a
   handler's `ConnectedBlockStates` holds the id each of its blocks takes for every way of setting the
   states, ViaVersion's `blockStates` and `connectedBlockStates`. Each handler is BDS's rule as
-  written. `BlockRewriter::rewriteSubChunks` takes a packet's sub-chunks a hop at a time: it
-  renumbers the palettes, then `connectBlocks` gives every block the hop connects the id its
+  written. `BlockRewriter::handleChunks` takes a packet's chunks a hop at a time: it renumbers the
+  palettes with `replaceIds`, then `connectBlocks` gives every block the hop connects the id its
   neighbours make it, reading the sub-chunks in the same packet, then the blocks the client was sent
   before. A neighbour in neither counts as air. `protocols/v2168_to_v2193/connection_data.h` has
   `StairConnectionHandler` (BDS's `CornerConnectionCallback`, `minecraft:corner`) and
@@ -414,7 +418,9 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocol/mapping.h` `MappingDataBase`, `MappingData` | `MappingDataBase`, `MappingData` |
 | `rewriter/block.h` `BlockRewriter` | `BlockRewriter` |
 | `protocol/block_connection.h` `BlockConnectionStorage` | `BlockConnectionStorage`, read as `PacketBlockConnectionProvider` reads it |
-| `protocol/sub_chunk.h` `SubChunk`, `SubChunkStorage` | `ChunkSection`, `DataPalette` |
+| `protocol/chunk.h` `Chunk`, `SubChunk`, `DataPalette` | `Chunk`, `ChunkSection`, `DataPalette` |
+| `protocol/chunk.h` `ChunkType`, `SubChunkType`, `PaletteType` | `ChunkType1_18`, `ChunkSectionType1_18`, `PaletteType1_18` |
+| `rewriter/block.h` `BlockRewriter::handleChunks` | `BlockRewriter#handleChunk` |
 | `protocol/block_connection.h` `ConnectionData`, `ConnectionHandlers` | `ConnectionData`, its `connectionHandlerMap` and `init` |
 | `protocol/block_connection.h` `BlockData`, `ConnectedBlockStates` | `BlockData`, a handler's `blockStates` and `connectedBlockStates` |
 | `protocols/v<from>_to_v<to>/block_connections.h` `BlockConnections` | `blockConnections.nbt`, its `profiles` |

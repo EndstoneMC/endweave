@@ -1,9 +1,9 @@
 #pragma once
 
 #include "endweave/protocol/block_connection.h"
+#include "endweave/protocol/chunk.h"
 #include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
-#include "endweave/protocol/sub_chunk.h"
 
 #include <algorithm>
 #include <array>
@@ -19,9 +19,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <expected>
-#include <iterator>
 #include <map>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <span>
 #include <string>
@@ -125,12 +125,6 @@ consteval bool carriesBlockIds()
 template <class T>
 inline constexpr bool carries_block_ids_v = detail::carriesBlockIds<T>();
 
-/** A sub-chunk and where it sits, counted in sub-chunks. */
-struct PlacedSubChunk {
-    bp::BlockPos pos;
-    SubChunk sub_chunk;
-};
-
 /** Whether some hop from `From` to `To` gives blocks states BDS works out from their neighbours. */
 template <int From, int To>
 consteval bool connectsBlocks()
@@ -209,19 +203,22 @@ struct BlockRewriter {
         }
     }
 
-    /** The blocks of the sub-chunks one packet carries, a hop at a time: each hop's ids, then the
-     * states the hop works out from neighbouring blocks, read from these sub-chunks or, for a
-     * neighbour they do not hold, from the blocks the client was sent before. The client keeps these
-     * ones too. */
-    static void rewriteSubChunks(std::vector<PlacedSubChunk> &sub_chunks, BlockConnectionStorage &storage)
+    /** The blocks of the chunks one packet carries, a hop at a time: each hop's ids, then the states
+     * the hop works out from neighbouring blocks, read from these chunks or, for a neighbour they do
+     * not hold, from the blocks the client was sent before. The client keeps these ones too.
+     * @see ViaVersion BlockRewriter#handleChunk. */
+    static void handleChunks(std::span<Chunk> chunks, BlockConnectionStorage &storage)
     {
-        rewriteHops<From, To>(sub_chunks, storage);
+        rewriteHops<From, To>(chunks, storage);
         if constexpr (connectsBlocks<From, To>()) {
             std::vector<bp::BlockPos> stored;
-            for (const auto &placed : sub_chunks) {
-                if (!placed.sub_chunk.storages.empty()) {
-                    storage.storeSection(placed.pos, placed.sub_chunk.storages.front());
-                    stored.push_back(placed.pos);
+            for (const auto &chunk : chunks) {
+                for (const auto &sub_chunk : chunk.getSubChunks()) {
+                    if (const auto *blocks = sub_chunk.palette(0)) {
+                        const bp::BlockPos pos{chunk.getX(), sub_chunk.getY(), chunk.getZ()};
+                        storage.storeSection(pos, *blocks);
+                        stored.push_back(pos);
+                    }
                 }
             }
             updateChunkSectionNeighbours(stored, storage);
@@ -290,8 +287,9 @@ struct BlockRewriter {
                             continue;
                         }
                         const auto *blocks = storage.getSubChunk(beside);
-                        if (blocks == nullptr || std::ranges::none_of(blocks->getPalette(), [](std::uint32_t id) {
-                                return connectsBlock<From, To>(id);
+                        if (blocks == nullptr ||
+                            std::ranges::none_of(std::views::iota(std::size_t{0}, blocks->size()), [&](std::size_t i) {
+                                return connectsBlock<From, To>(blocks->idByIndex(i));
                             })) {
                             continue;
                         }
@@ -370,21 +368,21 @@ private:
     }
 
     template <int A, int B>
-    static void rewriteHops(std::vector<PlacedSubChunk> &sub_chunks, const BlockConnectionStorage &storage)
+    static void rewriteHops(std::span<Chunk> chunks, const BlockConnectionStorage &storage)
     {
         if constexpr (A != B) {
             constexpr int next = step(A, B);
-            for (auto &placed : sub_chunks) {
-                for (auto &blocks : placed.sub_chunk.storages) {
-                    for (auto &id : blocks.getPalette()) {
-                        id = MappingData<A, next>::getNewBlockStateId(id);
+            for (auto &chunk : chunks) {
+                for (auto &sub_chunk : chunk.getSubChunks()) {
+                    for (auto &palette : sub_chunk.palettes()) {
+                        palette.replaceIds(&MappingData<A, next>::getNewBlockStateId);
                     }
                 }
             }
             if constexpr (HasConnections<A, next>) {
-                connectBlocks<A, next>(sub_chunks, storage);
+                connectBlocks<A, next>(chunks, storage);
             }
-            rewriteHops<next, B>(sub_chunks, storage);
+            rewriteHops<next, B>(chunks, storage);
         }
     }
 
@@ -411,13 +409,14 @@ private:
 
     /** @see ViaVersion ConnectionData#connectBlocks. */
     template <int A, int B>
-    static void connectBlocks(std::vector<PlacedSubChunk> &sub_chunks, const BlockConnectionStorage &storage)
+    static void connectBlocks(std::span<Chunk> chunks, const BlockConnectionStorage &storage)
     {
-        std::map<std::tuple<int, int, int>, const SubChunkStorage *> sections;
-        for (const auto &placed : sub_chunks) {
-            if (!placed.sub_chunk.storages.empty()) {
-                sections.emplace(std::tuple{placed.pos.x, placed.pos.y, placed.pos.z},
-                                 &placed.sub_chunk.storages.front());
+        std::map<std::tuple<int, int, int>, const DataPalette *> sections;
+        for (const auto &chunk : chunks) {
+            for (const auto &sub_chunk : chunk.getSubChunks()) {
+                if (const auto *blocks = sub_chunk.palette(0)) {
+                    sections.emplace(std::tuple{chunk.getX(), sub_chunk.getY(), chunk.getZ()}, blocks);
+                }
             }
         }
         const auto blocks = [&](const bp::BlockPos &pos) -> std::optional<std::uint32_t> {
@@ -425,76 +424,33 @@ private:
             if (it == sections.end()) {
                 return getSent<B>(storage, pos);
             }
-            return it->second->getElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15));
+            return it->second->idAt(SubChunk::index(pos.x & 15, pos.y & 15, pos.z & 15));
         };
 
-        std::vector<std::tuple<SubChunkStorage *, std::uint16_t, std::uint32_t>> changes;
-        for (auto &placed : sub_chunks) {
-            if (placed.sub_chunk.storages.empty()) {
-                continue;
-            }
-            auto &layer = placed.sub_chunk.storages.front();
-            std::vector<std::uint32_t> connecting;
-            std::ranges::copy_if(layer.getPalette(), std::back_inserter(connecting), &ConnectionData<A, B>::connects);
-            if (connecting.empty()) {
-                continue;
-            }
-            for (int x = 0; x < 16; ++x) {
-                for (int z = 0; z < 16; ++z) {
-                    for (int y = 0; y < 16; ++y) {
-                        const auto index = SubChunkStorage::getIndex(x, y, z);
-                        const auto id = layer.getElement(index);
-                        if (!id || std::ranges::find(connecting, *id) == connecting.end()) {
-                            continue;
-                        }
-                        const bp::BlockPos pos{placed.pos.x * 16 + x, placed.pos.y * 16 + y, placed.pos.z * 16 + z};
-                        const auto connected = ConnectionData<A, B>::connect(pos, *id, blocks);
-                        if (connected != *id) {
-                            changes.emplace_back(&layer, index, connected);
-                        }
-                    }
+        std::vector<std::tuple<DataPalette *, std::uint16_t, std::uint32_t>> changes;
+        for (auto &chunk : chunks) {
+            for (auto &sub_chunk : chunk.getSubChunks()) {
+                auto *const layer = sub_chunk.palette(0);
+                if (layer == nullptr) {
+                    continue;
                 }
+                layer->forEachMatchingCoordinate(&ConnectionData<A, B>::connects, [&](std::uint16_t index) {
+                    const auto id = *layer->idAt(index);
+                    const bp::BlockPos pos{chunk.getX() * 16 + SubChunk::xFromIndex(index),
+                                           sub_chunk.getY() * 16 + SubChunk::yFromIndex(index),
+                                           chunk.getZ() * 16 + SubChunk::zFromIndex(index)};
+                    const auto connected = ConnectionData<A, B>::connect(pos, id, blocks);
+                    if (connected != id) {
+                        changes.emplace_back(layer, index, connected);
+                    }
+                });
             }
         }
         for (const auto &[layer, index, id] : changes) {
-            layer->setElement(index, id);
+            layer->setIdAt(index, id);
         }
     }
 };
-
-namespace detail {
-
-/** Reads the `count` network sub-chunks at the front of `data`, in the column at `pos`, and returns
- * what follows them. A sub-chunk in format 9 says which one of the column it is. */
-inline std::expected<std::string, std::error_code> readSubChunks(const std::string &data, std::size_t count,
-                                                                 bp::BlockPos pos,
-                                                                 std::vector<PlacedSubChunk> &sub_chunks)
-{
-    bp::BinaryReader in{data};
-    for (std::size_t i = 0; i < count; ++i) {
-        auto sub_chunk = SubChunk::read(in);
-        if (!sub_chunk) {
-            return std::unexpected(sub_chunk.error());
-        }
-        const std::int32_t y = sub_chunk->version == 9 ? static_cast<std::int8_t>(sub_chunk->y_index)
-                                                       : pos.y + static_cast<std::int32_t>(i);
-        sub_chunks.push_back({bp::BlockPos{pos.x, y, pos.z}, std::move(*sub_chunk)});
-    }
-    return std::string(in.getView().substr(in.getReadPointer()));
-}
-
-inline std::string writeSubChunks(std::span<const PlacedSubChunk> sub_chunks, std::string_view rest)
-{
-    std::string data;
-    bp::BinaryWriter out{data};
-    for (const auto &placed : sub_chunks) {
-        placed.sub_chunk.write(out);
-    }
-    out.writeRawBytes(rest);
-    return data;
-}
-
-} // namespace detail
 
 template <int From, int To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::LevelEvent)> {
@@ -552,14 +508,16 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::FullChunkData
         if (packet.cache_enabled || packet.client_request_sub_chunk_limit.has_value()) {
             return {};
         }
-        std::vector<PlacedSubChunk> sub_chunks;
-        const auto rest = detail::readSubChunks(packet.serialized_chunk, packet.sub_chunks_count,
-                                                {packet.pos.x, 0, packet.pos.z}, sub_chunks);
-        if (!rest) {
-            return std::unexpected(rest.error());
+        bp::BinaryReader in{packet.serialized_chunk};
+        auto chunk = ChunkType::read(in, packet.pos.x, 0, packet.pos.z, packet.sub_chunks_count);
+        if (!chunk) {
+            return std::unexpected(chunk.error());
         }
-        BlockRewriter<From, To>::rewriteSubChunks(sub_chunks, storage);
-        packet.serialized_chunk = detail::writeSubChunks(sub_chunks, *rest);
+        BlockRewriter<From, To>::handleChunks(std::span{&*chunk, 1}, storage);
+        std::string data;
+        bp::BinaryWriter out{data};
+        ChunkType::write(out, *chunk);
+        packet.serialized_chunk = std::move(data);
         return {};
     }
 };
@@ -569,25 +527,28 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SubChunkPacke
     static std::expected<void, std::error_code> rewrite(bp::SubChunkPacket_<From> &packet,
                                                         BlockConnectionStorage &storage)
     {
-        std::vector<PlacedSubChunk> sub_chunks;
-        std::vector<std::pair<std::string *, std::string>> entries;
+        std::vector<Chunk> chunks;
+        std::vector<std::string *> entries;
         for (auto &entry : packet.sub_chunk_data) {
             if (!entry.serialized_sub_chunk || entry.serialized_sub_chunk->empty()) {
                 continue;
             }
             const auto &center = packet.center_pos;
             const auto &offset = entry.sub_chunk_pos_offset;
-            auto rest =
-                detail::readSubChunks(*entry.serialized_sub_chunk, 1,
-                                      {center.x + offset.x, center.y + offset.y, center.z + offset.z}, sub_chunks);
-            if (!rest) {
-                return std::unexpected(rest.error());
+            bp::BinaryReader in{*entry.serialized_sub_chunk};
+            auto chunk = ChunkType::read(in, center.x + offset.x, center.y + offset.y, center.z + offset.z, 1);
+            if (!chunk) {
+                return std::unexpected(chunk.error());
             }
-            entries.emplace_back(&*entry.serialized_sub_chunk, std::move(*rest));
+            chunks.push_back(std::move(*chunk));
+            entries.push_back(&*entry.serialized_sub_chunk);
         }
-        BlockRewriter<From, To>::rewriteSubChunks(sub_chunks, storage);
-        for (std::size_t i = 0; i < entries.size(); ++i) {
-            *entries[i].first = detail::writeSubChunks(std::span{sub_chunks}.subspan(i, 1), entries[i].second);
+        BlockRewriter<From, To>::handleChunks(chunks, storage);
+        for (std::size_t i = 0; i < chunks.size(); ++i) {
+            std::string data;
+            bp::BinaryWriter out{data};
+            ChunkType::write(out, chunks[i]);
+            *entries[i] = std::move(data);
         }
         return {};
     }
