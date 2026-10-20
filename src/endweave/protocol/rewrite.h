@@ -9,20 +9,34 @@ namespace bp = bedrock::protocol;
 
 namespace endweave {
 
+class BlockConnectionStorage;
+
 /** Fixes values the wire diff can't see, such as renumbered enums. Runs once on the source
  * packet, mapping straight from `From` to `To`, since a value both share may be missing from a
  * version in between.
  *
  * It writes `To`'s values into the `From` packet, so a packet whose type doesn't change can be
  * re-encoded as is. One that parses bytes the schema leaves opaque returns an error for bytes it
- * can't read. */
+ * can't read. One that needs the blocks the client was sent before takes the
+ * `BlockConnectionStorage` as well. One that gives the packet's block ids itself sets
+ * `rewrites_block_ids`. */
 template <int From, int To, int Id>
 struct Rewriter;
 
+template <class T>
+concept RewriteResult = std::same_as<T, void> || std::same_as<T, std::expected<void, std::error_code>>;
+
 template <int From, int To, int Id>
-concept Rewritable = requires(bp::packet_of_t<From, Id> &packet) {
-    requires std::same_as<decltype(Rewriter<From, To, Id>::rewrite(packet)), void> ||
-                 std::same_as<decltype(Rewriter<From, To, Id>::rewrite(packet)), std::expected<void, std::error_code>>;
+concept RewritesWithStorage = requires(bp::packet_of_t<From, Id> &packet, BlockConnectionStorage &storage) {
+    requires RewriteResult<decltype(Rewriter<From, To, Id>::rewrite(packet, storage))>;
 };
+
+template <int From, int To, int Id>
+concept Rewritable = RewritesWithStorage<From, To, Id> || requires(bp::packet_of_t<From, Id> &packet) {
+    requires RewriteResult<decltype(Rewriter<From, To, Id>::rewrite(packet))>;
+};
+
+template <int From, int To, int Id>
+concept RewritesBlockIds = Rewritable<From, To, Id> && Rewriter<From, To, Id>::rewrites_block_ids;
 
 } // namespace endweave

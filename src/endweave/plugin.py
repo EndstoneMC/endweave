@@ -67,6 +67,7 @@ class EndweavePlugin(Plugin):
 
     prefix = "Endweave"
     api_version = "0.11"
+    _sending_deferred = False
     commands = {
         "endweave": {
             "description": "Endweave plugin commands",
@@ -113,6 +114,7 @@ class EndweavePlugin(Plugin):
         self._base_protocol = BaseProtocol(self._connection_manager, self._configuration, self.logger)
 
         self.register_events(self)
+        self.server.scheduler.run_task(self, self._schedule_send, delay=1, period=1)
         self._debug_handler = DebugHandler(
             self.logger,
             log_conversion_warnings=self._configuration.log_other_conversion_warnings,
@@ -155,9 +157,39 @@ class EndweavePlugin(Plugin):
 
     @event_handler(priority=EventPriority.HIGHEST, ignore_cancelled=True)
     def on_packet_send(self, event: PacketSendEvent) -> None:
+        if self._sending_deferred:
+            return
         connection = self._connection_manager.get_connection(str(event.address))
         if connection is not None:
             self._translate(connection, event, Direction.CLIENTBOUND)
+
+    def _schedule_send(self) -> None:
+        """Send each player the packets translation left to send, already in the player's version.
+
+        ViaVersion writes these below its encoder on the channel's event loop. Endstone has no such
+        point: a packet sent from inside the send event goes out ahead of the one in hand, and before
+        Endstone 0.11.14 overwrites the buffer a broadcast reuses for the next player. So they wait for
+        the next tick, and the send event they raise is let through untranslated.
+
+        See Also:
+            com.viaversion.viaversion.api.protocol.packet.PacketWrapper#scheduleSend
+        """
+        for connection in self._connection_manager.connections.values():
+            translator = connection.clientbound
+            if translator is None or connection.unique_id is None:
+                continue
+            packets = translator.take_scheduled_packets()
+            if not packets:
+                continue
+            player = self.server.get_player(connection.unique_id)
+            if player is None:
+                continue
+            self._sending_deferred = True
+            try:
+                for packet_id, payload in packets:
+                    player.send_packet(packet_id, payload)
+            finally:
+                self._sending_deferred = False
 
     def _translate(
         self,

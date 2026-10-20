@@ -33,6 +33,7 @@ CONTAINER_CLOSE = 47
 INVENTORY_TRANSACTION = 30
 SET_PLAYER_FURNACE_OPTIONS = 351  # 2168 has no such packet, so a 2193 client loses it
 TEXT = 9  # unchanged between the two, so neither table names it
+UPDATE_BLOCK = 21
 
 EMPTY_TRANSACTION = b"\x00\x00\x00\x00"
 EMPTY_CONTAINER_CLOSE = b"\x00\x00\x00"
@@ -349,6 +350,66 @@ class TestQuit:
         assert plugin._connection_manager.get_connection(ADDRESS) is connection
         assert connection.unique_id == staying.player.unique_id
         assert connection.active is True
+
+
+class DeferringTranslator:
+    """A clientbound translator holding packets translation left to send, which records what it translates."""
+
+    actions = {UPDATE_BLOCK: Action.TRANSLATE}
+
+    def __init__(self, *packets: tuple[int, bytes]) -> None:
+        self.packets = list(packets)
+        self.translated: list[int] = []
+
+    def translate(self, packet_id: int, payload: bytes) -> bytes | None:
+        self.translated.append(packet_id)
+        return payload
+
+    def take_scheduled_packets(self) -> list[tuple[int, bytes]]:
+        packets, self.packets = self.packets, []
+        return packets
+
+
+class TestDeferredPackets:
+    @pytest.fixture
+    def plugin(self, make_plugin: Callable[..., StubPlugin]) -> StubPlugin:
+        plugin = make_plugin(server_protocol=CARRIED_SERVER)
+        plugin.on_packet_receive(handshake(CARRIED_CLIENT))
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.unique_id = uuid4()
+        connection.clientbound = DeferringTranslator((UPDATE_BLOCK, b"\x01"))
+        return plugin
+
+    def test_sends_the_player_the_packets_translation_left(self, plugin: StubPlugin) -> None:
+        plugin._schedule_send()
+
+        plugin.server.get_player.return_value.send_packet.assert_called_once_with(UPDATE_BLOCK, b"\x01")
+
+    def test_lets_a_deferred_packet_through_untranslated(self, plugin: StubPlugin) -> None:
+        translator = plugin._connection_manager.get_connection(ADDRESS).clientbound
+        player = plugin.server.get_player.return_value
+        player.send_packet.side_effect = lambda packet_id, payload: plugin.on_packet_send(packet(packet_id, payload))
+
+        plugin._schedule_send()
+
+        assert translator.translated == []
+
+    def test_translates_the_packets_sent_after_them(self, plugin: StubPlugin) -> None:
+        translator = plugin._connection_manager.get_connection(ADDRESS).clientbound
+        plugin._schedule_send()
+
+        plugin.on_packet_send(packet(UPDATE_BLOCK, b"\x02"))
+
+        assert translator.translated == [UPDATE_BLOCK]
+
+    def test_holds_them_until_the_player_logs_in(self, plugin: StubPlugin) -> None:
+        connection = plugin._connection_manager.get_connection(ADDRESS)
+        connection.unique_id = None
+
+        plugin._schedule_send()
+
+        plugin.server.get_player.assert_not_called()
+        assert connection.clientbound.packets == [(UPDATE_BLOCK, b"\x01")]
 
 
 class TestDisable:

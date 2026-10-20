@@ -16,6 +16,8 @@ NEWEST = 2225
 UPDATE_BLOCK = 21
 LEVEL_EVENT = 25
 FULL_CHUNK_DATA = 58
+CHANGE_DIMENSION = 61
+NETWORK_CHUNK_PUBLISHER_UPDATE = 121
 UPDATE_BLOCK_SYNCED = 110
 LEVEL_SOUND_EVENT = 123
 CLIENT_CACHE_STATUS = 129
@@ -91,8 +93,12 @@ def string(value: bytes) -> bytes:
     return uvarint(len(value)) + value
 
 
-def update_block(runtime_id: int) -> bytes:
-    return varint(1) + varint(64) + varint(-2) + uvarint(runtime_id) + uvarint(3) + uvarint(0)
+def block_pos(pos: tuple[int, int, int]) -> bytes:
+    return b"".join(varint(axis) for axis in pos)
+
+
+def update_block(runtime_id: int, pos: tuple[int, int, int] = (1, 64, -2)) -> bytes:
+    return block_pos(pos) + uvarint(runtime_id) + uvarint(3) + uvarint(0)
 
 
 def level_event(event: int, data: int) -> bytes:
@@ -175,8 +181,20 @@ def read_sub_chunk_entries(payload: bytes) -> list[bytes]:
     return entries
 
 
-def sub_chunk_block(runtime_id: int) -> bytes:
-    return varint(1) + varint(2) + varint(3) + uvarint(runtime_id) + uvarint(3) + uvarint(0) + uvarint(0)
+def sub_chunk_block(runtime_id: int, pos: tuple[int, int, int] = (1, 2, 3)) -> bytes:
+    return block_pos(pos) + uvarint(runtime_id) + uvarint(3) + uvarint(0) + uvarint(0)
+
+
+def update_sub_chunk_blocks(*blocks: bytes) -> bytes:
+    return block_pos((32, 0, 48)) + uvarint(len(blocks)) + b"".join(blocks) + uvarint(0)
+
+
+def chunk_publisher_update(x: int, z: int, radius: int) -> bytes:
+    return block_pos((x, 64, z)) + uvarint(radius) + struct.pack("<I", 0)
+
+
+def change_dimension(dimension: int) -> bytes:
+    return varint(dimension) + struct.pack("<fff", 0.0, 64.0, 0.0) + b"\x00" + b"\x00"
 
 
 class TestActions:
@@ -401,3 +419,109 @@ class TestNewestConnections:
 
         assert blocks[5, 0, 5] == REDSTONE_WIRE["up", "none", "side", "none"]
         assert blocks[5, 1, 4] == REDSTONE_WIRE["side", "none", "side", "none"]
+
+
+class TestSentBlocks:
+    def test_joins_a_fence_to_a_block_sent_in_an_earlier_packet(self) -> None:
+        translator = Translator(OLD, NEW)
+        stone = placed_sub_chunk({(15, 0, 5): STONE})
+        fence = placed_sub_chunk({(0, 0, 5): OAK_FENCE_OLD})
+
+        translator.translate(SUB_CHUNK, sub_chunk_packet(sub_chunk_entry(stone, (0, 0, 0))))
+        payload = translator.translate(SUB_CHUNK, sub_chunk_packet(sub_chunk_entry(fence, (1, 0, 0))))
+
+        assert read_sub_chunk(read_sub_chunk_entries(payload)[0])[0, 0, 5] == OAK_FENCE["west"]
+
+    def test_joins_a_placed_fence_to_the_blocks_beside_it(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): STONE})))
+
+        payload = translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, 0, 53)))
+
+        assert payload == update_block(OAK_FENCE["west"], (38, 0, 53))
+
+    def test_joins_fences_placed_together(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({})))
+        blocks = (sub_chunk_block(OAK_FENCE_OLD, (37, 0, 53)), sub_chunk_block(OAK_FENCE_OLD, (38, 0, 53)))
+
+        payload = translator.translate(UPDATE_SUB_CHUNK_BLOCKS, update_sub_chunk_blocks(*blocks))
+
+        assert payload == update_sub_chunk_blocks(
+            sub_chunk_block(OAK_FENCE["east"], (37, 0, 53)), sub_chunk_block(OAK_FENCE["west"], (38, 0, 53))
+        )
+
+    def test_forgets_chunks_the_client_lets_go_of(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): STONE})))
+        translator.translate(NETWORK_CHUNK_PUBLISHER_UPDATE, chunk_publisher_update(10_000, 10_000, 128))
+
+        payload = translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, 0, 53)))
+
+        assert payload == update_block(OAK_FENCE[None], (38, 0, 53))
+
+    def test_forgets_every_block_on_changing_dimension(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): STONE})))
+        translator.translate(CHANGE_DIMENSION, change_dimension(1))
+
+        payload = translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, 0, 53)))
+
+        assert payload == update_block(OAK_FENCE[None], (38, 0, 53))
+
+
+class TestNeighborUpdates:
+    def test_defers_the_fence_a_placed_fence_joins(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): OAK_FENCE_OLD})))
+
+        translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, 0, 53)))
+
+        assert translator.take_scheduled_packets() == [(UPDATE_BLOCK, update_block(OAK_FENCE["east"], (37, 0, 53)))]
+
+    def test_defers_the_wire_below_one_placed_on_the_block_beside_it(self) -> None:
+        translator = Translator(NEW, NEWEST)
+        translator.translate(
+            FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): REDSTONE_WIRE_NEW, (5, 0, 4): STONE}))
+        )
+
+        payload = translator.translate(UPDATE_BLOCK, update_block(REDSTONE_WIRE_NEW, (37, 1, 52)))
+
+        assert payload == update_block(REDSTONE_WIRE["side", "none", "side", "none"], (37, 1, 52))
+        assert translator.take_scheduled_packets() == [
+            (UPDATE_BLOCK, update_block(REDSTONE_WIRE["up", "none", "side", "none"], (37, 0, 53)))
+        ]
+
+    def test_defers_a_block_once(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): OAK_FENCE_OLD})))
+        translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, 0, 53)))
+
+        assert translator.take_scheduled_packets()
+        assert translator.take_scheduled_packets() == []
+
+    def test_defers_nothing_when_the_blocks_beside_keep_their_states(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): OAK_FENCE_OLD})))
+
+        translator.translate(UPDATE_BLOCK, update_block(AIR, (38, 0, 53)))
+
+        assert translator.take_scheduled_packets() == []
+
+    def test_defers_nothing_for_blocks_the_packet_carries(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({})))
+        blocks = (sub_chunk_block(OAK_FENCE_OLD, (37, 0, 53)), sub_chunk_block(OAK_FENCE_OLD, (38, 0, 53)))
+
+        translator.translate(UPDATE_SUB_CHUNK_BLOCKS, update_sub_chunk_blocks(*blocks))
+
+        assert translator.take_scheduled_packets() == []
+
+    def test_forgets_deferred_blocks_on_changing_dimension(self) -> None:
+        translator = Translator(OLD, NEW)
+        translator.translate(FULL_CHUNK_DATA, level_chunk(placed_sub_chunk({(5, 0, 5): OAK_FENCE_OLD})))
+        translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_OLD, (38, 0, 53)))
+
+        translator.translate(CHANGE_DIMENSION, change_dimension(1))
+
+        assert translator.take_scheduled_packets() == []

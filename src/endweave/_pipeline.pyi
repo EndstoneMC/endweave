@@ -39,6 +39,11 @@ class Translator:
     def translate(self, packet_id: int, payload: bytes) -> bytes | None:
         """The translated payload, or None if the packet was cancelled."""
 
+    def take_scheduled_packets(self) -> list[tuple[int, bytes]]:
+        """
+        The packets, as (packet id, payload) in the version translated to, that translating left to send once the packet in hand is gone, such as the blocks whose states change with a block placed beside them. Each is returned once.
+        """
+
 class TranslationError(RuntimeError):
     packet_id: int
     stage: str

@@ -6,6 +6,7 @@
 #include <bedrock/protocol/network.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <optional>
@@ -64,12 +65,13 @@ struct Translator {
     }
 
     endweave::Translator engine;
+    endweave::BlockConnectionStorage block_connections;
     Actions actions;
     int from_version = 0;
     int to_version = 0;
 };
 
-std::optional<nb::bytes> translate(const Translator &translator, int packet_id, nb::bytes payload)
+std::optional<nb::bytes> translate(Translator &translator, int packet_id, nb::bytes payload)
 {
     const endweave::PacketHandler handler = translator.engine.get(packet_id);
     if (handler == nullptr) {
@@ -81,7 +83,7 @@ std::optional<nb::bytes> translate(const Translator &translator, int packet_id, 
     bp::BinaryWriter out{translated};
     bp::BinaryReader in{std::string_view{payload.c_str(), payload.size()}};
     bool cancelled = false;
-    const auto result = handler(cancelled, in, out);
+    const auto result = handler(cancelled, translator.block_connections, in, out);
     if (!result) {
         raiseTranslationError(packet_id, "translate", result.error());
     }
@@ -89,6 +91,16 @@ std::optional<nb::bytes> translate(const Translator &translator, int packet_id, 
         return std::nullopt;
     }
     return nb::bytes(translated.data(), translated.size());
+}
+
+std::vector<std::pair<int, nb::bytes>> takeScheduledPackets(Translator &translator)
+{
+    std::vector<std::pair<int, nb::bytes>> packets;
+    for (const auto &payload : translator.engine.writeUnsentBlocks(translator.block_connections)) {
+        packets.emplace_back(static_cast<int>(bp::MinecraftPacketIds::UpdateBlock),
+                             nb::bytes(payload.data(), payload.size()));
+    }
+    return packets;
 }
 
 } // namespace
@@ -142,5 +154,9 @@ NB_MODULE(_pipeline, m)
             },
             "The action for each packet id that needs one. Other ids pass through untouched.")
         .def("translate", &translate, "packet_id"_a, "payload"_a,
-             "The translated payload, or None if the packet was cancelled.");
+             "The translated payload, or None if the packet was cancelled.")
+        .def("take_scheduled_packets", &takeScheduledPackets,
+             "The packets, as (packet id, payload) in the version translated to, that translating left to "
+             "send once the packet in hand is gone, such as the blocks whose states change with a block "
+             "placed beside them. Each is returned once.");
 }

@@ -71,35 +71,47 @@ public:
 
     void write(bp::BinaryWriter &out) const
     {
-        std::uint8_t bits = bits_;
         if (!blocks_.empty()) {
-            bits = palette_.size() <= 1 ? 0 : *std::ranges::find_if(TYPES, [&](std::uint8_t type) {
-                return type != 0 && (std::size_t{1} << type) >= palette_.size();
-            });
-        }
-        out.write<std::uint8_t>((bits << 1) | 1);
-        if (bits == EMPTY) {
+            auto packed = *this;
+            packed.compact();
+            packed.write(out);
             return;
         }
-        if (blocks_.empty()) {
-            out.writeRawBytes(words_);
+        out.write<std::uint8_t>((bits_ << 1) | 1);
+        if (bits_ == EMPTY) {
+            return;
         }
-        else if (bits != 0) {
-            const std::size_t per_word = 32 / bits;
-            std::vector<std::uint32_t> words(getWordCount(bits));
-            for (std::size_t i = 0; i < SIZE; ++i) {
-                words[i / per_word] |= std::uint32_t{blocks_[i]} << (i % per_word * bits);
-            }
-            for (const auto word : words) {
-                out.write<std::uint32_t>(word);
-            }
-        }
-        if (bits != 0) {
+        out.writeRawBytes(words_);
+        if (bits_ != 0) {
             out.writeVarInt<std::int32_t>(static_cast<std::int32_t>(palette_.size()));
         }
         for (const auto id : palette_) {
             out.writeVarInt<std::int32_t>(static_cast<std::int32_t>(id));
         }
+    }
+
+    /** Packs blocks that were set back into words, with the fewest bits the palette needs. */
+    void compact()
+    {
+        if (blocks_.empty()) {
+            return;
+        }
+        bits_ = palette_.size() <= 1 ? 0 : *std::ranges::find_if(TYPES, [&](std::uint8_t type) {
+            return type != 0 && (std::size_t{1} << type) >= palette_.size();
+        });
+        std::vector<std::uint32_t> words(getWordCount(bits_));
+        if (bits_ != 0) {
+            const std::size_t per_word = 32 / bits_;
+            for (std::size_t i = 0; i < SIZE; ++i) {
+                words[i / per_word] |= std::uint32_t{blocks_[i]} << (i % per_word * bits_);
+            }
+        }
+        words_.clear();
+        bp::BinaryWriter out{words_};
+        for (const auto word : words) {
+            out.write<std::uint32_t>(word);
+        }
+        blocks_ = {};
     }
 
     [[nodiscard]] std::vector<std::uint32_t> &getPalette()

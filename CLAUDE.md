@@ -203,6 +203,9 @@ and it is not `Transformer`'s job.
   directory.
 - **One that parses bytes the schema leaves opaque returns `std::expected<void, std::error_code>`,**
   and `handle` fails the packet on an error, as it does a decode error. The rest return `void`.
+- **One that needs the blocks the client was sent takes the translator's `BlockConnectionStorage &`**
+  as a second argument, and one that gives the packet's block ids itself sets
+  `static constexpr bool rewrites_block_ids = true`, so `handle` skips `rewriteBlockIds` for it.
 
 ## Block states
 
@@ -254,8 +257,9 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   (`protocol/block_connection.h`), specialised in the hop that adds them, as ViaVersion's
   `ConnectionData` dispatches to its `ConnectionHandler`s. `BlockRewriter::rewriteSubChunks` takes a
   packet's sub-chunks a hop at a time: it renumbers the palettes, then gives every block the hop
-  connects the id its neighbours make it, reading only the sub-chunks in the same packet. A neighbour
-  outside them counts as air. Each handler is BDS's rule as written: it reads its neighbours through
+  connects the id its neighbours make it, reading the sub-chunks in the same packet, then the blocks
+  the client was sent before. A neighbour in neither counts as air. Each handler is BDS's rule as
+  written: it reads its neighbours through
   `findNeighborBlock`, and `ConnectedBlocks` holds the id its own blocks take for every way of setting
   the states. `protocols/v2168_to_v2193/block_connections.h` has `StairConnectionHandler` (BDS's
   `CornerConnectionCallback`, `minecraft:corner`) and `StandardConnectionHandler` (BDS's
@@ -263,6 +267,20 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   `protocols/v2193_to_v2225/block_connections.h` has `ChorusPlantConnectionHandler` and
   `FireConnectionHandler` (BDS's two `FunctionConnectionCallback`s) and `RedstoneConnectionHandler`
   (BDS's `RedStoneWireBlock`, `redstone_*`).
+- **`BlockConnectionStorage` keeps the blocks a client was sent**, by sub-chunk, as the client has
+  them, for a translator whose chain adds connection states; other translators keep nothing. Each
+  pipeline `Translator` owns one, and `handle` passes it to the rewriters that take it. Chunk packets
+  fill it, `UpdateBlock`, `UpdateBlockSynced` and `UpdateSubChunkBlocks` give a block in layer 0 the
+  states its kept neighbours make it and record the result, `NetworkChunkPublisherUpdate` drops the
+  columns the client lets go of, and `ChangeDimension` drops everything.
+- **A changed block reconnects the kept blocks around it.** `BlockRewriter::updateNeighbors` works
+  out again every kept block in the 3×3×3 around a block those three packets change, since redstone
+  reads the wire a block up or down on each side, past ViaVersion's six faces. The server sends
+  nothing for a block whose states change that way, so the storage keeps it as unsent, and
+  `Translator.take_scheduled_packets()` hands over an `UpdateBlock` for each. The plugin's
+  `_schedule_send` sends them every tick and lets their send event through untranslated: ViaVersion writes such packets
+  below its encoder, but one sent from inside Endstone's send event goes out ahead of the packet in
+  hand, and before Endstone 0.11.14 it overwrites the buffer a broadcast reuses for the next player.
 - **The client cache is turned off.** The server's blob ids hash the sub-chunks it serializes, so
   they stop naming what the client is sent once a palette is rewritten. `ClientCacheStatus` is
   rewritten to off for every pair.
@@ -349,8 +367,11 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocol/rewrite.h` `Rewriter` | none by name; the job is ViaVersion's per-packet `PacketHandler` lambda |
 | `protocol/block.h` `getNewBlockStateId` | `MappingData#getNewBlockStateId` |
 | `rewriter/block.h` `BlockRewriter` | `BlockRewriter` |
+| `protocol/block_connection.h` `BlockConnectionStorage` | `BlockConnectionStorage`, read as `PacketBlockConnectionProvider` reads it |
 | `protocol/sub_chunk.h` `SubChunk`, `SubChunkStorage` | `ChunkSection`, `DataPalette` |
 | `protocol/block_connection.h` `ConnectionData` | `ConnectionData` |
+| `rewriter/block.h` `BlockRewriter::updateNeighbors` | `ConnectionData#update` |
+| `plugin.py` `_schedule_send` | `PacketWrapper#scheduleSend` |
 | `protocols/v2168_to_v2193/block_connections.h` `StairConnectionHandler` | `StairConnectionHandler` |
 | `protocols/v2168_to_v2193/block_connections.h` `StandardConnectionHandler` | `AbstractFenceConnectionHandler` and its subclasses |
 | `protocols/v2193_to_v2225/block_connections.h` `ChorusPlantConnectionHandler`, `FireConnectionHandler`, `RedstoneConnectionHandler` | the handlers of the same names |

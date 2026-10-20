@@ -1,13 +1,17 @@
 #pragma once
 
 #include "endweave/protocol/block.h"
+#include "endweave/protocol/sub_chunk.h"
 
 #include <algorithm>
+#include <array>
 #include <bedrock/protocol/common.h>
 #include <bedrock/protocol/nbt.hpp>
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <optional>
+#include <set>
 #include <span>
 #include <string>
 #include <string_view>
@@ -119,6 +123,84 @@ struct ConnectionData {};
 
 template <int From, int To>
 concept HasConnections = requires(std::uint32_t id) { ConnectionData<From, To>::connects(id); };
+
+/** The blocks a client has been sent, as the client has them, by sub-chunk: what a later packet reads
+ * for a neighbour it does not carry.
+ * @see ViaVersion BlockConnectionStorage. */
+class BlockConnectionStorage {
+public:
+    [[nodiscard]] std::optional<std::uint32_t> get(const bp::BlockPos &pos) const
+    {
+        const auto it = sections_.find({pos.x >> 4, pos.y >> 4, pos.z >> 4});
+        if (it == sections_.end()) {
+            return std::nullopt;
+        }
+        return it->second.getElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15));
+    }
+
+    /** Keeps the blocks of the sub-chunk at `sub_chunk`, counted in sub-chunks. */
+    void store(const bp::BlockPos &sub_chunk, SubChunkStorage blocks)
+    {
+        blocks.compact();
+        sections_.insert_or_assign({sub_chunk.x, sub_chunk.y, sub_chunk.z}, std::move(blocks));
+    }
+
+    void set(const bp::BlockPos &pos, std::uint32_t id)
+    {
+        const auto it = sections_.find({pos.x >> 4, pos.y >> 4, pos.z >> 4});
+        if (it != sections_.end()) {
+            it->second.setElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15), id);
+            it->second.compact();
+        }
+    }
+
+    /** Keeps `id` at `pos` for a block the server will not send, so the client is sent it later. */
+    void setUnsent(const bp::BlockPos &pos, std::uint32_t id)
+    {
+        set(pos, id);
+        unsent_.insert({pos.x, pos.y, pos.z});
+    }
+
+    [[nodiscard]] bool hasUnsent() const
+    {
+        return !unsent_.empty();
+    }
+
+    /** The blocks kept with `setUnsent` since the last call, as they are now. */
+    std::vector<std::pair<bp::BlockPos, std::uint32_t>> takeUnsent()
+    {
+        std::vector<std::pair<bp::BlockPos, std::uint32_t>> blocks;
+        for (const auto &[x, y, z] : unsent_) {
+            const bp::BlockPos pos{x, y, z};
+            if (const auto id = get(pos)) {
+                blocks.emplace_back(pos, *id);
+            }
+        }
+        unsent_.clear();
+        return blocks;
+    }
+
+    /** Drops the sub-chunks of every column further than `radius` blocks from `center`, which the
+     * client lets go of too. */
+    void unloadOutside(const bp::BlockPos &center, std::int64_t radius)
+    {
+        std::erase_if(sections_, [&](const auto &section) {
+            const std::int64_t dx = section.first[0] * 16 + 8 - center.x;
+            const std::int64_t dz = section.first[2] * 16 + 8 - center.z;
+            return dx * dx + dz * dz > radius * radius;
+        });
+    }
+
+    void clear()
+    {
+        sections_.clear();
+        unsent_.clear();
+    }
+
+private:
+    std::map<std::array<int, 3>, SubChunkStorage> sections_;
+    std::set<std::array<int, 3>> unsent_;
+};
 
 /** `pos` moved by `offset`. */
 inline bp::BlockPos offsetPos(const bp::BlockPos &pos, const bp::BlockPos &offset)

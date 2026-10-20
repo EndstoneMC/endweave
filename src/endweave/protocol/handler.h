@@ -1,5 +1,6 @@
 #pragma once
 
+#include "endweave/protocol/block_connection.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/transform.h"
 #include "endweave/protocol/version.h"
@@ -23,6 +24,7 @@
 #include <system_error>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace bp = bedrock::protocol;
 
@@ -73,7 +75,8 @@ void chain(const Context<bp::packet_of_t<To, Id>> &ctx, bp::packet_of_t<Cur, Id>
 }
 
 template <int From, int To, int Id>
-std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &in, bp::BinaryWriter &out)
+std::expected<void, std::error_code> handle(bool &cancelled, BlockConnectionStorage &storage, bp::BinaryReader &in,
+                                            bp::BinaryWriter &out)
 {
     auto result = bp::deserialize<bp::packet_of_t<From, Id>>(in);
     if (!result) {
@@ -88,14 +91,24 @@ std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &i
     bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
     if constexpr (Rewritable<From, To, Id>) {
-        if constexpr (std::is_void_v<decltype(Rewriter<From, To, Id>::rewrite(packet))>) {
-            Rewriter<From, To, Id>::rewrite(packet);
+        const auto rewrite = [&] {
+            if constexpr (RewritesWithStorage<From, To, Id>) {
+                return Rewriter<From, To, Id>::rewrite(packet, storage);
+            }
+            else {
+                return Rewriter<From, To, Id>::rewrite(packet);
+            }
+        };
+        if constexpr (std::is_void_v<decltype(rewrite())>) {
+            rewrite();
         }
-        else if (auto rewritten = Rewriter<From, To, Id>::rewrite(packet); !rewritten) {
+        else if (auto rewritten = rewrite(); !rewritten) {
             return rewritten;
         }
     }
-    BlockRewriter<From, To>::rewriteBlockIds(packet);
+    if constexpr (!RewritesBlockIds<From, To, Id>) {
+        BlockRewriter<From, To>::rewriteBlockIds(packet);
+    }
     // Already rewritten for To, so an unchanged type is re-encoded as is.
     if constexpr (std::is_same_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>>) {
         bp::serialize(writer, packet);
@@ -125,7 +138,8 @@ std::expected<void, std::error_code> handle(bool &cancelled, bp::BinaryReader &i
 }
 
 /** @see ViaVersion PacketWrapper#cancel. */
-inline std::expected<void, std::error_code> cancel(bool &cancelled, bp::BinaryReader &, bp::BinaryWriter &)
+inline std::expected<void, std::error_code> cancel(bool &cancelled, BlockConnectionStorage &, bp::BinaryReader &,
+                                                   bp::BinaryWriter &)
 {
     cancelled = true;
     return {};
@@ -141,7 +155,8 @@ enum class Action : char {
 };
 
 /** @see ViaVersion PacketHandler. */
-using PacketHandler = std::expected<void, std::error_code> (*)(bool &, bp::BinaryReader &, bp::BinaryWriter &);
+using PacketHandler = std::expected<void, std::error_code> (*)(bool &, BlockConnectionStorage &, bp::BinaryReader &,
+                                                               bp::BinaryWriter &);
 
 namespace detail {
 
@@ -170,13 +185,19 @@ inline constexpr auto kHandlers = makeHandlers<From, To>(std::make_integer_seque
 
 } // namespace detail
 
+/** Writes the packets for the blocks a connection's translation kept to send later. */
+using UnsentBlockWriter = std::vector<std::string> (*)(BlockConnectionStorage &);
+
 /** The handler table for one From-to-To pair, built at compile time and shared by every connection.
  * @see ViaVersion Protocol, Velocity StateRegistry.PacketRegistry.ProtocolRegistry. */
 class Translator {
 public:
     constexpr Translator() = default;
 
-    constexpr explicit Translator(std::span<const PacketHandler> handlers) : handlers_(handlers) {}
+    constexpr Translator(std::span<const PacketHandler> handlers, UnsentBlockWriter write_unsent_blocks)
+        : handlers_(handlers), write_unsent_blocks_(write_unsent_blocks)
+    {
+    }
 
     [[nodiscard]] constexpr PacketHandler get(int id) const
     {
@@ -197,8 +218,16 @@ public:
         return handlers_.size();
     }
 
+    /** The packets for the blocks the translation through `storage` kept to send later, which it
+     * then forgets. */
+    [[nodiscard]] std::vector<std::string> writeUnsentBlocks(BlockConnectionStorage &storage) const
+    {
+        return write_unsent_blocks_ != nullptr ? write_unsent_blocks_(storage) : std::vector<std::string>{};
+    }
+
 private:
     std::span<const PacketHandler> handlers_;
+    UnsentBlockWriter write_unsent_blocks_ = nullptr;
 };
 
 namespace detail {
@@ -208,7 +237,7 @@ constexpr Translator getTranslator(int to)
 {
     Translator translator;
     ProtocolVersions::visit(to, [&]<int To>() {
-        translator = Translator{kHandlers<From, To>};
+        translator = Translator{kHandlers<From, To>, &BlockRewriter<From, To>::writeUnsentBlocks};
     });
     return translator;
 }
