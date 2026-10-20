@@ -8,7 +8,10 @@ version a second time, which BDS checks as well, so it is rewritten too. A
 client already on the server's number, or one the engine does not carry, gets
 neither pipeline nor rewrite: the server takes or refuses it itself. Where the
 two numbers name one wire shape, as 26.45 and 26.40-26.44 do, the pipeline
-translates nothing and the rewrite is the whole of the work. Translators are
+translates nothing and the rewrite is the whole of the work. A number one past
+one the engine knows is carried as that one, with a warning the first time,
+since Bedrock adds one for a release or hotfix that has mostly left every
+packet alone. Translators are
 shared by every connection between the same two versions, as ViaVersion shares
 its protocols.
 
@@ -59,6 +62,7 @@ class BaseProtocol:
     def __init__(self, connection_manager: ConnectionManager, configuration: EndweaveConfig, logger: Logger) -> None:
         self._connection_manager = connection_manager
         self._configuration = configuration
+        self._guessed_versions: set[int] = set()
         self._logger = logger
 
     def transform_serverbound(self, event: PacketReceiveEvent) -> Connection | None:
@@ -98,6 +102,12 @@ class BaseProtocol:
         connection.serverbound = serverbound
         connection.clientbound = _translator(server, client)
         event.payload = server.to_bytes(4, "big", signed=True) + payload[4:]
+        if not protocol_version.known and client not in self._guessed_versions:
+            self._guessed_versions.add(client)
+            self._logger.warning(
+                f"Protocol {client} is not one Endweave knows, so it is translated as "
+                f"{get_protocol(serverbound.from_version)}, which it may not match"
+            )
         return connection
 
     def on_login(self, event: PlayerLoginEvent) -> None:

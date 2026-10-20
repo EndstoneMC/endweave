@@ -21,6 +21,9 @@ Endweave translates between any two of these:
 26.45 puts the same bytes on the wire as 26.40-26.44 under a different number, so Endweave carries a client on
 either onto a server on the other by writing the server's number into the handshake, and translates nothing.
 
+A protocol one past one in the table, as a release usually is after its last preview, is translated as that one
+until Endweave lists it. The log warns when that happens, as the two may not match.
+
 ### Not translated
 
 These versions are known to Endweave but not carried by the 0.5.0 engine:

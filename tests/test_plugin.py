@@ -285,6 +285,12 @@ class TestCarriedVersions:
     def test_does_not_carry_a_version_the_engine_left_out(self) -> None:
         assert not _carries(975)
 
+    def test_carries_one_past_a_known_version(self) -> None:
+        assert _carries(supported_versions()[-1] + 1)
+
+    def test_does_not_carry_two_past_a_known_version(self) -> None:
+        assert not _carries(supported_versions()[-1] + 2)
+
     def test_names_a_routed_version_among_the_carried_ones(self) -> None:
         carried = [version.name for version in get_protocols() if _carries(version.version)]
 

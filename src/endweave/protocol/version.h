@@ -32,8 +32,8 @@ constexpr std::size_t indexOf(int version)
     return SUPPORTED_VERSIONS.size();
 }
 
-/** @see Velocity ProtocolVersion#getProtocolVersion(int). */
-constexpr std::optional<int> getProtocolVersion(int protocol_version)
+/** The supported version a listed version is, or is routed as. */
+constexpr std::optional<int> getKnownProtocolVersion(int protocol_version)
 {
     for (const int version : SUPPORTED_VERSIONS) {
         if (version == protocol_version) {
@@ -46,6 +46,18 @@ constexpr std::optional<int> getProtocolVersion(int protocol_version)
         }
     }
     return std::nullopt;
+}
+
+/** The supported version to route a version as. One more than a listed version is routed as that one
+ * too: Bedrock adds one for a release after its last preview, or for a hotfix, and the packets have
+ * mostly stayed the same, but no schema has checked it.
+ * @see Velocity ProtocolVersion#getProtocolVersion(int). */
+constexpr std::optional<int> getProtocolVersion(int protocol_version)
+{
+    if (const auto known = getKnownProtocolVersion(protocol_version)) {
+        return known;
+    }
+    return getKnownProtocolVersion(protocol_version - 1);
 }
 
 template <class F>

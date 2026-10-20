@@ -40,7 +40,7 @@ from .connection import Connection, ConnectionManager
 from .debug import DebugHandler, Direction, Packet, PacketType
 from .metrics import EndweaveMetrics
 from .protocol.base import BaseProtocol
-from .protocol.version import get_protocol, get_protocols
+from .protocol.version import get_protocol, get_protocols, is_registered
 from .update import send_update_message
 from .util import translate_alternate_color_codes
 
@@ -108,6 +108,12 @@ class EndweavePlugin(Plugin):
             self.logger.warning("Endweave does not have any compatible versions for this server version!")
             self.logger.warning(
                 f"Every packet passes through untouched until Endweave supports protocol {server_protocol}."
+            )
+        elif not is_registered(server_protocol):
+            routed = get_protocol(Translator(server_protocol, server_protocol).from_version)
+            self.logger.warning(
+                f"Protocol {server_protocol} is not one Endweave knows, so it is translated as {routed}, "
+                "which it may not match"
             )
 
         self._connection_manager = ConnectionManager(get_protocol(server_protocol))

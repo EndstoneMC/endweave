@@ -167,6 +167,38 @@ class TestPipeline:
         assert connection.clientbound is not None
         assert not connection.clientbound.actions
 
+    def test_carries_a_client_one_past_a_known_version_as_it(self, make_protocol: Callable[..., BaseProtocol]) -> None:
+        protocol = make_protocol(server_protocol=CARRIED_SERVER)
+
+        connection = protocol.transform_serverbound(handshake(CARRIED_CLIENT.version + 1))
+
+        assert connection.serverbound is not None
+        assert connection.serverbound.from_version == CARRIED_CLIENT.version
+
+    def test_warns_once_about_a_client_version_it_guesses(
+        self, make_protocol: Callable[..., BaseProtocol], mock_logger: MagicMock
+    ) -> None:
+        protocol = make_protocol(server_protocol=CARRIED_SERVER)
+
+        protocol.transform_serverbound(handshake(CARRIED_CLIENT.version + 1))
+        protocol.transform_serverbound(handshake(CARRIED_CLIENT.version + 1, address="127.0.0.2:19132"))
+
+        warnings = [
+            call.args[0] for call in mock_logger.warning.call_args_list if "not one Endweave knows" in call.args[0]
+        ]
+        assert warnings == [
+            "Protocol 2194 is not one Endweave knows, so it is translated as 26.50-26.52 (2193), which it may not match"
+        ]
+
+    def test_does_not_warn_about_a_client_version_it_knows(
+        self, make_protocol: Callable[..., BaseProtocol], mock_logger: MagicMock
+    ) -> None:
+        protocol = make_protocol(server_protocol=CARRIED_SERVER)
+
+        protocol.transform_serverbound(handshake(CARRIED_CLIENT.version))
+
+        assert not [call for call in mock_logger.warning.call_args_list if "not one Endweave knows" in call.args[0]]
+
     def test_carries_nothing_for_a_client_the_engine_does_not_know(
         self, make_protocol: Callable[..., BaseProtocol]
     ) -> None:

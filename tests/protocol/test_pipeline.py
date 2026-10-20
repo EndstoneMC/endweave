@@ -65,6 +65,14 @@ class TestTranslatorLookup:
         assert Translator(ALIAS, NEW).from_version == OLD
         assert Translator(NEW, ALIAS).to_version == OLD
 
+    def test_reads_one_past_a_known_version_as_it(self) -> None:
+        assert Translator(NEWEST + 1, NEW).from_version == NEWEST
+        assert Translator(NEW, ALIAS + 1).to_version == OLD
+
+    def test_refuses_two_past_a_known_version(self) -> None:
+        with pytest.raises(ValueError):
+            Translator(NEWEST + 2, NEW)
+
     def test_refuses_a_version_it_cannot_carry(self) -> None:
         with pytest.raises(ValueError):
             Translator(UNSUPPORTED, OLD)

@@ -61,6 +61,11 @@ Per packet, `EndweavePlugin._translate` looks the id up in the translator's `act
   2193 and 2225, a sorted line that `step(from, to)` routes along one hop at a time, so there is no path
   search. `WIRE_IDENTICAL` routes 2169 (26.45) as 2168, and `handler.h` static-asserts that
   claim against the schema, so a version that stops being identical fails the build.
+- `getProtocolVersion` also routes a number one past a listed one as that one, unchecked, since
+  Bedrock adds one for a release after its last preview (2192 to 2193 for 26.50) or for a hotfix,
+  and the packets have mostly stayed the same. `BaseProtocol` warns the first time it sees each such
+  client number, and `on_enable` warns for the server's. Once the release ships, give its number a
+  `WIRE_IDENTICAL` entry or a `SUPPORTED_VERSIONS` one.
 
 ### The engine
 
