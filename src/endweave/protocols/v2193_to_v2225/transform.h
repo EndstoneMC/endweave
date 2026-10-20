@@ -2,8 +2,8 @@
 
 #include "actor.h"
 #include "attributes.h"
-#include "block_connections.h"
 #include "chunk.h"
+#include "connection_data.h"
 #include "dimension.h"
 #include "endweave/protocol/transform.h"
 #include "game.h"

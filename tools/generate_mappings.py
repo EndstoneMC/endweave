@@ -10,7 +10,8 @@ newer version added, at that version's default, and loses the ones it removed. G
 loses what the older version lacks, and a block type the older version lacks is renamed to the
 fallback data/fallbacks/v<from>_to_v<to>.json names for it. Anything else stops the generator.
 items lists, sorted, the items the target has no mapping for. A hop that gives blocks states from
-their neighbours also gets a neighbor_blocks.h.
+their neighbours also gets a block_connections.h, a BlockData profile for each set of blocks that
+are the same to the blocks beside them.
 
 Usage: uv run tools/generate_mappings.py
 """
@@ -176,8 +177,8 @@ class BlockPalette:
         self.blocks: dict[tuple, Block] = {}
         # Every value each state of each block type takes.
         self.states: dict[str, dict[str, list[Tag]]] = {}
-        # What each block is to the blocks beside it, in the order NeighborBlock declares it.
-        self.neighbors: dict[tuple, tuple] = {}
+        # What each block is to the blocks beside it, in the order BlockData declares it.
+        self.connection_data: dict[tuple, tuple] = {}
         block_types = {block_type["name"]: block_type for block_type in mapping["block_types"]}
         by_runtime_id: dict[int, Block] = {}
         for entry in mapping["blocks"]:
@@ -187,7 +188,7 @@ class BlockPalette:
             self.blocks[block.key()] = block
             rule = entry.get("connection_rule", {})
             block_type = block_types[block.name]
-            self.neighbors[block.key()] = (
+            self.connection_data[block.key()] = (
                 rule.get("connections_from"),
                 rule.get("enabled_directions", 0),
                 entry.get("connection_id"),
@@ -263,8 +264,8 @@ def diff(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) 
     return updates
 
 
-# NeighborBlock's fields after its name and states, and how each is written when it is not its default.
-NEIGHBOR_FIELDS = {
+# BlockData's fields after its name and states, and how each is written when it is not its default.
+BLOCK_DATA_FIELDS = {
     "connections_from": (None, "0b{:05b}"),
     "enabled_directions": (0, "0b{:06b}"),
     "connection_id": (None, "{}"),
@@ -279,8 +280,8 @@ NEIGHBOR_FIELDS = {
 
 
 @dataclass
-class NeighborBlock:
-    """The blocks of one type that are the same to the blocks beside them."""
+class BlockData:
+    """The blocks of one type that are the same to the blocks beside them: one profile."""
 
     name: str
     states: dict[str, list[Tag]]
@@ -296,9 +297,9 @@ def products(blocks: list[dict[str, Tag]]) -> list[dict[str, list[Tag]]]:
     return [states for tag in values[split] for states in products([b for b in blocks if b[split] == tag])]
 
 
-def neighbor_blocks(
+def block_connections(
     source: BlockPalette, target: BlockPalette, updates: list[BlockStateUpdate]
-) -> list[NeighborBlock] | None:
+) -> list[BlockData] | None:
     """What every block `source` can send is to the blocks beside it, as `target` has it, for a hop
     that gives blocks states."""
     if not any(update.add for update in updates):
@@ -307,9 +308,9 @@ def neighbor_blocks(
     for name in sorted(source.states.keys() & target.states.keys()):
         groups: dict[tuple, list[dict[str, Tag]]] = {}
         for block in target.permutations(name):
-            groups.setdefault(target.neighbors[block.key()], []).append(block.states)
+            groups.setdefault(target.connection_data[block.key()], []).append(block.states)
         for fields, states in sorted(groups.items(), key=lambda group: repr(group[0])):
-            blocks += [NeighborBlock(name, product, fields) for product in products(states)]
+            blocks += [BlockData(name, product, fields) for product in products(states)]
     return blocks
 
 
@@ -342,9 +343,9 @@ def cpp_states(states: dict[str, list[Tag]]) -> list[str]:
     return cpp_snbt("states", f"{{{', '.join(values)}}}")
 
 
-def cpp_neighbor(block: NeighborBlock) -> list[str]:
+def cpp_block_data(block: BlockData) -> list[str]:
     lines = ["        {", f'            .name = "{block.name}",', *cpp_states(block.states)]
-    for (member, (default, form)), value in zip(NEIGHBOR_FIELDS.items(), block.fields):
+    for (member, (default, form)), value in zip(BLOCK_DATA_FIELDS.items(), block.fields):
         if value != default:
             lines.append(f"            .{member} = {form.format(value)},")
     lines.append("        },")
@@ -410,35 +411,32 @@ def write_mappings(
     print(f"{path.relative_to(ROOT)}: {len(updates)} block states, {len(missing_items)} items")
 
 
-def write_neighbor_blocks(source: BlockPalette, target: BlockPalette, records: list[list[str]]) -> None:
+def write_block_connections(source: BlockPalette, target: BlockPalette, profiles: list[list[str]]) -> None:
     lines = [
         *preamble(source, target, "block_connection.h"),
         "#include <array>",
-        "#include <span>",
         "",
         "namespace endweave {",
         "",
         "template <>",
-        f"inline std::span<const NeighborBlock> getNeighborBlocks<{source.protocol}, {target.protocol}>()",
-        "{",
-        f"    static constexpr std::array<NeighborBlock, {len(records)}> records = {{{{",
-        *(line for record in records for line in record),
+        f"struct BlockConnections<{source.protocol}, {target.protocol}> {{",
+        f"    static constexpr std::array<BlockData, {len(profiles)}> profiles = {{{{",
+        *(line for profile in profiles for line in profile),
         "    }};",
-        "    return records;",
-        "}",
+        "};",
         "",
         "} // namespace endweave",
         "",
     ]
-    path = write_lines(source, target, "neighbor_blocks.h", lines)
-    print(f"{path.relative_to(ROOT)}: {len(records)} records")
+    path = write_lines(source, target, "block_connections.h", lines)
+    print(f"{path.relative_to(ROOT)}: {len(profiles)} profiles")
 
 
 def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) -> None:
     updates = diff(source, target, fallbacks)
     write_mappings(source, target, [cpp_update(update) for update in updates], sorted(source.items - target.items))
-    if (blocks := neighbor_blocks(source, target, updates)) is not None:
-        write_neighbor_blocks(source, target, [cpp_neighbor(block) for block in blocks])
+    if (profiles := block_connections(source, target, updates)) is not None:
+        write_block_connections(source, target, [cpp_block_data(profile) for profile in profiles])
 
 
 def load_fallbacks(source: BlockPalette, target: BlockPalette) -> dict[str, str]:

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "attributes.h"
-#include "block_connections.h"
 #include "camera.h"
 #include "chunk.h"
+#include "connection_data.h"
 #include "diagnostics.h"
 #include "dimension.h"
 #include "endweave/protocol/transform.h"

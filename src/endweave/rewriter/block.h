@@ -220,11 +220,11 @@ struct BlockRewriter {
             std::vector<bp::BlockPos> stored;
             for (const auto &placed : sub_chunks) {
                 if (!placed.sub_chunk.storages.empty()) {
-                    storage.store(placed.pos, placed.sub_chunk.storages.front());
+                    storage.storeSection(placed.pos, placed.sub_chunk.storages.front());
                     stored.push_back(placed.pos);
                 }
             }
-            updateBorders(stored, storage);
+            updateChunkSectionNeighbours(stored, storage);
         }
     }
 
@@ -234,7 +234,7 @@ struct BlockRewriter {
     {
         if constexpr (connectsBlocks<From, To>()) {
             const auto connected = connectBlock<From, To>(pos, id, storage);
-            storage.set(pos, connected);
+            storage.store(pos, connected);
             return connected;
         }
         else {
@@ -246,7 +246,7 @@ struct BlockRewriter {
      * whose states change to send later, as the server sends nothing for them. Redstone reads the
      * wire a block up or down on each side, so this reaches past the faces.
      * @see ViaVersion ConnectionData#update. */
-    static void updateNeighbors(std::span<const bp::BlockPos> changed, BlockConnectionStorage &storage)
+    static void update(std::span<const bp::BlockPos> changed, BlockConnectionStorage &storage)
     {
         if constexpr (connectsBlocks<From, To>()) {
             std::set<std::array<int, 3>> neighbors;
@@ -270,8 +270,9 @@ struct BlockRewriter {
 
     /** Works out again the kept blocks along the `stored` sub-chunks in the sub-chunks beside them,
      * which the client was sent first, with the stored ones' blocks counted as air, and keeps those
-     * whose states change to send later. */
-    static void updateBorders(std::span<const bp::BlockPos> stored, BlockConnectionStorage &storage)
+     * whose states change to send later.
+     * @see ViaVersion ConnectionData.NeighbourUpdater#updateChunkSectionNeighbours. */
+    static void updateChunkSectionNeighbours(std::span<const bp::BlockPos> stored, BlockConnectionStorage &storage)
     {
         std::set<std::array<int, 3>> fresh;
         for (const auto &pos : stored) {
@@ -398,10 +399,10 @@ private:
             auto mapped = MappingData<A, next>::getNewBlockStateId(id);
             if constexpr (HasConnections<A, next>) {
                 if (ConnectionData<A, next>::connects(mapped)) {
-                    const auto get = [&](const bp::BlockPos &at) {
+                    const auto blocks = [&](const bp::BlockPos &at) {
                         return getSent<next>(storage, at);
                     };
-                    mapped = ConnectionData<A, next>::connect(pos, mapped, get).value_or(mapped);
+                    mapped = ConnectionData<A, next>::connect(pos, mapped, blocks);
                 }
             }
             return connectBlock<next, B>(pos, mapped, storage);
@@ -412,16 +413,16 @@ private:
     template <int A, int B>
     static void connectBlocks(std::vector<PlacedSubChunk> &sub_chunks, const BlockConnectionStorage &storage)
     {
-        std::map<std::tuple<int, int, int>, const SubChunkStorage *> blocks;
+        std::map<std::tuple<int, int, int>, const SubChunkStorage *> sections;
         for (const auto &placed : sub_chunks) {
             if (!placed.sub_chunk.storages.empty()) {
-                blocks.emplace(std::tuple{placed.pos.x, placed.pos.y, placed.pos.z},
-                               &placed.sub_chunk.storages.front());
+                sections.emplace(std::tuple{placed.pos.x, placed.pos.y, placed.pos.z},
+                                 &placed.sub_chunk.storages.front());
             }
         }
-        const auto get = [&](const bp::BlockPos &pos) -> std::optional<std::uint32_t> {
-            const auto it = blocks.find({pos.x >> 4, pos.y >> 4, pos.z >> 4});
-            if (it == blocks.end()) {
+        const auto blocks = [&](const bp::BlockPos &pos) -> std::optional<std::uint32_t> {
+            const auto it = sections.find({pos.x >> 4, pos.y >> 4, pos.z >> 4});
+            if (it == sections.end()) {
                 return getSent<B>(storage, pos);
             }
             return it->second->getElement(SubChunkStorage::getIndex(pos.x & 15, pos.y & 15, pos.z & 15));
@@ -447,9 +448,9 @@ private:
                             continue;
                         }
                         const bp::BlockPos pos{placed.pos.x * 16 + x, placed.pos.y * 16 + y, placed.pos.z * 16 + z};
-                        const auto connected = ConnectionData<A, B>::connect(pos, *id, get);
-                        if (connected && *connected != *id) {
-                            changes.emplace_back(&layer, index, *connected);
+                        const auto connected = ConnectionData<A, B>::connect(pos, *id, blocks);
+                        if (connected != *id) {
+                            changes.emplace_back(&layer, index, connected);
                         }
                     }
                 }
@@ -605,7 +606,7 @@ void rewriteUpdateBlock(Packet &packet, BlockConnectionStorage &storage)
     }
     const bp::BlockPos pos{packet.pos.x, packet.pos.y, packet.pos.z};
     packet.runtime_id = bp::BlockRuntimeId{BlockRewriter<From, To>::rewriteBlock(pos, packet.runtime_id, storage)};
-    BlockRewriter<From, To>::updateNeighbors(std::span{&pos, 1}, storage);
+    BlockRewriter<From, To>::update(std::span{&pos, 1}, storage);
 }
 
 } // namespace detail
@@ -642,8 +643,8 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::UpdateSubChun
         // Every changed block first, so each one reads the others as they now are.
         if constexpr (connectsBlocks<From, To>()) {
             for (const auto &block : packet.blocks_changed.standards) {
-                storage.set({block.pos.x, block.pos.y, block.pos.z},
-                            MappingData<From, To>::getNewBlockStateId(block.runtime_id));
+                storage.store({block.pos.x, block.pos.y, block.pos.z},
+                              MappingData<From, To>::getNewBlockStateId(block.runtime_id));
             }
         }
         std::vector<bp::BlockPos> changed;
@@ -653,7 +654,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::UpdateSubChun
                 bp::BlockRuntimeId{BlockRewriter<From, To>::rewriteBlock(pos, block.runtime_id, storage)};
             changed.push_back(pos);
         }
-        BlockRewriter<From, To>::updateNeighbors(changed, storage);
+        BlockRewriter<From, To>::update(changed, storage);
         for (auto &block : packet.blocks_changed.extras) {
             block.runtime_id = bp::BlockRuntimeId{MappingData<From, To>::getNewBlockStateId(block.runtime_id)};
         }
