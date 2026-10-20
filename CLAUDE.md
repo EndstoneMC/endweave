@@ -209,8 +209,9 @@ and it is not `Transformer`'s job.
 - **One that parses bytes the schema leaves opaque returns `std::expected<void, std::error_code>`,**
   and `handle` fails the packet on an error, as it does a decode error. The rest return `void`.
 - **One that needs the blocks the client was sent takes the translator's `BlockConnectionStorage &`**
-  as a second argument, and one that gives the packet's block ids itself sets
-  `static constexpr bool rewrites_block_ids = true`, so `handle` skips `rewriteBlockIds` for it.
+  as a second argument, and one that needs the items the client lacks its `ItemRegistryStorage &`.
+  One that gives the packet's block ids itself sets `static constexpr bool rewrites_block_ids = true`,
+  so `handle` skips `rewriteBlockIds` for it.
 
 ## Block states
 
@@ -236,7 +237,7 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   lays out its own. `data/v<protocol>.json` is the fields endweave reads from one version's
   bedrock-dumper `block_types.json` and `block_palette.json`, one entry per line, sorted, each state
   a JSON value (bool for a `ByteTag`, number for an `IntTag`, string for a `StringTag`) and each
-  field left out at its default. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
+  field left out at its default, then the item names from its `items.json`. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
   writes it. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the
   fallback for each block type the `to` version lacks. `data/` stays out of the sdist and the wheel.
 - **`uv run tools/generate_block_states.py` writes the rules from `data/`.** The script mirrors
@@ -297,6 +298,22 @@ same way, so a hop is stated as readable rules and the ids follow from them.
 - **The client cache is turned off.** The server's blob ids hash the sub-chunks it serializes, so
   they stop naming what the client is sent once a palette is rewritten. `ClientCacheStatus` is
   rewritten to off for every pair.
+
+## Items
+
+The server's `ItemRegistryPacket` gives every item its numeric id, so ids need no mapping; a client
+older than the server is only offered items its version lacks.
+
+- **`uv run tools/generate_items.py` writes `protocols/v<from>_to_v<to>/item_mappings.h`** from the
+  item names in `data/`, for a hop whose `from` has items its `to` lacks: an `ItemMappings`
+  specialisation listing them, which `getNewItemName` (`protocol/item.h`) reads hop by hop, as
+  ViaVersion's `MappingData#getNewItemId` does, returning none for a missing item.
+- **The registry keeps every item**, so a stack of one the client lacks still resolves, and the
+  `ItemRegistryPacket` rewriter notes their ids in the translator's `ItemRegistryStorage`. The
+  `CreativeContent` rewriter leaves those items out, and any group they leave empty, and the
+  `CraftingData` rewriter the recipes and mixes that take or make one (`rewriter/item.h`). MOT
+  does the same; ViaBackwards instead shows a fallback item, which needs the real one restored on
+  the way back.
 
 ## Transformers
 
@@ -389,7 +406,9 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocols/v2168_to_v2193/block_connections.h` `StandardConnectionHandler` | `AbstractFenceConnectionHandler` and its subclasses |
 | `protocols/v2193_to_v2225/block_connections.h` `ChorusPlantConnectionHandler`, `FireConnectionHandler`, `RedstoneConnectionHandler` | the handlers of the same names |
 | `data/v<protocol>.json`, `data/fallbacks/v<from>_to_v<to>.json` | Mappings repo `mappings/mapping-<version>.json`, `mappings/diff/` |
-| `tools/import_bedrock_data.py`, `tools/generate_block_states.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
+| `tools/import_bedrock_data.py`, `tools/generate_block_states.py`, `tools/generate_items.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
+| `protocol/item.h` `ItemMappings`, `getNewItemName` | ViaBackwards `ItemMappings`, `MappingData#getNewItemId` |
+| `rewriter/item.h` `ItemRewriter` | `ItemRewriter` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |
 | `protocol/handler.h` `Translator` | `Protocol` by role, Velocity `ProtocolRegistry` by behaviour |
 | `protocol/handler.h` `getTranslator` | Velocity `StateRegistry.PacketRegistry#getProtocolRegistry` |

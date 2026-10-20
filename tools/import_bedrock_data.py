@@ -5,7 +5,7 @@
 
 Keeps the block_types.json and block_palette.json fields endweave reads, one entry per line and
 sorted, with each state as a JSON value: a bool for a ByteTag, a number for an IntTag and a string
-for a StringTag. Fields at their default are left out.
+for a StringTag. Fields at their default are left out. From items.json it keeps the item names.
 
 Usage: uv run tools/import_bedrock_data.py <bedrock-data-<version> folder> <protocol>
 """
@@ -56,6 +56,7 @@ def main() -> None:
     folder, protocol = Path(sys.argv[1]), int(sys.argv[2])
     palette = json.loads((folder / "block_palette.json").read_text(encoding="utf-8"))
     block_types = json.loads((folder / "block_types.json").read_text(encoding="utf-8"))
+    items = json.loads((folder / "items.json").read_text(encoding="utf-8"))
     version = folder.name.removeprefix("bedrock-data-")
 
     types = sorted(
@@ -71,7 +72,9 @@ def main() -> None:
         key=lambda entry: (entry["name"], sorted(entry["states"].items())),
     )
 
-    def rows(entries: list[dict]) -> str:
+    item_names = sorted(item["name"] for item in items["items"])
+
+    def rows(entries: list) -> str:
         return ",\n".join(f"    {json.dumps(entry)}" for entry in entries)
 
     path = ROOT / "data" / f"v{protocol}.json"
@@ -79,11 +82,12 @@ def main() -> None:
     path.write_text(
         f'{{\n  "version": "{version}",\n'
         f'  "block_types": [\n{rows(types)}\n  ],\n'
-        f'  "blocks": [\n{rows(blocks)}\n  ]\n}}\n',
+        f'  "blocks": [\n{rows(blocks)}\n  ],\n'
+        f'  "items": [\n{rows(item_names)}\n  ]\n}}\n',
         encoding="utf-8",
         newline="\n",
     )
-    print(f"{path.relative_to(ROOT)}: {len(types)} block types, {len(blocks)} blocks")
+    print(f"{path.relative_to(ROOT)}: {len(types)} block types, {len(blocks)} blocks, {len(item_names)} items")
 
 
 if __name__ == "__main__":

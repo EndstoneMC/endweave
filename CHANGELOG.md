@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 - Fixed redstone wire, fences and other connected blocks sometimes showing the wrong shape after joining, along chunk borders and where redstone powered up as its chunk loaded.
 - Fixed connected blocks taking the wrong shape when several players on the same newer version were online.
+- Fixed items only a newer server has, such as 26.50's wool and concrete stairs and slabs, showing in an older client's creative inventory and recipe book with untranslated names.
 
 ## [0.6.1] - 2026-10-20
 
