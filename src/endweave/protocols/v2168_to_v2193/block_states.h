@@ -6,1193 +6,575 @@
 
 #include "endweave/protocol/block.h"
 
-#include <vector>
+#include <array>
+#include <span>
 
 namespace endweave {
 
 template <>
-inline std::vector<BlockStateUpdate> getBlockStateUpdates<2168, 2193>()
+inline std::span<const BlockStateUpdate> getBlockStateUpdates<2168, 2193>()
 {
-    return {
+    static constexpr std::array<BlockStateUpdate, 123> records = {{
         {
             .name = "minecraft:acacia_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:acacia_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:andesite_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:bamboo_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:bamboo_mosaic_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:bamboo_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:birch_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:birch_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:black_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:blackstone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:blue_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:brown_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:cherry_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:cherry_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:cinnabar_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:cinnabar_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:cobbled_deepslate_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:copper_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:crimson_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:crimson_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:cut_copper_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:cyan_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:dark_oak_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:dark_oak_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:dark_prismarine_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:deepslate_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:deepslate_tile_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:diorite_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:end_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:exposed_copper_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:exposed_cut_copper_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:granite_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:gray_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:green_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_black_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_blue_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_brown_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_cyan_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_gray_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_green_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_light_blue_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_light_gray_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_lime_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_magenta_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_orange_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_pink_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_purple_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_red_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_white_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:hard_yellow_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:iron_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:jungle_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:jungle_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:light_blue_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:light_gray_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:lime_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:magenta_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:mangrove_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:mangrove_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:mossy_cobblestone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:mossy_stone_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:mud_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:nether_brick_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:nether_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:normal_stone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:oak_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:oak_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:orange_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:oxidized_copper_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:oxidized_cut_copper_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:pale_oak_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:pale_oak_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:pink_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:polished_andesite_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:polished_blackstone_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:polished_blackstone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:polished_cinnabar_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:polished_deepslate_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:polished_diorite_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:polished_granite_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:polished_sulfur_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:polished_tuff_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:poplar_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:poplar_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:prismarine_bricks_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:prismarine_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:purple_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:purpur_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:quartz_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:red_nether_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:red_sandstone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:red_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:resin_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:sandstone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:smooth_quartz_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:smooth_red_sandstone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:smooth_sandstone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:spruce_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:spruce_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:stone_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:stone_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:sulfur_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:sulfur_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:trip_wire",
-            .states = {
-                {"attached_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"disarmed_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"powered_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"suspended_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .states = "{attached_bit: [0b, 1b], disarmed_bit: [0b, 1b], powered_bit: [0b, 1b], suspended_bit: [0b, 1b]}",
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:tuff_brick_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:tuff_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:warped_fence",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:warped_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:waxed_copper_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:waxed_cut_copper_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:waxed_exposed_copper_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:waxed_exposed_cut_copper_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:waxed_oxidized_copper_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:waxed_oxidized_cut_copper_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:waxed_weathered_copper_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:waxed_weathered_cut_copper_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:weathered_copper_bars",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:weathered_cut_copper_stairs",
-            .states = {
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .add = {
-                {"minecraft:corner", bp::StringTag{"none"}},
-            },
+            .states = "{upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .add = "{'minecraft:corner': 'none'}",
         },
         {
             .name = "minecraft:white_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:yellow_stained_glass_pane",
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_west': 0b}",
         },
-    };
+    }};
+    return records;
 }
 
 } // namespace endweave

@@ -6,2018 +6,943 @@
 
 #include "endweave/protocol/block.h"
 
-#include <vector>
+#include <array>
+#include <span>
 
 namespace endweave {
 
 template <>
-inline std::vector<BlockStateUpdate> getBlockStateUpdates<2193, 2168>()
+inline std::span<const BlockStateUpdate> getBlockStateUpdates<2193, 2168>()
 {
-    return {
+    static constexpr std::array<BlockStateUpdate, 221> records = {{
         {
             .name = "minecraft:acacia_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:acacia_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:andesite_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:bamboo_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:bamboo_mosaic_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:bamboo_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:birch_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:birch_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:black_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:black_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:black_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:blackstone_slab",
         },
         {
             .name = "minecraft:black_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:blackstone_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:black_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:black_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:black_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:black_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:blackstone_slab",
         },
         {
             .name = "minecraft:black_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:blackstone_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:blackstone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:blue_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:blue_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:blue_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:dark_prismarine_slab",
         },
         {
             .name = "minecraft:blue_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:dark_prismarine_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:blue_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:blue_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:blue_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:blue_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:dark_prismarine_slab",
         },
         {
             .name = "minecraft:blue_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:dark_prismarine_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:brown_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:brown_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:brown_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:dark_oak_slab",
         },
         {
             .name = "minecraft:brown_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:dark_oak_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:brown_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:brown_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:brown_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:brown_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:dark_oak_slab",
         },
         {
             .name = "minecraft:brown_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:dark_oak_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:cherry_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:cherry_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:cinnabar_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:cinnabar_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:cobbled_deepslate_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:copper_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:crimson_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:crimson_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:cut_copper_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:cyan_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:cyan_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:cyan_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:warped_slab",
         },
         {
             .name = "minecraft:cyan_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:warped_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:cyan_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:cyan_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:cyan_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:cyan_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:warped_slab",
         },
         {
             .name = "minecraft:cyan_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:warped_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:dark_oak_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:dark_oak_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:dark_prismarine_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:deepslate_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:deepslate_tile_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:diorite_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:end_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:exposed_copper_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:exposed_cut_copper_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:granite_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:gray_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:gray_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:gray_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:cobbled_deepslate_slab",
         },
         {
             .name = "minecraft:gray_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:cobbled_deepslate_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:gray_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:gray_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:gray_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:gray_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:cobbled_deepslate_slab",
         },
         {
             .name = "minecraft:gray_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:cobbled_deepslate_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:green_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:green_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:green_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:mossy_cobblestone_slab",
         },
         {
             .name = "minecraft:green_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:mossy_cobblestone_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:green_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:green_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:green_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:green_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:mossy_cobblestone_slab",
         },
         {
             .name = "minecraft:green_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:mossy_cobblestone_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:hard_black_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_blue_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_brown_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_cyan_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_gray_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_green_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_light_blue_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_light_gray_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_lime_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_magenta_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_orange_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_pink_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_purple_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_red_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_white_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:hard_yellow_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:iron_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:jungle_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:jungle_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:light_blue_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:light_blue_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:light_blue_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:prismarine_brick_slab",
         },
         {
             .name = "minecraft:light_blue_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:prismarine_bricks_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:light_blue_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:light_blue_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:light_blue_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:light_blue_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:prismarine_brick_slab",
         },
         {
             .name = "minecraft:light_blue_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:prismarine_bricks_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:light_gray_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:light_gray_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:light_gray_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:andesite_slab",
         },
         {
             .name = "minecraft:light_gray_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:andesite_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:light_gray_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:light_gray_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:light_gray_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:light_gray_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:andesite_slab",
         },
         {
             .name = "minecraft:light_gray_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:andesite_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:lime_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:lime_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:lime_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:mossy_stone_brick_slab",
         },
         {
             .name = "minecraft:lime_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:mossy_stone_brick_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:lime_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:lime_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:lime_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:lime_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:mossy_stone_brick_slab",
         },
         {
             .name = "minecraft:lime_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:mossy_stone_brick_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:magenta_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:magenta_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:magenta_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:crimson_slab",
         },
         {
             .name = "minecraft:magenta_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:crimson_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:magenta_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:magenta_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:magenta_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:magenta_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:crimson_slab",
         },
         {
             .name = "minecraft:magenta_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:crimson_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:mangrove_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:mangrove_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:mossy_cobblestone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:mossy_stone_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:mud_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:nether_brick_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:nether_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:normal_stone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:oak_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:oak_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:orange_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:orange_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:orange_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:acacia_slab",
         },
         {
             .name = "minecraft:orange_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:acacia_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:orange_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:orange_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:orange_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:orange_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:acacia_slab",
         },
         {
             .name = "minecraft:orange_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:acacia_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:oxidized_copper_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:oxidized_cut_copper_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:pale_oak_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:pale_oak_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:pink_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:pink_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:pink_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:cherry_slab",
         },
         {
             .name = "minecraft:pink_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:cherry_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:pink_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:pink_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:pink_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:pink_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:cherry_slab",
         },
         {
             .name = "minecraft:pink_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:cherry_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_andesite_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_blackstone_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_blackstone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_cinnabar_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_deepslate_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_diorite_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_granite_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_sulfur_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:polished_tuff_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:poplar_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:poplar_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:prismarine_bricks_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:prismarine_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:purple_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:purple_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:purple_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:purpur_slab",
         },
         {
             .name = "minecraft:purple_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:purpur_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:purple_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:purple_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:purple_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:purple_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:purpur_slab",
         },
         {
             .name = "minecraft:purple_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:purpur_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:purpur_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:quartz_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:red_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:red_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:red_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:red_nether_brick_slab",
         },
         {
             .name = "minecraft:red_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:red_nether_brick_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:red_nether_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:red_sandstone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:red_shrub",
@@ -2025,529 +950,242 @@ inline std::vector<BlockStateUpdate> getBlockStateUpdates<2193, 2168>()
         },
         {
             .name = "minecraft:red_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:red_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:red_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:red_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:red_nether_brick_slab",
         },
         {
             .name = "minecraft:red_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:red_nether_brick_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:resin_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:sandstone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:shelf_mushroom",
-            .states = {
-                {"growth", {bp::IntTag{0}, bp::IntTag{1}}},
-                {"minecraft:cardinal_direction", {bp::StringTag{"east"}, bp::StringTag{"north"}, bp::StringTag{"south"}, bp::StringTag{"west"}}},
-            },
+            .states = "{growth: [0, 1], 'minecraft:cardinal_direction': ['east', 'north', 'south', 'west']}",
             .rename = "minecraft:brown_mushroom",
-            .remove = {
-                "growth",
-                "minecraft:cardinal_direction",
-            },
+            .remove = "['growth', 'minecraft:cardinal_direction']",
         },
         {
             .name = "minecraft:smooth_quartz_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:smooth_red_sandstone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:smooth_sandstone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:spruce_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:spruce_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:stone_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:stone_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:sulfur_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:sulfur_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:trip_wire",
-            .states = {
-                {"attached_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"disarmed_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"powered_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"suspended_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{attached_bit: [0b, 1b], disarmed_bit: [0b, 1b], 'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b], powered_bit: [0b, 1b], suspended_bit: [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:tuff_brick_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:tuff_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:warped_fence",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:warped_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:waxed_copper_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:waxed_cut_copper_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:waxed_exposed_copper_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:waxed_exposed_cut_copper_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:waxed_oxidized_copper_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:waxed_oxidized_cut_copper_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:waxed_weathered_copper_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:waxed_weathered_cut_copper_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:weathered_copper_bars",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:weathered_cut_copper_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
-            .remove = {
-                "minecraft:corner",
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:white_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:white_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:white_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:smooth_quartz_slab",
         },
         {
             .name = "minecraft:white_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:smooth_quartz_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:white_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:white_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:white_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:white_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:smooth_quartz_slab",
         },
         {
             .name = "minecraft:white_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:smooth_quartz_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:yellow_concrete_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:yellow_concrete",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:yellow_concrete_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:bamboo_slab",
         },
         {
             .name = "minecraft:yellow_concrete_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:bamboo_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
         {
             .name = "minecraft:yellow_stained_glass_pane",
-            .states = {
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:yellow_wool_double_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:yellow_wool",
-            .remove = {
-                "minecraft:vertical_half",
-            },
+            .remove = "['minecraft:vertical_half']",
         },
         {
             .name = "minecraft:yellow_wool_slab",
-            .states = {
-                {"minecraft:vertical_half", {bp::StringTag{"bottom"}, bp::StringTag{"top"}}},
-            },
+            .states = "{'minecraft:vertical_half': ['bottom', 'top']}",
             .rename = "minecraft:bamboo_slab",
         },
         {
             .name = "minecraft:yellow_wool_stairs",
-            .states = {
-                {"minecraft:corner", {bp::StringTag{"inner_left"}, bp::StringTag{"inner_right"}, bp::StringTag{"none"}, bp::StringTag{"outer_left"}, bp::StringTag{"outer_right"}}},
-                {"upside_down_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"weirdo_direction", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}}},
-            },
+            .states = "{'minecraft:corner': ['inner_left', 'inner_right', 'none', 'outer_left', 'outer_right'], upside_down_bit: [0b, 1b], weirdo_direction: [0, 1, 2, 3]}",
             .rename = "minecraft:bamboo_stairs",
-            .remove = {
-                "minecraft:corner",
-            },
+            .remove = "['minecraft:corner']",
         },
-    };
+    }};
+    return records;
 }
 
 } // namespace endweave

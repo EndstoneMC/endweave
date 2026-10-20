@@ -213,10 +213,16 @@ same way, so a hop is stated as readable rules and the ids follow from them.
 
 - **The rules are generated C++, committed.** `protocols/v<from>_to_v<to>/block_states.h` lists one
   `BlockStateUpdate` per block type that changes: every value of each of its states, then the name
-  it takes (`rename`), the states it gains (`add`) and the ones it loses (`remove`). It is
-  `// clang-format off`, and it is never edited by hand. `getNewBlockStateId` hashes every state of
-  those blocks once per hop and looks ids up hop by hop; a block no hop changes keeps its id, which
-  is what an add-on block needs.
+  it takes (`rename`), the states it gains (`add`) and the ones it loses (`remove`), each in SNBT,
+  which `protocol/tag_parser.h` reads. The records are `static constexpr` data with no code to build
+  them, which keeps the translation unit quick to compile. It is `// clang-format off`, and it is
+  never edited by hand. `getNewBlockStateId` hashes every state of those blocks once per hop and
+  looks ids up hop by hop; a block no hop changes keeps its id, which is what an add-on block needs.
+- **`connection_rules.h` is generated for a hop that gives fences, panes, bars and tripwire their
+  connections**: the `BlockConnectionRule` of every block the older version can send, as the newer
+  version has it. A record is one block type's states that share BDS's `BlockConnectionRuleComponent`
+  and connection id, so a type whose rule depends on a state, such as a stair's facing, gets one
+  record per rule. A block with neither has no record.
 - **`data/` holds each version's block data, committed**, laid out as ViaVersion's Mappings repo
   lays out its own. `data/v<protocol>.json` is the fields endweave reads from one version's
   bedrock-dumper `block_types.json` and `block_palette.json`, one entry per line, sorted, each state
@@ -248,9 +254,10 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   `BlockRewriter::rewriteSubChunks` takes a packet's sub-chunks a hop at a time: it renumbers the
   palettes, then gives every block the hop connects the id its neighbours make it, reading only the
   sub-chunks in the same packet. A neighbour outside them counts as air. Each handler is BDS's rule
-  as written, and builds its tables from the hop's `BlockStateUpdate`s.
+  as written, and builds its tables from the hop's generated records.
   `protocols/v2168_to_v2193/block_connections.h` has `StairConnectionHandler`, BDS's
-  `CornerConnectionCallback`, for `minecraft:corner`.
+  `CornerConnectionCallback`, for `minecraft:corner`, and `StandardConnectionHandler`, BDS's
+  `StandardConnectionCallback`, for `minecraft:connection_*` on fences, panes, bars and tripwire.
 - **The client cache is turned off.** The server's blob ids hash the sub-chunks it serializes, so
   they stop naming what the client is sent once a palette is rewritten. `ClientCacheStatus` is
   rewritten to off for every pair.
@@ -340,6 +347,7 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocol/sub_chunk.h` `SubChunk`, `SubChunkStorage` | `ChunkSection`, `DataPalette` |
 | `protocol/block.h` `ConnectionData` | `ConnectionData` |
 | `protocols/v2168_to_v2193/block_connections.h` `StairConnectionHandler` | `StairConnectionHandler` |
+| `protocols/v2168_to_v2193/block_connections.h` `StandardConnectionHandler` | `AbstractFenceConnectionHandler` and its subclasses |
 | `data/v<protocol>.json`, `data/fallbacks/v<from>_to_v<to>.json` | Mappings repo `mappings/mapping-<version>.json`, `mappings/diff/` |
 | `tools/import_bedrock_data.py`, `tools/generate_block_states.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |

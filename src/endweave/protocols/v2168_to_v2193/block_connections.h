@@ -1,6 +1,7 @@
 #pragma once
 
 #include "block_states.h"
+#include "connection_rules.h"
 #include "endweave/protocol/block.h"
 
 #include <algorithm>
@@ -147,7 +148,7 @@ private:
         static const auto stairs = [] {
             std::vector<std::pair<std::uint32_t, Stair>> result;
             for (const auto &update : getBlockStateUpdates<2168, 2193>()) {
-                if (!update.add.contains("minecraft:corner")) {
+                if (!parseSnbt<bp::CompoundTag>(update.add).contains("minecraft:corner")) {
                     continue;
                 }
                 const auto &name = update.rename.empty() ? update.name : update.rename;
@@ -173,19 +174,153 @@ private:
     }
 };
 
+/** minecraft:connection_north, east, south and west on fences, panes, bars and tripwire: whether the
+ * block on that side accepts the block as a connector.
+ * @see BDS ConnectionBlockTraitAnon::StandardConnectionCallback, ViaVersion AbstractFenceConnectionHandler. */
+class StandardConnectionHandler {
+public:
+    static bool connects(std::uint32_t id)
+    {
+        return findBlock(id) != nullptr;
+    }
+
+    template <class Get>
+    static std::optional<std::uint32_t> connect(const bp::BlockPos &pos, std::uint32_t id, Get &&get)
+    {
+        const auto *self = findBlock(id);
+        if (self == nullptr) {
+            return std::nullopt;
+        }
+        std::size_t connections = 0;
+        for (std::size_t i = 0; i < SIDES.size(); ++i) {
+            const auto &[offset, face, state] = SIDES[i];
+            const auto neighbor = get(bp::BlockPos{pos.x + offset.x, pos.y + offset.y, pos.z + offset.z});
+            if (neighbor && canConnect(self->connection_id, *neighbor, face)) {
+                connections |= std::size_t{1} << i;
+            }
+        }
+        return self->connections[connections];
+    }
+
+private:
+    // BDS ConnectionID.
+    enum class ConnectionID : std::uint8_t {
+        Fence,
+        NetherBrickFence,
+        Wall,
+        ThinFence,
+        TripWire,
+    };
+
+    struct Side {
+        bp::BlockPos offset;
+        // BDS Facing::Name of the neighbour's face that looks back at the block.
+        std::uint8_t face;
+        std::string_view state;
+    };
+
+    static constexpr std::array<Side, 4> SIDES = {{
+        {{0, 0, -1}, 3, "minecraft:connection_north"},
+        {{1, 0, 0}, 4, "minecraft:connection_east"},
+        {{0, 0, 1}, 2, "minecraft:connection_south"},
+        {{-1, 0, 0}, 5, "minecraft:connection_west"},
+    }};
+
+    struct Rule {
+        std::optional<std::uint8_t> connections_from;
+        std::uint8_t enabled_directions;
+        std::optional<std::uint8_t> connection_id;
+    };
+
+    struct Block {
+        std::uint8_t connection_id;
+        std::array<std::uint32_t, std::size_t{1} << SIDES.size()> connections;
+    };
+
+    // BDS BlockTrait::Connection::getConnectedDirections, for one side.
+    static bool canConnect(std::uint8_t connection_id, std::uint32_t neighbor, std::uint8_t face)
+    {
+        const auto *rule = findRule(neighbor);
+        if (rule == nullptr || !rule->connections_from) {
+            return connection_id != static_cast<std::uint8_t>(ConnectionID::TripWire);
+        }
+        return *rule->connections_from != 0 && ((rule->enabled_directions >> face) & 1) != 0 &&
+               ((*rule->connections_from >> connection_id) & 1) != 0;
+    }
+
+    static const Rule *findRule(std::uint32_t id)
+    {
+        static const auto rules = [] {
+            std::vector<std::pair<std::uint32_t, Rule>> result;
+            for (const auto &rule : getBlockConnectionRules<2168, 2193>()) {
+                forEachState(parseSnbt<bp::CompoundTag>(rule.states), [&](const bp::CompoundTag &states) {
+                    result.emplace_back(computeRawSerializationIdHashForNetwork(rule.name, states),
+                                        Rule{rule.connections_from, rule.enabled_directions, rule.connection_id});
+                });
+            }
+            std::ranges::sort(result, {}, &std::pair<std::uint32_t, Rule>::first);
+            return result;
+        }();
+        const auto it = std::ranges::lower_bound(rules, id, {}, &std::pair<std::uint32_t, Rule>::first);
+        return it != rules.end() && it->first == id ? &it->second : nullptr;
+    }
+
+    // Every block the hop gives the four minecraft:connection_* states, by id.
+    static const Block *findBlock(std::uint32_t id)
+    {
+        static const auto blocks = [] {
+            std::vector<std::pair<std::uint32_t, Block>> result;
+            for (const auto &update : getBlockStateUpdates<2168, 2193>()) {
+                const auto add = parseSnbt<bp::CompoundTag>(update.add);
+                if (!std::ranges::all_of(SIDES, [&](const Side &side) {
+                        return add.contains(std::string(side.state));
+                    })) {
+                    continue;
+                }
+                const auto &name = update.rename.empty() ? update.name : update.rename;
+                forEachBlock(update, [&](const bp::CompoundTag &, const bp::CompoundTag &updated) {
+                    const auto *rule = findRule(computeRawSerializationIdHashForNetwork(name, updated));
+                    if (rule == nullptr || !rule->connection_id) {
+                        return;
+                    }
+                    Block block{*rule->connection_id, {}};
+                    for (std::size_t connections = 0; connections < block.connections.size(); ++connections) {
+                        bp::CompoundTag states = updated;
+                        for (std::size_t i = 0; i < SIDES.size(); ++i) {
+                            states.insert_or_assign(std::string(SIDES[i].state),
+                                                    bp::ByteTag{static_cast<std::int8_t>((connections >> i) & 1)});
+                        }
+                        block.connections[connections] = computeRawSerializationIdHashForNetwork(name, states);
+                    }
+                    for (const auto connected : block.connections) {
+                        result.emplace_back(connected, block);
+                    }
+                });
+            }
+            std::ranges::sort(result, {}, &std::pair<std::uint32_t, Block>::first);
+            return result;
+        }();
+        const auto it = std::ranges::lower_bound(blocks, id, {}, &std::pair<std::uint32_t, Block>::first);
+        return it != blocks.end() && it->first == id ? &it->second : nullptr;
+    }
+};
+
 /** The 26.50 states BDS works out from neighbouring blocks.
  * @see ViaVersion ConnectionData. */
 template <>
 struct ConnectionData<2168, 2193> {
     static bool connects(std::uint32_t id)
     {
-        return StairConnectionHandler::connects(id);
+        return StairConnectionHandler::connects(id) || StandardConnectionHandler::connects(id);
     }
 
     template <class Get>
     static std::optional<std::uint32_t> connect(const bp::BlockPos &pos, std::uint32_t id, Get &&get)
     {
-        return StairConnectionHandler::connect(pos, id, get);
+        if (auto stair = StairConnectionHandler::connect(pos, id, get)) {
+            return stair;
+        }
+        return StandardConnectionHandler::connect(pos, id, get);
     }
 };
 

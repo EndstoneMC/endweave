@@ -45,6 +45,11 @@ EAST_STAIRS = {"none": 4172483059, "inner_left": 705466535, "outer_left": 128946
 NORTH_STAIRS_OLD = 3179448066
 NORTH_STAIRS = {"none": 61940232}
 UPSIDE_DOWN_NORTH_STAIRS_OLD = 1718578519
+# minecraft:oak_fence and minecraft:glass_pane at NEW, by the side they connect on.
+OAK_FENCE = {None: OAK_FENCE_NEW, "east": 3720363220, "west": 3665119106}
+GLASS_PANE_OLD = 1848427078
+GLASS_PANE = {None: 1582595964, "north": 3519003817}
+GLASS = 927668178
 
 DESTROY_BLOCK = 2001
 START_BLOCK_CRACKING = 3600
@@ -319,3 +324,33 @@ class TestStairCorners:
         blocks = translate_chunk({(5, 0, 5): EAST_STAIRS["outer_left"]}, NEW, NEWEST)
 
         assert blocks[5, 0, 5] == EAST_STAIRS["outer_left"]
+
+
+class TestFenceConnections:
+    def test_joins_a_fence_to_a_full_block(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): OAK_FENCE_OLD, (6, 0, 5): STONE})
+
+        assert blocks[5, 0, 5] == OAK_FENCE["east"]
+
+    def test_joins_two_fences(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): OAK_FENCE_OLD, (6, 0, 5): OAK_FENCE_OLD})
+
+        assert blocks[5, 0, 5] == OAK_FENCE["east"]
+        assert blocks[6, 0, 5] == OAK_FENCE["west"]
+
+    def test_keeps_a_fence_and_a_pane_apart(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): OAK_FENCE_OLD, (6, 0, 5): GLASS_PANE_OLD})
+
+        assert blocks[5, 0, 5] == OAK_FENCE[None]
+        assert blocks[6, 0, 5] == GLASS_PANE[None]
+
+    def test_joins_a_pane_to_glass(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): GLASS_PANE_OLD, (5, 0, 4): GLASS})
+
+        assert blocks[5, 0, 5] == GLASS_PANE["north"]
+
+    def test_joins_a_fence_only_to_the_back_of_a_stair(self) -> None:
+        blocks = translate_chunk({(5, 0, 5): EAST_STAIRS_OLD, (6, 0, 5): OAK_FENCE_OLD, (4, 0, 5): OAK_FENCE_OLD})
+
+        assert blocks[6, 0, 5] == OAK_FENCE["west"]
+        assert blocks[4, 0, 5] == OAK_FENCE[None]

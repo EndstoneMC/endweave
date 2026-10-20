@@ -6,97 +6,49 @@
 
 #include "endweave/protocol/block.h"
 
-#include <vector>
+#include <array>
+#include <span>
 
 namespace endweave {
 
 template <>
-inline std::vector<BlockStateUpdate> getBlockStateUpdates<2225, 2193>()
+inline std::span<const BlockStateUpdate> getBlockStateUpdates<2225, 2193>()
 {
-    return {
+    static constexpr std::array<BlockStateUpdate, 6> records = {{
         {
             .name = "minecraft:chorus_plant",
-            .states = {
-                {"minecraft:connection_down", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_up", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_down",
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_up",
-                "minecraft:connection_west",
-            },
+            .states = "{'minecraft:connection_down': [0b, 1b], 'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_up': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_down', 'minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_up', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:disc_press",
-            .states = {
-                {"minecraft:cardinal_direction", {bp::StringTag{"east"}, bp::StringTag{"north"}, bp::StringTag{"south"}, bp::StringTag{"west"}}},
-            },
+            .states = "{'minecraft:cardinal_direction': ['east', 'north', 'south', 'west']}",
             .rename = "minecraft:jukebox",
-            .remove = {
-                "minecraft:cardinal_direction",
-            },
+            .remove = "['minecraft:cardinal_direction']",
         },
         {
             .name = "minecraft:fire",
-            .states = {
-                {"age", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}, bp::IntTag{4}, bp::IntTag{5}, bp::IntTag{6}, bp::IntTag{7}, bp::IntTag{8}, bp::IntTag{9}, bp::IntTag{10}, bp::IntTag{11}, bp::IntTag{12}, bp::IntTag{13}, bp::IntTag{14}, bp::IntTag{15}}},
-                {"minecraft:connection_east", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_north", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_south", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_up", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"minecraft:connection_west", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
-            .remove = {
-                "minecraft:connection_east",
-                "minecraft:connection_north",
-                "minecraft:connection_south",
-                "minecraft:connection_up",
-                "minecraft:connection_west",
-            },
+            .states = "{age: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 'minecraft:connection_east': [0b, 1b], 'minecraft:connection_north': [0b, 1b], 'minecraft:connection_south': [0b, 1b], 'minecraft:connection_up': [0b, 1b], 'minecraft:connection_west': [0b, 1b]}",
+            .remove = "['minecraft:connection_east', 'minecraft:connection_north', 'minecraft:connection_south', 'minecraft:connection_up', 'minecraft:connection_west']",
         },
         {
             .name = "minecraft:ice_crystal",
-            .states = {
-                {"minecraft:block_face", {bp::StringTag{"down"}, bp::StringTag{"east"}, bp::StringTag{"north"}, bp::StringTag{"south"}, bp::StringTag{"up"}, bp::StringTag{"west"}}},
-            },
+            .states = "{'minecraft:block_face': ['down', 'east', 'north', 'south', 'up', 'west']}",
             .rename = "minecraft:amethyst_cluster",
         },
         {
             .name = "minecraft:icicle",
-            .states = {
-                {"attached_bit", {bp::ByteTag{0}, bp::ByteTag{1}}},
-                {"dripstone_thickness", {bp::StringTag{"base"}, bp::StringTag{"frustum"}, bp::StringTag{"merge"}, bp::StringTag{"middle"}, bp::StringTag{"tip"}}},
-                {"hanging", {bp::ByteTag{0}, bp::ByteTag{1}}},
-            },
+            .states = "{attached_bit: [0b, 1b], dripstone_thickness: ['base', 'frustum', 'merge', 'middle', 'tip'], hanging: [0b, 1b]}",
             .rename = "minecraft:pointed_dripstone",
-            .remove = {
-                "attached_bit",
-            },
+            .remove = "['attached_bit']",
         },
         {
             .name = "minecraft:redstone_wire",
-            .states = {
-                {"redstone_east", {bp::StringTag{"none"}, bp::StringTag{"side"}, bp::StringTag{"up"}}},
-                {"redstone_north", {bp::StringTag{"none"}, bp::StringTag{"side"}, bp::StringTag{"up"}}},
-                {"redstone_signal", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}, bp::IntTag{4}, bp::IntTag{5}, bp::IntTag{6}, bp::IntTag{7}, bp::IntTag{8}, bp::IntTag{9}, bp::IntTag{10}, bp::IntTag{11}, bp::IntTag{12}, bp::IntTag{13}, bp::IntTag{14}, bp::IntTag{15}}},
-                {"redstone_south", {bp::StringTag{"none"}, bp::StringTag{"side"}, bp::StringTag{"up"}}},
-                {"redstone_west", {bp::StringTag{"none"}, bp::StringTag{"side"}, bp::StringTag{"up"}}},
-            },
-            .remove = {
-                "redstone_east",
-                "redstone_north",
-                "redstone_south",
-                "redstone_west",
-            },
+            .states = "{redstone_east: ['none', 'side', 'up'], redstone_north: ['none', 'side', 'up'], redstone_signal: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], redstone_south: ['none', 'side', 'up'], redstone_west: ['none', 'side', 'up']}",
+            .remove = "['redstone_east', 'redstone_north', 'redstone_south', 'redstone_west']",
         },
-    };
+    }};
+    return records;
 }
 
 } // namespace endweave

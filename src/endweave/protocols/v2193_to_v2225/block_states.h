@@ -6,51 +6,31 @@
 
 #include "endweave/protocol/block.h"
 
-#include <vector>
+#include <array>
+#include <span>
 
 namespace endweave {
 
 template <>
-inline std::vector<BlockStateUpdate> getBlockStateUpdates<2193, 2225>()
+inline std::span<const BlockStateUpdate> getBlockStateUpdates<2193, 2225>()
 {
-    return {
+    static constexpr std::array<BlockStateUpdate, 3> records = {{
         {
             .name = "minecraft:chorus_plant",
-            .add = {
-                {"minecraft:connection_down", bp::ByteTag{0}},
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_up", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .add = "{'minecraft:connection_down': 0b, 'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_up': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:fire",
-            .states = {
-                {"age", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}, bp::IntTag{4}, bp::IntTag{5}, bp::IntTag{6}, bp::IntTag{7}, bp::IntTag{8}, bp::IntTag{9}, bp::IntTag{10}, bp::IntTag{11}, bp::IntTag{12}, bp::IntTag{13}, bp::IntTag{14}, bp::IntTag{15}}},
-            },
-            .add = {
-                {"minecraft:connection_east", bp::ByteTag{0}},
-                {"minecraft:connection_north", bp::ByteTag{0}},
-                {"minecraft:connection_south", bp::ByteTag{0}},
-                {"minecraft:connection_up", bp::ByteTag{0}},
-                {"minecraft:connection_west", bp::ByteTag{0}},
-            },
+            .states = "{age: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}",
+            .add = "{'minecraft:connection_east': 0b, 'minecraft:connection_north': 0b, 'minecraft:connection_south': 0b, 'minecraft:connection_up': 0b, 'minecraft:connection_west': 0b}",
         },
         {
             .name = "minecraft:redstone_wire",
-            .states = {
-                {"redstone_signal", {bp::IntTag{0}, bp::IntTag{1}, bp::IntTag{2}, bp::IntTag{3}, bp::IntTag{4}, bp::IntTag{5}, bp::IntTag{6}, bp::IntTag{7}, bp::IntTag{8}, bp::IntTag{9}, bp::IntTag{10}, bp::IntTag{11}, bp::IntTag{12}, bp::IntTag{13}, bp::IntTag{14}, bp::IntTag{15}}},
-            },
-            .add = {
-                {"redstone_east", bp::StringTag{"none"}},
-                {"redstone_north", bp::StringTag{"none"}},
-                {"redstone_south", bp::StringTag{"none"}},
-                {"redstone_west", bp::StringTag{"none"}},
-            },
+            .states = "{redstone_signal: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]}",
+            .add = "{redstone_east: 'none', redstone_north: 'none', redstone_south: 'none', redstone_west: 'none'}",
         },
-    };
+    }};
+    return records;
 }
 
 } // namespace endweave

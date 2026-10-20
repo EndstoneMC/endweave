@@ -14,6 +14,8 @@ Usage: uv run tools/generate_block_states.py
 
 import itertools
 import json
+import math
+import re
 import struct
 import sys
 from dataclasses import dataclass, field
@@ -170,12 +172,19 @@ class BlockPalette:
         self.blocks: dict[tuple, Block] = {}
         # Every value each state of each block type takes.
         self.states: dict[str, dict[str, list[Tag]]] = {}
+        # Each block's BlockConnectionRuleComponent and connection id.
+        self.connections: dict[tuple, tuple[tuple[int, int] | None, int | None]] = {}
         by_runtime_id: dict[int, Block] = {}
         for entry in mapping["blocks"]:
             block = Block(entry["name"], {name: to_tag(value) for name, value in entry["states"].items()})
             if block.get_runtime_id() != entry["id"] & 0xFFFFFFFF:
                 sys.exit(f"{block} does not hash to its id {entry['id']}")
             self.blocks[block.key()] = block
+            rule = entry.get("connection_rule")
+            self.connections[block.key()] = (
+                (rule["connections_from"], rule["enabled_directions"]) if rule is not None else None,
+                entry.get("connection_id"),
+            )
             by_runtime_id[block.get_runtime_id()] = block
             values = self.states.setdefault(block.name, {})
             for name, tag in block.states.items():
@@ -240,35 +249,101 @@ def diff(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) 
     return updates
 
 
-def cpp_tag(tag: Tag) -> str:
-    if isinstance(tag, StringTag):
-        return f'bp::StringTag{{"{tag.data}"}}'
-    return f"bp::{type(tag).__name__}{{{tag.data}}}"
+@dataclass
+class BlockConnectionRule:
+    """The blocks of one type that share a BlockConnectionRuleComponent and a connection id."""
+
+    name: str
+    states: dict[str, list[Tag]]
+    rule: tuple[int, int] | None
+    connection_id: int | None
 
 
-def cpp_update(update: BlockStateUpdate) -> list[str]:
-    lines = ["        {", f'            .name = "{update.name}",']
-    if update.states:
-        lines.append("            .states = {")
-        for state, tags in sorted(update.states.items()):
-            lines.append(f'                {{"{state}", {{{", ".join(cpp_tag(tag) for tag in tags)}}}}},')
-        lines.append("            },")
-    if update.rename:
-        lines.append(f'            .rename = "{update.rename}",')
-    if update.add:
-        lines.append("            .add = {")
-        lines += [f'                {{"{state}", {cpp_tag(tag)}}},' for state, tag in update.add.items()]
-        lines.append("            },")
-    if update.remove:
-        lines.append("            .remove = {")
-        lines += [f'                "{state}",' for state in update.remove]
-        lines.append("            },")
+def products(blocks: list[dict[str, Tag]]) -> list[dict[str, list[Tag]]]:
+    """Splits blocks of one type into sets that are each every combination of some state values."""
+    values = {name: sorted({block[name] for block in blocks}) for name in sorted(blocks[0])}
+    if len(blocks) == math.prod(len(tags) for tags in values.values()):
+        return [values]
+    split = next(name for name, tags in values.items() if len(tags) > 1)
+    return [states for tag in values[split] for states in products([b for b in blocks if b[split] == tag])]
+
+
+def connection_rules(
+    source: BlockPalette, target: BlockPalette, updates: list[BlockStateUpdate]
+) -> list[BlockConnectionRule] | None:
+    """The connection rule of every block `source` can send, as `target` has it, when the hop gives
+    fences, panes, bars or tripwire their minecraft:connection_* states."""
+    connected = {u.name for u in updates if any(state.startswith("minecraft:connection_") for state in u.add)}
+    connectors = (block for name in connected for block in target.permutations(name))
+    if not any(target.connections[block.key()][1] is not None for block in connectors):
+        return None
+    rules = []
+    for name in sorted(source.states.keys() & target.states.keys()):
+        groups: dict[tuple, list[dict[str, Tag]]] = {}
+        for block in target.permutations(name):
+            if (connection := target.connections[block.key()]) != (None, None):
+                groups.setdefault(connection, []).append(block.states)
+        for (rule, connection_id), blocks in sorted(groups.items(), key=lambda group: repr(group[0])):
+            rules += [BlockConnectionRule(name, states, rule, connection_id) for states in products(blocks)]
+    return rules
+
+
+def snbt_string(value: str) -> str:
+    if any(c in value for c in "'\"\\"):
+        sys.exit(f"{value} needs escaping in SNBT")
+    return f"'{value}'"
+
+
+def snbt_key(name: str) -> str:
+    return name if re.fullmatch(r"[0-9A-Za-z_\-.+]+", name) else snbt_string(name)
+
+
+def snbt(tag: Tag) -> str:
+    if isinstance(tag, ByteTag):
+        return f"{tag.data}b"
+    if isinstance(tag, IntTag):
+        return str(tag.data)
+    return snbt_string(tag.data)
+
+
+def cpp_snbt(field: str, value: str) -> list[str]:
+    return [f'            .{field} = "{value}",']
+
+
+def cpp_states(states: dict[str, list[Tag]]) -> list[str]:
+    if not states:
+        return []
+    values = (f"{snbt_key(state)}: [{', '.join(snbt(tag) for tag in tags)}]" for state, tags in sorted(states.items()))
+    return cpp_snbt("states", f"{{{', '.join(values)}}}")
+
+
+def cpp_rule(rule: BlockConnectionRule) -> list[str]:
+    lines = ["        {", f'            .name = "{rule.name}",', *cpp_states(rule.states)]
+    if rule.rule is not None:
+        lines.append(f"            .connections_from = 0b{rule.rule[0]:05b},")
+        lines.append(f"            .enabled_directions = 0b{rule.rule[1]:06b},")
+    if rule.connection_id is not None:
+        lines.append(f"            .connection_id = {rule.connection_id},")
     lines.append("        },")
     return lines
 
 
-def write(source: BlockPalette, target: BlockPalette, updates: list[BlockStateUpdate]) -> None:
-    path = PROTOCOLS / f"v{source.protocol}_to_v{target.protocol}" / "block_states.h"
+def cpp_update(update: BlockStateUpdate) -> list[str]:
+    lines = ["        {", f'            .name = "{update.name}",', *cpp_states(update.states)]
+    if update.rename:
+        lines.append(f'            .rename = "{update.rename}",')
+    if update.add:
+        values = ", ".join(f"{snbt_key(state)}: {snbt(tag)}" for state, tag in sorted(update.add.items()))
+        lines += cpp_snbt("add", f"{{{values}}}")
+    if update.remove:
+        lines += cpp_snbt("remove", f"[{', '.join(snbt_string(state) for state in update.remove)}]")
+    lines.append("        },")
+    return lines
+
+
+def write(source: BlockPalette, target: BlockPalette, file: str, function: str, records: list[list[str]]) -> None:
+    path = PROTOCOLS / f"v{source.protocol}_to_v{target.protocol}" / file
+    record_type = function.removeprefix("get").removesuffix("s")
     lines = [
         "// clang-format off",
         f"// Generated by tools/generate_block_states.py from data/v{source.protocol}.json ({source.version}) and",
@@ -278,23 +353,32 @@ def write(source: BlockPalette, target: BlockPalette, updates: list[BlockStateUp
         "",
         '#include "endweave/protocol/block.h"',
         "",
-        "#include <vector>",
+        "#include <array>",
+        "#include <span>",
         "",
         "namespace endweave {",
         "",
         "template <>",
-        f"inline std::vector<BlockStateUpdate> getBlockStateUpdates<{source.protocol}, {target.protocol}>()",
+        f"inline std::span<const {record_type}> {function}<{source.protocol}, {target.protocol}>()",
         "{",
-        "    return {",
-        *(line for update in updates for line in cpp_update(update)),
-        "    };",
+        f"    static constexpr std::array<{record_type}, {len(records)}> records = {{{{",
+        *(line for record in records for line in record),
+        "    }};",
+        "    return records;",
         "}",
         "",
         "} // namespace endweave",
         "",
     ]
     path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
-    print(f"{path.relative_to(ROOT)}: {len(updates)} block types")
+    print(f"{path.relative_to(ROOT)}: {len(records)} records")
+
+
+def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) -> None:
+    updates = diff(source, target, fallbacks)
+    write(source, target, "block_states.h", "getBlockStateUpdates", [cpp_update(update) for update in updates])
+    if (rules := connection_rules(source, target, updates)) is not None:
+        write(source, target, "connection_rules.h", "getBlockConnectionRules", [cpp_rule(rule) for rule in rules])
 
 
 def load_fallbacks(source: BlockPalette, target: BlockPalette) -> dict[str, str]:
@@ -315,8 +399,8 @@ def main() -> None:
         key=lambda palette: palette.protocol,
     )
     for older, newer in zip(palettes, palettes[1:]):
-        write(older, newer, diff(older, newer, load_fallbacks(older, newer)))
-        write(newer, older, diff(newer, older, load_fallbacks(newer, older)))
+        write_hop(older, newer, load_fallbacks(older, newer))
+        write_hop(newer, older, load_fallbacks(newer, older))
 
 
 if __name__ == "__main__":
