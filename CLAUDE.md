@@ -213,6 +213,9 @@ and it is not `Transformer`'s job.
   **Block states**). A rewriter for one pair goes in that pair's directory.
 - **One that parses bytes the schema leaves opaque returns `std::expected<void, std::error_code>`,**
   and `handle` fails the packet on an error, as it does a decode error. The rest return `void`.
+- **One that drops the packet takes `Context<packet_of_t<From, Id>> &` in the packet's place,**
+  reaches the packet through `ctx.out()` and calls `ctx.cancel()`, as a transform does. `handle`
+  then encodes nothing, and `translate` returns `None`.
 - **One that keeps state across packets takes the storages it needs after the packet,** any of
   `Storages` in any order: the `BlockConnectionStorage &` for the blocks the client was sent, the
   `ItemRegistryStorage &` for the items it lacks, the `DimensionDataStorage &` for how far each

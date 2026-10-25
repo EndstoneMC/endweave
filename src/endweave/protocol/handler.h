@@ -95,17 +95,26 @@ std::expected<void, std::error_code> handle(bool &cancelled, const Storages &sto
     bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
     if constexpr (Rewritable<From, To, Id>) {
+        Context<bp::packet_of_t<From, Id>> ctx{cancelled, packet};
         const auto rewrite = [&] {
-            return [&]<RewriteResult Result, class... Storage>(
-                       Result (*function)(bp::packet_of_t<From, Id> &, Storage &...)) {
-                return function(packet, std::get<std::remove_const_t<Storage> &>(storages)...);
-            }(&Rewriter<From, To, Id>::rewrite);
+            return
+                [&]<RewriteResult Result, class Packet, class... Storage>(Result (*function)(Packet &, Storage &...)) {
+                    if constexpr (std::is_same_v<Packet, Context<bp::packet_of_t<From, Id>>>) {
+                        return function(ctx, std::get<std::remove_const_t<Storage> &>(storages)...);
+                    }
+                    else {
+                        return function(packet, std::get<std::remove_const_t<Storage> &>(storages)...);
+                    }
+                }(&Rewriter<From, To, Id>::rewrite);
         };
         if constexpr (std::is_void_v<decltype(rewrite())>) {
             rewrite();
         }
         else if (auto rewritten = rewrite(); !rewritten) {
             return rewritten;
+        }
+        if (cancelled) {
+            return {};
         }
     }
     if constexpr (!RewritesBlockIds<From, To, Id>) {

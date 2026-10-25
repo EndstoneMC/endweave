@@ -25,7 +25,8 @@ using Storages = std::tuple<BlockConnectionStorage &, ItemRegistryStorage &, Dim
  *
  * It writes `To`'s values into the `From` packet, so a packet whose type doesn't change can be
  * re-encoded as is. One that parses bytes the schema leaves opaque returns an error for bytes it
- * can't read. One that keeps state across packets takes the storages it needs after the packet, any
+ * can't read. One that drops the packet takes a `Context` over it in the packet's place and calls
+ * `cancel`. One that keeps state across packets takes the storages it needs after the packet, any
  * of `Storages`. One that gives the packet's block ids itself sets `rewrites_block_ids`. */
 template <int From, int To, int Id>
 struct Rewriter;
