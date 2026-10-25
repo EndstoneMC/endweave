@@ -505,36 +505,55 @@ template <int From, int To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::FullChunkData)> {
     static std::expected<void, std::error_code> rewrite(bp::LevelChunkPacket_<From> &packet,
                                                         BlockConnectionStorage &storage,
-                                                        [[maybe_unused]] const DimensionDataStorage &dimensions)
+                                                        const DimensionDataStorage &dimensions)
     {
         if (packet.cache_enabled) {
             return {};
         }
+        if constexpr (requires { packet.is_client_biome_update; }) {
+            // Cancelled for a version without biome updates.
+            if (packet.is_client_biome_update) {
+                return {};
+            }
+        }
+        const auto dimension = dimensions.getDimensionData(packet.dimension_id);
+        // A biome storage for each sub-chunk of the dimension, read where a hop renumbers biomes.
+        // ENDWEAVE: a chunk of a dimension the client has no definition for keeps its biomes as they are.
+        const std::size_t biome_count =
+            MappingData<From, To>::mapsBiomes() && dimension ? static_cast<std::size_t>(dimension->height >> 4) : 0;
         // A request limit means the client asks for that many sub-chunks from the bottom of the
         // dimension, or for all of them if it is negative, which then come in SubChunkPacket.
-        if (packet.client_request_sub_chunk_limit.has_value()) {
+        const bool requested = packet.client_request_sub_chunk_limit.has_value();
+        if (requested) {
             if constexpr (connectsBlocks<From, To>()) {
                 const auto limit = *packet.client_request_sub_chunk_limit;
-                const auto dimension = dimensions.getDimensionData(packet.dimension_id);
                 storage.loadChunk(packet.pos.x, packet.pos.z,
                                   limit < 0 || !dimension ? std::numeric_limits<std::int32_t>::max()
                                                           : (dimension->min_y >> 4) + limit);
             }
-            return {};
+            if (biome_count == 0) {
+                return {};
+            }
         }
         bp::BinaryReader in{packet.serialized_chunk};
-        auto chunk = ChunkType::read(in, packet.pos.x, 0, packet.pos.z, packet.sub_chunks_count);
+        auto chunk =
+            ChunkType::read(in, packet.pos.x, 0, packet.pos.z, requested ? 0 : packet.sub_chunks_count, biome_count);
         if (!chunk) {
             return std::unexpected(chunk.error());
         }
         if constexpr (connectsBlocks<From, To>()) {
-            auto top = std::numeric_limits<std::int32_t>::min();
-            for (const auto &sub_chunk : chunk->getSubChunks()) {
-                top = std::max(top, sub_chunk.getY() + 1);
+            if (!requested) {
+                auto top = std::numeric_limits<std::int32_t>::min();
+                for (const auto &sub_chunk : chunk->getSubChunks()) {
+                    top = std::max(top, sub_chunk.getY() + 1);
+                }
+                storage.loadChunk(packet.pos.x, packet.pos.z, top);
             }
-            storage.loadChunk(packet.pos.x, packet.pos.z, top);
         }
         BlockRewriter<From, To>::handleChunks(std::span{&*chunk, 1}, storage);
+        for (auto &biomes : chunk->getBiomes()) {
+            biomes.replaceIds(&MappingData<From, To>::getNewBiomeId);
+        }
         std::string data;
         bp::BinaryWriter out{data};
         ChunkType::write(out, *chunk);
@@ -557,7 +576,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SubChunkPacke
             const auto &center = packet.center_pos;
             const auto &offset = entry.sub_chunk_pos_offset;
             bp::BinaryReader in{*entry.serialized_sub_chunk};
-            auto chunk = ChunkType::read(in, center.x + offset.x, center.y + offset.y, center.z + offset.z, 1);
+            auto chunk = ChunkType::read(in, center.x + offset.x, center.y + offset.y, center.z + offset.z, 1, 0);
             if (!chunk) {
                 return std::unexpected(chunk.error());
             }

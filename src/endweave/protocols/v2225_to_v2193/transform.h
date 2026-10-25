@@ -2,6 +2,7 @@
 
 #include "actor.h"
 #include "attributes.h"
+#include "chunk.h"
 #include "endweave/protocol/transform.h"
 #include "inventory.h"
 #include "item_stack.h"

@@ -277,7 +277,8 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   palette keeps its packed indices as they were read until a block in it is set, so a hop that only
   renumbers rewrites the palette and copies the rest. `PaletteType`, `SubChunkType` (formats 8 and
   9) and `ChunkType` read and write them as the network carries them, as ViaVersion's `Type`s do.
-  Biomes, border blocks and block actors after the sub-chunks are copied as they are.
+  The biomes after the sub-chunks are read only where a hop renumbers them (see **Biomes**); they,
+  border blocks and block actors are otherwise copied as they are.
 - **States BDS works out from neighbouring blocks are `ConnectionData<From, To>`**
   (`protocol/block_connection.h`), shaped as ViaVersion's. A hop that adds them lists its handlers in
   a `ConnectionHandlers` specialisation (`protocols/v<from>_to_v<to>/connection_data.h`), as
@@ -360,6 +361,15 @@ version, so a biome its version lacks is shown as a fallback.
   The generator fails on a biome with no fallback and on a fallback for a biome `to` has.
   `MappingData<From, To>::getNewBiomeId` reads them hop by hop, and `getNewBiomeName` returns none
   for a missing biome.
+- **A chunk's biomes are renumbered with `getNewBiomeId`** in the `LevelChunkPacket` rewriter, where
+  a hop renumbers any. After its sub-chunks, none in sub-chunk request mode, the payload holds a
+  biome storage for each sub-chunk of the dimension, from the bottom, the count `DimensionData`
+  gives; each is a `DataPalette` of biome ids that `PaletteType` reads, where an empty one is the
+  same as the one below it (BDS writes `0xFF`). A chunk of a dimension the client has no definition
+  for keeps its biomes. `SubChunkPacket` carries none.
+- **A 2225 biome update is dropped for 2193.** `is_client_biome_update` marks a `LevelChunkPacket`
+  that only updates the biomes of a chunk the client has; an older client would read it as the
+  whole chunk.
 - **The `BiomeDefinitionList` rewriter leaves out the definitions of the biomes the client lacks**
   (`rewriter/biome.h`), as shawtymarco/go-multiversion does. The string list is sent whole, so the
   definitions left keep every index into it.

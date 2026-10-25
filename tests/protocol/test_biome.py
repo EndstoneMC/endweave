@@ -6,16 +6,22 @@ import struct
 
 import pytest
 
-from endweave._pipeline import Translator
+from endweave._pipeline import TranslationError, Translator
 
 OLD = 2168
 NEW = 2193
 NEWEST = 2225
 
+FULL_CHUNK_DATA = 58
 BIOME_DEFINITION_LIST = 122
 
 PLAINS = 1
+DRIPSTONE_CAVES = 188
 ICE_CAVES = 196  # NEWEST has it, NEW and OLD lack it
+
+STONE = 2150698529
+
+SAME_AS_BELOW = b"\xff"
 
 
 def uvarint(value: int) -> bytes:
@@ -26,6 +32,10 @@ def uvarint(value: int) -> bytes:
         out.append(byte | (0x80 if value else 0))
         if not value:
             return bytes(out)
+
+
+def varint(value: int) -> bytes:
+    return uvarint(((value << 1) ^ (value >> 31)) & 0xFFFFFFFF)
 
 
 def string(value: str) -> bytes:
@@ -55,6 +65,48 @@ def biome_definition_list(definitions: dict[int, bytes], strings: list[str]) -> 
     return uvarint(len(definitions)) + entries + uvarint(len(strings)) + b"".join(string(s) for s in strings)
 
 
+def biomes(*palette: int) -> bytes:
+    """A biome storage with every block of the sub-chunk at palette index 0."""
+    if len(palette) == 1:
+        return b"\x01" + varint(palette[0])
+    return bytes([(1 << 1) | 1]) + bytes(512) + varint(len(palette)) + b"".join(varint(i) for i in palette)
+
+
+def sub_chunk(runtime_id: int) -> bytes:
+    """A version 9 sub-chunk holding one block everywhere."""
+    signed = struct.unpack("<i", struct.pack("<I", runtime_id))[0]
+    return bytes([9, 1, 0, 1]) + varint(signed)
+
+
+def level_chunk(
+    serialized: bytes,
+    count: int = 1,
+    request_limit: int | None = None,
+    dimension: int = 0,
+    biome_update: bool | None = None,
+) -> bytes:
+    """A LevelChunkPacket; `biome_update` is NEWEST's flag, which the older versions lack."""
+    limit = b"\x00" if request_limit is None else b"\x01" + varint(request_limit)
+    flag = b"" if biome_update is None else bytes([biome_update])
+    return (
+        varint(2)
+        + varint(3)
+        + varint(dimension)
+        + uvarint(count)
+        + limit
+        + b"\x00"
+        + uvarint(0)
+        + uvarint(len(serialized))
+        + serialized
+        + flag
+    )
+
+
+def column(*storages: bytes, height: int = 24) -> bytes:
+    """`storages` from the bottom of a dimension `height` sub-chunks high, the rest the same as below."""
+    return b"".join(storages) + SAME_AS_BELOW * (height - len(storages))
+
+
 class TestBiomeDefinitions:
     STRINGS = ["minecraft:plains", "minecraft:ice_caves", "monster", "minecraft:desert"]
     PLAINS_DEFINITION = definition(PLAINS, tags=[2])
@@ -75,3 +127,51 @@ class TestBiomeDefinitions:
         payload = biome_definition_list({0: self.PLAINS_DEFINITION, 3: self.DESERT_DEFINITION}, self.STRINGS)
 
         assert Translator(NEW, NEWEST).translate(BIOME_DEFINITION_LIST, payload) == payload
+
+
+class TestChunkBiomes:
+    def test_gives_a_biome_the_client_lacks_its_fallback(self) -> None:
+        def payload(biome: int) -> bytes:
+            return sub_chunk(STONE) + column(biomes(PLAINS, biome), SAME_AS_BELOW, biomes(biome)) + b"\x00"
+
+        source = level_chunk(payload(ICE_CAVES), biome_update=False)
+
+        assert Translator(NEWEST, NEW).translate(FULL_CHUNK_DATA, source) == level_chunk(payload(DRIPSTONE_CAVES))
+
+    def test_rewrites_the_biomes_of_a_chunk_whose_sub_chunks_are_requested(self) -> None:
+        def payload(biome: int) -> bytes:
+            return column(biomes(biome)) + b"\x00"
+
+        source = level_chunk(payload(ICE_CAVES), count=0, request_limit=-1, biome_update=False)
+
+        assert Translator(NEWEST, OLD).translate(FULL_CHUNK_DATA, source) == level_chunk(
+            payload(DRIPSTONE_CAVES), count=0, request_limit=-1
+        )
+
+    def test_reads_as_many_storages_as_the_dimension_has_sub_chunks(self) -> None:
+        def payload(biome: int) -> bytes:
+            return sub_chunk(STONE) + column(biomes(biome), height=8) + b"\x00"
+
+        source = level_chunk(payload(ICE_CAVES), dimension=1, biome_update=False)
+
+        assert Translator(NEWEST, NEW).translate(FULL_CHUNK_DATA, source) == level_chunk(
+            payload(DRIPSTONE_CAVES), dimension=1
+        )
+
+    def test_leaves_the_biomes_of_a_dimension_it_has_no_definition_for(self) -> None:
+        payload = sub_chunk(STONE) + b"\xaa\xbb"
+
+        assert Translator(NEWEST, NEW).translate(
+            FULL_CHUNK_DATA, level_chunk(payload, dimension=3, biome_update=False)
+        ) == level_chunk(payload, dimension=3)
+
+    def test_drops_a_biome_update(self) -> None:
+        source = level_chunk(column(biomes(ICE_CAVES)), count=0, biome_update=True)
+
+        assert Translator(NEWEST, NEW).translate(FULL_CHUNK_DATA, source) is None
+
+    def test_refuses_biomes_it_cannot_read(self) -> None:
+        with pytest.raises(TranslationError):
+            Translator(NEWEST, NEW).translate(
+                FULL_CHUNK_DATA, level_chunk(sub_chunk(STONE) + biomes(ICE_CAVES), biome_update=False)
+            )

@@ -17,10 +17,11 @@ namespace bp = bedrock::protocol;
 
 namespace endweave {
 
-/** One layer of a sub-chunk's blocks: a palette of block ids, and the palette index of each of its
- * 4096 blocks. The indices are kept packed as they were read until a block is set. A palette with
- * no ids is BDS's empty storage, which has no blocks.
- * @see BDS SubChunkStorage<Block>, ViaVersion DataPalette. */
+/** One layer of a sub-chunk's blocks, or its biomes: a palette of ids, and the palette index of each
+ * of its 4096 blocks. The indices are kept packed as they were read until a block is set. A palette
+ * with no ids is BDS's empty storage, which has no blocks, or a sub-chunk whose biomes are the ones
+ * below it.
+ * @see BDS SubChunkStorage<Block>, SubChunkStorage<Biome>, ViaVersion DataPalette. */
 class DataPalette {
 public:
     // BDS SubChunkStorageUnit::Type: the bits a palette index can be packed in.
@@ -255,13 +256,15 @@ private:
     std::vector<DataPalette> palettes_;
 };
 
-/** The sub-chunks of a column that one packet carries, and the bytes that follow them: biomes,
- * border blocks and block actors, which are copied as they are.
+/** The sub-chunks of a column that one packet carries, where they are read the biomes of each
+ * sub-chunk of its dimension, from the bottom up, and the bytes that follow: border blocks and block
+ * actors, which are copied as they are.
  * @see ViaVersion Chunk. */
 class Chunk {
 public:
-    Chunk(std::int32_t x, std::int32_t z, std::vector<SubChunk> sub_chunks, std::string rest)
-        : x_(x), z_(z), sub_chunks_(std::move(sub_chunks)), rest_(std::move(rest))
+    Chunk(std::int32_t x, std::int32_t z, std::vector<SubChunk> sub_chunks, std::vector<DataPalette> biomes,
+          std::string rest)
+        : x_(x), z_(z), sub_chunks_(std::move(sub_chunks)), biomes_(std::move(biomes)), rest_(std::move(rest))
     {
     }
 
@@ -285,6 +288,16 @@ public:
         return sub_chunks_;
     }
 
+    [[nodiscard]] std::span<DataPalette> getBiomes()
+    {
+        return biomes_;
+    }
+
+    [[nodiscard]] std::span<const DataPalette> getBiomes() const
+    {
+        return biomes_;
+    }
+
     [[nodiscard]] const std::string &getRest() const
     {
         return rest_;
@@ -294,6 +307,7 @@ private:
     std::int32_t x_;
     std::int32_t z_;
     std::vector<SubChunk> sub_chunks_;
+    std::vector<DataPalette> biomes_;
     std::string rest_;
 };
 
@@ -306,8 +320,8 @@ inline std::unexpected<std::error_code> malformed()
 
 } // namespace detail
 
-/** A layer of a network sub-chunk: the bits each palette index is packed in, the packed indices, and
- * the palette.
+/** A layer of a network sub-chunk, or a sub-chunk's biomes: the bits each palette index is packed in,
+ * the packed indices, and the palette.
  * @see ViaVersion PaletteType1_18. */
 class PaletteType {
 public:
@@ -415,14 +429,15 @@ public:
     }
 };
 
-/** The `count` network sub-chunks of a column, and the bytes after them.
+/** The `count` network sub-chunks of a column, its `biome_count` biome storages, and the bytes after
+ * them.
  * @see ViaVersion ChunkType1_18. */
 class ChunkType {
 public:
-    /** Reads the sub-chunks of the column at `x`, `z`, counted in sub-chunks, then keeps the rest of
-     * `in`. Sub-chunks in format 8 count up from `y`. */
+    /** Reads the sub-chunks of the column at `x`, `z`, counted in sub-chunks, then its biomes, then
+     * keeps the rest of `in`. Sub-chunks in format 8 count up from `y`. */
     static std::expected<Chunk, std::error_code> read(bp::BinaryReader &in, std::int32_t x, std::int32_t y,
-                                                      std::int32_t z, std::size_t count)
+                                                      std::int32_t z, std::size_t count, std::size_t biome_count)
     {
         std::vector<SubChunk> sub_chunks;
         for (std::size_t i = 0; i < count; ++i) {
@@ -432,15 +447,26 @@ public:
             }
             sub_chunks.push_back(std::move(*sub_chunk));
         }
+        std::vector<DataPalette> biomes;
+        for (std::size_t i = 0; i < biome_count; ++i) {
+            auto biome = PaletteType::read(in);
+            if (!biome) {
+                return std::unexpected(biome.error());
+            }
+            biomes.push_back(std::move(*biome));
+        }
         std::string rest(in.getView().substr(in.getReadPointer()));
         in.setReadPointer(in.getReadPointer() + rest.size());
-        return Chunk{x, z, std::move(sub_chunks), std::move(rest)};
+        return Chunk{x, z, std::move(sub_chunks), std::move(biomes), std::move(rest)};
     }
 
     static void write(bp::BinaryWriter &out, const Chunk &chunk)
     {
         for (const auto &sub_chunk : chunk.getSubChunks()) {
             SubChunkType::write(out, sub_chunk);
+        }
+        for (const auto &biome : chunk.getBiomes()) {
+            PaletteType::write(out, biome);
         }
         out.writeRawBytes(chunk.getRest());
     }
