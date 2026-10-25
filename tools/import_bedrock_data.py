@@ -5,7 +5,8 @@
 
 Keeps the block_types.json and block_palette.json fields endweave reads, one entry per line and
 sorted, with each state as a JSON value: a bool for a ByteTag, a number for an IntTag and a string
-for a StringTag. Fields at their default are left out. From items.json it keeps the item names.
+for a StringTag. Fields at their default are left out. From items.json it keeps the item names, and
+from biomes.json each biome's name and id.
 
 Usage: uv run tools/import_bedrock_data.py <bedrock-data-<version> folder> <protocol>
 """
@@ -86,6 +87,9 @@ def main() -> None:
 
     item_names = sorted(item["name"] for item in items["items"])
 
+    biome_list = json.loads((folder / "biomes.json").read_text(encoding="utf-8"))["biomes"]
+    biomes = sorted(({"name": biome["name"], "id": biome["id"]} for biome in biome_list), key=lambda b: b["name"])
+
     def rows(entries: list) -> str:
         return ",\n".join(f"    {json.dumps(entry)}" for entry in entries)
 
@@ -95,11 +99,15 @@ def main() -> None:
         f'{{\n  "version": "{version}",\n'
         f'  "block_types": [\n{rows(types)}\n  ],\n'
         f'  "blocks": [\n{rows(blocks)}\n  ],\n'
-        f'  "items": [\n{rows(item_names)}\n  ]\n}}\n',
+        f'  "items": [\n{rows(item_names)}\n  ],\n'
+        f'  "biomes": [\n{rows(biomes)}\n  ]\n}}\n',
         encoding="utf-8",
         newline="\n",
     )
-    print(f"{path.relative_to(ROOT)}: {len(types)} block types, {len(blocks)} blocks, {len(item_names)} items")
+    print(
+        f"{path.relative_to(ROOT)}: {len(types)} block types, {len(blocks)} blocks, {len(item_names)} items, "
+        f"{len(biomes)} biomes"
+    )
 
 
 if __name__ == "__main__":

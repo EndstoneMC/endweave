@@ -1,10 +1,10 @@
 # /// script
 # requires-python = ">=3.12"
 # ///
-"""Generates each hop's mappings from the block palettes and item names in data/.
+"""Generates each hop's mappings from the block palettes, item names and biomes in data/.
 
-Each hop gets a mappings.h: its block_states, its items if the target lacks any of the source's, and
-its experiments if it names any.
+Each hop gets a mappings.h: its block_states, its items if the target lacks any of the source's, its
+experiments if it names any, and its biomes if the target lacks or renumbers any.
 The classes mirror BDS's own, so a block's network id is computed the way
 Block::computeRawSerializationIdHashForNetwork computes it. Going up, a block gains the states the
 newer version added, at that version's default, and loses the ones it removed. Going down, it
@@ -12,7 +12,8 @@ loses what the older version lacks, and a block type the older version lacks is 
 fallback data/fallbacks/v<from>_to_v<to>.json names for it. Anything else stops the generator.
 items lists, sorted, the items the target has no mapping for. experiments lists, sorted, the ones
 the fallbacks file names: the experiments the target gates behind what the source ships as base
-game. A hop that gives blocks states from their neighbours also gets a block_connections.h, a
+game. biomes gives the id each biome takes that the target renumbers, or lacks and so takes its
+fallback's. A hop that gives blocks states from their neighbours also gets a block_connections.h, a
 BlockData profile for each set of blocks that are the same to the blocks beside them.
 
 Usage: uv run tools/generate_mappings.py
@@ -170,12 +171,13 @@ class Block:
 
 
 class BlockPalette:
-    """One version's blocks, and its item names, read from data/v<protocol>.json."""
+    """One version's blocks, its item names and its biomes, read from data/v<protocol>.json."""
 
     def __init__(self, protocol: int, mapping: dict) -> None:
         self.protocol = protocol
         self.version = mapping["version"]
         self.items = set(mapping["items"])
+        self.biomes = {biome["name"]: biome["id"] for biome in mapping["biomes"]}
         self.blocks: dict[tuple, Block] = {}
         # Every value each state of each block type takes.
         self.states: dict[str, dict[str, list[Tag]]] = {}
@@ -268,6 +270,35 @@ def diff(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) 
         for block in source.permutations(update.name):
             if update.apply(block).key() not in target.blocks:
                 sys.exit(f"{block} has no state at {target.version}")
+    return updates
+
+
+@dataclass
+class BiomeUpdate:
+    """The id one biome takes across a hop, and the biome it falls back to where the target lacks it."""
+
+    name: str
+    id: int
+    new_id: int
+    rename: str | None = None
+
+
+def diff_biomes(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) -> list[BiomeUpdate]:
+    path = f"data/fallbacks/v{source.protocol}_to_v{target.protocol}.json"
+    if unused := sorted(name for name in fallbacks if name not in source.biomes or name in target.biomes):
+        sys.exit(
+            f"{path} names a biome fallback for {', '.join(unused)}, "
+            f"which {target.version} has or {source.version} lacks"
+        )
+    updates = []
+    for name, biome_id in sorted(source.biomes.items()):
+        new_name = name if name in target.biomes else fallbacks.get(name)
+        if new_name is None:
+            sys.exit(f"biome {name} is not in {target.version}: add a fallback for it to {path}")
+        if new_name not in target.biomes:
+            sys.exit(f"{path} falls biome {name} back to {new_name}, which {target.version} lacks")
+        if new_name != name or target.biomes[new_name] != biome_id:
+            updates.append(BiomeUpdate(name, biome_id, target.biomes[new_name], new_name if new_name != name else None))
     return updates
 
 
@@ -372,6 +403,13 @@ def cpp_update(update: BlockStateUpdate) -> list[str]:
     return lines
 
 
+def cpp_biome(update: BiomeUpdate) -> list[str]:
+    lines = ["        {", f'            .name = "{update.name}",', f"            .id = {update.id},"]
+    if update.rename:
+        lines.append(f'            .rename = "{update.rename}",')
+    return [*lines, f"            .new_id = {update.new_id},", "        },"]
+
+
 def preamble(source: BlockPalette, target: BlockPalette, header: str) -> list[str]:
     return [
         "// clang-format off",
@@ -397,6 +435,7 @@ def write_mappings(
     updates: list[list[str]],
     missing_items: list[str],
     experiments: list[str],
+    biomes: list[list[str]],
 ) -> None:
     lines = [
         *preamble(source, target, "mapping.h"),
@@ -423,11 +462,17 @@ def write_mappings(
             *(f'        "{name}",' for name in experiments),
             "    }};",
         ]
+    if biomes:
+        lines += [
+            f"    static constexpr std::array<BiomeUpdate, {len(biomes)}> biomes = {{{{",
+            *(line for biome in biomes for line in biome),
+            "    }};",
+        ]
     lines += ["};", "", "} // namespace endweave", ""]
     path = write_lines(source, target, "mappings.h", lines)
     print(
         f"{path.relative_to(ROOT)}: {len(updates)} block states, {len(missing_items)} items, "
-        f"{len(experiments)} experiments"
+        f"{len(experiments)} experiments, {len(biomes)} biomes"
     )
 
 
@@ -454,12 +499,14 @@ def write_block_connections(source: BlockPalette, target: BlockPalette, profiles
 
 def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict) -> None:
     updates = diff(source, target, fallbacks.get("block_types", {}))
+    biomes = diff_biomes(source, target, fallbacks.get("biomes", {}))
     write_mappings(
         source,
         target,
         [cpp_update(update) for update in updates],
         sorted(source.items - target.items),
         sorted(fallbacks.get("experiments", [])),
+        [cpp_biome(biome) for biome in biomes],
     )
     if (profiles := block_connections(source, target, updates)) is not None:
         write_block_connections(source, target, [cpp_block_data(profile) for profile in profiles])
@@ -470,7 +517,7 @@ def load_fallbacks(source: BlockPalette, target: BlockPalette) -> dict:
     if not path.exists():
         return {}
     fallbacks = json.loads(path.read_text(encoding="utf-8"))
-    if unknown := sorted(fallbacks.keys() - {"block_types", "experiments"}):
+    if unknown := sorted(fallbacks.keys() - {"block_types", "experiments", "biomes"}):
         sys.exit(f"{path.relative_to(ROOT)} has {', '.join(unknown)}, which the generator does not read")
     return fallbacks
 

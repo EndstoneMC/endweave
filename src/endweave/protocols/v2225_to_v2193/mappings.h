@@ -54,6 +54,14 @@ struct Mappings<2225, 2193> {
         "minecraft:ice_crystal",
         "minecraft:icicle",
     }};
+    static constexpr std::array<BiomeUpdate, 1> biomes = {{
+        {
+            .name = "minecraft:ice_caves",
+            .id = 196,
+            .rename = "minecraft:dripstone_caves",
+            .new_id = 188,
+        },
+    }};
 };
 
 } // namespace endweave

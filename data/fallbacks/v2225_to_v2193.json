@@ -3,5 +3,8 @@
     "minecraft:disc_press": "minecraft:jukebox",
     "minecraft:ice_crystal": "minecraft:amethyst_cluster",
     "minecraft:icicle": "minecraft:pointed_dripstone"
+  },
+  "biomes": {
+    "minecraft:ice_caves": "minecraft:dripstone_caves"
   }
 }

@@ -127,9 +127,10 @@ Upstream stays valuable for three things.
 5. **Leave out what only Java Edition needs.** The `State` machine (Bedrock has one flat id space),
    per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable), the sound
    and entity halves of `MappingData`, the rewriter hierarchy, `Type<T>`, and the platform-split
-   config options. Block states and items are the exception: every version renumbers blocks and
-   adds items, so `protocol/mapping.h` has `MappingDataBase` for one hop and `MappingData` across
-   hops, with `getNewBlockStateId` and `getNewItemName` (see **Block states** and **Items**). Of `PacketWrapper`,
+   config options. Block states, items and biomes are the exception: every version renumbers blocks
+   and adds items and biomes, so `protocol/mapping.h` has `MappingDataBase` for one hop and
+   `MappingData` across hops, with `getNewBlockStateId`, `getNewItemName` and `getNewBiomeId` (see
+   **Block states**, **Items** and **Biomes**). Of `PacketWrapper`,
    only the cancel half exists, as `Context`; the buffer half has no place because the schema
    derives the codec. Of `UserConnection`, there is no `StorableObject` store: the pipeline
    `Translator` owns the state a rewriter keeps across packets, `BlockConnectionStorage`,
@@ -248,9 +249,11 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   lays out its own. `data/v<protocol>.json` is the fields endweave reads from one version's
   bedrock-dumper `block_types.json` and `block_palette.json`, one entry per line, sorted, each state
   a JSON value (bool for a `ByteTag`, number for an `IntTag`, string for a `StringTag`) and each
-  field left out at its default, then the item names from its `items.json`. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
+  field left out at its default, then the item names from its `items.json` and each biome's name and
+  id from its `biomes.json`. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
   writes it. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the
-  fallback for each block type the `to` version lacks. `data/` stays out of the sdist and the wheel.
+  fallback for each block type the `to` version lacks, and `biomes` for each biome. `data/` stays
+  out of the sdist and the wheel.
 - **`uv run tools/generate_mappings.py` writes each hop's `mappings.h` and `block_connections.h` from
   `data/`.** The script mirrors
   BDS's classes and methods (`Block`, `CompoundTag`, `NbtIo`, `StringByteOutput`) and checks its hash
@@ -346,6 +349,17 @@ older than the server is just not offered the items its version lacks.
   `CraftingData` rewriter the recipes and mixes that take or make one (`rewriter/item.h`). MOT
   does the same; ViaBackwards instead shows a fallback item, which needs the real one restored on
   the way back.
+
+## Biomes
+
+Chunks carry biomes by numeric id, which the client resolves against the biomes built into its
+version, so a biome its version lacks is shown as a fallback.
+
+- **A hop whose `to` lacks or renumbers any of `from`'s biomes lists them in `biomes`** in its
+  `mappings.h`: each one's id, the biome it is renamed to where `to` lacks it, and the id it takes.
+  The generator fails on a biome with no fallback and on a fallback for a biome `to` has.
+  `MappingData<From, To>::getNewBiomeId` reads them hop by hop, and `getNewBiomeName` returns none
+  for a missing biome.
 
 ## Transformers
 
