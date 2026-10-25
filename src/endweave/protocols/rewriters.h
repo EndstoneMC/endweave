@@ -4,13 +4,16 @@
 #include "endweave/protocol/rewrite.h"
 #include "endweave/rewriter/block.h"
 
+#include <algorithm>
 #include <bedrock/protocol/actor.h>
 #include <bedrock/protocol/enum.hpp>
 #include <bedrock/protocol/game.h>
 #include <bedrock/protocol/network.h>
+#include <bedrock/protocol/pack.h>
 #include <bedrock/protocol/player.h>
 #include <bedrock/protocol/sound.h>
 #include <cstdint>
+#include <string>
 #include <type_traits>
 #include <variant>
 #include <vector>
@@ -18,6 +21,27 @@
 namespace bp = bedrock::protocol;
 
 namespace endweave {
+
+namespace detail {
+
+// ENDWEAVE: To gates behind these experiments what From ships as base game, so the client is told
+// they are on, as a world that runs them is.
+template <int From, int To>
+void enableExperiments(bp::Experiments &experiments)
+{
+    for (const auto name : MappingData<From, To>::getExperiments()) {
+        const auto toggle = std::ranges::find(experiments.toggles, name, &bp::ExperimentToggle::name);
+        if (toggle != experiments.toggles.end()) {
+            toggle->enabled = true;
+        }
+        else {
+            experiments.toggles.push_back({.name = std::string(name), .enabled = true});
+        }
+        experiments.experiments_ever_toggled = true;
+    }
+}
+
+} // namespace detail
 
 // ENDWEAVE: the checksum is taken over the server's block registry, which no translation can
 // reproduce for the other side. Zero is the "do not check" value at every version, so this holds
@@ -32,6 +56,16 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::StartGame)> {
         std::erase_if(packet.block_properties, [](const auto &property) {
             return MappingData<From, To>::getNewBlockName(property.name) != property.name;
         });
+        detail::enableExperiments<From, To>(packet.settings.experiments);
+    }
+};
+
+template <int From, int To>
+    requires(MappingData<From, To>::enablesExperiments())
+struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::ResourcePackStack)> {
+    static void rewrite(bp::ResourcePackStackPacket_<From> &packet)
+    {
+        detail::enableExperiments<From, To>(packet.experiments);
     }
 };
 

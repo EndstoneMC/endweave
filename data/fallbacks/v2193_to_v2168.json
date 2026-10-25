@@ -48,5 +48,8 @@
     "minecraft:yellow_concrete_double_slab": "minecraft:yellow_concrete",
     "minecraft:yellow_concrete_slab": "minecraft:bamboo_slab",
     "minecraft:yellow_concrete_stairs": "minecraft:bamboo_stairs"
-  }
+  },
+  "experiments": [
+    "y_2026_drop_3"
+  ]
 }

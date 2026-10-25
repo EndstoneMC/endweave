@@ -3,15 +3,17 @@
 # ///
 """Generates each hop's mappings from the block palettes and item names in data/.
 
-Each hop gets a mappings.h: its block_states, and its items if the target lacks any of the source's.
+Each hop gets a mappings.h: its block_states, its items if the target lacks any of the source's, and
+its experiments if it names any.
 The classes mirror BDS's own, so a block's network id is computed the way
 Block::computeRawSerializationIdHashForNetwork computes it. Going up, a block gains the states the
 newer version added, at that version's default, and loses the ones it removed. Going down, it
 loses what the older version lacks, and a block type the older version lacks is renamed to the
 fallback data/fallbacks/v<from>_to_v<to>.json names for it. Anything else stops the generator.
-items lists, sorted, the items the target has no mapping for. A hop that gives blocks states from
-their neighbours also gets a block_connections.h, a BlockData profile for each set of blocks that
-are the same to the blocks beside them.
+items lists, sorted, the items the target has no mapping for. experiments lists, sorted, the ones
+the fallbacks file names: the experiments the target gates behind what the source ships as base
+game. A hop that gives blocks states from their neighbours also gets a block_connections.h, a
+BlockData profile for each set of blocks that are the same to the blocks beside them.
 
 Usage: uv run tools/generate_mappings.py
 """
@@ -390,7 +392,11 @@ def write_lines(source: BlockPalette, target: BlockPalette, file: str, lines: li
 
 
 def write_mappings(
-    source: BlockPalette, target: BlockPalette, updates: list[list[str]], missing_items: list[str]
+    source: BlockPalette,
+    target: BlockPalette,
+    updates: list[list[str]],
+    missing_items: list[str],
+    experiments: list[str],
 ) -> None:
     lines = [
         *preamble(source, target, "mapping.h"),
@@ -411,9 +417,18 @@ def write_mappings(
             *(f'        "{name}",' for name in missing_items),
             "    }};",
         ]
+    if experiments:
+        lines += [
+            f"    static constexpr std::array<std::string_view, {len(experiments)}> experiments = {{{{",
+            *(f'        "{name}",' for name in experiments),
+            "    }};",
+        ]
     lines += ["};", "", "} // namespace endweave", ""]
     path = write_lines(source, target, "mappings.h", lines)
-    print(f"{path.relative_to(ROOT)}: {len(updates)} block states, {len(missing_items)} items")
+    print(
+        f"{path.relative_to(ROOT)}: {len(updates)} block states, {len(missing_items)} items, "
+        f"{len(experiments)} experiments"
+    )
 
 
 def write_block_connections(source: BlockPalette, target: BlockPalette, profiles: list[list[str]]) -> None:
@@ -437,18 +452,27 @@ def write_block_connections(source: BlockPalette, target: BlockPalette, profiles
     print(f"{path.relative_to(ROOT)}: {len(profiles)} profiles")
 
 
-def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) -> None:
-    updates = diff(source, target, fallbacks)
-    write_mappings(source, target, [cpp_update(update) for update in updates], sorted(source.items - target.items))
+def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict) -> None:
+    updates = diff(source, target, fallbacks.get("block_types", {}))
+    write_mappings(
+        source,
+        target,
+        [cpp_update(update) for update in updates],
+        sorted(source.items - target.items),
+        sorted(fallbacks.get("experiments", [])),
+    )
     if (profiles := block_connections(source, target, updates)) is not None:
         write_block_connections(source, target, [cpp_block_data(profile) for profile in profiles])
 
 
-def load_fallbacks(source: BlockPalette, target: BlockPalette) -> dict[str, str]:
+def load_fallbacks(source: BlockPalette, target: BlockPalette) -> dict:
     path = DATA / "fallbacks" / f"v{source.protocol}_to_v{target.protocol}.json"
     if not path.exists():
         return {}
-    return json.loads(path.read_text(encoding="utf-8")).get("block_types", {})
+    fallbacks = json.loads(path.read_text(encoding="utf-8"))
+    if unknown := sorted(fallbacks.keys() - {"block_types", "experiments"}):
+        sys.exit(f"{path.relative_to(ROOT)} has {', '.join(unknown)}, which the generator does not read")
+    return fallbacks
 
 
 def main() -> None:

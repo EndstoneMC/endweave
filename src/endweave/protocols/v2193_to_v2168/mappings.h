@@ -1034,6 +1034,9 @@ struct Mappings<2193, 2168> {
         "minecraft:yellow_concrete_slab",
         "minecraft:yellow_concrete_stairs",
     }};
+    static constexpr std::array<std::string_view, 1> experiments = {{
+        "y_2026_drop_3",
+    }};
 };
 
 } // namespace endweave
