@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- On a 26.60 server, 26.50-26.52 clients see frostbites as zombies, ice balls as snowballs and Ice Caves as Dripstone Caves.
+
+### Changed
+- 26.40-26.45 clients on a 26.50 or newer server see wool slabs and stairs, red shrubs and shelf mushrooms as they are, instead of stand-ins.
+
+### Fixed
+- Fixed wool stairs from a 26.40-26.45 server with experiments on being invisible to 26.50 and newer clients.
+- Fixed 26.40-26.45 clients being sent the definitions of 26.50's concrete slabs and stairs, which their version does not have.
+- Fixed an off-hand item use from a 26.50 or newer client reaching a 26.40-26.45 server as a main-hand one.
+- Fixed 26.50-26.52 clients on a 26.60 server being sent the Freezing effect and offered ice balls and the Potion of Freezing in their creative inventory and recipe book.
+- Fixed recipes disappearing from an older client's recipe book when only some of the items that unlock them are missing from its version.
+
 ## [0.6.2] - 2026-10-20
 
 ### Fixed
