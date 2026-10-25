@@ -29,8 +29,11 @@ SUB_CHUNK = 174
 OAK_STAIRS_OLD = 3302397712
 OAK_STAIRS_NEW = 4233957882
 OAK_STAIRS_OUTER = 1227992387
-# minecraft:white_wool_stairs, which OLD lacks, and the smooth quartz stairs it falls back to.
-WOOL_STAIRS = 1832763565
+# minecraft:white_wool_stairs upside down facing 2, which OLD has behind y_2026_drop_3.
+WOOL_STAIRS_OLD = 2317387549
+WOOL_STAIRS_NEW = 1832763565
+# minecraft:white_concrete_stairs, which OLD lacks, and the smooth quartz stairs it falls back to.
+CONCRETE_STAIRS = 2326266271
 QUARTZ_STAIRS = 2049139513
 # minecraft:oak_fence: OLD has no connections, NEW has four.
 OAK_FENCE_OLD = 1997655867
@@ -238,8 +241,20 @@ class TestBlockIds:
         assert translator.translate(UPDATE_BLOCK, update_block(OAK_STAIRS_OUTER)) == update_block(OAK_STAIRS_OLD)
         assert translator.translate(UPDATE_BLOCK, update_block(OAK_FENCE_JOINED)) == update_block(OAK_FENCE_OLD)
 
+    def test_gives_an_experimental_block_the_properties_the_newer_version_added(self) -> None:
+        assert Translator(OLD, NEW).translate(UPDATE_BLOCK, update_block(WOOL_STAIRS_OLD)) == update_block(
+            WOOL_STAIRS_NEW
+        )
+
+    def test_keeps_an_experimental_block_the_older_version_has(self) -> None:
+        assert Translator(NEW, OLD).translate(UPDATE_BLOCK, update_block(WOOL_STAIRS_NEW)) == update_block(
+            WOOL_STAIRS_OLD
+        )
+
     def test_shows_an_older_client_the_fallback_for_a_block_it_lacks(self) -> None:
-        assert Translator(NEW, OLD).translate(UPDATE_BLOCK, update_block(WOOL_STAIRS)) == update_block(QUARTZ_STAIRS)
+        assert Translator(NEW, OLD).translate(UPDATE_BLOCK, update_block(CONCRETE_STAIRS)) == update_block(
+            QUARTZ_STAIRS
+        )
 
     def test_carries_a_state_across_every_hop_between_the_ends(self) -> None:
         assert Translator(NEWEST, OLD).translate(UPDATE_BLOCK, update_block(FIRE_NEWEST)) == update_block(FIRE_OLD)
@@ -304,7 +319,7 @@ class TestChunkPalettes:
         assert Translator(OLD, NEW).translate(FULL_CHUNK_DATA, payload) == payload
 
     def test_rewrites_a_requested_sub_chunk(self) -> None:
-        payload = sub_chunk_packet(sub_chunk_entry(sub_chunk(OAK_FENCE_JOINED, WOOL_STAIRS)))
+        payload = sub_chunk_packet(sub_chunk_entry(sub_chunk(OAK_FENCE_JOINED, CONCRETE_STAIRS)))
 
         assert Translator(NEW, OLD).translate(SUB_CHUNK, payload) == sub_chunk_packet(
             sub_chunk_entry(sub_chunk(OAK_FENCE_OLD, QUARTZ_STAIRS))

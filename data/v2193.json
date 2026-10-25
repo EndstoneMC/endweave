@@ -1,5 +1,5 @@
 {
-  "version": "1.26.51.1",
+  "version": "1.26.52.3",
   "block_types": [
     {"name": "minecraft:acacia_button", "default_state_id": 152215376, "material_type": 2, "tags": ["minecraft:is_axe_item_destructible", "wood"]},
     {"name": "minecraft:acacia_door", "default_state_id": -305734764, "material_type": 2, "tags": ["one_way_collidable", "minecraft:is_axe_item_destructible", "wood"]},

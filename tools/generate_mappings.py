@@ -236,6 +236,11 @@ class BlockStateUpdate:
 
 
 def diff(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) -> list[BlockStateUpdate]:
+    if unused := sorted(name for name in fallbacks if name not in source.states or name in target.states):
+        sys.exit(
+            f"data/fallbacks/v{source.protocol}_to_v{target.protocol}.json names a fallback for {', '.join(unused)}, "
+            f"which {target.version} has or {source.version} lacks"
+        )
     updates = []
     for name in sorted(source.states):
         new_name = name if name in target.states else fallbacks.get(name)

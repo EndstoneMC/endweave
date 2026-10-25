@@ -11,6 +11,7 @@ Usage: uv run tools/import_bedrock_data.py <bedrock-data-<version> folder> <prot
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -35,15 +36,27 @@ BLOCK_FIELDS = {
 }
 
 
-def state_value(state: dict) -> bool | int | str:
-    match state["type"]:
-        case "byte":
-            if state["value"] not in (0, 1):
-                sys.exit(f"byte state {state['name']} = {state['value']} is not a bool")
-            return bool(state["value"])
-        case "int" | "string":
-            return state["value"]
-    sys.exit(f"state {state['name']} has unknown type {state['type']}")
+SNBT_STATE = re.compile(
+    r"(?:'(?P<quoted>[^']*)'|(?P<bare>[\w.+-]+)):(?:'(?P<string>[^']*)'|(?P<byte>-?\d+)b|(?P<int>-?\d+))"
+)
+
+
+def parse_states(snbt: str) -> dict[str, bool | int | str]:
+    matches = list(SNBT_STATE.finditer(snbt))
+    if "{" + ",".join(match[0] for match in matches) + "}" != snbt:
+        sys.exit(f"states {snbt} are not a flat SNBT compound")
+    states: dict[str, bool | int | str] = {}
+    for match in matches:
+        name = match["quoted"] if match["quoted"] is not None else match["bare"]
+        if match["string"] is not None:
+            states[name] = match["string"]
+        elif match["byte"] is not None:
+            if match["byte"] not in ("0", "1"):
+                sys.exit(f"byte state {name} = {match['byte']} is not a bool")
+            states[name] = match["byte"] == "1"
+        else:
+            states[name] = int(match["int"])
+    return states
 
 
 def pick(entry: dict, fields: dict) -> dict:
@@ -65,8 +78,7 @@ def main() -> None:
     )
     blocks = sorted(
         (
-            {"name": entry["name"], "states": {s["name"]: state_value(s) for s in entry["states"]}}
-            | pick(entry, BLOCK_FIELDS)
+            {"name": entry["name"], "states": parse_states(entry["states"])} | pick(entry, BLOCK_FIELDS)
             for entry in palette["blocks"]
         ),
         key=lambda entry: (entry["name"], sorted(entry["states"].items())),
