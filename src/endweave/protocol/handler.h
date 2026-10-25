@@ -11,6 +11,7 @@
 #include "endweave/protocols/v2193_to_v2168/transform.h"
 #include "endweave/protocols/v2193_to_v2225/transform.h"
 #include "endweave/protocols/v2225_to_v2193/transform.h"
+#include "endweave/rewriter/biome.h"
 #include "endweave/rewriter/block.h"
 #include "endweave/rewriter/dimension.h"
 #include "endweave/rewriter/item.h"

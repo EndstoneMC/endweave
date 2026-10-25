@@ -360,6 +360,9 @@ version, so a biome its version lacks is shown as a fallback.
   The generator fails on a biome with no fallback and on a fallback for a biome `to` has.
   `MappingData<From, To>::getNewBiomeId` reads them hop by hop, and `getNewBiomeName` returns none
   for a missing biome.
+- **The `BiomeDefinitionList` rewriter leaves out the definitions of the biomes the client lacks**
+  (`rewriter/biome.h`), as shawtymarco/go-multiversion does. The string list is sent whole, so the
+  definitions left keep every index into it.
 
 ## Transformers
 
