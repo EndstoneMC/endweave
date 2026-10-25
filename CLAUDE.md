@@ -207,9 +207,10 @@ and it is not `Transformer`'s job.
   field across untouched, which is what a transform does with a field it does not reshape.
 - **Pair-agnostic rewriters are partial specializations over `From` and `To`,** in
   `protocols/rewriters.h`: `StartGamePacket`'s block registry checksum, which is zeroed because no
-  translation reproduces it, the heartbeat `LevelSoundEvent` inside actor data, and the block states
-  the schema cannot type (see **Block states**). A rewriter for one pair goes in that pair's
-  directory.
+  translation reproduces it, and its definitions of the block types the client lacks, which are left
+  out; the experiments a hop names, turned on in `StartGamePacket` and `ResourcePackStackPacket`;
+  the heartbeat `LevelSoundEvent` inside actor data; and the block states the schema cannot type (see
+  **Block states**). A rewriter for one pair goes in that pair's directory.
 - **One that parses bytes the schema leaves opaque returns `std::expected<void, std::error_code>`,**
   and `handle` fails the packet on an error, as it does a decode error. The rest return `void`.
 - **One that keeps state across packets takes the storages it needs after the packet,** any of
@@ -251,9 +252,11 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   a JSON value (bool for a `ByteTag`, number for an `IntTag`, string for a `StringTag`) and each
   field left out at its default, then the item names from its `items.json` and each biome's name and
   id from its `biomes.json`. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
-  writes it. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the
-  fallback for each block type the `to` version lacks, and `biomes` for each biome. `data/` stays
-  out of the sdist and the wheel.
+  writes it. Import from bedrock-data dumped with every experiment on, since a server may run any of
+  them. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the fallback
+  for each block type the `to` version lacks, `biomes` for each biome, and `experiments` the
+  experiments `to` gates behind what `from` ships as base game. `data/` stays out of the sdist and
+  the wheel.
 - **`uv run tools/generate_mappings.py` writes each hop's `mappings.h` and `block_connections.h` from
   `data/`.** The script mirrors
   BDS's classes and methods (`Block`, `CompoundTag`, `NbtIo`, `StringByteOutput`) and checks its hash
