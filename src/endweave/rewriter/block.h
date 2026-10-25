@@ -491,6 +491,13 @@ template <int From, int To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::LevelSoundEvent)> {
     static void rewrite(bp::LevelSoundEventPacket_<From> &packet)
     {
+        if constexpr (MappingData<From, To>::mapsEntities()) {
+            // ENDWEAVE: a sound of an actor type the client lacks plays as its fallback's.
+            if (const auto name = MappingData<From, To>::getNewEntityName(packet.actor_identifier);
+                name != packet.actor_identifier) {
+                packet.actor_identifier = std::string(name);
+            }
+        }
         // The sound events whose data is the block they sound for.
         for (const std::string_view event : {"item.use.on", "hit", "step", "break", "place", "land"}) {
             if (packet.sound_event == event) {

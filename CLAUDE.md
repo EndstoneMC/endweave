@@ -126,13 +126,13 @@ Upstream stays valuable for three things.
 
 5. **Leave out what only Java Edition needs.** The `State` machine (Bedrock has one flat id space),
    per-version `PacketType` enums and name-based auto-mapping (Bedrock ids are stable), the sound
-   and entity halves of `MappingData`, the rewriter hierarchy, `Type<T>`, and the platform-split
-   config options. Block states, items and biomes are the exception: every version renumbers blocks
-   and adds items and biomes, so `protocol/mapping.h` has `MappingDataBase` for one hop and
-   `MappingData` across hops, with `getNewBlockStateId`, `getNewItemName` and `getNewBiomeId` (see
-   **Block states**, **Items** and **Biomes**). Of `PacketWrapper`,
-   only the cancel half exists, as `Context`; the buffer half has no place because the schema
-   derives the codec. Of `UserConnection`, there is no `StorableObject` store: the pipeline
+   half of `MappingData`, the rewriter hierarchy, `Type<T>`, and the platform-split config options.
+   Block states, items, biomes and actor types are the exception: every version renumbers blocks
+   and adds items, biomes and actors, so `protocol/mapping.h` has `MappingDataBase` for one hop and
+   `MappingData` across hops, with `getNewBlockStateId`, `getNewItemName`, `getNewBiomeId` and
+   `getNewEntityName` (see **Block states**, **Items**, **Biomes** and **Actor types**). Of
+   `PacketWrapper`, only the cancel half exists, as `Context`; the buffer half has no place because
+   the schema derives the codec. Of `UserConnection`, there is no `StorableObject` store: the pipeline
    `Translator` owns the state a rewriter keeps across packets, `BlockConnectionStorage`,
    `ItemRegistryStorage` and `DimensionDataStorage`, together the `Storages`, and `handle` hands a
    rewriter the ones its `rewrite` takes, by type, as `UserConnection#get` does.
@@ -253,13 +253,15 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   lays out its own. `data/v<protocol>.json` is the fields endweave reads from one version's
   bedrock-dumper `block_types.json` and `block_palette.json`, one entry per line, sorted, each state
   a JSON value (bool for a `ByteTag`, number for an `IntTag`, string for a `StringTag`) and each
-  field left out at its default, then the item names from its `items.json` and each biome's name and
-  id from its `biomes.json`. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
+  field left out at its default, then the item names from its `items.json`, each biome's name and
+  id from its `biomes.json` and the actor identifiers from its `entity_identifiers.json`.
+  `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
   writes it. Import from bedrock-data dumped with every experiment on, since a server may run any of
   them. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the fallback
-  for each block type the `to` version lacks, `biomes` for each biome, `experiments` the
-  experiments `to` gates behind what `from` ships as base game, and `mob_effects` the id of each
-  mob effect `to` lacks, by name. `data/` stays out of the sdist and the wheel.
+  for each block type the `to` version lacks, `biomes` for each biome, `entities` for each actor
+  type, `experiments` the experiments `to` gates behind what `from` ships as base game, and
+  `mob_effects` the id of each mob effect `to` lacks, by name. `data/` stays out of the sdist and
+  the wheel.
 - **`uv run tools/generate_mappings.py` writes each hop's `mappings.h` and `block_connections.h` from
   `data/`.** The script mirrors
   BDS's classes and methods (`Block`, `CompoundTag`, `NbtIo`, `StringByteOutput`) and checks its hash
@@ -383,6 +385,22 @@ version, so a biome its version lacks is shown as a fallback.
   (`rewriter/biome.h`), as shawtymarco/go-multiversion does. The string list is sent whole, so the
   definitions left keep every index into it.
 
+## Actor types
+
+`AddActorPacket` names an actor type by its identifier, which the client resolves against the
+actor definitions built into its version, so a type its version lacks is shown as a fallback.
+
+- **A hop whose `to` lacks any of `from`'s actor types pairs each with its fallback in `entities`**
+  in its `mappings.h`, sorted. The generator fails on a type with no fallback, on a fallback `to`
+  lacks too and on a fallback for a type `to` has. `MappingData<From, To>::getNewEntityName` reads
+  them hop by hop and returns the name unchanged for a type no hop maps, such as an add-on's.
+- **The `AddActor` rewriter spawns such a type as its fallback** (`protocols/rewriters.h`), as
+  ViaBackwards' `mapEntityTypeWithData` does, and clears its synced properties, whose indices name
+  the replaced type's. The `AvailableActorIDList` rewriter leaves the type out, the
+  `SyncActorProperty` rewriter cancels its property definitions, and the `LevelSoundEvent` rewriter
+  plays its sounds as the fallback's. ViaBackwards' name tag is left out: Bedrock's is the actor's
+  custom name, which the server owns.
+
 ## Mob effects
 
 `MobEffectPacket` names an effect by its id, which the client resolves against the effects built
@@ -494,7 +512,7 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
 | `protocols/v2193_to_v2225/connection_data.h` `ChorusPlantConnectionHandler`, `FireConnectionHandler`, `RedstoneConnectionHandler` | the handlers of the same names |
 | `data/v<protocol>.json`, `data/fallbacks/v<from>_to_v<to>.json` | Mappings repo `mappings/mapping-<version>.json`, `mappings/diff/` |
 | `tools/import_bedrock_data.py`, `tools/generate_mappings.py` | Mappings repo `MappingsGenerator`, `MappingsOptimizer` |
-| `protocols/v<from>_to_v<to>/mappings.h` `Mappings` | Mappings repo `mappings-<from>to<to>.nbt`, its `blockstates` and `items` sections |
+| `protocols/v<from>_to_v<to>/mappings.h` `Mappings` | Mappings repo `mappings-<from>to<to>.nbt`, its `blockstates`, `items` and `entities` sections |
 | `rewriter/item.h` `ItemRewriter` | `ItemRewriter` |
 | `protocol/handler.h` `PacketHandler` | `PacketHandler` (`api/protocol/remapper/`) |
 | `protocol/handler.h` `Translator` | `Protocol` by role, Velocity `ProtocolRegistry` by behaviour |

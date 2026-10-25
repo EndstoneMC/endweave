@@ -7,6 +7,10 @@
   "biomes": {
     "minecraft:ice_caves": "minecraft:dripstone_caves"
   },
+  "entities": {
+    "minecraft:frostbite": "minecraft:zombie",
+    "minecraft:ice_ball": "minecraft:snowball"
+  },
   "mob_effects": {
     "minecraft:freezing": 38
   }

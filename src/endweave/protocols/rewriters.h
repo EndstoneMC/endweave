@@ -133,6 +133,52 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddActor)> {
             detail::rewriteVisibleMobEffects<From, To>(packet.data.data);
         }
         BlockRewriter<From, To>::rewriteActorData(packet.data.data, packet.actor_type == "minecraft:falling_block");
+        if constexpr (MappingData<From, To>::mapsEntities()) {
+            // ENDWEAVE: an actor type the client lacks is spawned as its fallback, which is given none
+            // of the properties the server synced for the type it replaces.
+            if (const auto name = MappingData<From, To>::getNewEntityName(packet.actor_type);
+                name != packet.actor_type) {
+                packet.actor_type = std::string(name);
+                packet.synched_properties = {};
+            }
+        }
+    }
+};
+
+// ENDWEAVE: an actor type the client lacks reaches it as its fallback, so it is left out of the
+// types the client is told of.
+template <int From, int To>
+    requires(MappingData<From, To>::mapsEntities())
+struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AvailableActorIDList)> {
+    static void rewrite(bp::packet_of_t<From, static_cast<int>(bp::MinecraftPacketIds::AvailableActorIDList)> &packet)
+    {
+        bp::CompoundTag &identifiers = packet.identifier_list;
+        const auto idlist = identifiers.find("idlist");
+        auto *const entries = idlist != identifiers.end() ? idlist->second.get_if<bp::ListTag>() : nullptr;
+        if (entries == nullptr) {
+            return;
+        }
+        const auto lacked = std::remove_if(entries->begin(), entries->end(), [](const bp::Tag &entry) {
+            const auto *const id = entry.contains("id") ? entry.at("id").get_if<bp::StringTag>() : nullptr;
+            return id != nullptr && MappingData<From, To>::getNewEntityName(id->value()) != id->value();
+        });
+        entries->erase(lacked, entries->end());
+    }
+};
+
+// ENDWEAVE: the client has no actor type to give these properties to.
+template <int From, int To>
+    requires(MappingData<From, To>::mapsEntities())
+struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SyncActorProperty)> {
+    static void rewrite(
+        Context<bp::packet_of_t<From, static_cast<int>(bp::MinecraftPacketIds::SyncActorProperty)>> &ctx)
+    {
+        const bp::CompoundTag &properties = ctx.out().property_data;
+        const auto type = properties.find("type");
+        const auto *const name = type != properties.end() ? type->second.get_if<bp::StringTag>() : nullptr;
+        if (name != nullptr && MappingData<From, To>::getNewEntityName(name->value()) != name->value()) {
+            ctx.cancel();
+        }
     }
 };
 

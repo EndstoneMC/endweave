@@ -5,8 +5,8 @@
 
 Keeps the block_types.json and block_palette.json fields endweave reads, one entry per line and
 sorted, with each state as a JSON value: a bool for a ByteTag, a number for an IntTag and a string
-for a StringTag. Fields at their default are left out. From items.json it keeps the item names, and
-from biomes.json each biome's name and id.
+for a StringTag. Fields at their default are left out. From items.json it keeps the item names,
+from biomes.json each biome's name and id, and from entity_identifiers.json the actor identifiers.
 
 Usage: uv run tools/import_bedrock_data.py <bedrock-data-<version> folder> <protocol>
 """
@@ -64,6 +64,11 @@ def pick(entry: dict, fields: dict) -> dict:
     return {key: entry[key] for key, default in fields.items() if key in entry and entry[key] != default}
 
 
+def entity_names(folder: Path) -> list[str]:
+    identifiers = json.loads((folder / "entity_identifiers.json").read_text(encoding="utf-8"))
+    return sorted(entry["id"] for entry in identifiers["idlist"])
+
+
 def main() -> None:
     if len(sys.argv) != 3:
         sys.exit(__doc__)
@@ -100,7 +105,8 @@ def main() -> None:
         f'  "block_types": [\n{rows(types)}\n  ],\n'
         f'  "blocks": [\n{rows(blocks)}\n  ],\n'
         f'  "items": [\n{rows(item_names)}\n  ],\n'
-        f'  "biomes": [\n{rows(biomes)}\n  ]\n}}\n',
+        f'  "biomes": [\n{rows(biomes)}\n  ],\n'
+        f'  "entities": [\n{rows(entity_names(folder))}\n  ]\n}}\n',
         encoding="utf-8",
         newline="\n",
     )

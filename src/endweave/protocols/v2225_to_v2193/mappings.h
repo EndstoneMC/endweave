@@ -62,6 +62,10 @@ struct Mappings<2225, 2193> {
             .new_id = 188,
         },
     }};
+    static constexpr std::array<std::pair<std::string_view, std::string_view>, 2> entities = {{
+        {"minecraft:frostbite", "minecraft:zombie"},
+        {"minecraft:ice_ball", "minecraft:snowball"},
+    }};
     static constexpr std::array<std::int32_t, 1> mob_effects = {{
         38,
     }};

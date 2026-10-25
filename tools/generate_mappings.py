@@ -13,8 +13,10 @@ fallback data/fallbacks/v<from>_to_v<to>.json names for it. Anything else stops 
 items lists, sorted, the items the target has no mapping for. experiments lists, sorted, the ones
 the fallbacks file names: the experiments the target gates behind what the source ships as base
 game. biomes gives the id each biome takes that the target renumbers, or lacks and so takes its
-fallback's. mob_effects lists, sorted, the ids of the mob effects the fallbacks file says the target
-lacks, since no dump has the effect registry. A hop that gives blocks states from their neighbours
+fallback's. entities pairs each actor type the target lacks with the fallback the fallbacks file
+names for it, sorted, and stops the generator where it names none. mob_effects lists, sorted, the
+ids of the mob effects the fallbacks file says the target lacks, since no dump has the effect
+registry. A hop that gives blocks states from their neighbours
 also gets a block_connections.h, a BlockData profile for each set of blocks that are the same to
 the blocks beside them.
 
@@ -180,6 +182,7 @@ class BlockPalette:
         self.version = mapping["version"]
         self.items = set(mapping["items"])
         self.biomes = {biome["name"]: biome["id"] for biome in mapping["biomes"]}
+        self.entities = set(mapping["entities"])
         self.blocks: dict[tuple, Block] = {}
         # Every value each state of each block type takes.
         self.states: dict[str, dict[str, list[Tag]]] = {}
@@ -510,6 +513,23 @@ def cpp_array(element: str, name: str, values: list[str]) -> list[str]:
     ]
 
 
+def entities(source: BlockPalette, target: BlockPalette, fallbacks: dict[str, str]) -> list[tuple[str, str]]:
+    path = f"data/fallbacks/v{source.protocol}_to_v{target.protocol}.json"
+    if unused := sorted(name for name in fallbacks if name not in source.entities or name in target.entities):
+        sys.exit(
+            f"{path} names a fallback for {', '.join(unused)}, which {target.version} has or {source.version} lacks"
+        )
+    mappings = []
+    for name in sorted(source.entities - target.entities):
+        fallback = fallbacks.get(name)
+        if fallback is None:
+            sys.exit(f"{name} is not in {target.version}: add a fallback for it to the entities of {path}")
+        if fallback not in target.entities:
+            sys.exit(f"{name}'s fallback {fallback} is not in {target.version}")
+        mappings.append((name, fallback))
+    return mappings
+
+
 def mob_effects(source: BlockPalette, target: BlockPalette, effects: dict[str, int]) -> list[int]:
     ids = sorted(effects.values())
     if len(set(ids)) != len(ids):
@@ -518,8 +538,16 @@ def mob_effects(source: BlockPalette, target: BlockPalette, effects: dict[str, i
 
 
 def content_mappings(source: BlockPalette, target: BlockPalette, fallbacks: dict) -> list[str]:
+    renames = entities(source, target, fallbacks.get("entities", {}))
     effects = mob_effects(source, target, fallbacks.get("mob_effects", {}))
-    return cpp_array("std::int32_t", "mob_effects", [str(effect) for effect in effects])
+    return [
+        *cpp_array(
+            "std::pair<std::string_view, std::string_view>",
+            "entities",
+            [f'{{"{name}", "{fallback}"}}' for name, fallback in renames],
+        ),
+        *cpp_array("std::int32_t", "mob_effects", [str(effect) for effect in effects]),
+    ]
 
 
 def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict) -> None:
@@ -543,7 +571,7 @@ def load_fallbacks(source: BlockPalette, target: BlockPalette) -> dict:
     if not path.exists():
         return {}
     fallbacks = json.loads(path.read_text(encoding="utf-8"))
-    if unknown := sorted(fallbacks.keys() - {"block_types", "experiments", "biomes", "mob_effects"}):
+    if unknown := sorted(fallbacks.keys() - {"block_types", "experiments", "biomes", "entities", "mob_effects"}):
         sys.exit(f"{path.relative_to(ROOT)} has {', '.join(unknown)}, which the generator does not read")
     return fallbacks
 
