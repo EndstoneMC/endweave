@@ -1,6 +1,7 @@
 #include "item_stack.h"
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -14,6 +15,8 @@ using ToAction = decltype(bp::ItemStackRequestCereal_<2225>::RequestData::action
 
 /** 2225 inserted CraftDiscPressActionData here, ahead of the two deprecated crafts. */
 constexpr std::size_t kCraftDiscPress = 16;
+static_assert(std::is_same_v<std::variant_alternative_t<kCraftDiscPress, ToAction>,
+                             bp::ItemStackRequestCereal_<2225>::CraftDiscPressActionData>);
 
 template <std::size_t I, class Parent>
 void carry(const Context<Parent> &ctx, FromAction &&from, ToAction &to)
