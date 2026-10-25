@@ -209,7 +209,8 @@ and it is not `Transformer`'s job.
   `protocols/rewriters.h`: `StartGamePacket`'s block registry checksum, which is zeroed because no
   translation reproduces it, and its definitions of the block types the client lacks, which are left
   out; the experiments a hop names, turned on in `StartGamePacket` and `ResourcePackStackPacket`;
-  the heartbeat `LevelSoundEvent` inside actor data; and the block states the schema cannot type (see
+  the heartbeat `LevelSoundEvent` inside actor data; the actor types and mob effects the client lacks
+  (see **Actor types** and **Mob effects**); and the block states the schema cannot type (see
   **Block states**). A rewriter for one pair goes in that pair's directory.
 - **One that parses bytes the schema leaves opaque returns `std::expected<void, std::error_code>`,**
   and `handle` fails the packet on an error, as it does a decode error. The rest return `void`.
@@ -361,15 +362,15 @@ older than the server is just not offered the items its version lacks.
   `CreativeContent` rewriter leaves those items out, and any group they leave empty, and the
   `CraftingData` rewriter the recipes and mixes that take or make one (`rewriter/item.h`). MOT
   does the same; ViaBackwards instead shows a fallback item, which needs the real one restored on
-  the way back.
+  the way back. An unlocking requirement that names one among other ingredients only loses that
+  one.
 - **A potion is an aux value**, on `minecraft:potion`, `splash_potion` and `lingering_potion` and
   one past it on a tipped `minecraft:arrow`. A hop whose `to` lacks potions lists each item and aux
   value that carries one in `potions`, sorted, and `MappingData<From, To>::getNewPotionAux` returns
   none for them. The `ItemRegistryPacket` rewriter notes the ids of the items that carry one, and
   the `CreativeContent` and `CraftingData` rewriters leave a potion the client lacks out as they do a
-  missing item. An unlocking requirement that names one among other ingredients only loses that
-  one, since every tipped arrow recipe lists every lingering potion. A stack that carries one is
-  left as it is, as a missing item's is.
+  missing item; every tipped arrow recipe's unlocking requirement lists every lingering potion. A
+  stack that carries one is left as it is, as a missing item's is.
 
 ## Biomes
 
