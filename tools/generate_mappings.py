@@ -13,8 +13,10 @@ fallback data/fallbacks/v<from>_to_v<to>.json names for it. Anything else stops 
 items lists, sorted, the items the target has no mapping for. experiments lists, sorted, the ones
 the fallbacks file names: the experiments the target gates behind what the source ships as base
 game. biomes gives the id each biome takes that the target renumbers, or lacks and so takes its
-fallback's. A hop that gives blocks states from their neighbours also gets a block_connections.h, a
-BlockData profile for each set of blocks that are the same to the blocks beside them.
+fallback's. mob_effects lists, sorted, the ids of the mob effects the fallbacks file says the target
+lacks, since no dump has the effect registry. A hop that gives blocks states from their neighbours
+also gets a block_connections.h, a BlockData profile for each set of blocks that are the same to
+the blocks beside them.
 
 Usage: uv run tools/generate_mappings.py
 """
@@ -436,6 +438,7 @@ def write_mappings(
     missing_items: list[str],
     experiments: list[str],
     biomes: list[list[str]],
+    content: list[str],
 ) -> None:
     lines = [
         *preamble(source, target, "mapping.h"),
@@ -468,7 +471,7 @@ def write_mappings(
             *(line for biome in biomes for line in biome),
             "    }};",
         ]
-    lines += ["};", "", "} // namespace endweave", ""]
+    lines += [*content, "};", "", "} // namespace endweave", ""]
     path = write_lines(source, target, "mappings.h", lines)
     print(
         f"{path.relative_to(ROOT)}: {len(updates)} block states, {len(missing_items)} items, "
@@ -497,6 +500,28 @@ def write_block_connections(source: BlockPalette, target: BlockPalette, profiles
     print(f"{path.relative_to(ROOT)}: {len(profiles)} profiles")
 
 
+def cpp_array(element: str, name: str, values: list[str]) -> list[str]:
+    if not values:
+        return []
+    return [
+        f"    static constexpr std::array<{element}, {len(values)}> {name} = {{{{",
+        *(f"        {value}," for value in values),
+        "    }};",
+    ]
+
+
+def mob_effects(source: BlockPalette, target: BlockPalette, effects: dict[str, int]) -> list[int]:
+    ids = sorted(effects.values())
+    if len(set(ids)) != len(ids):
+        sys.exit(f"data/fallbacks/v{source.protocol}_to_v{target.protocol}.json gives two mob effects one id")
+    return ids
+
+
+def content_mappings(source: BlockPalette, target: BlockPalette, fallbacks: dict) -> list[str]:
+    effects = mob_effects(source, target, fallbacks.get("mob_effects", {}))
+    return cpp_array("std::int32_t", "mob_effects", [str(effect) for effect in effects])
+
+
 def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict) -> None:
     updates = diff(source, target, fallbacks.get("block_types", {}))
     biomes = diff_biomes(source, target, fallbacks.get("biomes", {}))
@@ -507,6 +532,7 @@ def write_hop(source: BlockPalette, target: BlockPalette, fallbacks: dict) -> No
         sorted(source.items - target.items),
         sorted(fallbacks.get("experiments", [])),
         [cpp_biome(biome) for biome in biomes],
+        content_mappings(source, target, fallbacks),
     )
     if (profiles := block_connections(source, target, updates)) is not None:
         write_block_connections(source, target, [cpp_block_data(profile) for profile in profiles])
@@ -517,7 +543,7 @@ def load_fallbacks(source: BlockPalette, target: BlockPalette) -> dict:
     if not path.exists():
         return {}
     fallbacks = json.loads(path.read_text(encoding="utf-8"))
-    if unknown := sorted(fallbacks.keys() - {"block_types", "experiments", "biomes"}):
+    if unknown := sorted(fallbacks.keys() - {"block_types", "experiments", "biomes", "mob_effects"}):
         sys.exit(f"{path.relative_to(ROOT)} has {', '.join(unknown)}, which the generator does not read")
     return fallbacks
 

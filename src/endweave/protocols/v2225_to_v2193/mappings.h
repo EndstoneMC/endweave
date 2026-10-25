@@ -62,6 +62,9 @@ struct Mappings<2225, 2193> {
             .new_id = 188,
         },
     }};
+    static constexpr std::array<std::int32_t, 1> mob_effects = {{
+        38,
+    }};
 };
 
 } // namespace endweave

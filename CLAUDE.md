@@ -257,9 +257,9 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   id from its `biomes.json`. `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
   writes it. Import from bedrock-data dumped with every experiment on, since a server may run any of
   them. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the fallback
-  for each block type the `to` version lacks, `biomes` for each biome, and `experiments` the
-  experiments `to` gates behind what `from` ships as base game. `data/` stays out of the sdist and
-  the wheel.
+  for each block type the `to` version lacks, `biomes` for each biome, `experiments` the
+  experiments `to` gates behind what `from` ships as base game, and `mob_effects` the id of each
+  mob effect `to` lacks, by name. `data/` stays out of the sdist and the wheel.
 - **`uv run tools/generate_mappings.py` writes each hop's `mappings.h` and `block_connections.h` from
   `data/`.** The script mirrors
   BDS's classes and methods (`Block`, `CompoundTag`, `NbtIo`, `StringByteOutput`) and checks its hash
@@ -382,6 +382,19 @@ version, so a biome its version lacks is shown as a fallback.
 - **The `BiomeDefinitionList` rewriter leaves out the definitions of the biomes the client lacks**
   (`rewriter/biome.h`), as shawtymarco/go-multiversion does. The string list is sent whole, so the
   definitions left keep every index into it.
+
+## Mob effects
+
+`MobEffectPacket` names an effect by its id, which the client resolves against the effects built
+into its version. No dump has the effect registry, so the fallbacks file names the ones a hop's `to`
+lacks.
+
+- **A hop whose `to` lacks mob effects lists their ids in `mob_effects`** in its `mappings.h`.
+  `MappingData<From, To>::getNewMobEffectId` reads them hop by hop and returns none for a missing
+  effect.
+- **The `MobEffect` rewriter cancels a packet that names one** (`protocols/rewriters.h`), as
+  ViaBackwards cancels `UPDATE_MOB_EFFECT`, and the actor data rewriters leave it out of
+  `VisibleMobEffects`, which packs up to eight effect ids seven bits apiece.
 
 ## Transformers
 

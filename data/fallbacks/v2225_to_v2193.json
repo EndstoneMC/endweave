@@ -6,5 +6,8 @@
   },
   "biomes": {
     "minecraft:ice_caves": "minecraft:dripstone_caves"
+  },
+  "mob_effects": {
+    "minecraft:freezing": 38
   }
 }

@@ -1,11 +1,13 @@
 #pragma once
 
+#include "endweave/protocol/context.h"
 #include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/rewriter/block.h"
 
 #include <algorithm>
 #include <bedrock/protocol/actor.h>
+#include <bedrock/protocol/effect.h>
 #include <bedrock/protocol/enum.hpp>
 #include <bedrock/protocol/game.h>
 #include <bedrock/protocol/network.h>
@@ -94,6 +96,30 @@ void rewriteActorData(std::vector<bp::DataItemEntry_<From>> &entries)
     }
 }
 
+// ENDWEAVE: this key packs up to eight visible effects in seven bits each, the id above the ambient
+// bit. An effect the client lacks is left out, as its MobEffect is.
+template <int From, int To>
+void rewriteVisibleMobEffects(std::vector<bp::DataItemEntry_<From>> &entries)
+{
+    for (auto &entry : entries) {
+        if (entry.id != static_cast<std::uint32_t>(bp::ActorDataIDs_<From>::VisibleMobEffects)) {
+            continue;
+        }
+        if (auto *const effects = std::get_if<bp::DataItemInt64Payload_<From>>(&entry.payload)) {
+            std::uint64_t kept = 0;
+            int shift = 0;
+            for (auto packed = static_cast<std::uint64_t>(effects->value); packed != 0; packed >>= 7) {
+                const std::uint64_t effect = packed & 0x7F;
+                if (MappingData<From, To>::getNewMobEffectId(static_cast<std::int32_t>(effect >> 1))) {
+                    kept |= effect << shift;
+                    shift += 7;
+                }
+            }
+            effects->value = static_cast<std::int64_t>(kept);
+        }
+    }
+}
+
 } // namespace detail
 
 template <int From, int To>
@@ -102,6 +128,9 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddActor)> {
     {
         if constexpr (detail::sound_renumbered_v<From, To>) {
             detail::rewriteActorData<From, To>(packet.data.data);
+        }
+        if constexpr (MappingData<From, To>::mapsMobEffects()) {
+            detail::rewriteVisibleMobEffects<From, To>(packet.data.data);
         }
         BlockRewriter<From, To>::rewriteActorData(packet.data.data, packet.actor_type == "minecraft:falling_block");
     }
@@ -117,11 +146,16 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddItemActor)
 };
 
 template <int From, int To>
-    requires detail::sound_renumbered_v<From, To>
+    requires(detail::sound_renumbered_v<From, To> || MappingData<From, To>::mapsMobEffects())
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddPlayer)> {
     static void rewrite(bp::AddPlayerPacket_<From> &packet)
     {
-        detail::rewriteActorData<From, To>(packet.unpack.data);
+        if constexpr (detail::sound_renumbered_v<From, To>) {
+            detail::rewriteActorData<From, To>(packet.unpack.data);
+        }
+        if constexpr (MappingData<From, To>::mapsMobEffects()) {
+            detail::rewriteVisibleMobEffects<From, To>(packet.unpack.data);
+        }
     }
 };
 
@@ -132,7 +166,23 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SetActorData)
         if constexpr (detail::sound_renumbered_v<From, To>) {
             detail::rewriteActorData<From, To>(packet.packed_items.data);
         }
+        if constexpr (MappingData<From, To>::mapsMobEffects()) {
+            detail::rewriteVisibleMobEffects<From, To>(packet.packed_items.data);
+        }
         BlockRewriter<From, To>::rewriteActorData(packet.packed_items.data, false);
+    }
+};
+
+// ENDWEAVE: an effect the client has no MobEffect for is left off it, as ViaBackwards leaves off
+// breath_of_the_nautilus.
+template <int From, int To>
+    requires(MappingData<From, To>::mapsMobEffects())
+struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::MobEffect)> {
+    static void rewrite(Context<bp::MobEffectPacket_<From>> &ctx)
+    {
+        if (!MappingData<From, To>::getNewMobEffectId(ctx.out().effect_id)) {
+            ctx.cancel();
+        }
     }
 };
 
