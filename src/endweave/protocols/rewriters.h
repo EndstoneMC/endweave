@@ -1,5 +1,6 @@
 #pragma once
 
+#include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/rewriter/block.h"
 
@@ -26,6 +27,11 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::StartGame)> {
     static void rewrite(bp::StartGamePacket_<From> &packet)
     {
         packet.server_block_type_registry_checksum = 0;
+        // ENDWEAVE: a block type To lacks reaches the client as its fallback, so the server's definition
+        // of it is left out.
+        std::erase_if(packet.block_properties, [](const auto &property) {
+            return MappingData<From, To>::getNewBlockName(property.name) != property.name;
+        });
     }
 };
 

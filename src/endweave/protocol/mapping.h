@@ -47,6 +47,14 @@ struct MappingDataBase {
         return it != mappings.end() && it->first == id ? it->second : id;
     }
 
+    /** The name `To` gives the block type `From` calls `name`, which is its fallback where `To` lacks it. */
+    static std::string_view getNewBlockName(std::string_view name)
+    {
+        const auto &updates = Mappings<From, To>::block_states;
+        const auto it = std::ranges::find(updates, name, &BlockStateUpdate::name);
+        return it != updates.end() && !it->rename.empty() ? it->rename : name;
+    }
+
     /** The name `To` gives the item `From` calls `name`, or none for an item `To` lacks. */
     static std::optional<std::string_view> getNewItemName(std::string_view name)
     {
@@ -77,6 +85,17 @@ struct MappingData {
         else {
             constexpr int next = step(From, To);
             return MappingData<next, To>::getNewBlockStateId(MappingDataBase<From, next>::getNewBlockStateId(id));
+        }
+    }
+
+    static std::string_view getNewBlockName(std::string_view name)
+    {
+        if constexpr (From == To) {
+            return name;
+        }
+        else {
+            constexpr int next = step(From, To);
+            return MappingData<next, To>::getNewBlockName(MappingDataBase<From, next>::getNewBlockName(name));
         }
     }
 
