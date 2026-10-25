@@ -9,3 +9,4 @@
 #include "mappings.h"
 #include "player.h"
 #include "skin.h"
+#include "sound.h"

@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Fixed an off-hand item use from a 26.50 or newer client reaching a 26.40-26.45 server as a main-hand one.
 - Fixed 26.50-26.52 clients on a 26.60 server being sent the Freezing effect and offered ice balls and the Potion of Freezing in their creative inventory and recipe book.
 - Fixed recipes disappearing from an older client's recipe book when only some of the items that unlock them are missing from its version.
+- Fixed 26.60 players being kicked when a 26.40-26.52 server changes a sound it is playing, and older clients misreading the same change from a 26.60 server.
 
 ## [0.6.2] - 2026-10-20
 

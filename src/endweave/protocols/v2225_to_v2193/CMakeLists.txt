@@ -5,4 +5,5 @@ target_sources(_pipeline PRIVATE
         inventory.cpp
         item_stack.cpp
         player.cpp
-        skin.cpp)
+        skin.cpp
+        sound.cpp)
