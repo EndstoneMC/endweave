@@ -69,6 +69,16 @@ struct Mappings<2225, 2193> {
     static constexpr std::array<std::int32_t, 1> mob_effects = {{
         38,
     }};
+    static constexpr std::array<std::pair<std::string_view, std::int32_t>, 8> potions = {{
+        {"minecraft:arrow", 48},
+        {"minecraft:arrow", 49},
+        {"minecraft:lingering_potion", 47},
+        {"minecraft:lingering_potion", 48},
+        {"minecraft:potion", 47},
+        {"minecraft:potion", 48},
+        {"minecraft:splash_potion", 47},
+        {"minecraft:splash_potion", 48},
+    }};
 };
 
 } // namespace endweave

@@ -254,7 +254,8 @@ same way, so a hop is stated as readable rules and the ids follow from them.
   bedrock-dumper `block_types.json` and `block_palette.json`, one entry per line, sorted, each state
   a JSON value (bool for a `ByteTag`, number for an `IntTag`, string for a `StringTag`) and each
   field left out at its default, then the item names from its `items.json`, each biome's name and
-  id from its `biomes.json` and the actor identifiers from its `entity_identifiers.json`.
+  id from its `biomes.json`, the actor identifiers from its `entity_identifiers.json`, and the aux
+  values `creative_items.json` gives each item whose aux value names a potion.
   `uv run tools/import_bedrock_data.py <bedrock-data-<version>> <protocol>`
   writes it. Import from bedrock-data dumped with every experiment on, since a server may run any of
   them. `data/fallbacks/v<from>_to_v<to>.json` is written by hand: `block_types` names the fallback
@@ -361,6 +362,14 @@ older than the server is just not offered the items its version lacks.
   `CraftingData` rewriter the recipes and mixes that take or make one (`rewriter/item.h`). MOT
   does the same; ViaBackwards instead shows a fallback item, which needs the real one restored on
   the way back.
+- **A potion is an aux value**, on `minecraft:potion`, `splash_potion` and `lingering_potion` and
+  one past it on a tipped `minecraft:arrow`. A hop whose `to` lacks potions lists each item and aux
+  value that carries one in `potions`, sorted, and `MappingData<From, To>::getNewPotionAux` returns
+  none for them. The `ItemRegistryPacket` rewriter notes the ids of the items that carry one, and
+  the `CreativeContent` and `CraftingData` rewriters leave a potion the client lacks out as they do a
+  missing item. An unlocking requirement that names one among other ingredients only loses that
+  one, since every tipped arrow recipe lists every lingering potion. A stack that carries one is
+  left as it is, as a missing item's is.
 
 ## Biomes
 

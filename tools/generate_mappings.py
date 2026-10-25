@@ -4,7 +4,8 @@
 """Generates each hop's mappings from the block palettes, item names and biomes in data/.
 
 Each hop gets a mappings.h: its block_states, its items if the target lacks any of the source's, its
-experiments if it names any, and its biomes if the target lacks or renumbers any.
+experiments if it names any, its biomes if the target lacks or renumbers any, and its entities,
+mob_effects and potions if the target lacks any.
 The classes mirror BDS's own, so a block's network id is computed the way
 Block::computeRawSerializationIdHashForNetwork computes it. Going up, a block gains the states the
 newer version added, at that version's default, and loses the ones it removed. Going down, it
@@ -16,9 +17,9 @@ game. biomes gives the id each biome takes that the target renumbers, or lacks a
 fallback's. entities pairs each actor type the target lacks with the fallback the fallbacks file
 names for it, sorted, and stops the generator where it names none. mob_effects lists, sorted, the
 ids of the mob effects the fallbacks file says the target lacks, since no dump has the effect
-registry. A hop that gives blocks states from their neighbours
-also gets a block_connections.h, a BlockData profile for each set of blocks that are the same to
-the blocks beside them.
+registry. potions lists, sorted, each item and aux value the source gives a potion that the target
+lacks. A hop that gives blocks states from their neighbours also gets a block_connections.h, a
+BlockData profile for each set of blocks that are the same to the blocks beside them.
 
 Usage: uv run tools/generate_mappings.py
 """
@@ -183,6 +184,7 @@ class BlockPalette:
         self.items = set(mapping["items"])
         self.biomes = {biome["name"]: biome["id"] for biome in mapping["biomes"]}
         self.entities = set(mapping["entities"])
+        self.potions = {name: set(aux_values) for name, aux_values in mapping["potions"].items()}
         self.blocks: dict[tuple, Block] = {}
         # Every value each state of each block type takes.
         self.states: dict[str, dict[str, list[Tag]]] = {}
@@ -540,6 +542,11 @@ def mob_effects(source: BlockPalette, target: BlockPalette, effects: dict[str, i
 def content_mappings(source: BlockPalette, target: BlockPalette, fallbacks: dict) -> list[str]:
     renames = entities(source, target, fallbacks.get("entities", {}))
     effects = mob_effects(source, target, fallbacks.get("mob_effects", {}))
+    lacked = sorted(
+        (name, aux)
+        for name, aux_values in source.potions.items()
+        for aux in aux_values - target.potions.get(name, aux_values)
+    )
     return [
         *cpp_array(
             "std::pair<std::string_view, std::string_view>",
@@ -547,6 +554,9 @@ def content_mappings(source: BlockPalette, target: BlockPalette, fallbacks: dict
             [f'{{"{name}", "{fallback}"}}' for name, fallback in renames],
         ),
         *cpp_array("std::int32_t", "mob_effects", [str(effect) for effect in effects]),
+        *cpp_array(
+            "std::pair<std::string_view, std::int32_t>", "potions", [f'{{"{name}", {aux}}}' for name, aux in lacked]
+        ),
     ]
 
 
