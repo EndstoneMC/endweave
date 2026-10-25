@@ -20,6 +20,9 @@ DRIPSTONE_CAVES = 188
 ICE_CAVES = 196  # NEWEST has it, NEW and OLD lack it
 
 STONE = 2150698529
+# minecraft:oak_stairs facing 1, right side up: OLD has no corner, NEW adds it.
+OAK_STAIRS_OLD = 3302397712
+OAK_STAIRS_NEW = 4233957882
 
 SAME_AS_BELOW = b"\xff"
 
@@ -46,16 +49,38 @@ def optional(value: bytes | None) -> bytes:
     return b"\x00" if value is None else b"\x01" + value
 
 
-def definition(biome_id: int, tags: list[int] | None = None) -> bytes:
-    """A biome definition with no chunk generation data."""
+def uint32s(values: list[int]) -> bytes:
+    return uvarint(len(values)) + b"".join(struct.pack("<I", value) for value in values)
+
+
+def capped_surface(
+    floor: list[int], ceiling: list[int], sea: int | None, foundation: int | None, beach: int | None
+) -> bytes:
+    blocks = (None if block is None else struct.pack("<I", block) for block in (sea, foundation, beach))
+    return uint32s(floor) + uint32s(ceiling) + b"".join(optional(block) for block in blocks)
+
+
+def noise_gradient_surface(non_replaceable: list[int]) -> bytes:
+    """No gradient ranges, and a noise with no amplitudes."""
+    return uint32s(non_replaceable) + uvarint(0) + string("") + struct.pack("<i", 0) + uvarint(0)
+
+
+def surface_builder(capped: bytes | None = None, noise: bytes | None = None) -> bytes:
+    """No surface materials or mesa, and none of the four built-in surfaces."""
+    return b"\x00" + bytes(4) + b"\x00" + optional(capped) + optional(noise)
+
+
+def definition(biome_id: int, tags: list[int] | None = None, surface: bytes | None = None) -> bytes:
+    """A biome definition whose chunk generation data, if any, is its surface builder and nothing else."""
     tag_data = None if tags is None else uvarint(len(tags)) + b"".join(struct.pack("<H", tag) for tag in tags)
+    chunk_gen = None if surface is None else bytes(9) + b"\x01" + surface + b"\x00"
     return (
         struct.pack("<H", biome_id)
         + struct.pack("<5f", 0.5, 0.5, 0.0, 0.1, 0.2)
         + struct.pack("<i", -1)
         + b"\x01"
         + optional(tag_data)
-        + b"\x00"
+        + optional(chunk_gen)
     )
 
 
@@ -127,6 +152,22 @@ class TestBiomeDefinitions:
         payload = biome_definition_list({0: self.PLAINS_DEFINITION, 3: self.DESERT_DEFINITION}, self.STRINGS)
 
         assert Translator(NEW, NEWEST).translate(BIOME_DEFINITION_LIST, payload) == payload
+
+
+class TestBiomeDefinitionBlocks:
+    def test_rewrites_the_blocks_a_capped_surface_names(self) -> None:
+        def payload(stairs: int) -> bytes:
+            capped = capped_surface([stairs, STONE], [stairs], stairs, None, STONE)
+            return biome_definition_list({0: definition(PLAINS, surface=surface_builder(capped=capped))}, ["plains"])
+
+        assert Translator(OLD, NEW).translate(BIOME_DEFINITION_LIST, payload(OAK_STAIRS_OLD)) == payload(OAK_STAIRS_NEW)
+
+    def test_rewrites_the_blocks_a_noise_gradient_surface_keeps(self) -> None:
+        def payload(stairs: int) -> bytes:
+            noise = noise_gradient_surface([STONE, stairs])
+            return biome_definition_list({0: definition(PLAINS, surface=surface_builder(noise=noise))}, ["plains"])
+
+        assert Translator(OLD, NEW).translate(BIOME_DEFINITION_LIST, payload(OAK_STAIRS_OLD)) == payload(OAK_STAIRS_NEW)
 
 
 class TestChunkBiomes:

@@ -265,7 +265,10 @@ same way, so a hop is stated as readable rules and the ids follow from them.
 - **`rewriter/block.h` is `BlockRewriter`.** `rewriteBlockIds` finds every block id by its type,
   `bp::BlockRuntimeId`, which bedrock-protocol gives every member BDS types `BlockRuntimeId`, and
   `should_translate_v` covers every packet that carries one. `SerializedNetworkItemInstanceDescriptor`
-  is the one member BDS types `int32_t`, and the walker finds it by name.
+  is the one member BDS types `int32_t`, and the walker finds it by name. The surface blocks of a
+  biome definition, which BDS types `unsigned int` (a capped surface's floor, ceiling, sea,
+  foundation and beach, and a noise gradient's non-replaceable blocks), are rewritten by name in the
+  `BiomeDefinitionList` rewriter (`rewriter/biome.h`).
 - **Ids the schema cannot type are `Rewriter`s** in `rewriter/block.h`: the particle `LevelEvent`s,
   the block sound events, and the sub-chunks in `LevelChunkPacket` and `SubChunkPacket`. Actor data
   keys 16 and 23, and `Variant` on a falling block, go through `BlockRewriter::rewriteActorData` from
