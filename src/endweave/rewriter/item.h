@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <bedrock/protocol/crafting.h>
 #include <bedrock/protocol/detail/reflect.hpp>
+#include <bedrock/protocol/inventory.h>
 #include <bedrock/protocol/item.h>
 #include <bedrock/protocol/network.h>
 #include <cstddef>
@@ -121,6 +122,18 @@ struct ItemRewriter {
         }
         else {
             return false;
+        }
+    }
+};
+
+/** The player UI has three more slots for the disc press at 2225. */
+template <int From, int To>
+    requires((From < 2225) != (To < 2225))
+struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::InventoryContent)> {
+    static void rewrite(bp::packet_of_t<From, static_cast<int>(bp::MinecraftPacketIds::InventoryContent)> &packet)
+    {
+        if (packet.inventory_id == bp::ContainerID::PlayerOnlyUi) {
+            packet.slots.resize(To >= 2225 ? 57 : 54);
         }
     }
 };

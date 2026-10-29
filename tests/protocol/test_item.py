@@ -11,6 +11,7 @@ NEW = 2193
 NEWEST = 2225
 
 CRAFTING_DATA = 52
+INVENTORY_CONTENT = 49
 CREATIVE_CONTENT = 145
 ITEM_REGISTRY = 162
 
@@ -121,6 +122,47 @@ class TestItemRegistry:
         payload = item_registry(STICK, CONCRETE_STAIRS)
 
         assert Translator(NEW, OLD).translate(ITEM_REGISTRY, payload) == payload
+
+
+class TestPlayerUiInventory:
+    # A stack with a network id and an empty item-data blob, as written by the native serializer.
+    item = bytes.fromhex("05 00 01 00 03 01 12 00 0a") + bytes(10)
+    # A bundle with NBT and a network id captured from a 26.51 server.
+    bundle = bytes.fromhex("6003010000012e001fffff010a000003090062756e646c655f696401000000000000000000000000")
+    air = bytes(8)
+    container = bytes.fromhex("3b 01 03 00 00 00")
+
+    @classmethod
+    def content(cls, inventory_id: int, slots: list[bytes]) -> bytes:
+        return uvarint(inventory_id) + uvarint(len(slots)) + b"".join(slots) + cls.container + cls.item
+
+    def test_adds_three_empty_slots_to_the_player_ui(self) -> None:
+        slots = [self.bundle] + [self.air] * 52 + [self.item]
+        expected = self.content(124, slots + [self.air] * 3)
+
+        for source in (OLD, 2169, NEW):
+            translator = Translator(source, NEWEST)
+            assert INVENTORY_CONTENT in translator.actions
+            assert translator.translate(INVENTORY_CONTENT, self.content(124, slots)) == expected
+
+    def test_removes_the_three_new_player_ui_slots_for_older_clients(self) -> None:
+        slots = [self.item] + [self.air] * 52 + [self.item]
+        newer = self.content(124, slots + [self.item, self.air, self.item])
+
+        for target in (OLD, 2169, NEW):
+            assert Translator(NEWEST, target).translate(INVENTORY_CONTENT, newer) == self.content(124, slots)
+
+    def test_leaves_other_containers_and_same_layouts_alone(self) -> None:
+        for source, target, size in ((OLD, NEWEST, 54), (NEWEST, NEW, 57), (OLD, NEW, 54), (NEWEST, NEWEST, 57)):
+            slots = [self.item] + [self.air] * (size - 1)
+            for inventory_id in (0, 119, 120, 125):
+                payload = self.content(inventory_id, slots)
+                assert Translator(source, target).translate(INVENTORY_CONTENT, payload) == payload
+
+        for source, target, size in ((OLD, NEW, 54), (NEW, NEW, 54), (NEWEST, NEWEST, 57)):
+            slots = [self.item] + [self.air] * (size - 1)
+            payload = self.content(124, slots)
+            assert Translator(source, target).translate(INVENTORY_CONTENT, payload) == payload
 
 
 class TestCreativeContent:
