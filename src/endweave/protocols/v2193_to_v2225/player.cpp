@@ -12,7 +12,7 @@ void Transformer<bp::AddPlayerPacket_<2193>, bp::AddPlayerPacket_<2225>>::transf
     auto &to = ctx.out();
     ew::transform_members(ctx, std::move(from), to);
     // ENDWEAVE: 2193 has no player riding a block, so every player spawns on none.
-    to.passenger_block_data = std::nullopt;
+    to.passenger_of_block_data = std::nullopt;
 }
 
 void Transformer<bp::PlayerListPacket_<2193>::AddEntry, bp::PlayerListPacket_<2225>::AddEntry>::transform(

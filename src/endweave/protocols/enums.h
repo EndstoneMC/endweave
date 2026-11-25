@@ -1,192 +1,125 @@
 #pragma once
 
-#include "endweave/protocol/transform.h"
+#include "endweave/rewriter/enum.h"
 
-#include <bedrock/protocol/enum.hpp>
-#include <string_view>
-#include <type_traits>
+#include <bedrock/protocol/actor.h>
+#include <bedrock/protocol/command.h>
+#include <bedrock/protocol/diagnostics.h>
+#include <bedrock/protocol/inventory.h>
+#include <bedrock/protocol/map.h>
+#include <bedrock/protocol/network.h>
+#include <bedrock/protocol/skin.h>
+#include <bedrock/protocol/telemetry.h>
+#include <optional>
 
 namespace bp = bedrock::protocol;
 
 namespace endweave {
 
-namespace detail {
-
-template <class From, class To>
-concept ReflectedEnums = std::is_enum_v<From> && std::is_enum_v<To> && requires {
-    bp::enum_type_name<From>();
-    bp::enum_type_name<To>();
-};
-
-/** Whether `From` and `To` are two versions of the enum bedrock-protocol reflects as `name`. */
-template <class From, class To>
-consteval bool versionsOf(std::string_view name)
-{
-    if constexpr (ReflectedEnums<From, To>) {
-        return !std::is_same_v<From, To> && bp::enum_type_name<From>() == name && bp::enum_type_name<To>() == name;
-    }
-    else {
-        return false;
-    }
-}
-
-} // namespace detail
-
-// ENDWEAVE: an actor type one side has alone lands on Undefined.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("ActorType"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
+// ENDWEAVE: an actor type the destination lacks lands on Undefined.
+template <>
+struct EnumPolicy<bp::ActorType> {
+    static constexpr std::optional<bp::ActorType> apply(bp::ActorType)
     {
-        ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::Undefined);
+        return bp::ActorType::Undefined;
     }
 };
 
-// ENDWEAVE: a persona piece one side has alone lands on Unsupported.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("PieceType"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
+// ENDWEAVE: a persona piece the destination lacks lands on Unsupported.
+template <>
+struct EnumPolicy<bp::PieceType> {
+    static constexpr std::optional<bp::PieceType> apply(bp::PieceType)
     {
-        ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::Unsupported);
+        return bp::PieceType::Unsupported;
     }
 };
 
-// ENDWEAVE: a slot in a container the other side does not name has nowhere to land that is not some
+// ENDWEAVE: a slot in a container the destination does not name has nowhere to land that is not some
 // other container's, so the packet is dropped.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("ContainerEnumName"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
+template <>
+struct EnumPolicy<bp::ContainerEnumName> {
+    static constexpr std::optional<bp::ContainerEnumName> apply(bp::ContainerEnumName)
     {
-        const auto name = bp::enum_cast<To>(bp::enum_name(from));
-        if (!name) {
-            ctx.cancel();
-            return;
-        }
-        ctx.out() = *name;
+        return std::nullopt;
     }
 };
 
-// ENDWEAVE: a container the other side does not name has no screen there, and opening the wrong one
+// ENDWEAVE: a container the destination does not name has no screen there, and opening the wrong one
 // is further from what the server meant than opening nothing.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("ContainerType"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
+template <>
+struct EnumPolicy<bp::ContainerType> {
+    static constexpr std::optional<bp::ContainerType> apply(bp::ContainerType)
     {
-        const auto type = bp::enum_cast<To>(bp::enum_name(from));
-        if (!type) {
-            ctx.cancel();
-            return;
+        return std::nullopt;
+    }
+};
+
+// ENDWEAVE: a command version the destination does not name runs as the latest one it has.
+template <>
+struct EnumPolicy<bp::CurrentCmdVersion> {
+    static constexpr std::optional<bp::CurrentCmdVersion> apply(bp::CurrentCmdVersion)
+    {
+        return bp::CurrentCmdVersion::Latest;
+    }
+};
+
+// ENDWEAVE: a reason the destination lacks lands on Unknown; the message still says why in words.
+template <>
+struct EnumPolicy<bp::DisconnectFailReason> {
+    static constexpr std::optional<bp::DisconnectFailReason> apply(bp::DisconnectFailReason)
+    {
+        return bp::DisconnectFailReason::Unknown;
+    }
+};
+
+// ENDWEAVE: a structure marker the destination lacks borrows the closest-looking one it has, and any
+// other image it lacks is not drawn.
+template <>
+struct EnumPolicy<bp::MapDecoration::Type> {
+    static constexpr std::optional<bp::MapDecoration::Type> apply(bp::MapDecoration::Type image)
+    {
+        using Type = bp::MapDecoration::Type;
+        switch (image) {
+        case Type::AbandonedCamp:
+            return Type::WitchHut;
+        case Type::BuriedAncientCity:
+        case Type::BuriedMineshaft:
+            return Type::TrialChambers;
+        case Type::DesertPyramid:
+            return Type::JungleTemple;
+        case Type::WarmOceanRuins:
+            return Type::Monument;
+        default:
+            return Type::NoDraw;
         }
-        ctx.out() = *type;
     }
 };
 
-// ENDWEAVE: a command version the other side does not name is newer than anything it knows, so the
-// command runs as the latest one it has.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("CurrentCmdVersion"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
+// ENDWEAVE: a memory category the destination lacks lands on Unknown.
+template <>
+struct EnumPolicy<bp::MemoryCategory> {
+    static constexpr std::optional<bp::MemoryCategory> apply(bp::MemoryCategory)
     {
-        ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::Latest);
+        return bp::MemoryCategory::Unknown;
     }
 };
 
-// ENDWEAVE: a reason one side has alone lands on Unknown; the message still says why in words.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("DisconnectFailReason"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
-    {
-        ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::Unknown);
-    }
-};
-
-// ENDWEAVE: a packet one side has alone names no packet on the other and falls back to the sentinel
-// past the last id.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("MinecraftPacketIds"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
-    {
-        ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::EndId);
-    }
-};
-
-// ENDWEAVE: a memory category one side has alone lands on Unknown.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("MemoryCategory"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
-    {
-        ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::Unknown);
-    }
-};
-
-// ENDWEAVE: an event for an achievement the other side has no name for is dropped rather than
+// ENDWEAVE: an event for an achievement the destination has no number for is dropped rather than
 // reported as another.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("MinecraftEventing::AchievementIds"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
+template <>
+struct EnumPolicy<bp::MinecraftEventing::AchievementIds> {
+    static constexpr std::optional<bp::MinecraftEventing::AchievementIds> apply(bp::MinecraftEventing::AchievementIds)
     {
-        const auto achievement = bp::enum_cast<To>(bp::enum_name(from));
-        if (!achievement) {
-            ctx.cancel();
-            return;
-        }
-        ctx.out() = *achievement;
+        return std::nullopt;
     }
 };
 
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("MinecraftEventing::InteractionType"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
+// ENDWEAVE: a packet the destination lacks names no packet there, so a report about one is dropped.
+template <>
+struct EnumPolicy<bp::MinecraftPacketIds> {
+    static constexpr std::optional<bp::MinecraftPacketIds> apply(bp::MinecraftPacketIds)
     {
-        const auto interaction = bp::enum_cast<To>(bp::enum_name(from));
-        if (!interaction) {
-            ctx.cancel();
-            return;
-        }
-        ctx.out() = *interaction;
-    }
-};
-
-// ENDWEAVE: an input flag the other side lacks lands on the InputNum sentinel rather than dropping the
-// whole tick of input.
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("PlayerAuthInputPacket::InputData"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
-    {
-        ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::InputNum);
-    }
-};
-
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("ItemUseInventoryTransaction::ActionType"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
-    {
-        const auto action = bp::enum_cast<To>(bp::enum_name(from));
-        if (!action) {
-            ctx.cancel();
-            return;
-        }
-        ctx.out() = *action;
-    }
-};
-
-template <class From, class To>
-    requires(detail::versionsOf<From, To>("SubChunkPacket::HeightMapDataType"))
-struct Transformer<From, To> {
-    static void transform(Context<To> &ctx, From &&from)
-    {
-        ctx.out() = bp::enum_cast<To>(bp::enum_name(from)).value_or(To::NoData);
+        return std::nullopt;
     }
 };
 

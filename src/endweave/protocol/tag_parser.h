@@ -112,7 +112,7 @@ private:
             return bp::Tag{bp::StringTag{std::move(*text)}};
         }
         if (byte) {
-            return bp::Tag{bp::ByteTag{static_cast<std::int8_t>(value)}};
+            return bp::Tag{bp::ByteTag{static_cast<std::uint8_t>(value)}};
         }
         return bp::Tag{bp::IntTag{value}};
     }

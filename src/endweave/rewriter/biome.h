@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <bedrock/protocol/biome.h>
 #include <bedrock/protocol/network.h>
+#include <bedrock/protocol/packets_fwd.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <map>

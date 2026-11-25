@@ -5,7 +5,6 @@ target_sources(_pipeline PRIVATE
         diagnostics.cpp
         dimension.cpp
         inventory.cpp
-        map.cpp
         movement.cpp
         resource_pack.cpp
         shape.cpp

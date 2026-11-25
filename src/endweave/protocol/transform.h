@@ -2,11 +2,13 @@
 
 #include "endweave/protocol/context.h"
 
+#include <algorithm>
 #include <bedrock/protocol/detail/reflect.hpp>
 #include <concepts>
 #include <cstddef>
 #include <map>
 #include <optional>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 #include <variant>
@@ -45,13 +47,21 @@ template <class To, class From, class Parent>
 
 namespace detail {
 
+/** The index of `T`'s member named `name`, or its member count where it has none. */
+template <class T>
+consteval std::size_t fieldIndex(std::string_view name)
+{
+    const auto &names = bedrock::protocol::field_names<T>();
+    return static_cast<std::size_t>(std::ranges::find(names, name) - names.begin());
+}
+
 /** Moves member `I` of `from` into the same-named member of `to`, transforming it if the types
  * differ. Does nothing if `to` has no such member. */
 template <std::size_t I, class From, class To, class Parent>
 constexpr void assign_member(const Context<Parent> &ctx, From &from, To &to)
 {
-    constexpr std::size_t j = bedrock::protocol::field_index<To>(bedrock::protocol::field_name<I, From>());
-    if constexpr (j != bedrock::protocol::field_npos) {
+    constexpr std::size_t j = fieldIndex<To>(bedrock::protocol::field_name<I, From>());
+    if constexpr (j != bedrock::protocol::field_count<To>()) {
         auto &source = bedrock::protocol::field_get<I>(from);
         auto &target = bedrock::protocol::field_get<j>(to);
         using S = std::remove_cvref_t<decltype(source)>;
@@ -71,8 +81,8 @@ constexpr void assign_member(const Context<Parent> &ctx, From &from, To &to)
 template <std::size_t J, class From, class To>
 consteval bool member_filled()
 {
-    constexpr std::size_t i = bedrock::protocol::field_index<From>(bedrock::protocol::field_name<J, To>());
-    if constexpr (i == bedrock::protocol::field_npos) {
+    constexpr std::size_t i = fieldIndex<From>(bedrock::protocol::field_name<J, To>());
+    if constexpr (i == bedrock::protocol::field_count<From>()) {
         return false;
     }
     else {
@@ -126,41 +136,6 @@ struct Transformer<From, To> {
         transform_members(ctx, std::move(from), ctx.out());
     }
 };
-
-template <class Source, class Parent>
-class TransformProxy {
-public:
-    using From = std::remove_cvref_t<Source>;
-
-    constexpr TransformProxy(const Context<Parent> &ctx,
-                             Source &&source) noexcept(std::is_nothrow_constructible_v<Source, Source &&>)
-        : ctx_(ctx), source_(static_cast<Source &&>(source))
-    {
-    }
-
-    TransformProxy(const TransformProxy &) = delete;
-    TransformProxy(TransformProxy &&) = delete;
-    TransformProxy &operator=(const TransformProxy &) = delete;
-    TransformProxy &operator=(TransformProxy &&) = delete;
-
-    template <class To>
-        requires Transformable<Source, To>
-    [[nodiscard]] constexpr operator To() &&
-    {
-        return transform_to<To>(ctx_, static_cast<Source &&>(source_));
-    }
-
-private:
-    const Context<Parent> &ctx_;
-    Source source_;
-};
-
-template <class Parent, class From>
-[[nodiscard]] constexpr auto transform(const Context<Parent> &ctx, From &&from) noexcept(
-    std::is_nothrow_constructible_v<TransformProxy<From, Parent>, const Context<Parent> &, From &&>)
-{
-    return TransformProxy<From, Parent>(ctx, std::forward<From>(from));
-}
 
 template <class From, class To>
 struct Transformer<std::optional<From>, std::optional<To>> {

@@ -1,12 +1,10 @@
 #include "dimension.h"
 
-namespace ew = endweave;
-
 namespace endweave {
-void Transformer<bp::DimensionDefinitionGroup_<2168>::DimensionDefinition,
-                 bp::DimensionDefinitionGroup_<2193>::DimensionDefinition>::
-    transform(Context<bp::DimensionDefinitionGroup_<2193>::DimensionDefinition> &ctx,
-              bp::DimensionDefinitionGroup_<2168>::DimensionDefinition &&from)
+void Transformer<bp::DimensionDataPacket_<2168>::DimensionDefinition,
+                 bp::DimensionDataPacket_<2193>::DimensionDefinition>::
+    transform(Context<bp::DimensionDataPacket_<2193>::DimensionDefinition> &ctx,
+              bp::DimensionDataPacket_<2168>::DimensionDefinition &&from)
 {
     auto &to = ctx.out();
     // ENDWEAVE: 2193 keeps the two leading members in place and stops meaning by them what 2168 did:

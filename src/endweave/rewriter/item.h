@@ -10,6 +10,7 @@
 #include <bedrock/protocol/inventory.h>
 #include <bedrock/protocol/item.h>
 #include <bedrock/protocol/network.h>
+#include <bedrock/protocol/packets_fwd.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <map>
@@ -64,12 +65,14 @@ consteval bool isRecipeIngredient()
 {
     if constexpr (bp::Reflected<T>) {
         return bp::struct_name<T>() == "SerializedRecipeIngredient" &&
-               bp::field_index<T>("aux_value") != bp::field_npos;
+               std::ranges::contains(bp::field_names<T>(), "aux_value");
     }
     else {
         return false;
     }
 }
+
+static_assert(isRecipeIngredient<bp::SerializedRecipeIngredient>());
 
 } // namespace detail
 

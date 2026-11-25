@@ -4,6 +4,7 @@
 
 #include <bedrock/protocol/dimension.h>
 #include <bedrock/protocol/network.h>
+#include <bedrock/protocol/packets_fwd.hpp>
 #include <cstdint>
 #include <map>
 #include <optional>

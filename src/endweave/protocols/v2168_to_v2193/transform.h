@@ -8,7 +8,6 @@
 #include "dimension.h"
 #include "endweave/protocol/transform.h"
 #include "inventory.h"
-#include "map.h"
 #include "mappings.h"
 #include "movement.h"
 #include "resource_pack.h"

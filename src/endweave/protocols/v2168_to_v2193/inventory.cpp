@@ -3,15 +3,13 @@
 #include <bedrock/protocol/item.h>
 #include <utility>
 
-namespace ew = endweave;
-
 namespace endweave {
 void Transformer<bp::ItemUseInventoryTransaction_<2168>, bp::ItemUseInventoryTransaction_<2193>>::transform(
     Context<bp::ItemUseInventoryTransaction_<2193>> &ctx, bp::ItemUseInventoryTransaction_<2168> &&from)
 {
     auto &to = ctx.out();
-    to.transaction = ew::transform(ctx, std::move(from.transaction));
-    to.action_type = ew::transform(ctx, std::move(from.action_type));
+    to.transaction = std::move(from.transaction);
+    to.action_type = from.action_type;
     to.trigger_type = from.trigger_type;
     to.pos = from.pos;
     to.face = from.face;

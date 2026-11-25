@@ -4,5 +4,4 @@ target_sources(_pipeline PRIVATE
         dimension.cpp
         input.cpp
         inventory.cpp
-        map.cpp
         resource_pack.cpp)

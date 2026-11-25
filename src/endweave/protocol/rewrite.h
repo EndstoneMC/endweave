@@ -1,12 +1,9 @@
 #pragma once
 
-#include <bedrock/protocol/packet.hpp>
 #include <concepts>
 #include <expected>
 #include <system_error>
 #include <tuple>
-
-namespace bp = bedrock::protocol;
 
 namespace endweave {
 

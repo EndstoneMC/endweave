@@ -1,7 +1,5 @@
 #include "movement.h"
 
-namespace ew = endweave;
-
 namespace endweave {
 void Transformer<bp::MoveActorDeltaData_<2168>, bp::MoveActorDeltaData_<2193>>::transform(
     Context<bp::MoveActorDeltaData_<2193>> &ctx, bp::MoveActorDeltaData_<2168> &&from)

@@ -80,6 +80,8 @@ a `constexpr` array of `PacketHandler` indexed by id.
 | `protocol/transform.h` | `memberwise_complete_v<FromType, ToType>` | the destination names every member the source does, so the copy writes itself |
 | `protocol/rewrite.h` | `Rewriter<From, To, Id>` | this packet needs a value fixed that the wire diff cannot see |
 | `protocol/context.h` | `Context<To>` | what a transform is handed: the cancel flag and the object to fill |
+| `protocol/encoding.h` | `same_encoding_v<T, A, B>` | two protocols write `T` with one serializer |
+| `rewriter/enum.h` | `EnumPolicy<E>` | what an enum value the destination cannot encode is sent as instead |
 
 ## What endweave takes from ViaVersion, and what it does not
 
@@ -142,8 +144,9 @@ and `com.viaversion.viabackwards`.
 
 ## The handler layer
 
-- **A handler is generated, not registered.** `handle<From, To, Id>` deserializes
-  `packet_of_t<From, Id>`, applies the `Rewriter`, walks the transforms, and serializes the result.
+- **A handler is generated, not registered.** `handle<From, To, Id>` decodes
+  `packet_of_t<From, Id>` with `decode_<From, T>`, applies the `Rewriter`, walks the transforms, and
+  encodes the result with `encode_<To>`.
   `handlerFor` returns its address where the packet needs work, `&detail::cancel` where it is
   dropped, and `nullptr` where nothing happens; `makeHandlers` lays those out by id. This is the
   whole of what ViaVersion does with `registerClientbound` calls in a protocol constructor.
@@ -152,26 +155,37 @@ and `com.viaversion.viabackwards`.
   reshaped packet with no transform stops the build. Do not add an escape hatch that lets an
   unported packet fall through to passthrough: the silence is the failure this design exists to
   prevent.
-- **Type identity is the wire diff.** bedrock-protocol emits one type per distinct shape and
-  propagates versioning transitively, so the same type means the same bytes.
+- **Serializer identity is the wire diff.** bedrock-protocol gives each set of members one type and
+  each distinct encoding of it one `Serializer<T, N>`, named for the first protocol N that writes it,
+  which every other protocol that writes it alike inherits empty. Two protocols therefore encode a
+  type alike when they reach the same `serialize` and `deserialize`, which is `same_encoding_v`
+  (`protocol/encoding.h`). The same type no longer means the same bytes: a packet can keep its type
+  and change its encoding. `encodes_alike_v` is one type at both ends written by one serializer, and
   `should_translate_v` is true when `From != To`, the packet is modelled at every version on the
-  path, and either a `Rewriter` applies or `packet_of_t<From, Id>` and `packet_of_t<To, Id>` differ.
+  path, and either a `Rewriter` applies, or the packet does not encode alike, or it carries a block
+  id.
+- **A packet of one type that encodes two ways needs no `Transformer`.** It is decoded at `From` and
+  encoded at `To`, which `chain` already allows, and the codec carries its renumbered enums and its
+  layout across. It cannot carry an enum value `To` has no number or name for, which the enum gate
+  catches (see **Enums**).
 - **A packet the destination does not have is cancelled, never forwarded.** `should_cancel_v` is
   `has_packet_v<From, Id>` with a gap anywhere on the path. That covers a newer client sending
   something an older server never knew and a newer server sending something an older client cannot
   parse. Forwarding an id the peer does not know desynchronises or disconnects it.
 - **Cancellation reaches only as far as the schema does.** `has_packet_v` means "bedrock-protocol
   models this", not "this exists on the wire", so an id modelled at neither end passes through.
-  `SetPlayerFurnaceOptions` (351) is modelled at 2193 alone, so 2193 towards 2168 cancels it.
+  `SetPlayerFurnaceOptions` (351) is modelled from 2193 on, so 2193 towards 2168 cancels it.
 - **Null means passthrough, and the caller sees it before building anything.** `Translator::get(id)`
   answers without a reader or writer, and the binding publishes the non-null entries as `actions`,
   so a passthrough packet never crosses into C++. Keep the id lookup free of buffers.
 - **Passthrough is the null handler, not a return value.** A handler that runs either succeeds or
   carries an `error_code`, so it returns `std::expected<void, std::error_code>`. Cancel is a
   handler too, and `getAction` recognises it by address. Do not add a result enum.
-- **Every translated packet is checked twice.** `handle` rejects leftover source bytes
-  (`protocol_error`), since a schema that models part of a packet still deserializes, and reads its
-  own output back at `To` (`bad_message`), since the serializer and deserializer are generated apart.
+- **Every translated packet is checked twice.** `decode_` rejects leftover source bytes
+  (`trailing bytes`), since a schema that models part of a packet still deserializes, and `handle`
+  reads its own output back with `decode_<To, T>`, since the serializer and deserializer are
+  generated apart. bedrock-protocol's `Errc` reaches the caller as an `error_code` of the
+  `CodecErrorCategory`.
 - **Resolve once per version pair, never per packet.** `Translator` is the analogue of Velocity's
   `ProtocolRegistry`, and the plugin caches one per pair. Per packet it is a dict lookup in Python
   and an indexed load in C++.
@@ -196,7 +210,7 @@ and `com.viaversion.viabackwards`.
 ## `Rewriter`: work that the wire diff cannot see
 
 Some packets need attention whether or not their shape moved: a checksum the other side cannot
-reproduce, an enumerator renumbered between versions. That is a semantic change, not a shape change,
+reproduce, an enumerator carried as a bare integer. That is a semantic change, not a shape change,
 and it is not `Transformer`'s job.
 
 - **Keyed on the pair, applied once to the source.** `Rewriter<From, To, Id>::rewrite(packet_of_t<From,
@@ -209,9 +223,11 @@ and it is not `Transformer`'s job.
   `protocols/rewriters.h`: `StartGamePacket`'s block registry checksum, which is zeroed because no
   translation reproduces it, and its definitions of the block types the client lacks, which are left
   out; the experiments a hop names, turned on in `StartGamePacket` and `ResourcePackStackPacket`;
-  the heartbeat `LevelSoundEvent` inside actor data; the actor types and mob effects the client lacks
-  (see **Actor types** and **Mob effects**); and the block states the schema cannot type (see
-  **Block states**). A rewriter for one pair goes in that pair's directory.
+  the keys and the heartbeat `LevelSoundEvent` actor data carries untyped (see **Enums**); the
+  containers a `ContainerRegistryCleanup` names that the client has no name for, which are left out;
+  the actor types and mob effects the client lacks (see **Actor types** and **Mob effects**); and the
+  block states the schema cannot type (see **Block states**). A rewriter for one pair goes in that
+  pair's directory.
 - **One that parses bytes the schema leaves opaque returns `std::expected<void, std::error_code>`,**
   and `handle` fails the packet on an error, as it does a decode error. The rest return `void`.
 - **One that drops the packet takes `Context<packet_of_t<From, Id>> &` in the packet's place,**
@@ -223,6 +239,41 @@ and it is not `Transformer`'s job.
   dimension reaches. `handle` reads them off the signature.
   One that gives the packet's block ids itself sets `static constexpr bool rewrites_block_ids = true`,
   so `handle` skips `rewriteBlockIds` for it.
+
+## Enums
+
+Every enum is one type at every protocol endweave supports, valued by the library: a member's number
+at the newest protocol that has it. The codec maps each value to each protocol's numbers and names,
+so a value is carried across by decoding it at `From` and encoding it at `To`, and encoding one `To`
+cannot number or name fails the packet and kicks the player.
+
+- **A value the destination cannot encode stops the build until an `EnumPolicy` says what it
+  becomes.** `handle` static-asserts `carries_enums_v` over the two packets: for every enum both
+  hold, every value `From` can encode `To` must encode too, or the enum has an `EnumPolicy<E>` in
+  `protocols/enums.h`. Its `apply` gives the value to send instead, or none to drop the packet, and
+  the gate checks that `To` can encode every value a policy sends. A protocol encodes a value when it
+  numbers it and, where a field at that protocol codes the enum by name (`enum_names_<V, E>()` is
+  not empty), names it. An enum only the source packet holds is the transform's that drops its
+  field, as `NoiseAlignmentType`, which 2168 has no form of, is.
+- **The policy runs before encode, and only where it can matter.** `EnumRewriter<From,
+  To>::rewriteEnums` walks the packet carried to `To` as `rewriteBlockIds` does, through only the
+  enums that lose a value from `From` to `To`, and sends each value `To` cannot encode as its policy
+  says. A packet that reaches no such enum is never walked. A map key sent as a fallback the map
+  already holds keeps the entry that held it.
+- **A policy is pair-agnostic and says what the value is, not which protocol lacks it.** A
+  `ContainerType` the destination lacks drops the packet, an `ActorType` lands on `Undefined`, a
+  `MapDecoration` marker borrows the closest-looking one. Add one only for an enum the gate stops on,
+  with an `// ENDWEAVE:` note. A transform or rewriter that knows better for one field, as the
+  2225 to 2193 skin does for a tint whose piece 2193 cannot name, does it before the walk.
+- **A protocol's numbers and names are bedrock-protocol's `enum_*_<V>`:** `enum_integer_<V>`,
+  `enum_cast_<V, E>`, `enum_contains_<V>` and `enum_values_<V, E>` for every reflected enum, typed by
+  a field or not, and `enum_name_<V>` and the name forms for every enum some field codes by name,
+  which answer names only at a protocol where a field does. Spell them through `bp::`, and never
+  read bedrock-protocol's `detail` tables.
+- **An enum carried untyped is a `Rewriter`'s.** Actor data carries its keys and its heartbeat
+  `LevelSoundEvent` as integers in the sender's numbers, which the gate cannot see. The actor
+  rewriters read them through `From`'s numbers and write `To`'s, leave out a key `To` has no number
+  for, and land a sound it lacks on `Undefined`, where `numbers_apart_v` says the two differ.
 
 ## Block states
 
@@ -428,9 +479,9 @@ lacks.
 
 `Transformer` is the analogue of ViaVersion's `ValueTransformer`, in the shape of `std::formatter`:
 a trait declared undefined in `protocol/transform.h` and specialized per source/destination pair
-that changes shape. That header also holds the `ew::transform` / `ew::transform_to` /
-`ew::transform_into` / `ew::transform_members` call surface and the `std::optional` / `std::vector` /
-`std::map` / `std::variant` specializations.
+that changes shape. That header also holds the `ew::transform_to` / `ew::transform_into` /
+`ew::transform_members` call surface and the `std::optional` / `std::vector` / `std::map` /
+`std::variant` specializations.
 
 - **The context is the first parameter, and the destination lives in it.**
   `Transformer<From, To>::transform(Context<To> &ctx, From &&from)` returns `void` and fills
@@ -470,22 +521,15 @@ that changes shape. That header also holds the `ew::transform` / `ew::transform_
   storage. A `const` source is a compile error rather than a copy.
 - **In a hand-written body, assign every field explicitly, in declaration order,** through
   `auto &to = ctx.out();`. Only a field whose shape actually changed carries logic.
-- **Call through `ew::transform`,** which returns a proxy that takes its destination from the
-  assignment target: `to.slots = ew::transform(ctx, std::move(from.slots));`. The `std::move` is not
-  optional. Where there is no destination to deduce from, use `ew::transform_to<Dest>(ctx,
-  std::move(x))`; where the destination exists, `ew::transform_into(ctx, std::move(x), dest)`.
-  Qualifying is not optional either: inside a `Transformer<...>::transform` body the unqualified
-  name finds the member.
-- **A renumbered enum is mapped by name, never by a shift.** New enumerators land before a trailing
-  sentinel, so numbers move every version. Map with
-  `bp::enum_cast<To>(bp::enum_name(from)).value_or(<To's sentinel>)`, or cancel where no fallback is
-  honest. Do not add a shift table.
-- **An enum that changes every version is mapped once, for every pair,** as its own partial
-  specialization in `protocols/enums.h`, keyed on `bp::enum_type_name` and carrying its own fallback.
-  Add a case there only for an enum that keeps moving; there is no default, so any other enum still
-  fails the build until its hop writes a `Transformer`.
+- **A member whose type did not change is moved, and one whose type did is transformed** through
+  `ew::transform_into(ctx, std::move(from.slots), to.slots)`, or `ew::transform_to<Dest>(ctx,
+  std::move(x))` where there is no destination to fill. The `std::move` is not optional.
+- **An enum is never transformed.** It is one type at every protocol endweave supports, and the
+  codec renumbers it; a value the destination lacks is its `EnumPolicy`'s (see **Enums**).
 - **Establish what changed by static-asserting `is_same_v` on every field pair,** not by reading the
   two structs side by side. A versioned type can be nested where the packet's own name gives no sign.
+  A field whose type stayed can still encode two ways, which is the codec's, and the gate's where an
+  enum is involved.
 - **A field can migrate into a nested type rather than be renamed.** A name that vanishes from the
   top level is worth hunting for one level down before treating it as dropped.
 - **A field with no source is invented, and says so** in an `// ENDWEAVE:` note. Each of these is a
@@ -591,9 +635,8 @@ uvx cibuildwheel --platform linux                      # the manylinux wheels CI
   type or method with an upstream counterpart, and an `// ENDWEAVE:` note where a conversion is
   lossy, invented or refused. No rationale, no `@param` or `@return` blocks.
 - Per-module files include the one bedrock-protocol module they need, `<bedrock/protocol/<module>.h>`.
-  `protocol/handler.h` is the exception and must take the `<bedrock/protocol.hpp>` umbrella:
-  `bp::packet_of_t` is `void` for an id whose module is not included, and two `void`s compare equal,
-  so a lone module include makes unmodelled packets read as unchanged.
+  `protocol/handler.h` is the exception and takes the `<bedrock/protocol.hpp>` umbrella, since it
+  reaches every module.
 - `namespace bp = bedrock::protocol;`, declared after the includes and above `namespace endweave`.
   Versioned types are spelled through it, `bp::StartGamePacket_<2193>`. `namespace ew = endweave;`
   follows the same placement, but only in a `.cpp`, never a header.

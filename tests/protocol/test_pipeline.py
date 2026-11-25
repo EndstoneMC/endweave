@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import itertools
+
 import pytest
 
 from endweave._pipeline import (
@@ -148,3 +150,7 @@ class TestNewestHop:
     def test_carries_a_command_on_the_latest_version_down(self) -> None:
         assert Translator(NEWEST, NEW).translate(COMMAND_REQUEST, LATEST_COMMAND) is not None
         assert Translator(NEWEST, OLD).translate(COMMAND_REQUEST, LATEST_COMMAND) is not None
+
+    @pytest.mark.parametrize("source, target", list(itertools.permutations((OLD, NEW, NEWEST), 2)))
+    def test_keeps_a_command_on_the_latest_version_latest(self, source: int, target: int) -> None:
+        assert Translator(source, target).translate(COMMAND_REQUEST, LATEST_COMMAND) == LATEST_COMMAND

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "endweave/protocol/block_connection.h"
+#include "endweave/protocol/encoding.h"
 #include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/protocol/transform.h"
@@ -14,17 +15,20 @@
 #include "endweave/rewriter/biome.h"
 #include "endweave/rewriter/block.h"
 #include "endweave/rewriter/dimension.h"
+#include "endweave/rewriter/enum.h"
 #include "endweave/rewriter/item.h"
 
+#include <algorithm>
 #include <array>
 #include <bedrock/protocol.hpp>
-#include <bedrock/protocol/packet.hpp>
 #include <bedrock/protocol/serializer.hpp>
 #include <bedrock/protocol/stream.hpp>
 #include <cstddef>
 #include <expected>
+#include <format>
 #include <span>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <type_traits>
 #include <utility>
@@ -39,8 +43,7 @@ namespace detail {
 inline constexpr int kSkipBegin = static_cast<int>(bp::MinecraftPacketIds::TitleSpecificPacketsStart);
 inline constexpr int kSkipEnd = static_cast<int>(bp::MinecraftPacketIds::TitleSpecificPacketsEnd);
 
-template <int V>
-inline constexpr int kPacketIdCount = static_cast<int>(bp::MinecraftPacketIds_<V>::EndId);
+inline constexpr int kPacketIdCount = static_cast<int>(std::ranges::max(bp::enum_values<bp::MinecraftPacketIds>())) + 1;
 
 template <int From, int To, int Id>
 inline constexpr bool path_has_packet_v = bp::has_packet_v<From, Id> && path_has_packet_v<step(From, To), To, Id>;
@@ -53,10 +56,32 @@ inline constexpr bool should_cancel_v =
     !(Id >= kSkipBegin && Id <= kSkipEnd) && bp::has_packet_v<From, Id> && !path_has_packet_v<From, To, Id>;
 
 template <int From, int To, int Id>
+consteval bool encodesAlike()
+{
+    using Packet = bp::packet_of_t<From, Id>;
+    if constexpr (!std::is_same_v<Packet, bp::packet_of_t<To, Id>>) {
+        return false;
+    }
+    else if constexpr (std::is_void_v<Packet>) {
+        return true;
+    }
+    else {
+        return same_encoding_v<Packet, From, To>;
+    }
+}
+
+} // namespace detail
+
+/** Whether `From` and `To` encode packet `Id` alike: one type, written by one serializer. */
+template <int From, int To, int Id>
+inline constexpr bool encodes_alike_v = detail::encodesAlike<From, To, Id>();
+
+namespace detail {
+
+template <int From, int To, int Id>
 inline constexpr bool should_translate_v =
     From != To && !(Id >= kSkipBegin && Id <= kSkipEnd) && path_has_packet_v<From, To, Id> &&
-    (Rewritable<From, To, Id> || !std::is_same_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>> ||
-     carries_block_ids_v<bp::packet_of_t<From, Id>>);
+    (Rewritable<From, To, Id> || !encodes_alike_v<From, To, Id> || carries_block_ids_v<bp::packet_of_t<From, Id>>);
 
 template <int Cur, int To, int Id>
 void chain(const Context<bp::packet_of_t<To, Id>> &ctx, bp::packet_of_t<Cur, Id> &&from)
@@ -78,21 +103,61 @@ void chain(const Context<bp::packet_of_t<To, Id>> &ctx, bp::packet_of_t<Cur, Id>
     }
 }
 
+/** bedrock-protocol's codec errors as `std::error_code`s. */
+class CodecErrorCategory final : public std::error_category {
+public:
+    [[nodiscard]] const char *name() const noexcept override
+    {
+        return "bedrock-protocol";
+    }
+
+    [[nodiscard]] std::string message(int error) const override
+    {
+        return std::format("{}", static_cast<bp::Errc>(error));
+    }
+};
+
+inline std::error_code makeErrorCode(bp::Errc error)
+{
+    static const CodecErrorCategory category;
+    return {static_cast<int>(error), category};
+}
+
+/** Encodes a packet already carried to `To`, after sending each enum value `To` cannot encode as its
+ * policy says. */
+template <int From, int To, class Packet>
+std::expected<void, std::error_code> encode(bool &cancelled, Packet &packet, bp::BinaryWriter &out)
+{
+    if constexpr (EnumRewriter<From, To>::template rewrites_v<Packet>) {
+        EnumRewriter<From, To>::rewriteEnums(Context<Packet>{cancelled, packet}, packet);
+        if (cancelled) {
+            return {};
+        }
+    }
+    std::string translated;
+    bp::BinaryWriter writer{translated};
+    if (const auto written = bp::encode_<To>(packet, writer); !written) {
+        return std::unexpected(makeErrorCode(written.error().reason));
+    }
+    // Read it back to catch a serializer and deserializer that disagree.
+    if (const auto check = bp::decode_<To, Packet>(std::string_view{translated}); !check) {
+        return std::unexpected(makeErrorCode(check.error().reason));
+    }
+    out.writeRawBytes(translated);
+    return {};
+}
+
 template <int From, int To, int Id>
 std::expected<void, std::error_code> handle(bool &cancelled, const Storages &storages, bp::BinaryReader &in,
                                             bp::BinaryWriter &out)
 {
-    auto result = bp::deserialize<bp::packet_of_t<From, Id>>(in);
+    static_assert(carries_enums_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>, From, To>);
+    // Leftover bytes mean the schema only models part of the packet, and fail the decode.
+    auto result = bp::decode_<From, bp::packet_of_t<From, Id>>(in);
     if (!result) {
-        return std::unexpected(result.error());
-    }
-    // Leftover bytes mean the schema only models part of the packet.
-    if (in.getUnreadLength() != 0) {
-        return std::unexpected(std::make_error_code(std::errc::protocol_error));
+        return std::unexpected(makeErrorCode(result.error().reason));
     }
 
-    std::string translated;
-    bp::BinaryWriter writer{translated};
     auto &&packet = std::move(result).value();
     if constexpr (Rewritable<From, To, Id>) {
         Context<bp::packet_of_t<From, Id>> ctx{cancelled, packet};
@@ -120,32 +185,19 @@ std::expected<void, std::error_code> handle(bool &cancelled, const Storages &sto
     if constexpr (!RewritesBlockIds<From, To, Id>) {
         BlockRewriter<From, To>::rewriteBlockIds(packet);
     }
-    // Already rewritten for To, so an unchanged type is re-encoded as is.
+    // Already rewritten for To, so an unchanged type is encoded at To as is.
     if constexpr (std::is_same_v<bp::packet_of_t<From, Id>, bp::packet_of_t<To, Id>>) {
-        bp::serialize(writer, packet);
+        return encode<From, To>(cancelled, packet, out);
     }
     else {
-        bp::packet_of_t<To, Id> translated_packet;
-        chain<From, To, Id>(Context<bp::packet_of_t<To, Id>>{cancelled, translated_packet}, std::move(packet));
+        bp::packet_of_t<To, Id> translated;
+        chain<From, To, Id>(Context<bp::packet_of_t<To, Id>>{cancelled, translated}, std::move(packet));
         // Discard whatever was written before a cancel.
         if (cancelled) {
             return {};
         }
-        bp::serialize(writer, translated_packet);
+        return encode<From, To>(cancelled, translated, out);
     }
-
-    // Read it back to catch a serializer and deserializer that disagree.
-    bp::BinaryReader back{translated};
-    const auto check = bp::deserialize<bp::packet_of_t<To, Id>>(back);
-    if (!check) {
-        return std::unexpected(check.error());
-    }
-    if (back.getUnreadLength() != 0) {
-        return std::unexpected(std::make_error_code(std::errc::bad_message));
-    }
-
-    out.writeRawBytes(translated);
-    return {};
 }
 
 /** @see ViaVersion PacketWrapper#cancel. */
@@ -192,7 +244,7 @@ consteval std::array<PacketHandler, sizeof...(Ids)> makeHandlers(std::integer_se
 }
 
 template <int From, int To>
-inline constexpr auto kHandlers = makeHandlers<From, To>(std::make_integer_sequence<int, kPacketIdCount<From>>{});
+inline constexpr auto kHandlers = makeHandlers<From, To>(std::make_integer_sequence<int, kPacketIdCount>{});
 
 } // namespace detail
 
@@ -272,11 +324,10 @@ inline constexpr std::size_t kIdSpace = 1024;
 
 } // namespace detail
 
-/** Whether two protocol versions use the same packet type at every id. bedrock-protocol emits one
- * type per wire shape, so this means they encode identically. */
+/** Whether two protocol versions encode every packet alike. */
 template <int A, int B>
 inline constexpr bool wire_identical_v = []<std::size_t... I>(std::index_sequence<I...>) {
-    return (std::is_same_v<bp::packet_of_t<A, I>, bp::packet_of_t<B, I>> && ...);
+    return (encodes_alike_v<A, B, static_cast<int>(I)> && ...);
 }(std::make_index_sequence<detail::kIdSpace>{});
 
 namespace detail {

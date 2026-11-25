@@ -3,8 +3,6 @@
 #include <optional>
 #include <utility>
 
-namespace ew = endweave;
-
 namespace endweave {
 void Transformer<bp::CameraPreset_<2168>, bp::CameraPreset_<2193>>::transform(Context<bp::CameraPreset_<2193>> &ctx,
                                                                               bp::CameraPreset_<2168> &&from)

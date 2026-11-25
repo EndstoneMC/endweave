@@ -1,7 +1,6 @@
 #pragma once
 
 #include "endweave/protocol/transform.h"
-#include "skin.h"
 
 #include <bedrock/protocol/player.h>
 

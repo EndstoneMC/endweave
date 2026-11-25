@@ -6,8 +6,6 @@
 #include <variant>
 #include <vector>
 
-namespace ew = endweave;
-
 namespace endweave {
 
 void Transformer<bp::ServerboundPackSettingChangePacket_<2193>, bp::ServerboundPackSettingChangePacket_<2168>>::

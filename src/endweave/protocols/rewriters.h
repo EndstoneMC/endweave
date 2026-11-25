@@ -4,19 +4,24 @@
 #include "endweave/protocol/mapping.h"
 #include "endweave/protocol/rewrite.h"
 #include "endweave/rewriter/block.h"
+#include "endweave/rewriter/enum.h"
 
 #include <algorithm>
 #include <bedrock/protocol/actor.h>
 #include <bedrock/protocol/effect.h>
 #include <bedrock/protocol/enum.hpp>
 #include <bedrock/protocol/game.h>
+#include <bedrock/protocol/inventory.h>
 #include <bedrock/protocol/network.h>
 #include <bedrock/protocol/pack.h>
+#include <bedrock/protocol/packets_fwd.hpp>
 #include <bedrock/protocol/player.h>
 #include <bedrock/protocol/sound.h>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <type_traits>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -73,26 +78,56 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::ResourcePackS
 
 namespace detail {
 
+/** Whether the numbers actor data carries untyped, its keys and its heartbeat sound, differ between
+ * `From` and `To`. */
 template <int From, int To>
-inline constexpr bool sound_renumbered_v = !std::is_same_v<bp::LevelSoundEvent_<From>, bp::LevelSoundEvent_<To>>;
+inline constexpr bool actor_data_renumbered_v =
+    numbers_apart_v<bp::ActorDataIDs, From, To> || numbers_apart_v<bp::LevelSoundEvent, From, To>;
 
-// ENDWEAVE: this key holds a LevelSoundEvent, whose Undefined sentinel is renumbered every
-// version. Left alone, an actor meaning "no heartbeat sound" names a real one at the other end
-// and plays it every HEARTBEAT_INTERVAL_TICKS. The transforms carry the number across untouched,
-// so it still reads in From's numbering here and one lookup reaches To's exactly.
+// ENDWEAVE: this key holds a LevelSoundEvent in From's numbers, whose Undefined, "no heartbeat
+// sound", is renumbered every version. Left alone, an actor meaning no sound names a real one at
+// the other end and plays it every HEARTBEAT_INTERVAL_TICKS. A sound To has no number for lands on
+// Undefined.
 template <int From, int To>
-void rewriteActorData(std::vector<bp::DataItemEntry_<From>> &entries)
+void rewriteHeartbeatSound(std::vector<bp::DataItemEntry_<From>> &entries)
 {
-    using FromSound = bp::LevelSoundEvent_<From>;
-    using ToSound = bp::LevelSoundEvent_<To>;
+    constexpr auto undefined = *bp::enum_integer_<To>(bp::LevelSoundEvent::Undefined);
     for (auto &entry : entries) {
-        if (entry.id != static_cast<std::uint32_t>(bp::ActorDataIDs_<From>::HeartbeatSoundEvent)) {
+        auto *const sound = std::get_if<bp::DataItemIntPayload_<From>>(&entry.payload);
+        if (sound == nullptr || entry.id != bp::enum_integer_<From>(bp::ActorDataIDs::HeartbeatSoundEvent)) {
             continue;
         }
-        if (auto *const sound = std::get_if<bp::DataItemIntPayload_<From>>(&entry.payload)) {
-            const auto name = bp::enum_name(static_cast<FromSound>(sound->value));
-            sound->value = static_cast<std::int32_t>(bp::enum_cast<ToSound>(name).value_or(ToSound::Undefined));
+        const auto event = bp::enum_cast_<From, bp::LevelSoundEvent>(static_cast<std::uint32_t>(sound->value));
+        sound->value = static_cast<std::int32_t>(event ? bp::enum_integer_<To>(*event).value_or(undefined) : undefined);
+    }
+}
+
+// ENDWEAVE: the keys are in From's numbers, and a key To has no number for is left out. A key past
+// every ActorDataIDs value names nothing at either end and is carried as it is.
+template <int From, int To>
+void rewriteActorDataKeys(std::vector<bp::DataItemEntry_<From>> &entries)
+{
+    using Key = std::underlying_type_t<bp::ActorDataIDs>;
+    std::erase_if(entries, [](auto &entry) {
+        if (!std::in_range<Key>(entry.id)) {
+            return false;
         }
+        const auto key = bp::enum_cast_<From, bp::ActorDataIDs>(static_cast<Key>(entry.id));
+        const auto number = key ? bp::enum_integer_<To>(*key) : std::nullopt;
+        if (number) {
+            entry.id = *number;
+        }
+        return !number;
+    });
+}
+
+/** Gives the numbers actor data carries untyped `To`'s, its keys last. */
+template <int From, int To>
+void renumberActorData(std::vector<bp::DataItemEntry_<From>> &entries)
+{
+    if constexpr (actor_data_renumbered_v<From, To>) {
+        rewriteHeartbeatSound<From, To>(entries);
+        rewriteActorDataKeys<From, To>(entries);
     }
 }
 
@@ -102,7 +137,7 @@ template <int From, int To>
 void rewriteVisibleMobEffects(std::vector<bp::DataItemEntry_<From>> &entries)
 {
     for (auto &entry : entries) {
-        if (entry.id != static_cast<std::uint32_t>(bp::ActorDataIDs_<From>::VisibleMobEffects)) {
+        if (entry.id != bp::enum_integer_<From>(bp::ActorDataIDs::VisibleMobEffects)) {
             continue;
         }
         if (auto *const effects = std::get_if<bp::DataItemInt64Payload_<From>>(&entry.payload)) {
@@ -126,13 +161,11 @@ template <int From, int To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddActor)> {
     static void rewrite(bp::AddActorPacket_<From> &packet)
     {
-        if constexpr (detail::sound_renumbered_v<From, To>) {
-            detail::rewriteActorData<From, To>(packet.data.data);
-        }
         if constexpr (MappingData<From, To>::mapsMobEffects()) {
             detail::rewriteVisibleMobEffects<From, To>(packet.data.data);
         }
         BlockRewriter<From, To>::rewriteActorData(packet.data.data, packet.actor_type == "minecraft:falling_block");
+        detail::renumberActorData<From, To>(packet.data.data);
         if constexpr (MappingData<From, To>::mapsEntities()) {
             // ENDWEAVE: an actor type the client lacks is spawned as its fallback, which is given none
             // of the properties the server synced for the type it replaces.
@@ -183,25 +216,23 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SyncActorProp
 };
 
 template <int From, int To>
-    requires detail::sound_renumbered_v<From, To>
+    requires detail::actor_data_renumbered_v<From, To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddItemActor)> {
     static void rewrite(bp::AddItemActorPacket_<From> &packet)
     {
-        detail::rewriteActorData<From, To>(packet.data.data);
+        detail::renumberActorData<From, To>(packet.data.data);
     }
 };
 
 template <int From, int To>
-    requires(detail::sound_renumbered_v<From, To> || MappingData<From, To>::mapsMobEffects())
+    requires(detail::actor_data_renumbered_v<From, To> || MappingData<From, To>::mapsMobEffects())
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::AddPlayer)> {
     static void rewrite(bp::AddPlayerPacket_<From> &packet)
     {
-        if constexpr (detail::sound_renumbered_v<From, To>) {
-            detail::rewriteActorData<From, To>(packet.unpack.data);
-        }
         if constexpr (MappingData<From, To>::mapsMobEffects()) {
             detail::rewriteVisibleMobEffects<From, To>(packet.unpack.data);
         }
+        detail::renumberActorData<From, To>(packet.unpack.data);
     }
 };
 
@@ -209,13 +240,25 @@ template <int From, int To>
 struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SetActorData)> {
     static void rewrite(bp::SetActorDataPacket_<From> &packet)
     {
-        if constexpr (detail::sound_renumbered_v<From, To>) {
-            detail::rewriteActorData<From, To>(packet.packed_items.data);
-        }
         if constexpr (MappingData<From, To>::mapsMobEffects()) {
             detail::rewriteVisibleMobEffects<From, To>(packet.packed_items.data);
         }
         BlockRewriter<From, To>::rewriteActorData(packet.packed_items.data, false);
+        detail::renumberActorData<From, To>(packet.packed_items.data);
+    }
+};
+
+// ENDWEAVE: a container the client has no name for was never opened there, so it is left out of the
+// ones to clean up, rather than the packet dropping the rest with it.
+template <int From, int To>
+    requires(detail::loses<bp::ContainerEnumName, From, To>())
+struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::ContainerRegistryCleanup)> {
+    static void rewrite(
+        bp::packet_of_t<From, static_cast<int>(bp::MinecraftPacketIds::ContainerRegistryCleanup)> &packet)
+    {
+        std::erase_if(packet.removed_containers, [](const bp::FullContainerName &container) {
+            return !bp::enum_contains_<To>(container.name);
+        });
     }
 };
 

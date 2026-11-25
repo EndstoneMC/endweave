@@ -9,6 +9,7 @@
 #include <optional>
 #include <span>
 #include <string>
+#include <string_view>
 #include <system_error>
 #include <utility>
 #include <vector>
@@ -316,6 +317,19 @@ namespace detail {
 inline std::unexpected<std::error_code> malformed()
 {
     return std::unexpected(std::make_error_code(std::errc::protocol_error));
+}
+
+/** The bytes a packet holds opaque, as a reader takes them. */
+inline std::string_view asChars(const std::vector<std::byte> &bytes)
+{
+    return {reinterpret_cast<const char *>(bytes.data()), bytes.size()};
+}
+
+/** The bytes a writer wrote, as a packet holds them opaque. */
+inline std::vector<std::byte> asBytes(std::string_view chars)
+{
+    const auto *const data = reinterpret_cast<const std::byte *>(chars.data());
+    return {data, data + chars.size()};
 }
 
 } // namespace detail

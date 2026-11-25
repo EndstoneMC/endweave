@@ -8,7 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(BEDROCK_PROTOCOL_VERSION "0.4.4" CACHE STRING "bedrock-protocol release to build against")
+set(BEDROCK_PROTOCOL_VERSION "0.5.1" CACHE STRING "bedrock-protocol release to build against")
 set(BEDROCK_PROTOCOL_SOURCE_DIR "" CACHE PATH "Local bedrock-protocol checkout, for schema work")
 
 include(FetchContent)
@@ -17,7 +17,7 @@ if (BEDROCK_PROTOCOL_SOURCE_DIR)
 else ()
     FetchContent_Declare(bedrock_protocol
         URL https://github.com/EndstoneMC/bedrock-protocol/releases/download/v${BEDROCK_PROTOCOL_VERSION}/bedrock-protocol-${BEDROCK_PROTOCOL_VERSION}-src.zip
-        URL_HASH SHA256=1036396da7edf8992f4ace4ccd858e61e36adb524a95dfaf149aa448749ef4f7
+        URL_HASH SHA256=bc92ea7b50d7dc02af4710d65c7d90659056f6d7261d3c0264b8d8d9711b96e0
         DOWNLOAD_EXTRACT_TIMESTAMP TRUE
         EXCLUDE_FROM_ALL
     )

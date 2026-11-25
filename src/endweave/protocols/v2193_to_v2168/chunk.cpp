@@ -7,8 +7,6 @@
 #include <utility>
 #include <vector>
 
-namespace ew = endweave;
-
 namespace endweave {
 namespace {
 
@@ -36,9 +34,9 @@ void Transformer<bp::SubChunkPacket_<2193>::HeightmapData, bp::SubChunkPacket_<2
     Context<bp::SubChunkPacket_<2168>::HeightmapData> &ctx, bp::SubChunkPacket_<2193>::HeightmapData &&from)
 {
     auto &to = ctx.out();
-    to.height_map_type = ew::transform(ctx, std::move(from.height_map_type));
+    to.height_map_type = from.height_map_type;
     to.subchunk_height_map = reshape(std::move(from.subchunk_height_map));
-    to.render_height_map_type = ew::transform(ctx, std::move(from.render_height_map_type));
+    to.render_height_map_type = from.render_height_map_type;
     to.subchunk_render_height_map = reshape(std::move(from.subchunk_render_height_map));
 }
 

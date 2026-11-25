@@ -12,8 +12,11 @@
 #include <bedrock/protocol/block.h>
 #include <bedrock/protocol/chunk.h>
 #include <bedrock/protocol/common.h>
+#include <bedrock/protocol/crafting.h>
 #include <bedrock/protocol/detail/reflect.hpp>
+#include <bedrock/protocol/enum.hpp>
 #include <bedrock/protocol/network.h>
+#include <bedrock/protocol/packets_fwd.hpp>
 #include <bedrock/protocol/serializer.hpp>
 #include <bedrock/protocol/sound.h>
 #include <bedrock/protocol/stream.hpp>
@@ -50,12 +53,14 @@ consteval bool isItemInstanceDescriptor()
 {
     if constexpr (bp::Reflected<T>) {
         return bp::struct_name<T>() == "SerializedNetworkItemInstanceDescriptor" &&
-               bp::field_index<T>("block_runtime_id") != bp::field_npos;
+               std::ranges::contains(bp::field_names<T>(), "block_runtime_id");
     }
     else {
         return false;
     }
 }
+
+static_assert(isItemInstanceDescriptor<bp::SerializedNetworkItemInstanceDescriptor>());
 
 template <class T>
 struct CarriesBlockIds {
@@ -194,12 +199,12 @@ struct BlockRewriter {
      * a falling block's variant. */
     static void rewriteActorData(std::vector<bp::DataItemEntry_<From>> &entries, bool falling_block)
     {
-        using Ids = bp::ActorDataIDs_<From>;
+        using Ids = bp::ActorDataIDs;
         for (auto &entry : entries) {
             auto *const value = std::get_if<bp::DataItemIntPayload_<From>>(&entry.payload);
-            if (value != nullptr && (entry.id == static_cast<std::uint32_t>(Ids::DisplayTileRuntimeId) ||
-                                     entry.id == static_cast<std::uint32_t>(Ids::DeprecatedCarryBlockRuntimeId) ||
-                                     (falling_block && entry.id == static_cast<std::uint32_t>(Ids::Variant)))) {
+            if (value != nullptr && (entry.id == bp::enum_integer_<From>(Ids::DisplayTileRuntimeId) ||
+                                     entry.id == bp::enum_integer_<From>(Ids::DeprecatedCarryBlockRuntimeId) ||
+                                     (falling_block && entry.id == bp::enum_integer_<From>(Ids::Variant)))) {
                 value->value = rewrite(value->value);
             }
         }
@@ -321,8 +326,11 @@ struct BlockRewriter {
             packet.runtime_id = bp::BlockRuntimeId{id};
             packet.update_flags = UPDATE_ALL;
             packet.layer = 0;
-            bp::BinaryWriter out{packets.emplace_back()};
-            bp::serialize(out, packet);
+            std::string payload;
+            bp::BinaryWriter out{payload};
+            if (bp::encode_<To>(packet, out)) {
+                packets.push_back(std::move(payload));
+            }
         }
         return packets;
     }
@@ -542,7 +550,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::FullChunkData
                 return {};
             }
         }
-        bp::BinaryReader in{packet.serialized_chunk};
+        bp::BinaryReader in{detail::asChars(packet.serialized_chunk)};
         auto chunk =
             ChunkType::read(in, packet.pos.x, 0, packet.pos.z, requested ? 0 : packet.sub_chunks_count, biome_count);
         if (!chunk) {
@@ -564,7 +572,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::FullChunkData
         std::string data;
         bp::BinaryWriter out{data};
         ChunkType::write(out, *chunk);
-        packet.serialized_chunk = std::move(data);
+        packet.serialized_chunk = detail::asBytes(data);
         return {};
     }
 };
@@ -575,14 +583,14 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SubChunkPacke
                                                         BlockConnectionStorage &storage)
     {
         std::vector<Chunk> chunks;
-        std::vector<std::string *> entries;
+        std::vector<std::vector<std::byte> *> entries;
         for (auto &entry : packet.sub_chunk_data) {
             if (!entry.serialized_sub_chunk || entry.serialized_sub_chunk->empty()) {
                 continue;
             }
             const auto &center = packet.center_pos;
             const auto &offset = entry.sub_chunk_pos_offset;
-            bp::BinaryReader in{*entry.serialized_sub_chunk};
+            bp::BinaryReader in{detail::asChars(*entry.serialized_sub_chunk)};
             auto chunk = ChunkType::read(in, center.x + offset.x, center.y + offset.y, center.z + offset.z, 1, 0);
             if (!chunk) {
                 return std::unexpected(chunk.error());
@@ -595,7 +603,7 @@ struct Rewriter<From, To, static_cast<int>(bp::MinecraftPacketIds::SubChunkPacke
             std::string data;
             bp::BinaryWriter out{data};
             ChunkType::write(out, chunks[i]);
-            *entries[i] = std::move(data);
+            *entries[i] = detail::asBytes(data);
         }
         return {};
     }
